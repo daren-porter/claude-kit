@@ -19,11 +19,11 @@ Interrupt Daren only for: a contradiction inside the spec, a decision the spec d
 
 For each Section of Work, in order:
 
-1. **Implement** per the spec. Follow the csharp-style and sql-style skills for all code, honoring their precedence rule (established repo style wins in shared repos). Surgical changes only; touch what the section requires.
+1. **Confirm the approach against the real code, then implement.** Before writing a section whose mechanism the spec assumed without reading the code, do a quick in-session read of the files it touches and confirm the planned approach actually holds - specs written during brainstorming can be fictional about code nobody had open yet. This is a lightweight read, not a subagent fan-out. If the real shape differs materially, adjust and note it in the Chapter (raise to Daren only if it changes design intent). Then implement, following the csharp-style and sql-style skills and their precedence rule (project rules - CLAUDE.md, `.editorconfig` - win; otherwise the skills' house style; a legacy neighbor file is not authority). Surgical changes only; touch what the section requires.
 
 2. **Verify with evidence.** Build must pass; run targeted tests. Claims of "done" or "passing" require the command output that proves it, observed in this session. If no test covers the change, use the temporary repro-script discipline from the global rules. Never mark a criterion met because the code "obviously" satisfies it.
 
-3. **Review.** Dispatch the `adversarial-reviewer` agent with the spec path and the base git ref (or list of changed files). If the section touched input handling, authentication/authorization, SQL construction, secrets/configuration, or an external boundary, also dispatch the `security-reviewer` agent. Dispatch both in parallel when both apply.
+3. **Review.** Dispatch the `adversarial-reviewer` agent with the spec path and the base git ref (or list of changed files). If the section touched input handling, authentication/authorization, SQL construction, secrets/configuration, or an external boundary, also dispatch the `security-reviewer` agent. Dispatch both in parallel when both apply. For a genuinely trivial, self-contained section (a rename, a comment, a one-line fix with no logic change), the per-section review is optional - the finishing-work pass still covers it; spend review budget where there is real risk.
 
 4. **Address findings.** Critical: must be fixed before the section closes. Major: fix, or record the justification for not fixing in the Chapter. Minor: note in the Chapter; fix only if trivial and in-scope.
 

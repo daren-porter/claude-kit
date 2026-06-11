@@ -9,7 +9,14 @@ Daren's personal C# style. Internalize the philosophy, then consult [references/
 
 ## Precedence
 
-In shared repos the repo's own style wins: first its stated style (CLAUDE.md, style docs in the repo), then the style established by sibling files solving a similar shape. Match them even where they conflict with this skill (EleosCore and other team codebases read as Scott-style; that is correct there). This skill's rules govern Daren's own repos and greenfield code.
+Project-declared rules win, then this skill, then (last resort) the neighbors:
+
+1. **Explicit style rules in the repo** - CLAUDE.md and any committed style docs.
+2. **`.editorconfig`** - when present it governs formatting and analyzer-style preferences. Do not hand-impose or "match the neighbor" against it; let the config and a formatter settle the mechanics (wrapping, spacing, `var`, expression bodies, naming). A rich `.editorconfig` (like EleosCore's `develop` config) makes most of the formatting rules below moot on that branch.
+3. **This skill** - Daren's house style. It is the default for anything 1 and 2 do not cover, in his own repos AND in shared repos. Use it rather than mirroring whatever a legacy sibling file happens to do.
+4. **A sibling file** - last resort only, for a genuine convention none of the above address, and for raw whitespace when there is no `.editorconfig` (match the file's prevailing indentation).
+
+The old "match the team's established style even where it conflicts with this skill" default is retired: a legacy neighbor is not authority. A repo that wants a different style states so in CLAUDE.md or `.editorconfig`. (This is C#-specific; `sql-style` keeps sibling-matching, since there is no SQL `.editorconfig` and the established team SQL style is the real target.) Still: surgical changes only - do not reformat unrelated code toward this style while doing other work.
 
 ## Core philosophy
 
@@ -24,10 +31,7 @@ In shared repos the repo's own style wins: first its stated style (CLAUDE.md, st
 ```csharp
 namespace OkWidgets.Web.Refresh;
 
-public sealed class WidgetRefreshService(
-    IWidgetRepository repository,
-    ILogger<WidgetRefreshService> logger
-)
+public sealed class WidgetRefreshService(IWidgetRepository repository, ILogger<WidgetRefreshService> logger)
 {
     public async Task<bool> TryRefreshAsync(string widgetId, CancellationToken ct)
     {
@@ -60,6 +64,9 @@ No regions, no section comments, one why-comment doing real work, every return v
 - ❌ Em dashes anywhere, including comments; use regular dashes, commas, or parentheses
 - ❌ `#region` blocks; the one sanctioned use is folding hundreds of lines of mechanical data (lookup tables and the like)
 - ❌ XML doc comments on internal plumbing, or sloppy XML docs on public surfaces (a public API doc without nullability/exception information is half-done)
+- ❌ Implementation detail or multi-paragraph narrative in an interface/abstraction doc; document at the type's own altitude (the interface states its contract; the implementation's summary just names what it is)
+- ❌ Reflexive `<inheritdoc/>` (or re-documenting) on an implementation when the interface already carries the doc and nothing generates/ships API docs; modern IDEs inherit it on hover automatically
+- ❌ Pre-wrapping a signature that fits on one line; keep it on one line within the line limit, chop to one-param-per-line only when it would exceed
 - ❌ Braceless bodies spanning multiple lines; braceless is allowed only when the body is truly one line
 - ❌ Null-guarding injected dependencies; the DI container is trusted (guard public method arguments instead, `ArgumentNullException.ThrowIfNull`)
 - ❌ Classic constructors in new code where a primary constructor does the job
@@ -75,7 +82,9 @@ No regions, no section comments, one why-comment doing real work, every return v
 ## Checklist before declaring C# work complete
 
 - [ ] File-scoped namespace; primary constructor for injected dependencies; `sealed` unless extension is expected
-- [ ] Public/reusable surfaces: BCL-quality XML docs; internal plumbing: no XML docs
+- [ ] Signatures on one line within the line limit (~120 cols); one parameter per line only when chopping a longer one
+- [ ] Public/reusable surfaces: BCL-quality XML docs at the type's own altitude (no impl detail in interface docs); internal plumbing: no XML docs; `<inheritdoc/>` only when docs are generated/shipped
+- [ ] When documenting, document fully (`<param>`/`<returns>`/`<exception>`), not a bare `<summary>`
 - [ ] Comments: why-only, no narration, no em dashes
 - [ ] Every return on its own line, blank line above when preceded by statements
 - [ ] Braceless only for truly one-line bodies
