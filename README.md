@@ -2,7 +2,7 @@
 
 Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, a systematic-debugging skill, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
-Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, staged-not-committed subagent work, no formatter hook).
+Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
 ## STRUCTURE
 
@@ -30,7 +30,7 @@ claude-kit/                          (repo = the marketplace)
         hooks.json                   Hook registrations (SessionStart only)
         session-start.js             Re-injects in-progress plans on startup/resume/compaction
   home/CLAUDE.md                     Versioned user-level CLAUDE.md (installed by setup script)
-  settings/settings.recommended.json acceptEdits + read-only allow-list starting point
+  settings/settings.recommended.json acceptEdits + curated allow-list starting point
   setup.ps1 / setup.sh               Per-machine CLAUDE.md install (sh symlinks, ps1 copies)
   docs/plans/                        Plan docs for work on this repo itself
 ```
@@ -62,13 +62,13 @@ The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"sou
 
    When alias config dirs are in use, both scripts also remove a `~/.claude/CLAUDE.md` (timestamped backup first): repos under the home directory would otherwise load the global rules twice - once from the config dir, once via the directory walk that picks up `~/.claude` as an ancestor.
 
-6. Merge `settings/settings.recommended.json` into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists `dotnet build/test/format/list` plus read-only git only - no `git add/commit/push` (commits always prompt; pushes always prompt).
+6. Merge `settings/settings.recommended.json` into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
 Updating: commit and push here, then `/plugin update claude-kit` on each machine. Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment.
 
 ## THE WORKFLOW
 
-Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
+Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation is delegated to subagents by default (main-context tokens re-bill on every subsequent turn; the orchestrator stays the designer), with subagents on the most capable model unless a mechanical, well-bounded task meets the downgrade gate - review and QA dispatches never downgrade. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
 
 Compaction recovery is deterministic: the SessionStart hook fires on startup, resume, and after every compaction, finds in-progress plans, and instructs the session to re-read them - Chapters included - before any work proceeds. Section boundaries double as deliberate session-reset points: when context usage runs high (roughly 50%+), Claude suggests closing the Chapter and starting fresh rather than running into auto-compaction. That is a suggestion, not a rule - sometimes keeping partial context beats a cold start.
 
@@ -78,7 +78,7 @@ Compaction recovery is deterministic: the SessionStart hook fires on startup, re
 - Chapters are appended to the plan doc, not kept in a separate file. The plan doc is the single source of truth for intent and state.
 - Durable learnings go to Claude Code auto memory (curate with `/memory`), not into plan docs or CLAUDE.md.
 - Project CLAUDE.md files carry only project-specific facts (build commands, architecture pointers); global rules live in `home/CLAUDE.md` only.
-- Style precedence: in shared repos the established repo style wins (find a sibling and mimic it); the style skills' personal rules govern Daren's own and greenfield repos.
+- Style precedence: a repo's stated rules (CLAUDE.md, style docs, `.editorconfig`) win; otherwise the style skills govern. C# treats a legacy sibling as last resort, not authority; SQL keeps sibling-matching in shared repos, where the established team SQL style is the target.
 - Each project with a non-obvious access architecture documents it and its accepted risks in `docs/security-model.md`. The security-reviewer agent reads it first, verifies the code upholds it, and re-checks accepted-risk preconditions instead of re-flagging them.
 
 ## NOTES AND KNOWN TRADEOFFS

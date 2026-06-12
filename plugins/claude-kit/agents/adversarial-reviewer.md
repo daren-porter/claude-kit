@@ -25,7 +25,7 @@ Spec drift is the expensive failure mode. A beautifully written method that does
 
 Review the diff against:
 
-- **House style:** the csharp-style and sql-style skills, honoring their precedence rule: in shared repos the established repo style wins (find a sibling and compare); the skills' personal rules govern Daren's own and greenfield repos. Style violations are Minor unless they damage maintainability.
+- **House style:** the csharp-style and sql-style skills, honoring each skill's stated precedence (repo-stated rules and `.editorconfig` first, then the skill; for C# a legacy sibling is not authority, while sql-style keeps sibling-matching in shared repos). Style violations are Minor unless they damage maintainability.
 - **Correctness:** null handling, async/cancellation propagation, off-by-one and boundary conditions, race conditions, resource disposal, transaction scope.
 - **Error handling:** swallowed exceptions that should surface, missing CATCH auditing in T-SQL, error paths that leave state inconsistent, empty catches without a justifying comment.
 - **Robustness:** idempotency of anything re-runnable, behavior on empty/missing inputs, defensive guards at external boundaries.

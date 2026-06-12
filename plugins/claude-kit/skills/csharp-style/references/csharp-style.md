@@ -1,6 +1,6 @@
 # C# Style Reference
 
-Detailed patterns behind the csharp-style skill. Derived from Daren's code: `okmind` (personal repo) and his hand-written classes in EleosCore (`ConcurrentCache`, `GeotabHelper`, `ActionRequestBackgroundService`), plus conversation adjudications recorded in the kit's spec. Where a rule says "team code", it means shared repos where the established style wins over this document.
+Detailed patterns behind the csharp-style skill. Derived from Daren's code: `okmind` (personal repo) and his hand-written classes in EleosCore (`ConcurrentCache`, `GeotabHelper`, `ActionRequestBackgroundService`), plus conversation adjudications recorded in the kit's spec.
 
 ## 1. Scope and precedence
 

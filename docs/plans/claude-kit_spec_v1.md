@@ -1,6 +1,6 @@
 # Daren's claude-kit
 
-Status: In Progress
+Status: Complete
 Commit Model: Review-Only
 Created: 2026-06-10
 
@@ -24,7 +24,7 @@ Fork-and-personalize Scott Applefeld's claude-kit (this repo). The repo skeleton
 
 6. **Three-valued commit model,** recorded in each spec header: Review-Only, Branch-and-PR, or Commit-and-Push. Branch-and-PR is the default for shared repos. Nothing is committed to main/master without explicit permission (Review-Only work may sit uncommitted on any branch, since nothing is committed); use worktrees when isolation is needed. Implementer subagents never commit: they leave work staged, so `git diff --staged` is always the clean review surface for agent work. Commits happen in the main session, after review, per the commit model.
 
-7. **Style skills derived from real code, with a shared-vs-personal distinction.** In shared repos, the agreed repo style wins ("find a sibling and mimic it"); Daren's personal style governs his own and greenfield repos. Rules are extracted from a personal repo and designated files in a shared repo (Open Questions 1 and 2). Conventions are tagged personal vs team; contradictions in the source code are flagged for Daren to adjudicate, never resolved silently.
+7. **Style skills derived from real code, with a shared-vs-personal distinction** (amended per Chapter 5 and commit 30edbf0). A repo's stated style (CLAUDE.md, style docs, `.editorconfig`) wins first; otherwise the skills govern. csharp-style retires sibling-matching as authority (legacy neighbors are a last resort); sql-style keeps sibling-matching in shared repos, where the established team SQL style is the target. Rules are extracted from a personal repo and designated files in a shared repo (Open Questions 1 and 2). Conventions are tagged personal vs team; contradictions in the source code are flagged for Daren to adjudicate, never resolved silently.
 
 8. **Evidence before completion claims,** mid-effort and at the end. The executing-work verify step requires command output or direct observation before a section is marked done; the qa-verifier agent enforces the same at effort end and may return UNVERIFIABLE rather than guess.
 
@@ -79,7 +79,7 @@ Acceptance criteria:
 
 ### 5. Style skills
 
-Both skills follow Scott's format (short SKILL.md: philosophy, exemplar, antipatterns, completion checklist; plus a detailed reference file) and state the precedence rule explicitly: in shared repos the established repo style wins (EleosCore reads as Scott-style; match siblings there); Daren's style governs his own and greenfield repos.
+Both skills follow Scott's format (short SKILL.md: philosophy, exemplar, antipatterns, completion checklist; plus a detailed reference file) and state their precedence rules explicitly (amended per Chapter 5 and commit 30edbf0): a repo's stated style (CLAUDE.md, style docs, `.editorconfig`) wins first; otherwise the skills govern. csharp-style retires sibling-matching as authority (legacy neighbors are a last resort); sql-style keeps sibling-matching in shared repos, where the established team SQL style is the target (EleosCore reads as Scott-style).
 
 **csharp-style** is built from analyzed sources and conversation adjudications, not from Scott's rules. Sources: okmind (personal, AI-assisted; known AI-isms excluded), and in EleosCore: ConcurrentCache.cs (excluding most IDictionary interface implementations and the throwing void Add overload, written by others), GeotabHelper.cs (excluding RandomString), ActionRequestBackgroundService.cs. Confirmed rules, binding on the skill content:
 
@@ -265,4 +265,23 @@ Completed: Section 12 (Style-skill reference gating)
 Decisions / Surprises: Gap check (delegated, fresh context) found the consult-always instruction was load-bearing: several routine-work rules lived only in the references, including the fire-and-forget Task.Run rule that is a binding spec criterion. Pulled up into csharp-style: captured primary-ctor params used directly, is null/is not null, OperationCanceledException handled quietly, Task.Run rule, no defensive over-validation internally, multi-line => placement, emoji ban, sentence-like names, _camelCase readonly fields, LogError exception object, tests-earn-their-place. Pulled up into sql-style: INNER JOIN/LEFT JOIN, no XACT_ABORT, no MERGE upserts, PII caution for @p_ErrorData, controlled-schema/GRANT line, temp-table guard, CTE/OUTPUT naming, function-preference line (CONCAT/COALESCE/TRY_CONVERT/FORMAT), phase order + comment punctuation, file naming. Deliberately not pulled up: C# 4-spaces/one-statement-per-line (universal defaults, exemplar shows them); using order and no-file-headers (covered by reworded "creating a new file" C# territory). SQL territories gained "index"; reviewer confirmed all pull-ups trace to the references.
 Review Findings: none specific to this section beyond the gap items themselves (addressed above).
 Next: Section 8 (Validation and install)
+Commit Model: Review-Only
+
+### Chapter 12 - 2026-06-12
+Completed: Section 8 (Validation and install)
+Decisions / Surprises: Chapter 1's blocker was stale: Daren had created daren-porter/claude-kit and the marketplace + user-scope install already existed in BOTH profiles (personal and work) since 06-11, pinned at a1bb6f7/30edbf0. Sections 9-12 were committed (bc22d8c) and pushed to main with Daren's explicit permission, then both profiles updated to bc22d8c via `claude plugin marketplace update daren` + `claude plugin update claude-kit@daren` (CLI, no session needed; restart applies). Smoke test on the installed caches: new delegate-by-default and capable-by-default text present in executing-work, scoped-reading line present in adversarial-reviewer, hook files present, both profiles. Superpowers: no entries in either profile's installed_plugins.json. Recovery hook: fired at the start of this session (live observation). Plugin validate: both levels pass (no-version warning is the intended design).
+Review Findings: none (validation section; per-section reviews already covered the content).
+Next: finishing-work
+Commit Model: Review-Only (this Chapter and the close-out will be presented for commit permission together)
+
+### Chapter 13 - 2026-06-12 (finishing-work close-out)
+Completed: finishing-work over the full effort (12 sections, commits a1bb6f7/30edbf0/bc22d8c plus close-out delta).
+QA verification: PASS on every acceptance criterion across all 12 sections (two live-session criteria pass by strong proxy: cache diff clean against repo, synthetic hook execution, plus live observations recorded in Chapter 12). Its one defect, stale "find a sibling" precedence wording, was fixed in README, adversarial-reviewer, and spec Section 5.
+Final adversarial review: CHANGES_REQUIRED on three more instances of the same stale-precedence family, all fixed: spec Approach decision 7 amended in place; orphaned "team code" sentence deleted from the csharp reference intro; executing-work's precedence parenthetical now defers to the skills (they differ on sibling-matching). Everything else clean: no main-session-by-default remnants, no debris, no em dashes, Chapter 7's say-it-in-both choice fully reversed.
+Security review: CONCERNS, no blockers. 1 Major fixed: session-start.js sanitizes repo-controlled data before injection (Commit Model whitelisted to the three known values, filenames stripped of non-printing chars and capped at 120, scan capped at 50 files, listing labeled as repo data; hostile-payload test verified the neutralization, behavior parity verified for legitimate plans). Minors: README "read-only allow-list" wording corrected (build/test/format execute or rewrite project code); setup.sh word-splitting on a spaced $HOME accepted as-is (fixed dir names; standard POSIX-sh idiom; flagged by two reviewers, both as note-only).
+Docs curation: no docs/ files written (README is the living doc; a docs/ tree would duplicate it). Drift Report: D1 (README omits the delegate-by-default execution policy) and D2 (README omits the capable-by-default model policy), both README omissions vs spec+code agreement, presented to Daren for adjudication; resolution recorded below when adjudicated. Non-material note: README says the ~/.claude duplicate removal always backs up; setup.sh backs up regular files only (a symlink's content is the repo file; nothing lost).
+Drift adjudication: Daren accepted D1 and D2 as omissions (2026-06-12); the README intro's policy list and THE WORKFLOW now carry the delegate-by-default and capable-by-default policies.
+Provenance note: commit 30edbf0's precedence sharpening and doc-discipline rules were adjudicated live with Daren on 2026-06-11 but never Chaptered; spec Section 5 and decision 7 now record the amendment, closing that gap.
+Learnings banked to auto memory: config-dir/symlink layout and double-load gotcha; delegate-by-default + capable-by-default policy rationale.
+Next: none (effort complete pending drift adjudication and final commit per Review-Only)
 Commit Model: Review-Only
