@@ -16,9 +16,9 @@ Fork-and-personalize Scott Applefeld's claude-kit (this repo). The repo skeleton
 
 2. **Specs stay at acceptance-criteria altitude.** Plans record goal, approach, sections of work, and verifiable acceptance criteria. They do not contain pre-written code (superpowers' code-complete plans go stale and front-load work better done in contact with the code).
 
-3. **Dispatch-time elaboration for delegated work.** The "zero-context engineer" rigor superpowers puts into plans moves to subagent dispatch prompts, written at dispatch time from the actual current code: exact files, signatures, conventions, definition of done, what not to touch. Model tiering applies: mechanical well-bounded task gets a cheap model with exhaustive instructions; integration or judgment work gets a capable model with goals and constraints. BLOCKED escalation path: more context, then a better model, then a smaller task, then the human.
+3. **Dispatch-time elaboration for delegated work.** The "zero-context engineer" rigor superpowers puts into plans moves to subagent dispatch prompts, written at dispatch time from the actual current code: exact files, signatures, conventions, definition of done, what not to touch, and how to verify (the implementer runs the verification and reports command output as evidence). Model selection is capable-by-default (amended 2026-06-12): a subagent runs the most capable model unless ALL of these hold - the work is mechanical with no design judgment, the instructions are exhaustive, failure is cheaply detectable (build, tests, or the staged diff will catch it), and the blast radius is one or two files touching no shared contracts. When uncertain between tiers, take the higher. Review and QA dispatches never downgrade. BLOCKED escalation path: more context, then a better model, then a smaller task, then the human.
 
-4. **Main-session implementation by default,** with three delegation triggers: the work is mechanical and self-contained, the work is parallelizable across non-overlapping files, or main context is getting heavy and the task does not need accumulated session state.
+4. **Delegated implementation by default** (amended 2026-06-12; originally main-session by default). Tokens absorbed into the main context are re-billed on every subsequent turn of the session, so implementation churn (file reads, build output, failed attempts) belongs in disposable subagent contexts; the orchestrator stays the designer, dispatcher, and reviewer. Keep a task in the main session only when it is design-entangled (its shape is still being discovered in contact with the code), tiny (the dispatch prompt would cost more than the work), or dependent on session state that cannot be cheaply summarized (an in-flight debugging hypothesis chain). Quality holds because the kit's machinery is independent of who implements: dispatch-time elaboration, fresh-context adversarial review per section, qa-verifier at the end, staged-only changes as the review surface.
 
 5. **Chapters as supervised state, section boundaries as reset points.** Chapters and the SessionStart recovery hook make context loss survivable, not lossless. At a section boundary with context usage high (roughly 50%+), Claude suggests closing the Chapter and starting a fresh session. This is a suggestion, not a prohibition: Daren may prefer auto-compaction to keep partial context, and that is acceptable. Mid-section, prefer finishing the section before any reset.
 
@@ -29,6 +29,8 @@ Fork-and-personalize Scott Applefeld's claude-kit (this repo). The repo skeleton
 8. **Evidence before completion claims,** mid-effort and at the end. The executing-work verify step requires command output or direct observation before a section is marked done; the qa-verifier agent enforces the same at effort end and may return UNVERIFIABLE rather than guess.
 
 9. **No format hook.** Daren does not use CSharpier and shared repos own their formatting. The format-on-edit hook and its settings entry are dropped entirely.
+
+10. **Token-efficiency amendments (2026-06-12).** The global CLAUDE.md is slimmed to one-line anchors where a skill owns the mechanics (autonomy contract, subagent orchestration, plans/Chapters; the skills are installed at user scope on every machine, so the anchors always resolve). It is installed once per machine as symlinks from each CLAUDE_CONFIG_DIR to the repo's home/CLAUDE.md (copies on Windows), and the ancestor-walk duplicate at ~/.claude/CLAUDE.md is removed (previously every aliased session loaded the rules twice: once as user memory, once via the directory walk from repos under $HOME). Style-skill references are consulted by territory instead of unconditionally. Per-section review dispatches name the section so the reviewer skips Chapters.
 
 ## Sections of Work
 
@@ -133,6 +135,42 @@ Acceptance criteria:
 - A fresh session lists the kit's skills; superpowers' skills are absent.
 - The recovery hook fires in a test project with an In Progress plan.
 
+### 9. Delegation and model policy rewrite (added 2026-06-12; Sections 9-12 execute before Section 8)
+
+executing-work's "Delegating to subagents" section inverted per amended decisions 3 and 4: delegate-by-default with the three keep-in-main exceptions; dispatch prompts include verification instructions and implementers report command evidence; capable-by-default model selection with the four-condition downgrade gate; reviewers never downgrade. Section-loop verify step assigns evidence production to the implementer when work was delegated (orchestrator reads the staged diff and spot-checks evidence). Per-section review dispatches name the section under review and scope the reviewer's spec reading to Goal, Approach, that section, and Out of Scope (Chapters only for deviations noted against the section).
+
+Acceptance criteria:
+- executing-work states delegate-by-default, the three keep-in-main exceptions, the four-condition downgrade gate, uncertainty-rounds-up, and reviewers-never-downgrade.
+- The verify step distinguishes delegated work (implementer evidence, orchestrator spot-check) from main-session work.
+- The review step scopes the reviewer's spec reading as above.
+- No contradiction with brainstorming or finishing-work on a dry read.
+
+### 10. Global CLAUDE.md slimming (added 2026-06-12)
+
+home/CLAUDE.md trimmed where skills own the mechanics: Autonomy Contract, Subagent Orchestration, and Plans/Chapters/Memory become one-to-two-line anchors naming the owning skill; Context Conservation drops the section-boundary reset paragraph (executing-work owns it) and keeps the generated-file rule. Communication, Style Rules, Working Discipline, Code Discipline, and Honesty are untouched.
+
+Acceptance criteria:
+- The three slimmed sections are anchors that name the owning skill; no mechanics duplicated from skills remain.
+- Nothing in the file contradicts executing-work's delegate-by-default policy.
+- The anti-sycophancy and no-em-dash rules survive verbatim in intent.
+
+### 11. CLAUDE.md single-source install (added 2026-06-12)
+
+setup.sh symlinks the repo's home/CLAUDE.md into each existing alias config dir (~/.claude-personal, ~/.claude-work; fallback ~/.claude when neither exists), backing up any regular file it replaces, and removes the ancestor-walk duplicate at ~/.claude/CLAUDE.md (with timestamped backup) when alias dirs are in use. setup.ps1 mirrors with copies (Windows symlinks need developer mode) including the duplicate removal. README documents the single-source scheme and that the repo checkout must remain in place for the symlinks.
+
+Acceptance criteria:
+- After running setup.sh on this machine: ~/.claude-personal/CLAUDE.md and ~/.claude-work/CLAUDE.md are symlinks to the repo file; ~/.claude/CLAUDE.md does not exist; timestamped backups of all three replaced files exist.
+- Re-running setup.sh succeeds and changes nothing further (idempotent).
+- Exactly one resolvable copy of the global rules remains across the config dirs and the $HOME ancestor-walk path.
+
+### 12. Style-skill reference gating (added 2026-06-12)
+
+csharp-style and sql-style SKILL.md files state that the SKILL.md alone covers routine work and name the territories that require the reference (C#: XML documentation on reusable surfaces, test scaffolding, library/BCL-shape conventions, unsettled file-anatomy questions; SQL: new-object templates, naming, deployment cases beyond the proc skeleton). A gap check confirms no rule binding on routine code lives only in a reference.
+
+Acceptance criteria:
+- Each SKILL.md names its reference-required territories and states the SKILL.md suffices for routine work.
+- Gap check performed: every rule that routine code can violate is present in the SKILL.md (rules found only in a reference are either pulled up or shown to belong to a named territory).
+
 ## Out of Scope
 
 - A personal writing-voice skill (deferred until Daren provides writing samples; the kit ships without one and nothing references one).
@@ -198,5 +236,33 @@ Commit Model: Review-Only
 Completed: Section 7 (home/CLAUDE.md merge, settings.recommended.json; setup scripts landed in Section 1)
 Decisions / Surprises: Scott's "Never fabricate" bullet was retained under a new Honesty section (the spec excluded only the language/stack defaults from the Defaults section, not this). Context Conservation gained the section-boundary reset suggestion so the global rules and executing-work say one thing. Cross-checks from Chapters 3-4 now resolve: systematic-debugging's "global rules" repro-script reference lands on Code Discipline; docs-curator's prose rules do not conflict.
 Review Findings: none in scope (batched S5-S7 review); settings verified as exactly acceptEdits + dotnet build/test/format/list + git status/diff/log.
+Next: Section 8 (Validation and install)
+Commit Model: Review-Only
+
+### Chapter 8 - 2026-06-12
+Completed: Section 9 (Delegation and model policy rewrite), per Daren's redirect: sections 9-12 added to the spec (Approach decisions 3 and 4 amended, decision 10 added) and executed before Section 8. Key motivating fact: tokens in the main context are re-billed every subsequent turn (roughly quadratic session cost), so implementation churn belongs in disposable subagent contexts; this reverses the original main-session-by-default reasoning and Daren confirmed the inversion.
+Decisions / Surprises: Model policy framed as capable-by-default with a four-condition downgrade gate (Daren's requirement: downgrade only when relatively certain). Agents carry no model: frontmatter, so they inherit the main session's model; reviewers-never-downgrade is encoded in executing-work prose rather than pinned frontmatter.
+Review Findings (batched over S9-S12): adversarial-reviewer.md Inputs gained the optional section-scope line so the agent text matches executing-work's new scoped dispatch (Minor, fixed).
+Next: Section 10 work (completed; see Chapter 9)
+Commit Model: Review-Only
+
+### Chapter 9 - 2026-06-12
+Completed: Section 10 (Global CLAUDE.md slimming)
+Decisions / Surprises: Autonomy Contract, Plans/Chapters/Memory, and Subagent Orchestration reduced to anchors naming the owning skill; Context Conservation's reset paragraph removed (executing-work owns it, reversing Chapter 7's say-one-thing-in-both choice in favor of saying it once). The stage-never-commit invariant stays in the global file deliberately: it must hold for ad-hoc subagent use where executing-work never triggers; trimmed to one line so only the invariant, not the mechanics, is duplicated (review Major resolved this way). File: 3,975 -> ~2,600 bytes, paid once per session instead of twice (see Chapter 10).
+Review Findings: 1 Major (staging bullet duplicated executing-work mechanics) fixed by the trim-and-justify above.
+Next: Section 11 work (completed; see Chapter 10)
+Commit Model: Review-Only
+
+### Chapter 10 - 2026-06-12
+Completed: Section 11 (CLAUDE.md single-source install)
+Decisions / Surprises: Root cause of the double-load verified on this machine before writing: cc-personal/cc-work aliases set CLAUDE_CONFIG_DIR, so the config dir's CLAUDE.md loads as user memory AND ~/.claude/CLAUDE.md loads again via the ancestor directory walk (repos live under $HOME). Three identical copies existed (.claude, .claude-personal, .claude-work). setup.sh executed here: both alias dirs now symlink to the repo's home/CLAUDE.md, ~/.claude/CLAUDE.md removed, three timestamped .bak files created, re-run verified idempotent. Windows ps1 uses copies (symlinks need developer mode) and must be re-run after edits; hash-compare avoids backup churn when content is unchanged.
+Review Findings: spec decision 10 gained "(copies on Windows)" (Minor, fixed). Two Minors noted, not fixed: setup.sh word-splitting breaks on a space-containing $HOME (standard POSIX-sh idiom, fixed dir names); ps1 re-runs after edits deposit a stale-copy .bak per config dir (harmless, git holds history).
+Next: Section 12 work (completed; see Chapter 11)
+Commit Model: Review-Only
+
+### Chapter 11 - 2026-06-12
+Completed: Section 12 (Style-skill reference gating)
+Decisions / Surprises: Gap check (delegated, fresh context) found the consult-always instruction was load-bearing: several routine-work rules lived only in the references, including the fire-and-forget Task.Run rule that is a binding spec criterion. Pulled up into csharp-style: captured primary-ctor params used directly, is null/is not null, OperationCanceledException handled quietly, Task.Run rule, no defensive over-validation internally, multi-line => placement, emoji ban, sentence-like names, _camelCase readonly fields, LogError exception object, tests-earn-their-place. Pulled up into sql-style: INNER JOIN/LEFT JOIN, no XACT_ABORT, no MERGE upserts, PII caution for @p_ErrorData, controlled-schema/GRANT line, temp-table guard, CTE/OUTPUT naming, function-preference line (CONCAT/COALESCE/TRY_CONVERT/FORMAT), phase order + comment punctuation, file naming. Deliberately not pulled up: C# 4-spaces/one-statement-per-line (universal defaults, exemplar shows them); using order and no-file-headers (covered by reworded "creating a new file" C# territory). SQL territories gained "index"; reviewer confirmed all pull-ups trace to the references.
+Review Findings: none specific to this section beyond the gap items themselves (addressed above).
 Next: Section 8 (Validation and install)
 Commit Model: Review-Only

@@ -31,7 +31,7 @@ claude-kit/                          (repo = the marketplace)
         session-start.js             Re-injects in-progress plans on startup/resume/compaction
   home/CLAUDE.md                     Versioned user-level CLAUDE.md (installed by setup script)
   settings/settings.recommended.json acceptEdits + read-only allow-list starting point
-  setup.ps1 / setup.sh               One-time per-machine CLAUDE.md install
+  setup.ps1 / setup.sh               Per-machine CLAUDE.md install (sh symlinks, ps1 copies)
   docs/plans/                        Plan docs for work on this repo itself
 ```
 
@@ -57,10 +57,12 @@ The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"sou
    Default scope is user, so every project picks it up. If the marketplace was added before a structure fix, refresh it first: `/plugin marketplace update daren` (or remove and re-add).
 
 5. Install the user-level CLAUDE.md (plugins cannot ship memory files):
-   - Windows: `.\setup.ps1`
-   - WSL/macOS/Linux: `./setup.sh`
+   - WSL/macOS/Linux: `./setup.sh` symlinks `home/CLAUDE.md` into each Claude config dir (`~/.claude-personal`, `~/.claude-work`; falls back to `~/.claude` when neither exists). Editing the repo file updates every profile; keep the checkout in place, the links point into it.
+   - Windows: `.\setup.ps1` targets the same dirs but installs copies (symlinks need developer mode); re-run it after updating `home/CLAUDE.md`.
 
-6. Merge `settings/settings.recommended.json` into `~/.claude/settings.json`. It sets `acceptEdits` and allow-lists `dotnet build/test/format/list` plus read-only git only - no `git add/commit/push` (commits always prompt; pushes always prompt).
+   When alias config dirs are in use, both scripts also remove a `~/.claude/CLAUDE.md` (timestamped backup first): repos under the home directory would otherwise load the global rules twice - once from the config dir, once via the directory walk that picks up `~/.claude` as an ancestor.
+
+6. Merge `settings/settings.recommended.json` into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists `dotnet build/test/format/list` plus read-only git only - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
 Updating: commit and push here, then `/plugin update claude-kit` on each machine. Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment.
 

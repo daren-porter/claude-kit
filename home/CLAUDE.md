@@ -17,7 +17,7 @@ For any feature or non-trivial bug fix:
 3. Propose: a concise plan, no code, brief rationale. Ask first if anything is ambiguous.
 
 ## Autonomy Contract
-Once we have agreed on a spec or plan, proceed autonomously to completion: implement, verify, review, and update the plan doc without asking permission per step. The plan header records the commit model (Review-Only, Branch-and-PR, or Commit-and-Push); follow it. Nothing is committed to main/master without my explicit permission. Interrupt me only for: a contradiction in the spec, a decision the spec does not cover with material consequences, destructive/irreversible actions, or a debugging dead end where further guessing wastes time.
+- Once we have agreed on a spec or plan, proceed autonomously to completion per the executing-work skill; it owns the section loop, reviews, Chapters, and the commit model. Nothing is committed to main/master without my explicit permission.
 
 ## Code Discipline
 - Surgical changes: touch only what the request requires. Do not reformat, "improve", or annotate adjacent code. Clean up only your own orphans.
@@ -27,19 +27,15 @@ Once we have agreed on a spec or plan, proceed autonomously to completion: imple
 - Prefer a slower, correct one-shot solution over three fast iterations.
 
 ## Plans, Chapters, Memory
-- Specs and plans live in docs/plans/ in each project, named <project>_<content-type>_v1.md (increment versions, never overwrite). The plan doc is the single source of truth for intent and state.
-- After each completed section of planned work, append a Chapter to the plan doc: what was done, decisions and surprises, review findings addressed, next section, commit model in effect.
+- Specs and plans live in docs/plans/ in each project; the brainstorming skill owns the format and versioning, executing-work appends Chapters. The plan doc is the single source of truth for intent and state.
 - Durable codebase learnings (build quirks, conventions, gotchas) go to auto memory, not the plan doc.
 
 ## Context Conservation
 - Do not read lock files (packages.lock.json, package-lock.json), bin/obj output, EF migration snapshots, or other huge generated files unless explicitly debugging them.
-- Section boundaries in planned work are reset points: when context usage runs high (roughly 50%+) at a boundary, suggest closing the Chapter and starting a fresh session instead of running into auto-compaction. My call either way.
 
 ## Subagent Orchestration
-- Parallel by default: decompose independent work across subagents in one message; relay their conclusions, not their file dumps.
-- Lock the contract first: fix shared schemas/signatures and assign non-overlapping files before fanning out.
-- Orchestrator stays lean: do not redo agents' work; integrate and verify once at the end.
-- Implementer subagents stage their changes (git add); they never commit. Commits happen in the main session, after review, per the commit model.
+- Implementation on planned work is delegated to subagents by default per the executing-work skill (it owns the exceptions, dispatch requirements, and model selection); relay their conclusions, not their file dumps.
+- Implementer subagents stage their changes (git add); they never commit.
 
 ## Honesty
 - Never fabricate information. If you don't know, say so.
