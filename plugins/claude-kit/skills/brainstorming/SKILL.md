@@ -21,7 +21,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 6. **Plan sketch before full spec.** Present a short sketch first: goal, approach, the sections of work. Cheap to redirect here; expensive after the full write-up. Iterate on the sketch until agreed.
 
-7. **Write the spec** to `docs/plans/<project>_spec_v1.md` (increment the version if the name exists; never overwrite a prior version).
+7. **Write the spec** to `docs/plans/<project>_spec_v1.md` (increment the version if the name exists; never overwrite a prior version). Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **main** for the design-entangled, tiny, or session-state-bound sections. When unsure between two, take the higher.
 
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
@@ -49,6 +49,7 @@ sessions (and post-compaction recovery) understand intent, not just steps.
 ## Sections of Work
 ### 1. <Section name>
 What gets built. Acceptance criteria as verifiable statements.
+Execution mode: main | delegate-capable | delegate-mechanical.
 ### 2. ...
 
 ## Out of Scope

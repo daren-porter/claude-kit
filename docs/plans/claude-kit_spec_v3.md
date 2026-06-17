@@ -192,4 +192,11 @@ Acceptance criteria:
    Defaulted to offer-at-a-genuine-fork plus direct invocation. Owner: Daren.
 
 ## Chapters
-(Appended by executing-work as sections complete. Leave empty at creation.)
+
+### Chapter 1 - 2026-06-17
+Completed: Section 1 (Model down-selection)
+Implemented By: main session (Approach decision 6 - voice-critical agent and skill authoring)
+Decisions / Surprises: Two model-pinned implementer agents (implementer-opus model:opus, implementer-sonnet model:sonnet) carrying the kit's verify discipline (build + durable-test checkpoint, the four-status protocol, stage-never-commit, read the style-skill paths since subagents inherit no skills). executing-work reworked to three execution modes - main (orchestrator session on the selected model, never named), delegate-capable -> implementer-opus, delegate-mechanical -> implementer-sonnet. The main-thread model is never hard-coded, so selecting Fable as main needs zero instruction changes (the decoupling Daren asked for). brainstorming assigns a mode per section; the Chapter format gained "Implemented By" (in use as of this Chapter). Capable-by-default and reviewers-never-downgrade preserved; the global Subagent Orchestration anchor already defers model selection to executing-work, so no CLAUDE.md change was needed.
+Review Findings: APPROVED_WITH_CONCERNS, 4 Minors, all fixed: the escalation paragraph reworked so a first NEEDS_CONTEXT is answered and re-dispatched at the same tier (distinct from BLOCKED), and the fail-twice trigger broadened to "two failures of any kind at the tier"; brainstorming's mode list reordered capable-first to match the default; the "brainstorming lesson" on repeated escalation now routes to a kaizen note (dogfooding the loop).
+Next: Section 2 (Design council)
+Commit Model: Commit-and-Push
