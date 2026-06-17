@@ -57,7 +57,8 @@ lens, the repo paths or data worth reading, and the read-only constraint. Member
 must not see each other's briefs or outputs this round - blindness puts genuine
 divergence on the record before anyone anchors. Each returns a position grounded in
 evidence it actually read (file:line, schema, real data), plus its strongest
-objection to each alternative.
+objection to each alternative. If a member returns NEEDS_CONTEXT instead of a
+position, supply the missing input and re-dispatch it before the facilitator pass.
 
 ## 3. Facilitator pass
 

@@ -1,6 +1,6 @@
 {
   "name": "claude-kit",
-  "description": "Daren Porter's personal Claude Code kit: brainstorm/execute/finish workflow skills, four review agents, systematic debugging, C# and T-SQL style guides, and compaction-recovery hooks.",
+  "description": "Daren Porter's personal Claude Code kit: brainstorm/execute/finish workflow with per-section model down-selection, fresh-context review agents, systematic debugging, skill authoring, kaizen self-improvement, a design council, a cold judgment lens, C# and T-SQL style guides, and a compaction-recovery hook.",
   "author": {
     "name": "Daren Porter",
     "email": "daren@asr-solutions.com"

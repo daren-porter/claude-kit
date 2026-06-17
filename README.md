@@ -1,6 +1,6 @@
 # claude-kit
 
-Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, discipline skills for systematic debugging, skill authoring, review response, and kaizen self-improvement, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
+Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish) with per-section model down-selection, fresh-context review agents, discipline skills (systematic debugging, skill authoring, review response, kaizen self-improvement, a multi-lens design council, and cold judgment calls), C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
 Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
@@ -22,6 +22,8 @@ claude-kit/                          (repo = the marketplace)
         responding-to-review/        Adjudicate review findings and direct feedback; no performative agreement
         writing-skills/              Author and improve kit skills (match form to failure, baseline-test wording)
         kaizen/                      Capture kit friction; reflect into briefs; apply as improvements
+        design-council/              Opt-in multi-lens pressure-test for a hard-to-reverse design fork
+        cold/                        Neutral evidence-first lens for non-code judgment calls
         csharp-style/                Daren's C# style + detailed reference (incl. test style)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
       agents/
@@ -29,6 +31,10 @@ claude-kit/                          (repo = the marketplace)
         qa-verifier.md               Build, tests, acceptance criteria with evidence
         security-reviewer.md         OWASP + SOC 2 review tuned to the procedure-only model
         docs-curator.md              Updates docs/, returns Drift Report
+        implementer-opus.md          Scoped section implementer, Opus tier (delegate-capable)
+        implementer-sonnet.md        Scoped section implementer, Sonnet tier (delegate-mechanical)
+        council-member.md            Read-only design-council lens
+        design-facilitator.md        Neutral design-council convergence judge
       hooks/
         hooks.json                   Hook registrations (SessionStart only)
         session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo)
@@ -71,7 +77,7 @@ Updating: commit and push here, then `/plugin update claude-kit` on each machine
 
 ## THE WORKFLOW
 
-Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation is delegated to subagents by default (main-context tokens re-bill on every subsequent turn; the orchestrator stays the designer), with subagents on the most capable model unless a mechanical, well-bounded task meets the downgrade gate - review and QA dispatches never downgrade. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
+Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation runs per a per-section execution mode (main-context tokens re-bill every turn, so the orchestrator stays the designer): **main** in the session on whatever model is selected, **delegate-capable** to the implementer-opus agent, or **delegate-mechanical** to the implementer-sonnet agent - capable by default, mechanical only for genuinely well-bounded sections, reviewers never downgrading. The main-thread model is never hard-coded, so it tracks whatever you run. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
 
 Compaction recovery is deterministic: the SessionStart hook fires on startup, resume, and after every compaction, finds in-progress plans, and instructs the session to re-read them - Chapters included - before any work proceeds. Section boundaries are clean recovery points by construction: once a Chapter is written, the plan doc carries the full state, so a fresh session - whenever Daren chooses to start one - resumes with nothing lost.
 

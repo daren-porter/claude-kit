@@ -1,6 +1,6 @@
 # claude-kit v3 - Scott-informed adoptions
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Created: 2026-06-17
 
@@ -223,4 +223,15 @@ Implemented By: main session (global-rule prose, decision 6)
 Decisions / Surprises: Removed the context-reset heuristic from executing-work's Context discipline and the README, keeping the recovery framing (delegation keeps the orchestrator lean; section boundaries are clean recovery points because the plan doc carries state) and adding the explicit counter "when to start a fresh session is Daren's call, not a context-usage threshold you try to estimate." home/CLAUDE.md needed no removal (v2 already dropped its reset paragraph); it gained the two high-confidence bullets - match-effort-to-blast-radius (Code Discipline) and name-what-you-changed-outside-the-code (Honesty), live in both profiles via the symlink. This closes kaizen candidate 2.
 Review Findings: APPROVED, no findings (one voice-nit, "shared or local state", explicitly not a finding; left as-is).
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-06-17 (finishing-work close-out)
+Completed: finishing-work over the full v3 effort (4 sections; commits f2e98fb, 1481e41, 5e6ab66, 915de86, plus this close-out delta).
+QA verification: PASS on every acceptance criterion across all four sections, each cited to file:line. Plugin validates clean; the model-tier mapping lives only in the two implementer agents' frontmatter (the decoupling holds); the facilitator carries no pin; the six council defenses and cold's routing/cross-reference are present; the context-reset heuristic is gone from all three surfaces; the two CLAUDE.md bullets are present; no em dashes.
+Security review: skipped with justification. No code, hook, or boundary was touched - the new agents are read-only design agents and scoped implementer definitions (prose), and session-start.js was untouched. No security surface.
+Final cohesion review: APPROVED_WITH_CONCERNS. The execution modes, design council, cold, and global-rule fixes cohere as one system; all cross-references resolve; capable-by-default was not reversed; the deferred CLAUDE.md nuggets did not leak; no model pin survives on any judge agent. 2 Minors fixed: plugin.json's stale "four review agents" marketplace description (the surviving stale inventory claim, user-facing in /plugin listings) refreshed to the current capability list; the council-member's emitted READY/NEEDS_CONTEXT had no documented consumer - design-council now states that a member NEEDS_CONTEXT is supplied and re-dispatched before the facilitator pass.
+Docs curation: README (this repo's living doc) updated - the two new skills, four new agents, the execution-mode workflow sentence, and the intro capability list; plugin.json marketplace description refreshed. Surfaced to Daren.
+Learnings banked: the kaizen-pending-candidates memory updated - candidate 2 (the context-reset heuristic) is resolved by this effort's Section 4; candidate 1 (durable-test vs no-new-test-infra precedence) remains open.
+Note: none of v3's sections were delegate-mechanical (all voice-critical prose), so the new implementer tiers were authored but not exercised this effort; they are in place for future code-heavy mechanical work.
+Next: none (effort complete).
 Commit Model: Commit-and-Push
