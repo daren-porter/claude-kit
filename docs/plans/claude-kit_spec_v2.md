@@ -231,3 +231,10 @@ Decisions / Surprises: Added a scope-decomposition check as step 2 and a spec se
 Review Findings: APPROVED. 2 Minors, both note-only, not fixed: the step-2 parenthetical "(its own data, its own lifecycle, useful on its own)" reads slightly ambiguously on all-three-vs-any-one but intent is clear; "should have been three specs" hardcodes an illustrative number that matches the kit's conversational voice.
 Next: Section 4 (executing-work edits)
 Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-06-17
+Completed: Section 4 (executing-work edits)
+Decisions / Surprises: Five edits landed - file-handoff discipline (bulky inputs as file paths, subagents write reports to files and return status plus an evidence summary), never-pre-judge-the-reviewer (this is the dispatch-side rule that now backs responding-to-review's cross-reference, resolving the forward-reference Chapter 2 removed), DONE_WITH_CONCERNS implementer status, the durable-test checkpoint in the verify step (which reframes the throwaway repro as a debugging tool, not the default home for new behavior), and test expectations in the dispatch contract. The skill hedges "watch it fail first" as "where practical": always-watch-fail is not achievable for a test-after on existing code, so this operationalizes Approach decision 2's unqualified phrasing rather than contradicting it (deliberate refinement, not a defect).
+Review Findings: APPROVED_WITH_CONCERNS, 3 Minors. 2 fixed: the dispatch/verify test-decision redundancy got a pointer (verify confirms what dispatch set); the DONE_WITH_CONCERNS "hand it to the reviewer" seam was clarified to "a question to check, not a pre-rated finding" so it does not collide with the never-pre-judge rule. 1 not fixed - the "where practical" watch-it-fail hedge, recorded above as a deliberate refinement.
+Next: Section 5 (durable-tests wiring)
+Commit Model: Commit-and-Push
