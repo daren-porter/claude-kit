@@ -224,3 +224,10 @@ Decisions / Surprises: Main-session authoring per Approach decision 5. The skill
 Review Findings: 1 Major fixed - the skill asserted executing-work "owns" a never-pre-judge-the-reviewer rule that Section 4 has not landed yet, making the cross-reference false-on-disk during the section-by-section window; reworded to state the receiving-side discipline directly with no dependency on the unlanded rule (Section 4 carries the dispatch-side rule independently; the two can cross-reference once both exist). 4 Minors, all note-only per the reviewer, none fixed: the four-agent enumeration is slightly broad since qa-verifier/docs-curator run in finishing-work (discipline still applies uniformly); the YAGNI and verify steps are recipe-shaped, which is correct for procedure not discipline; the "do it properly" temptation gets a one-line test rather than a rationalization table (revisit if a baseline test shows agents fold); the "usually right" vs "trusted" lines sit near a tension that "silence reads as agreement" resolves.
 Next: Section 3 (brainstorming edits)
 Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-06-17
+Completed: Section 3 (brainstorming edits)
+Decisions / Surprises: Added a scope-decomposition check as step 2 and a spec self-review pass as step 9, renumbering the process list to 1-9. one-question-at-a-time (now step 3) and plan-sketch-first (now step 6) preserved verbatim; self-review placed after the spec is written and the commit model recorded, before handoff. Confirmed no kit file references brainstorming's step numbers, so the renumber is safe.
+Review Findings: APPROVED. 2 Minors, both note-only, not fixed: the step-2 parenthetical "(its own data, its own lifecycle, useful on its own)" reads slightly ambiguously on all-three-vs-any-one but intent is clear; "should have been three specs" hardcodes an illustrative number that matches the kit's conversational voice.
+Next: Section 4 (executing-work edits)
+Commit Model: Commit-and-Push
