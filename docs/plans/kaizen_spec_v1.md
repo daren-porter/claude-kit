@@ -183,3 +183,10 @@ Decisions / Surprises: Sections 1 and 2 landed in one file - the kaizen SKILL.md
 Review Findings: APPROVED_WITH_CONCERNS, 3 Minors, all fixed: the note format gained a concrete date+friction+origin example (Section 2 required "where it was"); "clear the note" was pinned to "remove its line from `notes.md`" so the hook's line-count predicate is unambiguous; the apply-flow commit model was given a defined source (kit repo is Commit-and-Push; a promoted spec follows its own).
 Next: Section 3 (self-monitoring touchpoints)
 Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-06-17
+Completed: Section 3 (self-monitoring touchpoints)
+Decisions / Surprises: home/CLAUDE.md gained the "Kaizen self-monitoring" posture bullet under Plans/Chapters/Memory, wording kept faithful to the Section 1 baseline-tested version to preserve the calibration; it propagates live to both config profiles via the symlink. executing-work's "Append a Chapter" step and finishing-work's new step 8 are the two reflection-point capture nudges; no capture nudge was added to any other skill (verified by grep - the only other kaizen mention is writing-skills' trigger word, which is intended). All cross-references resolve now that this section lands the posture rule the kaizen skill referenced.
+Review Findings: APPROVED. 2 Minors: finishing-work step 8 reworded to gate the offer on the observable inbox-has-pending-items predicate rather than a session judgment, matching the kaizen skill's structural non-nag gate (fixed); executing-work's "Decision/Surprise" vs the Chapter field label "Decisions / Surprises" is cosmetic (not fixed).
+Next: Section 4 (SessionStart hook extension)
+Commit Model: Commit-and-Push

@@ -27,3 +27,5 @@ When per-section reviews already cleared parts of the changeset, tell the finish
    - **Commit-and-Push:** final commit and push; report what was pushed.
 
 7. **Bank the learnings.** Anything durable discovered during the effort (build quirks, conventions, gotchas, environmental facts) belongs in auto memory, not the plan doc. Save it now, while it is fresh.
+
+8. **Kaizen check.** First make sure any kit friction from this effort (captured along the way, or a Chapter Surprise that traced to the kit) is in the kaizen inbox. Then offer a kaizen pass in one line only if the inbox has pending items; on a clean effort the inbox is empty and you say nothing. The predicate, not your read of the session, gates the offer.

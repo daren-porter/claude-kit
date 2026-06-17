@@ -29,7 +29,7 @@ For each Section of Work, in order:
 
 5. **Update the plan doc.** Mark the section complete. If the implementation deviated from the spec, update the spec section to match reality and flag the deviation in the Chapter; if the deviation changes design intent, raise it to Daren rather than silently rewriting the spec.
 
-6. **Append a Chapter** (format below).
+6. **Append a Chapter** (format below). If a Decision/Surprise traced to the kit itself fighting the work (an ambiguous rule, a contradictory step), also jot it to the kaizen inbox per the global self-monitoring rule: the Chapter records it for this effort, the inbox carries it to a kaizen pass.
 
 7. **Apply the commit model** recorded in the spec header:
    - **Review-Only:** stage the section's changes (git add); never commit. Accumulate a running changed-files summary in the Chapter for the final walkthrough. `git diff --staged` is Daren's review surface.

@@ -29,6 +29,7 @@ For any feature or non-trivial bug fix:
 ## Plans, Chapters, Memory
 - Specs and plans live in docs/plans/ in each project; the brainstorming skill owns the format and versioning, executing-work appends Chapters. The plan doc is the single source of truth for intent and state.
 - Durable codebase learnings (build quirks, conventions, gotchas) go to auto memory, not the plan doc.
+- Kaizen self-monitoring: if, while working, the kit itself (its skills, agents, rules, workflow) creates friction - a rule that was ambiguous or wrong, a step that fought the work, or a capability you wished it had and it lacked - jot one line to `~/.claude-kaizen/notes.md` (date, the friction, where it surfaced). Capture only concrete kit friction; not "went fine" or praise, not a project-specific gotcha (that goes to auto memory), not your own one-off mistake. Zero notes is the normal, healthy case; do not go looking. Full bar and the kaizen pass are in the kaizen skill.
 
 ## Context Conservation
 - Do not read lock files (packages.lock.json, package-lock.json), bin/obj output, EF migration snapshots, or other huge generated files unless explicitly debugging them.
