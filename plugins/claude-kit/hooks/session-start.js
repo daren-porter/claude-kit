@@ -43,7 +43,10 @@ function countPendingKaizen(cwd) {
         // No notes file - nothing from there.
     }
     try {
-        const briefs = fs.readdirSync(path.join(inbox, 'briefs')).filter((f) => !f.startsWith('.'));
+        // One file per brief: count regular files only, so a stray subdirectory
+        // cannot inflate the count past the skill's stated contract.
+        const briefs = fs.readdirSync(path.join(inbox, 'briefs'), { withFileTypes: true })
+            .filter((d) => d.isFile() && !d.name.startsWith('.'));
         count += briefs.slice(0, 500).length;
     } catch {
         // No briefs directory - nothing from there.

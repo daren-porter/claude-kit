@@ -1,6 +1,6 @@
 # kaizen - a self-improvement loop for the kit
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Created: 2026-06-17
 
@@ -196,4 +196,15 @@ Completed: Section 4 (SessionStart hook extension)
 Decisions / Surprises: Added countPendingKaizen(cwd) - gates on the kit-repo marker (cwd/plugins/claude-kit/.claude-plugin/plugin.json), reads ~/.claude-kaizen (note lines + brief files, both bounded), and injects only the integer count, never inbox text. Restructured the emit section into independent blocks so the kaizen nudge fires whether or not a plan is in progress; the plan-recovery path is byte-for-byte preserved. No durable test: the kit has no test harness and standing one up is out of scope (new test infra, unasked), so verified behaviorally via synthetic payloads - kit repo + notes injects both blocks; non-kit cwd is silent; empty inbox suppresses the kaizen nudge while plan recovery still fires; node --check clean - per the reframed test discipline.
 Review Findings: adversarial APPROVED, security CLEAR. The shared substantive Minor (the notes read pulled the whole file into memory before slicing) was hardened to a bounded openSync/readSync buffer matching the file's own plan-scan idiom (re-verified: counting still correct). Accepted Minors, not fixed: the 64KB boundary can undercount or bisect the final line of an enormous notes.md (conservative direction; notes are one line each); briefs readdir enumerates before the 500-cap (benign, the inbox is the user's own dir); kit detection assumes cwd is the repo root (consistent with the existing plan scan); the no-version warning (pre-existing, intended).
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-06-17 (finishing-work close-out)
+Completed: finishing-work over the full kaizen effort (4 sections; commits 6e747c4, 26d7385, 1616cc9, plus this close-out delta).
+QA verification: PASS on every acceptance criterion across all four sections, each cited to file:line. The verifier exercised the hook against an isolated fake HOME (the real ~/.claude-kaizen confirmed absent and left untouched), confirming the count paths, the additive plan-recovery behavior, and the kit-marker gating. Plugin validates clean, node --check passes, no em dashes anywhere.
+Security review: skipped over the prose with justification; the only code/boundary change (the hook) was security-reviewed in Section 4 and returned CLEAR (only an integer injected, fails silent, stays within the user's own home dir). Nothing else in the changeset has a security surface.
+Final cohesion review: APPROVED_WITH_CONCERNS. The loop is coherent end to end - the capture bar, the inbox contract, the pending-items predicate shared by skill and hook, the offer points, and the apply flow tell one story - with no spec drift and no out-of-scope creep (context-reset heuristic untouched, no SessionEnd hook, no auto-apply, no capture nudge beyond the two reflection points). 3 Minors: the hook counted brief directory entries while the skill contract says "one file per brief" - fixed (counts regular files only; verified a stray subdir is excluded); the "Decision/Surprise" vs canonical "Decisions / Surprises" label echo - accepted (grammatical prose beats exact label echo); a source-wrap nit at kaizen SKILL.md:82 - accepted (source-only, no rendered effect).
+Docs curation: README is this repo's living doc (docs-curator is docs/-scoped). Drift resolved and surfaced to Daren: kaizen added to the intro skill list, the STRUCTURE skills tree, the session-start.js description, and a new workflow paragraph. Deliberately left untouched: THE WORKFLOW's context-reset heuristic description, which is the logged kaizen item Daren is weighing - out of scope for this effort.
+Learnings banked: the kaizen-skill-next-effort memory updated from "planned" to "built" (inbox location, how the loop runs, and the first pending candidates).
+First kaizen candidates surfaced (recorded, not acted on - acting is the loop's own later use, and the inbox was deliberately not created as a side effect of this build): (1) executing-work's durable-test checkpoint vs csharp-style's no-new-test-infra rule have no stated precedence when a project has no test project; (2) the context-reset heuristic keys on a context-usage self-assessment Claude cannot reliably make.
+Next: none (effort complete).
 Commit Model: Commit-and-Push

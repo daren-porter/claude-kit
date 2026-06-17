@@ -1,6 +1,6 @@
 # claude-kit
 
-Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, discipline skills for systematic debugging, skill authoring, and review response, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
+Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, discipline skills for systematic debugging, skill authoring, review response, and kaizen self-improvement, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
 Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
@@ -21,6 +21,7 @@ claude-kit/                          (repo = the marketplace)
         systematic-debugging/        Root-cause discipline before proposing fixes
         responding-to-review/        Adjudicate review findings and direct feedback; no performative agreement
         writing-skills/              Author and improve kit skills (match form to failure, baseline-test wording)
+        kaizen/                      Capture kit friction; reflect into briefs; apply as improvements
         csharp-style/                Daren's C# style + detailed reference (incl. test style)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
       agents/
@@ -30,7 +31,7 @@ claude-kit/                          (repo = the marketplace)
         docs-curator.md              Updates docs/, returns Drift Report
       hooks/
         hooks.json                   Hook registrations (SessionStart only)
-        session-start.js             Re-injects in-progress plans on startup/resume/compaction
+        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo)
   home/CLAUDE.md                     Versioned user-level CLAUDE.md (installed by setup script)
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
   setup.ps1 / setup.sh               Per-machine CLAUDE.md install (sh symlinks, ps1 copies)
@@ -73,6 +74,8 @@ Updating: commit and push here, then `/plugin update claude-kit` on each machine
 Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation is delegated to subagents by default (main-context tokens re-bill on every subsequent turn; the orchestrator stays the designer), with subagents on the most capable model unless a mechanical, well-bounded task meets the downgrade gate - review and QA dispatches never downgrade. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
 
 Compaction recovery is deterministic: the SessionStart hook fires on startup, resume, and after every compaction, finds in-progress plans, and instructs the session to re-read them - Chapters included - before any work proceeds. Section boundaries double as deliberate session-reset points: when context usage runs high (roughly 50%+), Claude suggests closing the Chapter and starting fresh rather than running into auto-compaction. That is a suggestion, not a rule - sometimes keeping partial context beats a cold start.
+
+Kaizen keeps the kit improving itself. Concrete friction with the kit (an ambiguous rule, a step that fought the work, a missing capability) is captured cheaply to a home-level inbox (`~/.claude-kaizen`) from any project; a kaizen pass reflects the notes into briefs, and a fresh kit-repo session applies them per writing-skills. It is offered only when the inbox has pending items (finishing-work's close-out, or the SessionStart nudge in the kit repo), so it never prompts on an uneventful session.
 
 ## CONVENTIONS
 
