@@ -190,3 +190,10 @@ Decisions / Surprises: home/CLAUDE.md gained the "Kaizen self-monitoring" postur
 Review Findings: APPROVED. 2 Minors: finishing-work step 8 reworded to gate the offer on the observable inbox-has-pending-items predicate rather than a session judgment, matching the kaizen skill's structural non-nag gate (fixed); executing-work's "Decision/Surprise" vs the Chapter field label "Decisions / Surprises" is cosmetic (not fixed).
 Next: Section 4 (SessionStart hook extension)
 Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-06-17
+Completed: Section 4 (SessionStart hook extension)
+Decisions / Surprises: Added countPendingKaizen(cwd) - gates on the kit-repo marker (cwd/plugins/claude-kit/.claude-plugin/plugin.json), reads ~/.claude-kaizen (note lines + brief files, both bounded), and injects only the integer count, never inbox text. Restructured the emit section into independent blocks so the kaizen nudge fires whether or not a plan is in progress; the plan-recovery path is byte-for-byte preserved. No durable test: the kit has no test harness and standing one up is out of scope (new test infra, unasked), so verified behaviorally via synthetic payloads - kit repo + notes injects both blocks; non-kit cwd is silent; empty inbox suppresses the kaizen nudge while plan recovery still fires; node --check clean - per the reframed test discipline.
+Review Findings: adversarial APPROVED, security CLEAR. The shared substantive Minor (the notes read pulled the whole file into memory before slicing) was hardened to a bounded openSync/readSync buffer matching the file's own plan-scan idiom (re-verified: counting still correct). Accepted Minors, not fixed: the 64KB boundary can undercount or bisect the final line of an enormous notes.md (conservative direction; notes are one line each); briefs readdir enumerates before the 500-cap (benign, the inbox is the user's own dir); kit detection assumes cwd is the repo root (consistent with the existing plan scan); the no-version warning (pre-existing, intended).
+Next: finishing-work
+Commit Model: Commit-and-Push
