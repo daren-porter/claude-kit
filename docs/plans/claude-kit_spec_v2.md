@@ -1,6 +1,6 @@
 # claude-kit v2 - Superpowers-informed improvements
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Created: 2026-06-17
 
@@ -244,4 +244,15 @@ Completed: Section 5 (durable-tests wiring)
 Decisions / Surprises: home/CLAUDE.md Test discipline reframed - durable test when the change earns regression cover plus watch-it-fail where practical; the temporary repro script scoped explicitly to debugging a fix; value-not-coverage judgment preserved. The reframe deliberately keeps the full repro-script discipline (verify fail, fix, verify pass, delete) so systematic-debugging's two back-references to "the temporary repro-script discipline from the global rules" still resolve. adversarial-reviewer gained a Tests bullet (missing test for warranted behavior = Major; a mock-locking or coverage-padding test = Minor; no test where none was warranted = not a finding), consistent with csharp-style section 11. README and the other docs carry no contradictory testing stance (swept and verified). v1 is not edited; the Out-of-Scope correction is carried by v2 Approach decision 2. Editing the repo's home/CLAUDE.md propagated live to ~/.claude-personal/CLAUDE.md through the single-source symlink, as designed.
 Review Findings: APPROVED. 1 Minor, not fixed: the reframed CLAUDE.md bullet is dense (~80 words) against the terse surrounding Code Discipline bullets; kept as one bullet because the repro discipline must stay intact for the systematic-debugging back-references and the single "Test discipline:" bullet structure is cleaner than splitting it.
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 6 - 2026-06-17 (finishing-work close-out)
+Completed: finishing-work over the full effort (5 sections; commits 703cded, 5ad9aac, 59cc132, 983d11f, 71219c6, plus this close-out delta).
+QA verification: PASS on every acceptance criterion across all five sections, each cited to file:line; plugin validates clean (the no-version warning is the kit's intended design), no em dashes in any changed file, all cross-references resolve.
+Security review: skipped with justification. The changeset is entirely behavior-shaping markdown (two new skills, three edited skills, one agent, the global rule); no input handling, auth, SQL construction, secrets, or external boundaries were touched, and the only executable artifact (session-start.js) is unchanged. No security surface to review; manufacturing a pass over prose would spend budget for nothing, against finishing-work's own guidance.
+Final adversarial review (cross-section cohesion): APPROVED_WITH_CONCERNS. The durable-test stance is consistent across home/CLAUDE.md, executing-work, the adversarial-reviewer Tests bullet, and csharp-style section 11; the review-handling split (executing-work owns dispatch-side never-pre-judge and triage; responding-to-review owns receiving-side adjudication) is clean; no debris, no Out-of-Scope creep, still one JS file. 1 Major fixed: the README skill inventory had gone stale (line-3 prose and the STRUCTURE tree omitted writing-skills and responding-to-review); both added. 2 Minors: writing-skills is discovery-by-trigger only with no skill pointing at it - intended (a trigger-loaded meta-skill and the kaizen foundation), recorded as a decision, not fixed; responding-to-review listed docs-curator among findings-to-adjudicate while finishing-work routes docs-curator drift to Daren - fixed by scoping the adjudicate-list to the severity-rating reviewers and naming docs-curator the route-to-Daren exception.
+Docs curation: for this repo the README is the living doc (docs-curator is docs/-scoped and there is no docs/ tree beyond plans/). The one drift item was the stale README inventory (the Major above), resolved by adding the two new skills and refreshing the summary line; surfaced to Daren in the close-out rather than reconciled silently.
+Learnings banked: the effort's substance is encoded in the skills themselves (in-repo, not memory). One project memory added: the kaizen skill is the planned next effort, to sit on writing-skills.
+Open Questions 1 and 2 remain deferred (owner Daren), to revisit when the kaizen skill lands.
+Next: none (effort complete). The kaizen skill is the next planned effort.
 Commit Model: Commit-and-Push

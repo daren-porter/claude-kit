@@ -12,11 +12,13 @@ worth hearing, but "usually" is not "always." Evaluate before you act.
 
 ## The two sources
 
-**Review-agent findings** (adversarial-reviewer, security-reviewer, qa-verifier,
-docs-curator) are fallible. A finding can be wrong, out of scope, or built on
-context the agent lacked. Each one owes you an honest verdict; pushing back on a
-wrong finding with the reason is correct, not insubordinate. Adjudicate every
-finding - do not rubber-stamp, and do not reflexively defer.
+**Review-agent findings** (adversarial-reviewer, security-reviewer, qa-verifier)
+are fallible. A finding can be wrong, out of scope, or built on context the agent
+lacked. Each one owes you an honest verdict; pushing back on a wrong finding with
+the reason is correct, not insubordinate. Adjudicate every finding - do not
+rubber-stamp, and do not reflexively defer. (docs-curator is the exception: its
+Drift Report is not a severity-rated finding to adjudicate but a signal you route
+to Daren per finishing-work.)
 
 **Daren's feedback** is trusted: implement once you understand it. Still verify
 scope when it is unclear, and still say so when you see a problem with it. Silence

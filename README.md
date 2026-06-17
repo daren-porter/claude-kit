@@ -1,6 +1,6 @@
 # claude-kit
 
-Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, a systematic-debugging skill, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
+Daren Porter's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish), four review agents, discipline skills for systematic debugging, skill authoring, and review response, C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
 Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
@@ -19,6 +19,8 @@ claude-kit/                          (repo = the marketplace)
         executing-work/              Autonomous section loop: implement, verify, review, Chapter
         finishing-work/              QA, security, docs curation, final review, close-out
         systematic-debugging/        Root-cause discipline before proposing fixes
+        responding-to-review/        Adjudicate review findings and direct feedback; no performative agreement
+        writing-skills/              Author and improve kit skills (match form to failure, baseline-test wording)
         csharp-style/                Daren's C# style + detailed reference (incl. test style)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
       agents/
