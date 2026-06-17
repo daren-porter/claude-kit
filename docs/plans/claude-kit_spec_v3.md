@@ -200,3 +200,11 @@ Decisions / Surprises: Two model-pinned implementer agents (implementer-opus mod
 Review Findings: APPROVED_WITH_CONCERNS, 4 Minors, all fixed: the escalation paragraph reworked so a first NEEDS_CONTEXT is answered and re-dispatched at the same tier (distinct from BLOCKED), and the fail-twice trigger broadened to "two failures of any kind at the tier"; brainstorming's mode list reordered capable-first to match the default; the "brainstorming lesson" on repeated escalation now routes to a kaizen note (dogfooding the loop).
 Next: Section 2 (Design council)
 Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-06-17
+Completed: Section 2 (Design council)
+Implemented By: main session (voice-critical agent and skill authoring, decision 6)
+Decisions / Surprises: Molded the design-council skill plus council-member and design-facilitator agents from Scott's fork - Daren-addressed, kit voice, the six false-convergence defenses intact, opt-in / cost-named / never-auto-run. Both council agents are read-only and inherit the session model. brainstorming step 5 now offers the council at a genuine material/hard-to-reverse fork.
+Review Findings: APPROVED_WITH_CONCERNS. 1 Major fixed: design-facilitator carried an inherited "model: opus" pin from Scott that contradicted decision 1's decoupling and the kit's no-pin-judge convention (adversarial-reviewer / qa-verifier / security-reviewer / council-member all inherit and rely on never-downgrade); removed so the facilitator inherits the session model. 2 Minors: the swarms provenance was inherited-not-verified, corrected to credit the actual chain (adapted from Scott's design-council, which credits the Converge concept in DheerG/swarms) rather than re-verify the upstream; the "files unstaged" finding is a false positive for main-session authoring (the commit step stages and commits), not fixed.
+Next: Section 3 (cold skill)
+Commit Model: Commit-and-Push

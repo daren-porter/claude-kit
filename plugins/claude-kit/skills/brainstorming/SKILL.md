@@ -17,7 +17,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 4. **Feel out the corners.** Edge cases, failure modes, integration points, performance characteristics, who consumes the output, what happens on re-run, what already exists that solves a similar shape.
 
-5. **Present options with tradeoffs** when a real decision exists. State a recommendation and the reason. Disagree openly with Daren's framing when warranted; he wants the arguments, not agreement. Hold the position under pushback and move on new facts, not tone.
+5. **Present options with tradeoffs** when a real decision exists. State a recommendation and the reason. Disagree openly with Daren's framing when warranted; he wants the arguments, not agreement. Hold the position under pushback and move on new facts, not tone. When a fork is genuinely material and hard to reverse (architecture, schema or data-model, build-vs-buy, a migration direction) and independent lenses beyond this conversation would help, offer the `design-council` skill - opt-in, with the cost named. It pressure-tests the approaches and returns a recommendation or a clean unresolved fork; it never makes the call.
 
 6. **Plan sketch before full spec.** Present a short sketch first: goal, approach, the sections of work. Cheap to redirect here; expensive after the full write-up. Iterate on the sketch until agreed.
 
