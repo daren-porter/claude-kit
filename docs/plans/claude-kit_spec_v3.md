@@ -216,3 +216,11 @@ Decisions / Surprises: Molded Scott's cold skill to Daren - the non-code judgmen
 Review Findings: APPROVED_WITH_CONCERNS, 1 Minor fixed: the molded text cited "the global rules say to match Daren's precision and anchor to his exact context", a rule that lives in Scott's CLAUDE.md but not Daren's; reworded to state the principle directly. (Also a data point for the deferred CLAUDE.md curation pass - "match my precision" is a Scott nugget the kit lacks.)
 Next: Section 4 (Global-rule fixes)
 Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-06-17
+Completed: Section 4 (Global-rule fixes)
+Implemented By: main session (global-rule prose, decision 6)
+Decisions / Surprises: Removed the context-reset heuristic from executing-work's Context discipline and the README, keeping the recovery framing (delegation keeps the orchestrator lean; section boundaries are clean recovery points because the plan doc carries state) and adding the explicit counter "when to start a fresh session is Daren's call, not a context-usage threshold you try to estimate." home/CLAUDE.md needed no removal (v2 already dropped its reset paragraph); it gained the two high-confidence bullets - match-effort-to-blast-radius (Code Discipline) and name-what-you-changed-outside-the-code (Honesty), live in both profiles via the symlink. This closes kaizen candidate 2.
+Review Findings: APPROVED, no findings (one voice-nit, "shared or local state", explicitly not a finding; left as-is).
+Next: finishing-work
+Commit Model: Commit-and-Push

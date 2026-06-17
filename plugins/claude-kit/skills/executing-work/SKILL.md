@@ -58,7 +58,7 @@ Parallelize when tasks touch non-overlapping files: lock shared contracts first,
 
 ## Context discipline
 
-Delegation is the primary lever for keeping the orchestrator lean; the resets below are the fallback. Section boundaries are deliberate reset points: after a Chapter is written, the plan doc carries the full state by construction, so a fresh session is cheap there and recovers automatically via the SessionStart hook. When context usage is high (roughly 50%+) at a section boundary, suggest to Daren closing out and starting a fresh session instead of running toward auto-compaction. This is a suggestion, not a rule; sometimes keeping partial context beats a cold start, and that is Daren's call. Mid-section, prefer finishing the section and writing its Chapter before any reset.
+Delegation is the primary lever for keeping the orchestrator lean. Section boundaries are clean recovery points by construction: after a Chapter is written, the plan doc carries the full state, so a fresh session resumes from it automatically via the SessionStart hook with nothing lost. Mid-section, prefer finishing the section and writing its Chapter before any reset, so the recovery point is a real boundary. When to start that fresh session is Daren's call, not a context-usage threshold you try to estimate.
 
 ## Chapter format
 

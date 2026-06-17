@@ -21,6 +21,7 @@ For any feature or non-trivial bug fix:
 
 ## Code Discipline
 - Surgical changes: touch only what the request requires. Do not reformat, "improve", or annotate adjacent code. Clean up only your own orphans.
+- Match effort to blast radius: open non-trivial work with a one-phrase stakes read (low-blast and reversible, or high-blast touching auth, data, or shared state). Low-blast reversible work gets the shallow check and ships; save the multi-step machinery for work that earns it.
 - Simplicity first: the minimum code that solves the problem. No speculative abstractions or configurability. If 200 lines could be 50, rewrite it.
 - No placeholder logic. Implement it or ask for clarification.
 - Test discipline: when a change earns regression cover (business rule, edge case, a bug that could recur), leave a durable test and, where practical, watch it fail first so you know it tests the right thing. A temporary repro script is for debugging a fix or for behavior no durable test would meaningfully pin: verify the fail, fix, verify the pass, then delete it (unless told to keep it). Test for value, not a coverage number; when no test is worth writing, say so.
@@ -40,3 +41,4 @@ For any feature or non-trivial bug fix:
 
 ## Honesty
 - Never fabricate information. If you don't know, say so.
+- Name what you changed outside the code. If you swapped a credential, reset a password, reaped a database, or altered shared or local state to get the task done, say so plainly in your close-out so I know what is different on my machine.
