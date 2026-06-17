@@ -217,3 +217,10 @@ Decisions / Surprises: Authored in the main session per Approach decision 5 (voi
 Review Findings: 1 Major fixed - the required "kit-grounded example" for description=trigger was sourced from Superpowers; now leads with executing-work's own workflow-summary description as the in-repo specimen (the case Open Question 1 flags). 3 Minors fixed - uncited Superpowers measurement reframed as a caution, not data; the "two rules" block given a lead-in marking it universal, not scoped to the form table; the duplicate kaizen forward-reference trimmed to the description trigger alone.
 Next: Section 2 (responding-to-review)
 Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-06-17
+Completed: Section 2 (responding-to-review discipline skill)
+Decisions / Surprises: Main-session authoring per Approach decision 5. The skill covers both review-agent findings (fallible, adjudicated) and Daren's feedback (trusted but still verified), and cross-references the global anti-sycophancy rule rather than duplicating it.
+Review Findings: 1 Major fixed - the skill asserted executing-work "owns" a never-pre-judge-the-reviewer rule that Section 4 has not landed yet, making the cross-reference false-on-disk during the section-by-section window; reworded to state the receiving-side discipline directly with no dependency on the unlanded rule (Section 4 carries the dispatch-side rule independently; the two can cross-reference once both exist). 4 Minors, all note-only per the reviewer, none fixed: the four-agent enumeration is slightly broad since qa-verifier/docs-curator run in finishing-work (discipline still applies uniformly); the YAGNI and verify steps are recipe-shaped, which is correct for procedure not discipline; the "do it properly" temptation gets a one-line test rather than a rationalization table (revisit if a baseline test shows agents fold); the "usually right" vs "trusted" lines sit near a tension that "silence reads as agreement" resolves.
+Next: Section 3 (brainstorming edits)
+Commit Model: Commit-and-Push
