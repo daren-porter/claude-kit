@@ -208,3 +208,11 @@ Decisions / Surprises: Molded the design-council skill plus council-member and d
 Review Findings: APPROVED_WITH_CONCERNS. 1 Major fixed: design-facilitator carried an inherited "model: opus" pin from Scott that contradicted decision 1's decoupling and the kit's no-pin-judge convention (adversarial-reviewer / qa-verifier / security-reviewer / council-member all inherit and rely on never-downgrade); removed so the facilitator inherits the session model. 2 Minors: the swarms provenance was inherited-not-verified, corrected to credit the actual chain (adapted from Scott's design-council, which credits the Converge concept in DheerG/swarms) rather than re-verify the upstream; the "files unstaged" finding is a false positive for main-session authoring (the commit step stages and commits), not fixed.
 Next: Section 3 (cold skill)
 Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-06-17
+Completed: Section 3 (cold skill)
+Implemented By: main session (voice-critical prose, decision 6)
+Decisions / Surprises: Molded Scott's cold skill to Daren - the non-code judgment-call lens, the framing/anchor distinction, ground rules, short/full output shapes, and when-not-to-use routing (code -> adversarial-reviewer/security-reviewer, design fork -> design-council, agreed work -> executing-work). Cross-references the global anti-sycophancy rule rather than duplicating it. Note: none of v3's sections were delegate-mechanical candidates (all voice-critical prose), so the new implementer-sonnet tier was not exercised this effort; it is in place for future code-heavy mechanical work.
+Review Findings: APPROVED_WITH_CONCERNS, 1 Minor fixed: the molded text cited "the global rules say to match Daren's precision and anchor to his exact context", a rule that lives in Scott's CLAUDE.md but not Daren's; reworded to state the principle directly. (Also a data point for the deferred CLAUDE.md curation pass - "match my precision" is a Scott nugget the kit lacks.)
+Next: Section 4 (Global-rule fixes)
+Commit Model: Commit-and-Push
