@@ -176,4 +176,10 @@ Acceptance criteria:
    refine in execution. Owner: Daren.
 
 ## Chapters
-(Appended by executing-work as sections complete. Leave empty at creation.)
+
+### Chapter 1 - 2026-06-17
+Completed: Sections 1 and 2 (the kaizen skill; the inbox and brief artifact format), delivered together
+Decisions / Surprises: Sections 1 and 2 landed in one file - the kaizen SKILL.md is the natural home for the inbox location and the note/brief formats, so it documents both. Inbox defaulted (Open Question 1) to `~/.claude-kaizen/` ($HOME-level, profile-independent, kit-path-independent): `notes.md` (append-only; date + friction + origin per line) and `briefs/`. The capture wording was baseline-tested per writing-skills (the dogfood of the meta-skill): 4 fresh subagents, 2 clean scenarios both returned NO NOTE (one correctly excluding the agent's own mistake, not the kit's), 2 genuine-friction scenarios both captured a concrete note. Calibration established; the tested posture wording goes verbatim into CLAUDE.md in Section 3. Known forward reference: the skill cites "the global posture rule in CLAUDE.md", which Section 3 lands (disclosed to the reviewer). Bonus: friction-run A independently surfaced a real kit gap - v2's "earn a durable test" vs csharp-style's "no new test infra unless asked" have no stated precedence - a genuine first kaizen candidate.
+Review Findings: APPROVED_WITH_CONCERNS, 3 Minors, all fixed: the note format gained a concrete date+friction+origin example (Section 2 required "where it was"); "clear the note" was pinned to "remove its line from `notes.md`" so the hook's line-count predicate is unambiguous; the apply-flow commit model was given a defined source (kit repo is Commit-and-Push; a promoted spec follows its own).
+Next: Section 3 (self-monitoring touchpoints)
+Commit Model: Commit-and-Push
