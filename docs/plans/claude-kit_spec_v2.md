@@ -238,3 +238,10 @@ Decisions / Surprises: Five edits landed - file-handoff discipline (bulky inputs
 Review Findings: APPROVED_WITH_CONCERNS, 3 Minors. 2 fixed: the dispatch/verify test-decision redundancy got a pointer (verify confirms what dispatch set); the DONE_WITH_CONCERNS "hand it to the reviewer" seam was clarified to "a question to check, not a pre-rated finding" so it does not collide with the never-pre-judge rule. 1 not fixed - the "where practical" watch-it-fail hedge, recorded above as a deliberate refinement.
 Next: Section 5 (durable-tests wiring)
 Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-06-17
+Completed: Section 5 (durable-tests wiring)
+Decisions / Surprises: home/CLAUDE.md Test discipline reframed - durable test when the change earns regression cover plus watch-it-fail where practical; the temporary repro script scoped explicitly to debugging a fix; value-not-coverage judgment preserved. The reframe deliberately keeps the full repro-script discipline (verify fail, fix, verify pass, delete) so systematic-debugging's two back-references to "the temporary repro-script discipline from the global rules" still resolve. adversarial-reviewer gained a Tests bullet (missing test for warranted behavior = Major; a mock-locking or coverage-padding test = Minor; no test where none was warranted = not a finding), consistent with csharp-style section 11. README and the other docs carry no contradictory testing stance (swept and verified). v1 is not edited; the Out-of-Scope correction is carried by v2 Approach decision 2. Editing the repo's home/CLAUDE.md propagated live to ~/.claude-personal/CLAUDE.md through the single-source symlink, as designed.
+Review Findings: APPROVED. 1 Minor, not fixed: the reframed CLAUDE.md bullet is dense (~80 words) against the terse surrounding Code Discipline bullets; kept as one bullet because the repro discipline must stay intact for the systematic-debugging back-references and the single "Test discipline:" bullet structure is cleaner than splitting it.
+Next: finishing-work
+Commit Model: Commit-and-Push

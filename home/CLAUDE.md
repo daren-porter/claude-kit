@@ -23,7 +23,7 @@ For any feature or non-trivial bug fix:
 - Surgical changes: touch only what the request requires. Do not reformat, "improve", or annotate adjacent code. Clean up only your own orphans.
 - Simplicity first: the minimum code that solves the problem. No speculative abstractions or configurability. If 200 lines could be 50, rewrite it.
 - No placeholder logic. Implement it or ask for clarification.
-- Test discipline: if no test covers your change, create a temporary repro script, verify the fail, fix it, verify the pass, then delete the script (unless told to keep it).
+- Test discipline: when a change earns regression cover (business rule, edge case, a bug that could recur), leave a durable test and, where practical, watch it fail first so you know it tests the right thing. A temporary repro script is for debugging a fix or for behavior no durable test would meaningfully pin: verify the fail, fix, verify the pass, then delete it (unless told to keep it). Test for value, not a coverage number; when no test is worth writing, say so.
 - Prefer a slower, correct one-shot solution over three fast iterations.
 
 ## Plans, Chapters, Memory
