@@ -41,7 +41,6 @@ claude-kit/                          (repo = the marketplace)
         session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
-  home/CLAUDE.md                     Legacy user-level source, superseded by assets/CLAUDE.md; removed once the live config is migrated
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
   setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
   docs/plans/                        Plan docs for work on this repo itself

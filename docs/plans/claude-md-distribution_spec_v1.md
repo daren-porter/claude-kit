@@ -317,3 +317,53 @@ Review Findings (adversarial-reviewer with an explicit security lens, APPROVED, 
 
 Next: Section 4 - Install scheme migration + docs.
 Commit Model: Commit-and-Push.
+
+### Chapter 4 - 2026-06-18
+Completed: Section 4 - Install scheme migration + docs.
+
+Decisions / Surprises:
+- **Scheme finalized as option C (Daren's choice), dedup verified.** Before building, an
+  empirical probe settled the question Chapter 1 left open: Claude Code 2.1.181 dedupes
+  memory by realpath. Evidence: from `repo/home` (where the alias symlink's realpath and the
+  walk's cwd-file realpath coincide) the loaded-memory set showed ONE entry; a distinct cwd
+  CLAUDE.md showed as a SECOND entry. So the conventional canonical `~/.claude/CLAUDE.md`
+  with alias symlinks pointing to it loads exactly once (walk copy dedupes against the
+  config-dir copy) and has no outside-`$HOME` gap (the alias symlink loads it cwd-independently).
+  Approach point 2 and Section 1/4 criteria were updated from Chapter 1's dedicated-canonical
+  variant to this; Chapter 1 stays as history.
+- **Tooling:** setup.sh/setup.ps1 rewritten to the slimmed role - point alias CLAUDE_CONFIG_DIR
+  profiles at one canonical `~/.claude/CLAUDE.md` (sourced from the plugin asset). Idempotent,
+  collision-safe timestamped backups, never clobbers an existing customized canonical. README
+  updated to the plugin-managed scheme (install plugin, accept reconcile offer; repo is only
+  the author's edit source).
+- **Live migration run with Daren's explicit go (committed tooling first, then ran it).**
+  `./setup.sh` against the real `$HOME`: created `~/.claude/CLAUDE.md` (byte-identical to the
+  prior rules, same sha256, so no rule changed), backed up and repointed both alias symlinks
+  (`~/.claude-work`, `~/.claude-personal`) from `repo/home/CLAUDE.md` to `~/.claude/CLAUDE.md`,
+  wrote the marker + baseline. Verified on the live config: content == asset; marker == asset
+  hash; single-load probe shows exactly one global-rules entry; both alias dirs resolve to the
+  real `~/.claude/CLAUDE.md` (no repo path, so moving/removing the repo cannot change loading);
+  re-run is idempotent (no new backups).
+- **`home/CLAUDE.md` retired** (git rm) now that nothing live points to it and the asset is the
+  source; its README STRUCTURE line removed. The migration `.bak` symlinks (and any prior-run
+  backups) still point at the deleted `repo/home/CLAUDE.md` and are therefore now dangling -
+  cosmetic only; the prior content is preserved in git history and is byte-identical to the live
+  `~/.claude/CLAUDE.md`.
+- **Caveat for other machines (close-out item):** any other machine still on the old scheme
+  (alias `CLAUDE.md` symlinked to `repo/home/CLAUDE.md`) will have a dangling symlink after it
+  pulls this commit, until it runs the new `./setup.sh` or accepts the reconcile offer. The
+  rules still reach it via the plugin asset; only the old repo-symlink needs repointing.
+
+Review Findings (adversarial-reviewer on the tooling/docs, APPROVED_WITH_CONCERNS, no Critical/Major):
+- The C#/T-SQL security-reviewer does not fit shell/PowerShell setup scripts; the data-safety
+  review was folded into the adversarial-reviewer dispatch (it probed the data-loss paths and
+  found none unbacked-up).
+- Four Minors, all fixed before the live run: same-second backup-name collision (added a
+  collision-safe `backup_to`/`Backup-To` helper, unit-tested); setup.ps1 `.Target` idempotency
+  comparison normalized + array-safe; setup.ps1 symlink-fallback now copies the canonical (not
+  the pristine asset) to avoid divergence; setup.ps1 canonical stray-link check made consistent
+  with the alias check (`-eq 'SymbolicLink'`). setup.ps1 changes are unverified on Windows (no
+  Windows host); setup.sh fully dry-run and live-run verified.
+
+Next: finishing-work.
+Commit Model: Commit-and-Push.
