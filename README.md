@@ -26,6 +26,7 @@ claude-kit/                          (repo = the marketplace)
         cold/                        Neutral evidence-first lens for non-code judgment calls
         csharp-style/                Daren's C# style + detailed reference (incl. test style)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
+        reconcile-claude-md/         Install/merge/overwrite the kit's recommended global CLAUDE.md into the user's live file
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
         qa-verifier.md               Build, tests, acceptance criteria with evidence
@@ -37,10 +38,12 @@ claude-kit/                          (repo = the marketplace)
         design-facilitator.md        Neutral design-council convergence judge
       hooks/
         hooks.json                   Hook registrations (SessionStart only)
-        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo)
-  home/CLAUDE.md                     Versioned user-level CLAUDE.md (installed by setup script)
+        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance
+      assets/
+        CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
+  home/CLAUDE.md                     Legacy user-level source, superseded by assets/CLAUDE.md; removed once the live config is migrated
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
-  setup.ps1 / setup.sh               Per-machine CLAUDE.md install (sh symlinks, ps1 copies)
+  setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
   docs/plans/                        Plan docs for work on this repo itself
 ```
 
@@ -65,15 +68,14 @@ The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"sou
    ```
    Default scope is user, so every project picks it up. If the marketplace was added before a structure fix, refresh it first: `/plugin marketplace update daren` (or remove and re-add).
 
-5. Install the user-level CLAUDE.md (plugins cannot ship memory files):
-   - WSL/macOS/Linux: `./setup.sh` symlinks `home/CLAUDE.md` into each Claude config dir (`~/.claude-personal`, `~/.claude-work`; falls back to `~/.claude` when neither exists). Editing the repo file updates every profile; keep the checkout in place, the links point into it.
-   - Windows: `.\setup.ps1` targets the same dirs but installs copies (symlinks need developer mode); re-run it after updating `home/CLAUDE.md`.
+5. Install the user-level CLAUDE.md. The recommended rules ship inside the plugin (`assets/CLAUDE.md`), so per-machine setup is just: accept the SessionStart offer to reconcile (it fires when the kit's baseline has advanced past your last sync), or run the `reconcile-claude-md` skill explicitly. On first run it installs the recommended verbatim to `~/.claude/CLAUDE.md`; later it offers merge (keep your customizations) or overwrite, always backing up first.
+   - Only if you use alias config dirs (`CLAUDE_CONFIG_DIR` profiles like `~/.claude-work`, `~/.claude-personal`): run `./setup.sh` (or `.\setup.ps1` on Windows) once to symlink each profile's `CLAUDE.md` to the single canonical `~/.claude/CLAUDE.md`. Claude Code dedupes the directory-walk copy against the config-dir copy by realpath, so the rules load exactly once. The repo is only the author's edit source; nothing at runtime depends on the checkout.
 
-   When alias config dirs are in use, both scripts also remove a `~/.claude/CLAUDE.md` (timestamped backup first): repos under the home directory would otherwise load the global rules twice - once from the config dir, once via the directory walk that picks up `~/.claude` as an ancestor.
+   The old double-load workaround (removing `~/.claude/CLAUDE.md`) is gone: `~/.claude/CLAUDE.md` is now the canonical file itself, and Claude Code dedupes it by realpath against the directory-walk copy, so it loads once.
 
 6. Merge `settings/settings.recommended.json` into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
-Updating: commit and push here, then `/plugin update claude-kit` on each machine. Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment.
+Updating: commit and push here, then `/plugin update claude-kit` on each machine. Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
 
 ## THE WORKFLOW
 
@@ -88,14 +90,14 @@ Kaizen keeps the kit improving itself. Concrete friction with the kit (an ambigu
 - Specs and plans: `docs/plans/` in each project, named `<project>_<content-type>_v1.md`, versions increment, never overwrite.
 - Chapters are appended to the plan doc, not kept in a separate file. The plan doc is the single source of truth for intent and state.
 - Durable learnings go to Claude Code auto memory (curate with `/memory`), not into plan docs or CLAUDE.md.
-- Project CLAUDE.md files carry only project-specific facts (build commands, architecture pointers); global rules live in `home/CLAUDE.md` only.
+- Project CLAUDE.md files carry only project-specific facts (build commands, architecture pointers); global rules live in the kit's recommended `assets/CLAUDE.md`, reconciled into the live `~/.claude/CLAUDE.md`.
 - Style precedence: a repo's stated rules (CLAUDE.md, style docs, `.editorconfig`) win; otherwise the style skills govern. C# treats a legacy sibling as last resort, not authority; SQL keeps sibling-matching in shared repos, where the established team SQL style is the target.
 - Each project with a non-obvious access architecture documents it and its accepted risks in `docs/security-model.md`. The security-reviewer agent reads it first, verifies the code upholds it, and re-checks accepted-risk preconditions instead of re-flagging them.
 
 ## NOTES AND KNOWN TRADEOFFS
 
 - Plugin skills are namespaced: explicit invocation is `/claude-kit:brainstorming`. Automatic (model-invoked) triggering is unaffected.
-- Plugins are copied to a cache at install (`~/.claude/plugins/cache`); the plugin cannot reference files outside `plugins/claude-kit/`. That is why `home/` and `settings/` live outside the plugin - they are machine-setup assets, not plugin components.
+- Plugins are copied to a cache at install (`~/.claude/plugins/cache`); the plugin cannot reference files outside `plugins/claude-kit/`. The recommended CLAUDE.md therefore lives *inside* the plugin (`assets/CLAUDE.md`), so the hook and skill can read it from the cache. `settings/` stays outside the plugin - it is a machine-setup asset, not a plugin component.
 - Plugin-shipped agents cannot declare their own hooks, MCP servers, or permissionMode (Claude Code security restriction). None of these agents need them.
 - There is deliberately no format-on-edit hook: shared repos own their formatting, and a formatter rewriting files after every edit causes edit-mismatch churn.
 - `settings.recommended.json` reflects the settings schema as of June 2026; verify key names against current docs if something is ignored: https://code.claude.com/docs/en/settings

@@ -29,21 +29,22 @@ path. Key decisions, agreed with Daren across the design conversation:
    source; the plugin is the distribution channel; neither is needed at runtime once
    installed.
 
-2. **The user's live CLAUDE.md is a real, repo-independent file, loaded once via the
-   config-dir channel (option a).** RE-VERIFIED empirically (this machine, claude 2.1.181,
-   Section 1); the loading model is more nuanced than the 2026-06-12 observation implied,
-   and the result overturns the earlier lean toward option (b). Two channels load global
-   rules: (A) `$CLAUDE_CONFIG_DIR/CLAUDE.md` loads cwd-independently; (B) `~/.claude/CLAUDE.md`
-   loads only via the project directory walk when cwd is under `$HOME`, regardless of the
-   alias, and not at all when cwd is outside `$HOME`. So option (b) - a real file at
-   `~/.claude` with empty alias dirs - would silently drop the global rules for any repo
-   outside `$HOME`. The chosen scheme is therefore option (a): each alias config dir's
-   `CLAUDE.md` is a symlink to one repo-independent canonical real file (channel A,
-   cwd-independent), with `~/.claude/CLAUDE.md` kept clear so the walk (channel B) never
-   loads a second copy. A single-profile user (no alias `CLAUDE_CONFIG_DIR`) keeps the
-   canonical at `~/.claude/CLAUDE.md` directly, which is their config-dir memory and Claude
-   Code's standard single-load location. Either way the live file is real and
-   repo-independent - the symlink-to-repo is gone. See Chapter 1 for the probe evidence.
+2. **The user's live CLAUDE.md is a real, repo-independent file at `~/.claude/CLAUDE.md`,
+   loaded once.** RE-VERIFIED empirically (this machine, claude 2.1.181). Two channels load
+   global rules: (A) `$CLAUDE_CONFIG_DIR/CLAUDE.md` loads cwd-independently; (B) `~/.claude/CLAUDE.md`
+   loads via the project directory walk when cwd is under `$HOME` (not at all outside `$HOME`).
+   A further probe (Section 4 prep) settled the open dedup question: when the config-dir
+   `CLAUDE.md` and the walk-reached `CLAUDE.md` resolve to the SAME realpath, Claude Code
+   loads the content once (deduped by realpath) - confirmed by enumerating the loaded memory
+   set (a distinct cwd CLAUDE.md shows as a second entry; a same-realpath one does not). The
+   chosen scheme (Daren's call) uses the conventional location: the canonical real file is
+   `~/.claude/CLAUDE.md`, and each alias config dir's `CLAUDE.md` is a symlink to it. Channel A
+   (the alias symlink) loads the rules for repos anywhere, including outside `$HOME`, so there
+   is no gap; under `$HOME` the walk's copy of `~/.claude/CLAUDE.md` is the same realpath and
+   dedupes, so it still loads once. A single-profile user (no alias) has `~/.claude/CLAUDE.md`
+   directly as config-dir memory. The symlink-to-repo is gone. (Chapter 1 chose a
+   dedicated-canonical variant while dedup was unverified; Chapter 4 records the pivot to this
+   conventional scheme after the dedup probe and Daren's choice.)
 
 3. **A hook detects, a skill reconciles.** A SessionStart hook is non-interactive: it
    can compare the plugin's recommended CLAUDE.md against a stored sync marker and
@@ -93,15 +94,12 @@ Acceptance criteria:
   cuts over, so the live rules never break mid-effort. `home/CLAUDE.md` is retired in
   Section 4 once the asset is the source.
 - The loading behavior is re-verified empirically on this machine and the result
-  recorded (done; see Chapter 1 for the sentinel-probe evidence and the two-channel
-  model). The canonical scheme chosen from the result is **option (a)**: each alias
-  config dir's `CLAUDE.md` symlinks to one repo-independent canonical real file, and
-  `~/.claude/CLAUDE.md` is kept clear so the directory walk never loads a second copy,
-  so the live CLAUDE.md loads exactly once (cwd-independently) and depends on no repo
-  path. Single-profile users keep the canonical at `~/.claude/CLAUDE.md` directly. The
-  canonical real-file path for the alias case defaults to `~/.claude/claude-kit-global.md`
-  (a non-auto-loaded name under `~/.claude`); confirmed or adjusted at the live migration
-  in Section 4, which needs Daren's explicit go regardless.
+  recorded (see Chapters 1 and 4 for the probe evidence and the two-channel + realpath-dedup
+  model). The final canonical scheme (Daren's choice at Section 4, after the dedup probe) is
+  the conventional one: the canonical real file is `~/.claude/CLAUDE.md`, each alias config
+  dir's `CLAUDE.md` symlinks to it, and because Claude Code dedupes the config-dir and
+  walk-reached copies by realpath, the live CLAUDE.md loads exactly once and depends on no
+  repo path.
 - The sync-marker convention is defined: a file at `~/.claude/.claude-kit-md-version`,
   anchored at the default `~/.claude` dir via `os.homedir()` (not the alias config dir),
   holding the SHA-256 hash of the recommended CLAUDE.md the user last reconciled. It is
@@ -159,10 +157,13 @@ Acceptance criteria:
   role is removed or reduced to what the plugin cannot do, and the README documents the
   new plugin-managed scheme (install the plugin, accept the reconcile offer; the repo is
   only the author's edit source).
-- Daren's live config is migrated with backups and his explicit go at that step: the
-  repo symlinks at the alias dirs are replaced by the chosen canonical scheme from
-  Section 1, a real `~/.claude/CLAUDE.md` exists and loads once, and timestamped backups
-  of every replaced file are made. Re-running the install is idempotent.
+- Daren's live config is migrated with backups and his explicit go at that step: the repo
+  symlinks at the alias dirs are replaced so each alias dir's `CLAUDE.md` symlinks to the
+  canonical real file `~/.claude/CLAUDE.md` (Daren's chosen scheme), whose walk-reached copy
+  dedupes against the config-dir copy by realpath (verified) so the live rules load exactly
+  once. Timestamped backups of every replaced file are made, and re-running the install is
+  idempotent. The repo's `home/CLAUDE.md` is retired only after the migration repoints the
+  live symlinks off it.
 - After migration, removing or moving the repo does not change which global rules load.
 
 ## Out of Scope
