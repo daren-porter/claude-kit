@@ -117,13 +117,18 @@ Acceptance criteria:
 - The skill exists, trigger-style description (an explicit "sync/reconcile my CLAUDE.md"
   request, or accepting the hook's offer). It reads the plugin's recommended CLAUDE.md
   and the user's live CLAUDE.md.
-- First run (no live file or no marker): offers to install the recommended verbatim.
+- First run (no live file): offers to install the recommended verbatim. A live file
+  with a missing marker is treated as a baseline-advanced update (merge/overwrite with
+  the base-missing fallback), never a verbatim install over existing content; a
+  dangling live symlink stops with a report rather than installing over the canonical.
 - Update run: presents what changed in the kit's baseline and offers **merge** (fold in
   the kit's deltas, preserve the user's unrelated content, flag every overlap or
   duplication for the user to adjudicate, never silently drop a user rule) or
   **overwrite** (replace wholesale).
-- Every write makes a timestamped backup of the prior file first, and updates the sync
-  marker to the reconciled version afterward.
+- Every write makes a timestamped backup of the prior file first, then updates both the
+  sync marker (`~/.claude/.claude-kit-md-version`, the recommended's SHA-256) and the
+  baseline snapshot (`~/.claude/.claude-kit-md-base.md`, the recommended's content - the
+  base for the next merge) to the reconciled recommended, never to the merged result.
 - Behavior baseline-tested per writing-skills, including the failure case that a merge
   must not drop or mangle a user-authored rule.
 - A fresh-session dry read is coherent; no contradiction with the global rules.
@@ -227,4 +232,48 @@ the substantive output is the scheme decision, which is Daren's to adjudicate an
 above and in Approach point 2. The finishing-work full-changeset pass still covers it.
 
 Next: Section 2 - Reconcile skill.
+Commit Model: Commit-and-Push.
+
+### Chapter 2 - 2026-06-17
+Completed: Section 2 - Reconcile skill.
+
+Decisions / Surprises:
+- **Skill added:** `plugins/claude-kit/skills/reconcile-claude-md/SKILL.md` (115 lines,
+  kit voice, ASCII-only). Trigger-style quoted description; scopes out project CLAUDE.md
+  to avoid colliding with the marketplace `claude-md-management` skills. The merge is
+  model-performed prose (per Approach point 3), not executable code.
+- **Marker convention extended (refinement, serves the spec's intent):** alongside the
+  hash marker `~/.claude/.claude-kit-md-version`, the skill stores
+  `~/.claude/.claude-kit-md-base.md` (the recommended content at last sync) so the merge
+  has a true base->ours delta - the cleanest way to "fold in kit deltas, preserve unrelated
+  user content, never silently drop a user rule." The hook (Section 3) still only needs the
+  hash marker; the base snapshot is skill-only. Recorded in Section 2's criteria.
+- **Baseline test (writing-skills RED/GREEN, 2 reps each).** Fixture: base -> ours (kit
+  reworded a rule, changed the Style rule, added a Testing rule) vs theirs (user kept
+  Communication, customized Style differently, added "Never deploy on Fridays"). RED rep 1
+  reproduced the worst case (produced a file with the user's rule DROPPED and the user's
+  Style silently overwritten, no flag); RED rep 2 happened to preserve it (one sample lies).
+  Both GREEN reps preserved the user rule, folded in the kit delta + new section, and FLAGGED
+  the Style conflict instead of guessing. Guidance validated; no REFACTOR needed.
+- **Install scope:** the skill installs/merges the active profile's live file (resolving
+  symlinks to the canonical real file it backs up and writes). Multi-profile symlink fan-out
+  to one canonical is the install script's job (Section 4), not the skill's.
+
+Review Findings (adversarial-reviewer, APPROVED_WITH_CONCERNS):
+- Major - predicate 1 ("no live file") was ambiguous against a dangling symlink: `readlink -f`
+  reports a missing target as absent, which would have sent a broken-canonical state to
+  Install and written a fresh recommended over the user's content with no backup (exactly the
+  transient Section 4 creates). FIXED: predicate 1 now installs only when the live path is
+  neither file nor symlink, and STOPS-and-reports on a dangling symlink.
+- Minor - `$CANON` not explicitly bound to the `readlink -f` result before the backup `cp -a`
+  (a symlink backup would copy the link, not contents). FIXED: bound `$CANON` in the
+  three-files section.
+- Minor - shell `$HOME/.claude` vs hook `os.homedir()` anchor: coincide on POSIX. FIXED:
+  added a one-clause note that the anchors are intentionally the same so skill-writes and
+  hook-reads agree.
+- Minor - the skill's first-run bucket is safer than the spec's literal "no live file or no
+  marker" (a live file with a missing marker now merges, not installs-verbatim). Spec Section 2
+  criterion updated to match the safer behavior.
+
+Next: Section 3 - SessionStart hook detection.
 Commit Model: Commit-and-Push.
