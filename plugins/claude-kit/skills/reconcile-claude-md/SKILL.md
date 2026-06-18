@@ -56,9 +56,11 @@ Hash portably: `{ sha256sum "$F" 2>/dev/null || shasum -a 256 "$F"; } | cut -d' 
 
 The live file is absent, so there is nothing to back up. Offer to write the
 recommended verbatim; on yes, write it to the resolved live path, then write the
-marker and baseline snapshot. On a machine with alias profiles this installs the
-active profile's file only; wiring the other profiles' symlinks to one canonical
-file is the install script's job, not this skill's.
+marker and baseline snapshot. On a machine with alias profiles, point the user to
+setup.sh instead: it creates the canonical `~/.claude/CLAUDE.md` and the alias
+symlinks together. Installing the active profile's file alone here would leave the
+canonical empty, so a later setup.sh would build a second canonical from the asset
+and diverge from what you just wrote.
 
 ## Merge (the careful path)
 

@@ -29,7 +29,9 @@ ts() { date +%Y%m%d-%H%M%S; }
 backup_to() {
     b="$1.bak.$(ts)"; c=1
     while [ -e "$b" ]; do b="$1.bak.$(ts)_$c"; c=$((c + 1)); done
-    cp -a "$1" "$b" 2>/dev/null || true
+    # Fail loudly: with set -e a failed backup aborts before the caller's destructive
+    # replace, so a real user file is never clobbered without a good backup.
+    cp -a "$1" "$b"
 }
 
 # 1) Ensure the canonical real file exists. Never clobber an existing real canonical -

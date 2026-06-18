@@ -1,6 +1,6 @@
 # CLAUDE.md distribution: plugin-shipped, self-reconciling, repo-independent
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Created: 2026-06-17
 
@@ -367,3 +367,40 @@ Review Findings (adversarial-reviewer on the tooling/docs, APPROVED_WITH_CONCERN
 
 Next: finishing-work.
 Commit Model: Commit-and-Push.
+
+### Chapter 5 - 2026-06-18 (finishing-work, close-out)
+Completed: finishing-work pass; effort complete.
+
+Effort summary: the global CLAUDE.md is decoupled from the repo. The recommended rules
+ship as a plugin asset (`plugins/claude-kit/assets/CLAUDE.md`); the `reconcile-claude-md`
+skill installs/merges/overwrites them into the user's live `~/.claude/CLAUDE.md` with a
+backup and a baseline-tested anti-drop discipline; the SessionStart hook offers reconcile
+when the kit baseline advances (marker `~/.claude/.claude-kit-md-version`, never nags, never
+injects file contents); `setup.sh`/`setup.ps1` are slimmed to alias-profile symlink wiring;
+the repo's `home/CLAUDE.md` is retired. Daren's live config was migrated (canonical
+`~/.claude/CLAUDE.md`, alias dirs symlinked to it, loads once via realpath dedup,
+repo-independent). Final scheme is option C, chosen by Daren after the dedup probe.
+
+Review outcomes:
+- QA (qa-verifier): PASS. All four sections' acceptance criteria verified with command/inspection
+  evidence (no compiled build/test framework: plugin validate + node --check + hook subprocess
+  matrix + setup.sh dry-runs). The S2 writing-skills baseline test is UNVERIFIABLE-by-execution
+  (model-performed prose, no re-runnable harness); its RED/GREEN run is recorded in Chapter 2 and
+  the guardrail content is present.
+- Security: folded into the final adversarial pass (the C#/T-SQL security-reviewer does not fit a
+  JS/shell/markdown changeset). No injection path to the SessionStart context channel (static offer
+  line only); no secret handling; shell expansions quoted.
+- Final adversarial (whole changeset): one MAJOR fixed - `setup.sh` `backup_to` swallowed a failed
+  backup before an unconditional `ln -sf`, a data-loss path; now fails loudly so `set -e` aborts
+  before the destructive replace (verified). One MINOR fixed - skill Install section now points
+  alias-profile first-run users to setup.sh to avoid a divergent second canonical. One MINOR
+  rejected with evidence - the flagged "em-dash" at session-start.js:178 is a regular hyphen
+  (byte dump 0x2D; ASCII-only grep clean).
+- Docs (docs-curator): Drift NONE. Two README doc-lag items corrected (the offer also fires on a
+  never-reconciled first machine; the two `~/.claude` reconcile-state files named). No
+  spec-vs-implementation disagreement required adjudication.
+
+Durable learning banked to auto memory: the Claude Code 2.1.181 CLAUDE.md loading + realpath-dedup
+model (the empirical basis for the canonical scheme).
+
+Commit Model: Commit-and-Push (pushed).
