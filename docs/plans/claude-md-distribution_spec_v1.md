@@ -29,15 +29,21 @@ path. Key decisions, agreed with Daren across the design conversation:
    source; the plugin is the distribution channel; neither is needed at runtime once
    installed.
 
-2. **The user's live CLAUDE.md is a real file at `~/.claude/CLAUDE.md`, loaded once.**
-   CONFIRMED (this machine, 2026-06-12 double-load observation): with
-   `CLAUDE_CONFIG_DIR` set to an alias dir, both the alias-dir CLAUDE.md and
-   `~/.claude/CLAUDE.md` load. INFERRED from that: `~/.claude/CLAUDE.md` loads for every
-   profile regardless of the alias, so a real file there with empty alias dirs loads
-   exactly once (option b). The first execution step re-verifies this live before any
-   config is moved; if it no longer holds, fall back to a real canonical file plus
-   symlinks from each alias dir to it (option a). Either way the live file is real and
-   repo-independent - the symlink-to-repo is gone.
+2. **The user's live CLAUDE.md is a real, repo-independent file, loaded once via the
+   config-dir channel (option a).** RE-VERIFIED empirically (this machine, claude 2.1.181,
+   Section 1); the loading model is more nuanced than the 2026-06-12 observation implied,
+   and the result overturns the earlier lean toward option (b). Two channels load global
+   rules: (A) `$CLAUDE_CONFIG_DIR/CLAUDE.md` loads cwd-independently; (B) `~/.claude/CLAUDE.md`
+   loads only via the project directory walk when cwd is under `$HOME`, regardless of the
+   alias, and not at all when cwd is outside `$HOME`. So option (b) - a real file at
+   `~/.claude` with empty alias dirs - would silently drop the global rules for any repo
+   outside `$HOME`. The chosen scheme is therefore option (a): each alias config dir's
+   `CLAUDE.md` is a symlink to one repo-independent canonical real file (channel A,
+   cwd-independent), with `~/.claude/CLAUDE.md` kept clear so the walk (channel B) never
+   loads a second copy. A single-profile user (no alias `CLAUDE_CONFIG_DIR`) keeps the
+   canonical at `~/.claude/CLAUDE.md` directly, which is their config-dir memory and Claude
+   Code's standard single-load location. Either way the live file is real and
+   repo-independent - the symlink-to-repo is gone. See Chapter 1 for the probe evidence.
 
 3. **A hook detects, a skill reconciles.** A SessionStart hook is non-interactive: it
    can compare the plugin's recommended CLAUDE.md against a stored sync marker and
@@ -87,13 +93,20 @@ Acceptance criteria:
   cuts over, so the live rules never break mid-effort. `home/CLAUDE.md` is retired in
   Section 4 once the asset is the source.
 - The loading behavior is re-verified empirically on this machine and the result
-  recorded: whether `~/.claude/CLAUDE.md` loads under an alias `CLAUDE_CONFIG_DIR`. The
-  canonical scheme is chosen from the result - option (b) real file at `~/.claude` with
-  empty alias dirs, or option (a) real canonical plus alias-dir symlinks to it - such
-  that the live CLAUDE.md loads exactly once and depends on no repo path.
-- The sync-marker convention is defined: a file at `~/.claude/.claude-kit-md-version`
-  holding the hash (or version) of the recommended CLAUDE.md the user last reconciled,
-  repo-independent.
+  recorded (done; see Chapter 1 for the sentinel-probe evidence and the two-channel
+  model). The canonical scheme chosen from the result is **option (a)**: each alias
+  config dir's `CLAUDE.md` symlinks to one repo-independent canonical real file, and
+  `~/.claude/CLAUDE.md` is kept clear so the directory walk never loads a second copy,
+  so the live CLAUDE.md loads exactly once (cwd-independently) and depends on no repo
+  path. Single-profile users keep the canonical at `~/.claude/CLAUDE.md` directly. The
+  canonical real-file path for the alias case defaults to `~/.claude/claude-kit-global.md`
+  (a non-auto-loaded name under `~/.claude`); confirmed or adjusted at the live migration
+  in Section 4, which needs Daren's explicit go regardless.
+- The sync-marker convention is defined: a file at `~/.claude/.claude-kit-md-version`,
+  anchored at the default `~/.claude` dir via `os.homedir()` (not the alias config dir),
+  holding the SHA-256 hash of the recommended CLAUDE.md the user last reconciled. It is
+  profile-independent: profiles sharing one canonical share one marker, so reconciling
+  under one profile does not make another profile's hook nag. Repo-independent.
 
 ### 2. Reconcile skill
 A skill that installs, merges, or overwrites the kit's recommended CLAUDE.md into the
@@ -168,4 +181,50 @@ Acceptance criteria:
    backups and an explicit go." Owner: Daren.
 
 ## Chapters
-(Appended by executing-work as sections complete. Leave empty at creation.)
+
+### Chapter 1 - 2026-06-17
+Completed: Section 1 - Recommended CLAUDE.md as a plugin asset + canonical scheme.
+
+Decisions / Surprises:
+- **Plugin asset created.** `plugins/claude-kit/assets/CLAUDE.md` is a byte-identical copy
+  of `home/CLAUDE.md` (sha256 `003463ad...b669ae` on both). The repo's `home/CLAUDE.md`
+  and the live alias-dir symlinks pointing at it stay in place; Section 4 retires them.
+- **Empirical loading re-verification (claude 2.1.181, this machine) overturned the spec's
+  lean toward option (b).** Method: a throwaway `$HOME` override (temp fake-home, real
+  `CLAUDE_CONFIG_DIR=~/.claude-work` kept for auth) with distinct sentinel CLAUDE.md files
+  and headless `claude -p` probes. The real global `~/.claude/CLAUDE.md` was never touched
+  (the auto-mode classifier correctly blocked a direct write to it; the fake-home approach
+  sidesteps that). Results:
+  - Probe 1 (cwd in `/tmp`, outside `$HOME`): the fake `~/.claude/CLAUDE.md` sentinel did
+    NOT load -> answer `NONE`.
+  - Probe 2 (cwd under fake `$HOME`): both `~/CLAUDE.md` (`HR-9001`) and `~/.claude/CLAUDE.md`
+    (`DC-7731`) loaded.
+  - Conclusion - two channels: (A) `$CLAUDE_CONFIG_DIR/CLAUDE.md` loads cwd-independently;
+    (B) `~/.claude/CLAUDE.md` loads only via the project directory walk when cwd is under
+    `$HOME`, regardless of the alias. `--debug file` and full `-d` do not log memory-file
+    discovery, so the behavioral probe is the evidence.
+- **Chosen canonical scheme: option (a).** Because channel B is absent outside `$HOME`,
+  option (b) would silently drop the global rules for any repo cloned outside `$HOME`.
+  Option (a) - alias dirs symlink to one repo-independent canonical real file (channel A,
+  cwd-independent), `~/.claude/CLAUDE.md` kept clear so the walk never double-loads - loads
+  exactly once everywhere and is the minimal delta from today's working topology (only the
+  symlink target moves off the repo). This was the spec-delegated "choose from the result,"
+  not a change of design intent, so I proceeded; flagging it because it reverses the spec's
+  earlier lean. Single-profile users keep the canonical at `~/.claude/CLAUDE.md` directly.
+- **Open items for Daren (Section 4 confirmation, not blocking now):** (1) canonical
+  real-file path for the alias case defaulted to `~/.claude/claude-kit-global.md`; (2) could
+  not verify whether Claude dedupes by realpath across channels A and B (verifying it needs
+  `CLAUDE_CONFIG_DIR` pointed at a creds-less dir), so the chosen scheme deliberately keeps
+  only one channel active for the alias case and relies on no dedup. Single-profile single-load
+  rests on Claude Code's documented standard `~/.claude/CLAUDE.md` behavior, not re-verified here.
+- **Sync-marker convention defined:** `~/.claude/.claude-kit-md-version`, anchored at the
+  default `~/.claude` dir via `os.homedir()` (profile-independent), holding the SHA-256 of the
+  last-reconciled recommended CLAUDE.md.
+
+Review Findings: Per-section adversarial review skipped - the section's only code artifact is
+a byte-identical asset copy (verified by sha256 + `diff`) with no logic or external surface;
+the substantive output is the scheme decision, which is Daren's to adjudicate and is surfaced
+above and in Approach point 2. The finishing-work full-changeset pass still covers it.
+
+Next: Section 2 - Reconcile skill.
+Commit Model: Commit-and-Push.
