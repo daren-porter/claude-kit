@@ -21,9 +21,9 @@ keep what you cannot classify.
 
 Resolve these first and print them, so the user sees what you are operating on.
 
-- **Recommended** (the kit baseline): `assets/CLAUDE.md` under the plugin root,
-  which is two directories above this skill's base directory (the path shown to you
-  when this skill loaded). Read-only.
+- **Recommended** (the kit baseline), call it `$REC`: `assets/CLAUDE.md` under the
+  plugin root, two directories above this skill's base directory (the path shown to
+  you when this skill loaded). Read-only.
 - **Live** (what the session loads): `${CLAUDE_CONFIG_DIR:-$HOME/.claude}/CLAUDE.md`.
   Resolve symlinks to the canonical real file: `$CANON` = `readlink -f` of the live
   path. That real file (never the symlink itself) is what you back up and write, so
@@ -105,10 +105,12 @@ they accept that overwrite discards them.
 1. **Back up** the canonical file first:
    `cp -a "$CANON" "$CANON.bak.$(date +%Y%m%d-%H%M%S)"`.
 2. Write the new content to the canonical file.
-3. Update the marker and baseline to the **recommended**, never the merged result:
-   the recommended's hash into `.claude-kit-md-version`, the recommended's content
-   into `.claude-kit-md-base.md`. The merge's product was the live file; the
-   baseline must track the recommended so the next delta is computed correctly.
+3. Update the marker and baseline to the **recommended**, never the merged result.
+   Write the bare hash (no trailing label, so the hook's `trim()` reader matches) and
+   copy the content:
+   `{ sha256sum "$REC" 2>/dev/null || shasum -a 256 "$REC"; } | cut -d' ' -f1 > "$HOME/.claude/.claude-kit-md-version"`
+   then `cp -a "$REC" "$HOME/.claude/.claude-kit-md-base.md"`. The merge's product was
+   the live file; the baseline must track the recommended so the next delta is correct.
 
 A write you invoke here modifies global config and may prompt for permission even
 in an auto-accept session; that is expected - the user invoking this skill is the

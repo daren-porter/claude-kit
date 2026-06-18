@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const crypto = require('crypto');
 
 // Read Hook Input from stdin.
 function readStdin() {
@@ -52,6 +53,40 @@ function countPendingKaizen(cwd) {
         // No briefs directory - nothing from there.
     }
     return count;
+}
+
+// Decide whether to offer the reconcile skill: true when the plugin's recommended
+// CLAUDE.md has advanced past the user's sync marker (or was never reconciled).
+// Hashes only, never reads or injects file contents. Any failure or an unreadable/
+// oversized asset returns false (silent no-op); a missing marker correctly offers.
+function claudeMdSyncOffer() {
+    // The recommended CLAUDE.md ships beside this hook in the plugin cache
+    // (hooks/ and assets/ are siblings under the plugin root).
+    const recommended = path.join(__dirname, '..', 'assets', 'CLAUDE.md');
+    let assetHash;
+    try {
+        // Bound the read: our asset is tiny, so refuse to hash a pathological file
+        // rather than pull it in unbounded.
+        if (fs.statSync(recommended).size > 1024 * 1024) return false;
+        assetHash = crypto.createHash('sha256').update(fs.readFileSync(recommended)).digest('hex');
+    } catch {
+        // No readable recommended asset - nothing to offer.
+        return false;
+    }
+    // The marker is anchored at the default config dir via os.homedir(),
+    // profile-independent, matching the reconcile skill's writer.
+    const marker = path.join(os.homedir(), '.claude', '.claude-kit-md-version');
+    let markerHash = null;
+    try {
+        const fd = fs.openSync(marker, 'r');
+        const buf = Buffer.alloc(256);
+        const bytes = fs.readSync(fd, buf, 0, 256, 0);
+        fs.closeSync(fd);
+        markerHash = buf.toString('utf8', 0, bytes).trim();
+    } catch {
+        // No marker - never reconciled; offering is correct.
+    }
+    return assetHash !== markerHash;
 }
 
 function main() {
@@ -107,8 +142,17 @@ function main() {
         // Never let the kaizen check break recovery or the session.
     }
 
+    // CLAUDE.md baseline check is additive and universal (not kit-repo gated): it
+    // nudges in any project when the plugin's recommended rules advance.
+    let claudeMdOffer = false;
+    try {
+        claudeMdOffer = claudeMdSyncOffer();
+    } catch {
+        // Never let the CLAUDE.md check break recovery or the session.
+    }
+
     // Emit Additional Context.
-    if (activePlans.length === 0 && kaizenCount === 0) return;
+    if (activePlans.length === 0 && kaizenCount === 0 && !claudeMdOffer) return;
 
     const blocks = [];
 
@@ -128,6 +172,10 @@ function main() {
 
     if (kaizenCount > 0) {
         blocks.push(`This is the claude-kit repo and the kaizen inbox (~/.claude-kaizen) has ${kaizenCount} pending item(s). At a natural stopping point, consider running a kaizen pass (see the kaizen skill). Reminder, not a blocker.`);
+    }
+
+    if (claudeMdOffer) {
+        blocks.push('The claude-kit recommended global CLAUDE.md has advanced past your last reconciled version (or was never reconciled). Run the reconcile-claude-md skill to fold it into your live CLAUDE.md - merge (keeps your customizations) or overwrite, with a backup. Reminder, not a blocker.');
     }
 
     process.stdout.write(JSON.stringify({

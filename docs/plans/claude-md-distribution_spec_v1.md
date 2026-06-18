@@ -277,3 +277,42 @@ Review Findings (adversarial-reviewer, APPROVED_WITH_CONCERNS):
 
 Next: Section 3 - SessionStart hook detection.
 Commit Model: Commit-and-Push.
+
+### Chapter 3 - 2026-06-17
+Completed: Section 3 - SessionStart hook detection.
+
+Decisions / Surprises:
+- **Hook extended:** `session-start.js` gains `claudeMdSyncOffer()` - hashes the plugin's
+  recommended `assets/CLAUDE.md` (resolved via `__dirname/../assets`, so it works from the
+  plugin cache or the repo), compares to `~/.claude/.claude-kit-md-version` (read via the
+  file's bounded-read idiom, os.homedir()-anchored), and returns true when they differ or
+  the marker is absent. Wired into `main()` additively: its own try/catch, an extended
+  early-return guard, and a third `blocks.push` after the kaizen block.
+- **Universal, not kit-repo-gated:** unlike the kaizen nudge, the CLAUDE.md check runs in
+  every project, since the whole point is to nudge on any machine/project when the baseline
+  advances.
+- **Injection-safe by construction:** the offer is a static string; no asset/marker/stdin/env
+  bytes ever reach `additionalContext` (only the boolean gates the push). Asset read bounded
+  by a 1MB statSync cap before hashing; marker by a 256-byte bounded read.
+- **Verified (evidence):** `node --check` passes; 4-scenario subprocess test with a temp HOME:
+  no marker -> offer; marker matches -> silent (the non-nag guarantee, independent of the live
+  file); marker differs -> offer; repo cwd + matching marker -> plan block only, no CLAUDE.md
+  offer. Confirmed `os.homedir()` honors `$HOME` here, so the skill's `$HOME/.claude` writer and
+  the hook's `os.homedir()` reader coincide on POSIX.
+
+Review Findings (adversarial-reviewer with an explicit security lens, APPROVED, no Critical/Major):
+- The C#/T-SQL `security-reviewer` agent does not fit a Node hook, so the security review was
+  folded into the adversarial-reviewer dispatch (context-channel injection, fail-silent,
+  bounded reads, predicate correctness). It re-ran adversarial marker forms (interior junk,
+  1000-byte filler past the read window, marker-as-directory, binary stdin) and found no
+  content-injection path, no false-silence, all paths exit 0.
+- Minor (fd leak: `readSync` without `finally`): left as-is - it is the identical pre-existing
+  idiom of the plan-scan and kaizen readers, one fd in an immediately-exiting process; the
+  reviewer judged it not worth changing, and refactoring a pre-existing pattern would violate
+  surgical-changes.
+- Minor (writer/reader coupling): tightened the reconcile skill's Every-write step to pin the
+  marker write to a bare hash (`... | cut -d' ' -f1 > marker`) so it always survives the hook's
+  `trim()`. Bound `$REC` for the recommended path while there.
+
+Next: Section 4 - Install scheme migration + docs.
+Commit Model: Commit-and-Push.
