@@ -15,6 +15,21 @@ Interrupt Daren only for: a contradiction inside the spec, a decision the spec d
 
 2. **Branch check.** Nothing is committed to main/master without Daren's explicit permission. Branch-and-PR always works on a feature branch; confirm or create it before the first section (use a worktree when isolation from the current workspace is needed). Commit-and-Push commits to main only where Daren approved that (typically his own greenfield repos); in a shared repo without that permission, treat it as Branch-and-PR and note the substitution in the Chapter. Review-Only work may sit uncommitted on any branch, since nothing is committed.
 
+## Worktree dev-environment
+
+When the effort will run in a worktree (the Branch check chose one, or a section dispatches `isolation: worktree` subagents), set up `.worktreeinclude` **before** the worktree is created. A worktree is a fresh checkout: tracked files arrive with it, but gitignored local dev-state (IDE config, run configurations, the VCS-root mapping, `.env`/secrets) does not. Claude Code copies the gitignored files matching `.worktreeinclude` (a `.gitignore`-syntax file at the repo root) into every worktree it creates, so the job is to make that file correct, not to copy anything by hand.
+
+Ordering is load-bearing: the file is read at creation time, so a pattern added afterward does not seed a worktree that already exists - when you are entering a pre-existing worktree, the file only helps the next one, not the one you are entering. It is set once per repo and then applies to every future worktree. Create it, or append the missing pattern, in the working tree and leave it for Daren to commit (team benefit) or ignore (personal); do not commit it as part of the effort. Do nothing when there is no gitignored dev-state to copy or no IDE is detected; ask once when it is ambiguous (several IDEs in play, or it is unclear which Daren uses). This applies to Claude-created worktrees only (`EnterWorktree`, `--worktree`, `isolation: worktree`), not to worktrees made by hand with `git worktree add`.
+
+Detect what is present and gitignored, and add the matching pattern:
+
+| Present | Add | Notes |
+|---|---|---|
+| `.idea/` (JetBrains/Rider) | `.idea/` | Copies the gitignored subset (always `workspace.xml`, which holds run configs; the whole tree where `.idea` is ignored wholesale), while tracked parts (shared `runConfigurations/`, `vcs.xml`) arrive via the checkout. Matches `.idea` at any depth, so the `.idea.<Solution>` nesting and multi-solution repos are covered. Seeding `vcs.xml` also gives Rider the VCS-root mapping it cannot auto-detect from a worktree's `.git` pointer file. |
+| `.vscode/` (VS Code) | `.vscode/` only if it is gitignored | Usually tracked, so usually nothing to do. |
+| `.vs/` + `*.sln` (Visual Studio) | `.vs/` | |
+| `.env`, local secrets | the specific paths, only those already gitignored | `.worktreeinclude`'s canonical use. |
+
 ## Section loop
 
 For each Section of Work, in order:
