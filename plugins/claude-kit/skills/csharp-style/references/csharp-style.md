@@ -194,3 +194,10 @@ public async Task Submit_StillEmails_WhenDbFails()
 - One statement per line in production code.
 - Indentation and spacing follow the .NET defaults (4 spaces, never tabs); no custom alignment columns, no tab art.
 - Lines wrap at roughly 120 columns. Keep a signature on one line within that limit; chop to one parameter per line beyond it (see section 3).
+- **Named arguments only where required.** Pass arguments positionally by default. Name one only when the language forces it (you are skipping an optional parameter to set a later one) or when a bare literal would be unreadable at the call site (a lone `true`/`false`/`null` whose meaning the call does not reveal). Do not name every argument because a legacy sibling call does. Example: `await db.QueryAsync(sql, parameters, commandType: CommandType.StoredProcedure, cancellationToken: ct)` passes `sql`/`parameters` positionally and names only `commandType`/`cancellationToken`, because the optional `transaction`/`commandTimeout` parameters between them are skipped and the language requires naming to reach the later ones.
+
+## 13. Configuration and settings
+
+A value meant to be operator-configurable lives in configuration, not hard-coded. When you add a bound settings property (to an `IOptions`/settings model such as `HorizonSettings`), give it a real value in `appsettings.json` AND `appsettings.Development.json`. A default on the model alone is not configuration; it is a hidden constant nobody can change without a rebuild, and the appsettings omission is the recurring miss.
+
+The corollary draws the line. If a value is NOT meant to be changed without a code change, do not smuggle it into the settings model as a default either. A genuine constant belongs in a purpose-built `static`/`Global` class or on the type that uses it. The test is intent: can an operator need to change this without a deploy? Yes leads to configuration (model + both appsettings files); no leads to a `const`/`static`, not a settings property.

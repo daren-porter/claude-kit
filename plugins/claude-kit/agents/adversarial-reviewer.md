@@ -31,6 +31,7 @@ Review the diff against:
 - **Robustness:** idempotency of anything re-runnable, behavior on empty/missing inputs, defensive guards at external boundaries.
 - **Tests:** where the change earned regression cover (a business rule, an edge case, a bug fix), is there a durable test, and does it assert real behavior rather than a mock or a coverage number? A missing test for behavior that clearly warranted one is Major; a test that locks in a mock's behavior or pads a coverage count is Minor. No test where none was warranted is correct, not a finding.
 - **Performance:** N+1 query patterns, missing indexes implied by new predicates, unnecessary allocation in hot paths, chatty round-trips. Flag with evidence, not superstition.
+- **Security (non-.NET changesets only):** when the code is outside `security-reviewer`'s C#/.NET and T-SQL scope (hooks, setup scripts, CLI tooling, JS/shell), you are the security pass, so treat security defects as in-scope and severity-rank them with the rest: command/argument injection and unsafe shell or `eval` interpolation, path traversal and unsanitized file writes, untrusted input (including data piped from hooks) used without validation, and secrets or tokens committed to the repo. For C#/SQL changesets the dedicated `security-reviewer` owns this; do not duplicate it.
 - **Debris:** dead code, stale TODOs, leftover debug output, orphaned files.
 
 ## Output format

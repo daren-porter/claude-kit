@@ -84,6 +84,8 @@ No regions, no section comments, one why-comment doing real work, every return v
 - ❌ Leaving classes unsealed by default; seal unless extension is expected (or the type is currently extended)
 - ❌ Mocking simple collaborators with a library when a five-line hand-rolled fake is clearer
 - ❌ FluentAssertions 8+ (commercial license); stay on 7.x or use AwesomeAssertions
+- ❌ Naming every argument at a call site; pass leading required args positionally, name only what the language forces (a skipped optional) or a cryptic bare literal needs, rather than mirroring a sibling that over-names
+- ❌ Adding a bound settings property with only a model-side default; a configurable value also needs entries in `appsettings.json` and `appsettings.Development.json` (and a value not meant to be configured is a `const`/`static`, not a settings property)
 
 ## Checklist before declaring C# work complete
 
@@ -100,3 +102,4 @@ No regions, no section comments, one why-comment doing real work, every return v
 - [ ] `Async` suffix on Task methods; `CancellationToken` last and propagated down the chain
 - [ ] Tests: xUnit, `Method_DoesSomething_WhenSomeCondition`, Arrange/Act/Assert comments, `Build()` tuple factory, hand-rolled sealed fakes or NSubstitute, FluentAssertions 7.x
 - [ ] Tests earn their place (edge cases, business rules, regressions); no coverage padding, no new test infrastructure unless asked; say so when no test is worth writing
+- [ ] A new configurable setting has values in `appsettings.json` AND `appsettings.Development.json`, not just a model-side default (and a non-configurable constant is a `const`/`static`, not a settings property)

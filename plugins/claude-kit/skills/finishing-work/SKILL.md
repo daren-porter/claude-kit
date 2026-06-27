@@ -13,11 +13,13 @@ When per-section reviews already cleared parts of the changeset, tell the finish
 
 1. **QA verification.** Dispatch the `qa-verifier` agent with the spec path: full build, full test suite, and every acceptance criterion checked with evidence. Any FAIL: fix and re-run before proceeding. Do not rationalize a failing criterion as "close enough".
 
-2. **Security review.** Dispatch the `security-reviewer` agent over the whole changeset (not just the last section). Critical findings block completion. Major findings: fix or present to Daren with the tradeoff.
+2. **Security review.** When the changeset has C#/.NET or T-SQL surface, dispatch the `security-reviewer` agent over the whole changeset (not just the last section). Critical findings block completion. Major findings: fix or present to Daren with the tradeoff. When the changeset is entirely outside that scope (the kit's own JS/shell/markdown, or any non-.NET project), do not dispatch `security-reviewer` against code it was not built to review; security folds into the adversarial pass (step 3), which carries non-.NET security defects in scope.
 
 3. **Final adversarial review.** Dispatch the `adversarial-reviewer` agent over the entire changeset against the spec. Per-section reviews catch local issues; this pass catches cross-section cohesion problems, leftover debris (dead code, stale TODOs, orphaned files), and spec items that fell through the cracks.
 
 4. **Documentation curation.** Dispatch the `docs-curator` agent with the spec path. It updates the project's docs/ from the as-built code and returns a Drift Report. **Present every drift item to Daren for adjudication; never silently reconcile.** Drift is signal: either the docs were wrong, the spec was wrong, or the implementation diverged from his mental model. He decides which.
+
+   The curator writes docs but does not stage or commit them (no Bash, by design); the orchestrator owns what happens to its output, because whether docs are committed is a per-repo decision. Honor a docs-commit stance recorded in the repo's CLAUDE.md: some repos never commit curator output, so run the curator for the Drift Report's signal, then leave the writes uncommitted and say so in close-out. Where the repo has no stated stance, ask before docs ride along in any commit rather than assuming. Where docs are committed, the orchestrator stages them so they appear in the review surface.
 
 5. **Close the plan doc.** Set `Status: Complete`, append a final Chapter summarizing the effort, the review outcomes, and the drift adjudications.
 
