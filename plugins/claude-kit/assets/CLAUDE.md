@@ -16,6 +16,8 @@ For any feature or non-trivial bug fix:
 2. Surface concerns: call out any technical, product, or design issues or improvements you notice while analyzing.
 3. Propose: a concise plan, no code, brief rationale. Ask first if anything is ambiguous.
 
+This applies to investigation and technical questions too, not only to changes: read the code before answering, cite file:line, and match search depth to the question (a quick fan-out for broad "how/where", a direct read for a pinpoint one) rather than answering from assumption.
+
 ## Autonomy Contract
 - Once we have agreed on a spec or plan, proceed autonomously to completion per the executing-work skill; it owns the section loop, reviews, Chapters, and the commit model. Nothing is committed to main/master without my explicit permission.
 

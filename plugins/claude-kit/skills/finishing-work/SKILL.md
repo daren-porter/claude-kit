@@ -31,3 +31,14 @@ When per-section reviews already cleared parts of the changeset, tell the finish
 7. **Bank the learnings.** Anything durable discovered during the effort (build quirks, conventions, gotchas, environmental facts) belongs in auto memory, not the plan doc. Save it now, while it is fresh.
 
 8. **Kaizen check.** First make sure any kit friction from this effort (captured along the way, or a Chapter Surprise that traced to the kit) is in the kaizen inbox. Then offer a kaizen pass in one line only if the inbox has pending items; on a clean effort the inbox is empty and you say nothing. The predicate, not your read of the session, gates the offer.
+
+## Post-close increments
+
+Live use after `Status: Complete` often surfaces small follow-ons: a fix from real testing, a v1.1 refinement. Reopening the full finishing ceremony for each is too heavy, and improvising ad-hoc Chapters and reviews leaves you re-deciding the process every time. Run a defined post-close increment instead:
+
+1. Implement the change per the executing-work section loop (delegate or main as its size warrants).
+2. Scope the review to the delta: an adversarial pass over just the changed files, and a security pass only if the change touched a security surface. Skip the full-changeset re-review; the effort already had one.
+3. Re-run QA only on the acceptance criteria the change could have affected, and append a Chapter marked as a post-close increment.
+4. Apply the plan's commit model.
+
+The plan stays `Status: Complete`; increments accumulate as Chapters beneath it. Escalate back to a full finishing pass only when an increment grows into a body of work in its own right - several sections, or a design change - at which point it is a new effort with its own spec, not an increment.

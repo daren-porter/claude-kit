@@ -56,12 +56,19 @@ when you sit down to a pending brief.
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you
      are already in the kit repo).
    - **Promote:** large enough to deserve its own design. Brainstorm it into a
-     `docs/plans/` spec instead of a brief.
+     `docs/plans/` spec instead of a brief. If the design is not happening in this
+     pass, still capture it now as a **Proposed**-status stub spec (the friction,
+     the intent, and enough to pick it up cold) so the deferred-promote backlog
+     lives in `docs/plans/`, not as an ambiguous line in the inbox.
    - **Route elsewhere:** not actually about the kit. A project learning goes to
      auto memory; a project convention to that project's CLAUDE.md. It leaves the
      inbox either way.
-3. **Write the brief** for each apply-now item (format below) and remove its line
-   from `notes.md` to clear it.
+3. **Clear every triaged item from `notes.md`.** Triage always empties the line:
+   an apply-now item becomes a brief (format below), a promote becomes a spec or a
+   Proposed-status stub in `docs/plans/`, a route-elsewhere lands at its
+   destination. `notes.md` holds only untriaged friction; nothing triaged-but-parked
+   lingers there. That invariant is what lets the SessionStart nudge and the next
+   pass read a note line as "not yet looked at", never "looked at, parked here".
 
 ## The brief, and applying it
 

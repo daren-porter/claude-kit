@@ -18,6 +18,13 @@ Project-declared rules win, then this skill, then (last resort) the neighbors:
 
 The old "match the team's established style even where it conflicts with this skill" default is retired: a legacy neighbor is not authority. A repo that wants a different style states so in CLAUDE.md or `.editorconfig`. (This is C#-specific; `sql-style` keeps sibling-matching, since there is no SQL `.editorconfig` and the established team SQL style is the real target.) Still: surgical changes only - do not reformat unrelated code toward this style while doing other work.
 
+## Signature wrapping is formatter-owned, not willpower
+
+One-param-per-line wrapping on over-limit signatures is the one rule instruction does not reliably buy: delegated implementers miss it even when the dispatch prompt orders the chop, and Rider's on-type formatting does not fire on a `.cs` file a tool edits externally (it reloads it as-is). So do not trust either the implementer or the IDE to produce it. Two levers, in order:
+
+1. **Where the repo runs ReSharper/Rider cleanup, let `.editorconfig` own it.** Set `resharper_wrap_parameters_style = chop_if_long` and never hand-wrap against the config; a cleanup run then reflows correctly. This is the clean answer only where cleanup actually runs on the changed files (on-save, or a CLI/manual pass), which for externally-edited files usually means a deliberate step, not automatic.
+2. **Otherwise the orchestrator sweeps.** After a delegated C# section returns and before review, scan the changed signatures and chop any past ~120 cols to one parameter per line yourself, rather than assuming the implementer did. This is the reliable catch when no cleanup runs on the edit.
+
 ## Core philosophy
 
 1. **Code is self-documenting; comments are earned.** Names and structure carry the what; prefer names that read as sentences over brevity. A comment exists only when it adds something the code cannot say: the why, a non-obvious constraint, an intentional deviation. Comments are prose, not section labels.

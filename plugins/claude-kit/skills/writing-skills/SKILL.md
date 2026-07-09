@@ -88,6 +88,13 @@ Run several reps - one sample lies - and read every flagged result yourself, sin
 template echoes masquerade as both failures and successes. This is the standard
 for any change to behavior-shaping content, the kit's own skills included.
 
+**Run RED before you persist the wording, when the test subagent can read the
+repo.** Baseline-testing a kit skill edit from inside the kit repo is a trap: a
+subagent with repo access can read the SKILL.md you just saved, so an
+already-persisted edit leaks into the RED and voids it as a control (a RED rep once
+cited the edited file's line numbers). Keep the new wording in the test prompt only
+until RED has failed, then persist it for GREEN.
+
 ## Antipatterns
 
 - A narrative ("the time we fixed X") instead of a reusable technique.
