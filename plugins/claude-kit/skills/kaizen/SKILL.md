@@ -50,7 +50,12 @@ Run it when Daren asks, when he accepts an end-of-effort or session-start offer,
 when you sit down to a pending brief.
 
 1. **Gather.** Read the inbox notes plus any friction from this session still in
-   context, and ask Daren for his - his half of the retro is the other half.
+   context, and enumerate the deferred-promote backlog alongside them: the
+   `Status: Proposed` stubs already parked in `docs/plans/`. Nothing else
+   resurfaces those - the SessionStart nudge fires on inbox items and in-progress
+   plans, never on Proposed stubs - so a pass that reads only `notes.md` silently
+   drops the parked work. List both, then ask Daren for his: his half of the retro
+   is the other half.
 2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
    smallest change that fixes it? Sort into:
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you

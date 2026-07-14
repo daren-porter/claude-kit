@@ -1,0 +1,57 @@
+# Appsec Security Reviewer for Non-.NET Repos
+
+Status: Proposed
+Commit Model: Commit-and-Push
+Created: 2026-07-14
+
+## Why this exists
+
+A kaizen note (2026-07-10) captured real friction: the `security-reviewer` agent
+is built around the .NET/T-SQL procedure-only model and SOC 2, but
+mcp-providers-connector is Python with genuine security surface (subprocess
+execution, credential handling, injection). The reviewer does not transplant, so it
+got overridden with a "you are Python now" dispatch, and `finishing-work` step 2
+folds non-.NET security into the adversarial pass. This stub parks the question as a
+deferred-promote item; it needs a brainstorming pass before execution.
+
+## The current kit posture (what a design must engage)
+
+The kit already has a stated position on non-.NET security, and a design here is a
+decision to keep or change it:
+
+- `finishing-work` step 2: when the changeset is entirely outside C#/.NET or T-SQL,
+  do not dispatch `security-reviewer`; security folds into the adversarial pass.
+- `adversarial-reviewer` carries a "Security (non-.NET changesets only)" bullet:
+  command/argument injection, unsafe shell/`eval`, path traversal, untrusted input,
+  committed secrets.
+
+So the friction is not "there is no coverage" - it is "the coverage is a general
+bullet in a code reviewer, not an appsec specialist, and that felt too shallow for a
+repo with real attack surface."
+
+## The question to resolve
+
+Is non-.NET security review common enough across Daren's repos to warrant a standing
+specialist, or rare enough that a per-dispatch override plus a stronger adversarial
+bullet suffices? Options to weigh at design time:
+
+- **Strengthen the adversarial bullet only.** Cheapest. Keep the fold, deepen the
+  non-.NET security checklist in `adversarial-reviewer`. Beats a new agent if
+  non-.NET security work is infrequent.
+- **New language-agnostic appsec reviewer agent.** A specialist separate from the
+  .NET one (subprocess/command injection, secrets, path traversal, deserialization,
+  SSRF, dependency CVEs). Must beat "one more paragraph in adversarial-reviewer" -
+  the kit stays lean, and every agent is paid in every session's agent list.
+- **Profile the existing reviewer.** Give `security-reviewer` a .NET/procedure-only
+  profile plus a general-appsec profile. Risk: dilutes the sharp .NET/SOC 2 focus
+  that makes it good today.
+
+## Starting point
+
+Decide the frequency question first (how often do non-.NET repos here warrant real
+appsec review), because it discriminates between "strengthen the bullet" and "add an
+agent." Then, whichever path, keep the .NET/SOC 2 reviewer's focus intact.
+
+## Chapters
+
+(none yet - Proposed)

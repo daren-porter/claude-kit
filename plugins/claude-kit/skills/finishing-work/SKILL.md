@@ -19,6 +19,8 @@ When per-section reviews already cleared parts of the changeset, tell the finish
 
 4. **Documentation curation.** Dispatch the `docs-curator` agent with the spec path. It updates the project's docs/ from the as-built code and returns a Drift Report. **Present every drift item to Daren for adjudication; never silently reconcile.** Drift is signal: either the docs were wrong, the spec was wrong, or the implementation diverged from his mental model. He decides which.
 
+   When the effort's deliverable is itself documentation - a docs or knowledge repo whose changed files are the prose, with no separate code layer beneath for the curator to reconcile against - the drift model has nothing to compare: spec, as-built, and docs are one artifact. Skip the curator here as step 2 skips security on a non-.NET changeset, and say so in close-out; the adversarial pass (step 3) already reviews the prose against the spec.
+
    The curator writes docs but does not stage or commit them (no Bash, by design); the orchestrator owns what happens to its output, because whether docs are committed is a per-repo decision. Honor a docs-commit stance recorded in the repo's CLAUDE.md: some repos never commit curator output, so run the curator for the Drift Report's signal, then leave the writes uncommitted and say so in close-out. Where the repo has no stated stance, ask before docs ride along in any commit rather than assuming. Where docs are committed, the orchestrator stages them so they appear in the review surface.
 
 5. **Close the plan doc.** Set `Status: Complete`, append a final Chapter summarizing the effort, the review outcomes, and the drift adjudications.
