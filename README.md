@@ -101,4 +101,14 @@ Kaizen keeps the kit improving itself. Concrete friction with the kit (an ambigu
 - There is deliberately no format-on-edit hook: shared repos own their formatting, and a formatter rewriting files after every edit causes edit-mismatch churn.
 - `settings.recommended.json` reflects the settings schema as of June 2026; verify key names against current docs if something is ignored: https://code.claude.com/docs/en/settings
 
+## MAINTAINER TOOLS
+
+`tools/standing-context-audit.js` is a dependency-free Node script for maintainers: it reports the kit's standing (per-session, task-independent) context cost - the kit-owned slice (skill and agent descriptions, shipped CLAUDE.md) measured precisely, grounded against the real standing-token total from a session transcript, with size-outlier descriptions flagged as trim candidates. Run it during a token-efficiency pass or kaizen pass, when deciding whether the kit's standing footprint is worth trimming:
+
+```
+node tools/standing-context-audit.js
+```
+
+It also accepts an optional transcript path as its first argument. It lives outside the distributed plugin, adds zero standing footprint, and is not something kit end-users need to run.
+
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.
