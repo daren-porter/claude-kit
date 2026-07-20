@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: Collaborative design conversation for any new feature, project, or non-trivial change. Use when Daren wants to think through a problem before building. Phrases like "let's think through", "help me design", "spec this out", "how should we approach", or any substantial new effort without an existing spec. Produces a spec file in docs/plans/ with an agreed commit model. Skip for trivial fixes and small obvious changes.
+description: Collaborative design conversation for any new feature, project, or non-trivial change. Use when Daren wants to think through a problem before building. Phrases like "let's think through", "help me design", "spec this out", "how should we approach", or any substantial new effort without an existing spec (or with only a parked Proposed-status stub). Produces a spec file in docs/plans/ with an agreed commit model. Skip for trivial fixes and small obvious changes.
 ---
 
 # Brainstorming
@@ -25,7 +25,11 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 6. **Plan sketch before full spec.** Present a short sketch first: goal, approach, the sections of work. Cheap to redirect here; expensive after the full write-up. Iterate on the sketch until agreed.
 
-7. **Write the spec** to `docs/plans/<project>_spec_v1.md` (increment the version if the name exists; never overwrite a prior version). Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **main** for the design-entangled, tiny, or session-state-bound sections. When unsure between two, take the higher.
+7. **Write the spec** to `docs/plans/<project>_spec_v1.md`. If a file already exists under that name, branch on its status:
+   - **`Status: Proposed`** (a kaizen deferred-promote stub parked here): flesh it out in place - fill in Goal, Approach, and Sections of Work, flip `Status:` to `In Progress`, reset Chapters to empty. Completing a stub is not overwriting a prior version.
+   - **`In Progress` or `Complete`** (real prior work): increment the version (`_v2`, `_v3`, ...); never overwrite a prior version.
+
+   Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **main** for the design-entangled, tiny, or session-state-bound sections. When unsure between two, take the higher.
 
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
