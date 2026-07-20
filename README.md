@@ -111,4 +111,12 @@ node tools/standing-context-audit.js
 
 It also accepts an optional transcript path as its first argument. It lives outside the distributed plugin, adds zero standing footprint, and is not something kit end-users need to run.
 
+`tools/token-profiler.js` is its companion: it attributes estimated USD cost across a session's full fan-out (the main thread plus every subagent it spawned) to the kit's skills and processes, aggregated across the project's sessions, so you can see which parts of the workflow cost the most and where the lever is (session length, subagent fan-out, or a skill's own output). Run it during the same token-efficiency or kaizen pass:
+
+```
+node tools/token-profiler.js
+```
+
+Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
+
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.
