@@ -41,6 +41,12 @@ function planHead(cwd, planRel) {
     const full = path.join(cwd, planRel);
     let fd;
     try {
+        // A non-regular file (a FIFO would block openSync forever on read) is
+        // treated as not-a-plan rather than opened; the sibling transcript
+        // reader carries the same guard.
+        if (!fs.statSync(full).isFile()) {
+            return { exists: false, status: 'unknown' };
+        }
         fd = fs.openSync(full, 'r');
     } catch {
         return { exists: false, status: 'unknown' };

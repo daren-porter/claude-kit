@@ -40,12 +40,27 @@ function sh(cmd, cwd, timeout) {
 // echo is ignored).
 function targetBranch(cmd, cwd) {
     const c = String(cmd || '');
-    if (!/(?:^|&&|;|\|)\s*git\s+push\b/.test(c)) return null;
-    const after = c.replace(/^[\s\S]*?\bgit\s+push\b/, '').trim();
+    // A newline separates command segments exactly like && or ; in shell.
+    if (!/(?:^|&&|;|\||\n)\s*git\s+push\b/.test(c)) return null;
+    // Confine parsing to the push's own line; a finer cut on ; or && would
+    // split an injection-shaped refspec ("feat/x;calc.exe") into a clean
+    // prefix that then reaches the host CLI, weakening the no-host-call
+    // posture the allowlist tests pin. Standalone operators are instead
+    // dropped at tokenization below.
+    const after = c.replace(/^[\s\S]*?\bgit\s+push\b/, '').split(/\n/)[0].trim();
     // A branch deletion (git push --delete / -d, or a `:branch` / `+:branch` refspec)
     // removes a merged branch: correct cleanup, the inverse of stranding. Never guard it.
     if (/(?:^|\s)(?:--delete|-d)\b/.test(after)) return null;
-    const toks = after.split(/\s+/).filter((t) => t && !t.startsWith('-'));
+    // Token collection stops at a standalone shell operator, so a chained
+    // "git push && echo done" resolves HEAD instead of reading "echo" as the
+    // remote and asking the host about a branch named "done".
+    const toks = [];
+    for (const t of after.split(/\s+/)) {
+        if (!t) continue;
+        if (/^(&&|\|\||;|\|)$/.test(t)) break;
+        if (t.startsWith('-')) continue;
+        toks.push(t);
+    }
     // toks[0] = remote (if present), toks[1] = refspec (if present).
     let ref = toks.length >= 2 ? toks[1] : null;
     let branch = null;

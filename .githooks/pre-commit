@@ -7,6 +7,11 @@
 # the commit (this repo has no CI, so a soft gate beats a check that cannot run
 # anywhere).
 #
+# Known limitation: the gate keys on STAGED paths but validates the WORKING
+# TREE, so a partial stage can pass validation while committing an invalid
+# payload (and the converse can false-block). Accepted for a soft local gate;
+# validating a git checkout-index copy would close it if it ever bites.
+#
 # Wired via: git config core.hooksPath .githooks
 
 REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1

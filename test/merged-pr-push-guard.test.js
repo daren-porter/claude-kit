@@ -78,6 +78,30 @@ test('a push to a branch with a merged PR is blocked', () => {
     } finally { rmDir(repo); rmDir(shim); }
 });
 
+test('a newline-separated push segment is still guarded', () => {
+    const repo = makeRepo();
+    const shim = makeGhShim();
+    try {
+        git(repo, 'branch feature-x');
+        const r = runHook(repo, 'cd subdir\ngit push origin feature-x', shim);
+        assert.strictEqual(r.status, 2);
+        assert.match(r.stderr, /already merged/);
+    } finally { rmDir(repo); rmDir(shim); }
+});
+
+test('token parsing stops at the segment boundary: a chained bare push resolves HEAD, not the next command', () => {
+    const repo = makeRepo();
+    const shim = makeGhShim();
+    try {
+        // HEAD is the integration branch in the fixture, so a correctly-parsed
+        // bare push is exempt; pre-fix parsing read "echo done" as remote and
+        // refspec and asked the host about a branch named "done".
+        const r = runHook(repo, 'git push && echo done', shim);
+        assert.strictEqual(r.status, 0);
+        assert.strictEqual(r.stderr, '');
+    } finally { rmDir(repo); rmDir(shim); }
+});
+
 test('a branch deletion push is never guarded', () => {
     const repo = makeRepo();
     const shim = makeGhShim();

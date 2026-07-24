@@ -10,8 +10,7 @@ This directory is the working library and project history for the kit itself: th
 
 ## Active plans
 
-- **`plans/docs-lifecycle-and-guards_spec_v1.md`** (In Progress) - the curated docs lifecycle, the branch and PR guard layer, a blind reviewer paired with the adversarial one, and a batch of review-layer refinements.
-- **`plans/appsec-security-reviewer_spec_v1.md`** (Proposed) - whether non-.NET repos with real attack surface warrant a standing appsec reviewer, or a deeper adversarial security bullet suffices.
+- **`plans/appsec-security-reviewer_spec_v1.md`** (Proposed) - whether non-.NET repos with real attack surface warrant a standing appsec reviewer, or a deeper adversarial security bullet suffices. Likely retired: the docs-lifecycle effort generalized `security-reviewer` to any production codebase, substantially answering the question (the stub's Related note has the details); Daren adjudicates.
 - **`plans/visual-companion_spec_v1.md`** (Proposed) - what a "visual companion" for this kit would render, in what medium, and whether to build one or adopt the superpowers version.
 
 ## Living documents
@@ -22,6 +21,7 @@ This directory is the working library and project history for the kit itself: th
 
 Completed plans, most recent first.
 
+- **`archive/docs-lifecycle-and-guards_spec_v1.md`** - the curated docs lifecycle (this library's own taxonomy), the branch and PR guard hooks, the blind reviewer paired per section, and the review-layer refinements.
 - **`archive/kit-goal-port_spec_v1.md`** - the `/kit-goal` completion leash: a deterministic Stop hook that holds an armed plan run to completion, plus executing-work's completion contract.
 - **`archive/orchestration-economics_spec_v1.md`** - session-model-as-mode doctrine, the fable implementation tier above capable and mechanical, the Fable spend wall, and the dispatch-brief upgrades.
 - **`archive/token-profiler_spec_v1.md`** - Piece 2 of the token-efficiency work: an operational profiler that attributes cost-weighted spend across a session's full fan-out to the kit's skills and processes.
@@ -36,3 +36,5 @@ Completed plans, most recent first.
 ## How this library is maintained
 
 The `curating-docs` skill owns the mechanics: it archives a plan when it closes, prunes the backlog, cross-references related plans, and refreshes this index. `finishing-work` calls it at close-out, `brainstorming` calls it when a new spec is written, and it can be invoked directly to tidy or retrofit a tree.
+
+Four plugin hooks give the taxonomy mechanical teeth: `docs-write-guard` denies a non-curator subagent any write into `docs/`, `stop-docs-hygiene` flags an unarchived Complete plan or scratch leaked into `docs/` at turn end, a `session-start` nudge repeats the unarchived-Complete flag at session start, and `pr-docs-guard` blocks opening a PR while `docs/` has uncommitted changes.

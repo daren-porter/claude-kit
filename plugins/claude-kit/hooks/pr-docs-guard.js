@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse guard: docs must be committed before the PR.
 //
-// In Branch-and-PR and Commit-and-Push efforts the documentation work (drift
+// In Branch-and-PR efforts the documentation work (drift
 // curation, plan archival, backlog prune, index refresh) must ship in the same
 // PR as the code, not as a follow-up. Where neither author can release their own
 // PR, a separate docs PR is a governance dead-end, so this blocks creating the
