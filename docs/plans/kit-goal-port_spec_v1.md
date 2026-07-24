@@ -1,6 +1,6 @@
 # Kit-Goal Port and the Completion Contract
 
-Status: In Progress
+Status: Complete
 Commit Model: Branch-and-PR
 Created: 2026-07-24
 
@@ -99,4 +99,12 @@ Implemented By: implementer-sonnet
 Decisions / Surprises: docs/backlog.md created ahead of the docs-lifecycle effort with a minimal header; that effort formalizes the archive-snapshot convention. Both backlog items landed (baseline-test the ported wording; pin the session-start surfacing).
 Review Findings: per-section review skipped (trivial, docs-only; the finishing pass covers it). Gate re-verified 58/58 by implementer and orchestrator.
 Next: finishing-work
+Commit Model: Branch-and-PR
+
+### Chapter 6 (close-out) - 2026-07-24
+Completed: finishing pass over the whole effort.
+Implemented By: main session (orchestration) + qa-verifier + adversarial-reviewer (final pass)
+Decisions / Surprises: QA: PASS on every acceptance criterion across all five sections, gate 58/58 run twice. Security review folded into the adversarial passes per finishing-work (JS/markdown changeset); the final reviewer confirmed the injection defenses intact and test-pinned. Final adversarial: APPROVED, 1 Minor fixed in this close-out (the session-start armed-goal notice read as if it leashed every session in the repo; now says only the bound session is held). docs-curator deferred to the docs-lifecycle effort's finishing pass, which builds the docs library this repo currently lacks; running the curator here would curate a surface the next effort immediately restructures. Branch-and-PR's PR step deferred by design: one PR covers all three adoption efforts and opens at the docs-lifecycle effort's close (recorded substitution; nothing lands on main without Daren's merge).
+Review Findings: all per-section findings fixed in their sections; final-pass Minor fixed here; nothing outstanding.
+Delivered: commits d50c896..this one on branch kit-adoptions.
 Commit Model: Branch-and-PR
