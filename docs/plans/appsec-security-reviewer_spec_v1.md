@@ -4,6 +4,14 @@ Status: Proposed
 Commit Model: Commit-and-Push
 Created: 2026-07-14
 
+## Related
+
+- The docs-lifecycle-and-guards spec (section 5, 2026-07-24; archived at that effort's close) generalized
+  the existing security-reviewer to any production codebase (JS/Node hooks, shell, config
+  first-class; procedure-only model conditional on the project documenting it), which is
+  essentially this stub's option 3. The stub likely retires; Daren adjudicates. Note the
+  spec's own scope framing ("non-.NET repos need a separate agent") predates that change.
+
 ## Why this exists
 
 A kaizen note (2026-07-10) captured real friction: the `security-reviewer` agent

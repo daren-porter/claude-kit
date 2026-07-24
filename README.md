@@ -28,10 +28,13 @@ claude-kit/                          (repo = the marketplace)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
         reconcile-claude-md/         Install/merge/overwrite the kit's recommended global CLAUDE.md into the user's live file
         kit-goal/                    /kit-goal <plan> arms a deterministic project-scoped completion leash
+        curating-docs/               docs/ taxonomy: plan archival, backlog pruning, index and cross-references
+        branch-hygiene/              Reap merged branches, recover stranded ones; the branch-reaper nudge hands off here
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
+        blind-reviewer.md            Diff-only correctness review, dispatched without the spec or intent story
         qa-verifier.md               Build, tests, acceptance criteria with evidence; pinned sonnet
-        security-reviewer.md         OWASP + SOC 2 review tuned to the procedure-only model
+        security-reviewer.md         OWASP + SOC 2 review, any production codebase (deep on C#/T-SQL; covers hooks, shell, config)
         docs-curator.md              Updates docs/, returns Drift Report; pinned opus
         implementer-opus.md          Scoped section implementer, Opus tier (delegate-capable)
         implementer-sonnet.md        Scoped section implementer, Sonnet tier (delegate-mechanical)
@@ -39,15 +42,18 @@ claude-kit/                          (repo = the marketplace)
         council-member.md            Read-only design-council lens
         design-facilitator.md        Neutral design-council convergence judge
       hooks/
-        hooks.json                   Hook registrations (SessionStart + Stop)
-        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal
+        hooks.json                   Hook registrations (SessionStart + PreToolUse + Stop)
+        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal; nudges on unarchived Complete plans
         kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
+        docs-write-guard.js / stop-docs-hygiene.js Docs-library guards: non-curator subagent writes into docs/ denied; Stop-time unarchived-plan and scratch flags
+        pr-docs-guard.js / merged-pr-push-guard.js / branch-reaper-nudge.js Branch/PR guards: dirty-docs PR block, merged-branch push block, reap/strand nudge
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
+  .githooks/pre-commit               Validates the plugin payload on commits that touch it; wire with git config core.hooksPath .githooks
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
   test/                              Hook test suite (repo-level, not shipped): node --test test/*.test.js
   setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
-  docs/plans/                        Plan docs for work on this repo itself
+  docs/                              Curated docs library: README index, backlog.md, plans/ (active), archive/ (finished)
 ```
 
 The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"source": "./plugins/claude-kit"` - relative paths resolve against the repo root and work because the marketplace is added via git. Additional plugins later: add a folder under `plugins/` and a second entry in the catalog.
@@ -82,7 +88,7 @@ Updating: commit and push here, then `/plugin update claude-kit` on each machine
 
 ## THE WORKFLOW
 
-Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation runs per a per-section execution mode (main-context tokens re-bill every turn, so the orchestrator stays the designer): **main** in the session on whatever model is selected, **delegate-fable** to the implementer-fable agent for sections needing the strongest model that are still briefable, **delegate-capable** to the implementer-opus agent (the delegated default), or **delegate-mechanical** to the implementer-sonnet agent - capable by default, mechanical only for genuinely well-bounded sections, reviewers never downgrading. The main-thread model is never hard-coded, so it tracks whatever you run. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
+Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review paired with a blind diff-only review (plus security review on sensitive surfaces), update the plan, append a Chapter, apply the commit model. Implementation runs per a per-section execution mode (main-context tokens re-bill every turn, so the orchestrator stays the designer): **main** in the session on whatever model is selected, **delegate-fable** to the implementer-fable agent for sections needing the strongest model that are still briefable, **delegate-capable** to the implementer-opus agent (the delegated default), or **delegate-mechanical** to the implementer-sonnet agent - capable by default, mechanical only for genuinely well-bounded sections, reviewers never downgrading. The main-thread model is never hard-coded, so it tracks whatever you run. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
 
 Compaction recovery is deterministic: the SessionStart hook fires on startup, resume, and after every compaction, finds in-progress plans, and instructs the session to re-read them - Chapters included - before any work proceeds. Section boundaries are clean recovery points by construction: once a Chapter is written, the plan doc carries the full state, so a fresh session - whenever Daren chooses to start one - resumes with nothing lost.
 
@@ -99,11 +105,13 @@ The spend wall governs how far Fable reaches: its plan-included allotment is the
 ## CONVENTIONS
 
 - Specs and plans: `docs/plans/` in each project, named `<project>_<content-type>_v1.md`, versions increment, never overwrite.
+- docs/ follows the curating-docs taxonomy: plans/ holds active work, archive/ holds finished plans and dated backlog snapshots, backlog.md stays pruned-live, README.md is the index.
 - Chapters are appended to the plan doc, not kept in a separate file. The plan doc is the single source of truth for intent and state.
 - Durable learnings go to Claude Code auto memory (curate with `/memory`), not into plan docs or CLAUDE.md.
 - Project CLAUDE.md files carry only project-specific facts (build commands, architecture pointers); global rules live in the kit's recommended `assets/CLAUDE.md`, reconciled into the live `~/.claude/CLAUDE.md`.
 - Style precedence: a repo's stated rules (CLAUDE.md, style docs, `.editorconfig`) win; otherwise the style skills govern. C# treats a legacy sibling as last resort, not authority; SQL keeps sibling-matching in shared repos, where the established team SQL style is the target.
 - Each project with a non-obvious access architecture documents it and its accepted risks in `docs/security-model.md`. The security-reviewer agent reads it first, verifies the code upholds it, and re-checks accepted-risk preconditions instead of re-flagging them.
+- Wire the repo's git hooks once per clone: `git config core.hooksPath .githooks`.
 
 ## NOTES AND KNOWN TRADEOFFS
 
@@ -131,6 +139,6 @@ node tools/token-profiler.js
 
 Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
 
-The hook test suite lives in `test/` (repo-level, excluded from the plugin payload). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
+The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. The one exception is `session-start.js`, verified manually so far (pinning it is a backlog item). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
 
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.

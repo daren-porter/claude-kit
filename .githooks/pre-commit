@@ -1,0 +1,30 @@
+#!/bin/sh
+# pre-commit - validate the plugin payload when a commit touches it.
+#
+# When a commit touches plugins/claude-kit/, run `claude plugin validate` so a
+# frontmatter or manifest mistake fails the commit instead of shipping silently.
+# Skips with a stderr note when the `claude` CLI is absent rather than failing
+# the commit (this repo has no CI, so a soft gate beats a check that cannot run
+# anywhere).
+#
+# Wired via: git config core.hooksPath .githooks
+
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
+cd "$REPO_ROOT" || exit 1
+
+# Only validate when plugin sources are part of this commit.
+if ! git diff --cached --name-only -- 'plugins/claude-kit/' | grep -q .; then
+    exit 0
+fi
+
+if ! command -v claude >/dev/null 2>&1; then
+    echo "claude CLI not found; skipping plugin validation" >&2
+    exit 0
+fi
+
+if ! claude plugin validate ./plugins/claude-kit; then
+    echo "plugin validation failed; commit blocked (fix the payload or bypass with --no-verify)" >&2
+    exit 1
+fi
+
+exit 0

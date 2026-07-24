@@ -54,7 +54,12 @@ function makeGhShim() {
 
 function runHook(cwd, command, shimDir) {
     const env = Object.assign({}, process.env);
-    if (shimDir) env.PATH = shimDir + path.delimiter + env.PATH;
+    if (shimDir) {
+        // Match the host's real PATH key casing (Windows exposes "Path"), so the
+        // copied env never carries a duplicate key that hides the shim.
+        const key = Object.keys(env).find((k) => k.toLowerCase() === 'path') || 'PATH';
+        env[key] = shimDir + path.delimiter + (env[key] || '');
+    }
     return spawnSync(process.execPath, [HOOK], {
         input: JSON.stringify({ cwd, tool_input: { command } }),
         encoding: 'utf8',

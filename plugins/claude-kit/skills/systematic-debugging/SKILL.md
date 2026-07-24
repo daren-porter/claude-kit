@@ -15,6 +15,13 @@ Fixes proposed before the root cause is proven are guesses. A guess that happens
 
 3. **Isolate the cause.** Form a hypothesis, then test it with evidence: add targeted logging, bisect the input, shrink the repro, check the recent diff (`git log`/`git diff` over the touched area), inspect the relevant state. One variable at a time. Each test should be able to falsify the hypothesis, not just agree with it. Repeat until the cause is demonstrated, not just plausible.
 
+   Four causes recur on this stack, cost one observation each to rule out, and invalidate every theory built without them. Rule them out early rather than reasoning past them:
+
+   - **Deployment drift.** Is the thing that ran the source you are reading? Compare `sys.sql_modules` against the file for a procedure; check the built artifact's timestamp for code. A missed deployment leaves the old behavior in place, and then every theory about the source is a theory about the wrong text.
+   - **Execution context.** What identity and settings did it run under: `WITH EXECUTE AS` on a procedure or trigger, the connection's principal, the environment's configuration. Code that behaves under your context can fail under the caller's, and nothing in the source shows it.
+   - **The actual data shape at the failure point.** Query it. NULLs, duplicates, empty strings where NULL was assumed, a row count nobody expected: what is in the table is a hypothesis until you have selected it.
+   - **Isolation and concurrency.** The declared isolation level (READ UNCOMMITTED returns mid-transaction state), and whether a competing writer touches the same rows in the window where it fails.
+
 4. **Explain it.** One or two sentences: this fails because X, and here is the evidence. If the explanation cannot account for every observed symptom, the cause is not isolated yet; go back to step 3.
 
 5. **Fix the cause, not the symptom.** The minimum change that removes the demonstrated cause. No defensive try/catch wrapped around the mystery, no retry loop hiding a race, no "also tidied up while here".
