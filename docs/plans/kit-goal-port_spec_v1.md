@@ -1,0 +1,64 @@
+# Kit-Goal Port and the Completion Contract
+
+Status: In Progress
+Commit Model: Branch-and-PR
+Created: 2026-07-24
+
+## Goal
+
+The kit gains a deterministic, project-scoped completion leash for plan runs: `/kit-goal docs/plans/<plan>.md` arms it in one line, a Stop hook holds the armed session to completion (no LLM evaluator, no sweet-talking it), and the executing-work skill gains the completion-contract prose that keeps a long run from pausing at section boundaries, gates, or dispatched agents. Ported from Scott Applefeld's kit (`~/repos/sapplefeld-claude-kit`), where the mechanism survived multiple live-fire hardening rounds and ships with a real test suite, then trimmed to what our platform and philosophy actually use.
+
+## Approach
+
+Port the three-file mechanism (`kit-goal-lib.js` shared library, `kit-goal.js` CLI, `kit-goal-stop.js` Stop hook) plus the `/kit-goal` skill and tests from `~/repos/sapplefeld-claude-kit/plugins/claude-kit/hooks/` and `.../skills/kit-goal/`, with two deliberate trims agreed with Daren:
+
+- **No relay clause.** Scott's clause (c) (a resume-relay handoff releases the boundary stop) exists for his Windows AutoHotkey relay plane, which we are not adopting. Our allow conditions are exactly: (a) the plan's Status is Complete or the plan file is gone (archived), which auto-clears the goal; (b) the last assistant message leads with `BLOCKED:` as its literal first characters.
+- **No compaction-ledger genealogy.** Scott's successor-inheritance walk reads a ledger his compaction engine writes; we run no such engine, and on current Claude Code both native context summarization and `/resume` preserve the session identity, so the simple binding model suffices: the goal binds to one session (claimed by the user-typed `/kit-goal` command arguments in the transcript), a session bound elsewhere is never leashed, and re-arming is the documented recovery when a bound session dies.
+
+Everything else ports faithfully, because each piece encodes a defense that failed live in Scott's kit before it was added: the fail-open invariant (any error, unreadable transcript, or indeterminate state allows the stop; a block is reachable only after every allow condition affirmatively evaluated), the command-args-only binding claim (assistant echoes, hook-injected context, attachments, tool results, sidechain turns, and local-command stdout never claim), the `BLOCKED:` leading-prefix match with the mid-append retry schedule, the anchored plan-Status classifier with BOM strip, atomic state writes, and the harness's eight-consecutive-block cap as the loop backstop. Goal state lives at `.kit/goal-state.json` (gitignored, project-scoped).
+
+The executing-work skill gains a completion-contract section adapted from Scott's: the hard prohibition on ending the turn with unblocked work remaining, the rationalization table and red-flags list, the `BLOCKED:` protocol, and the dispatch rule his live fire proved necessary: under an armed leash, a wait is not a stop, so the critical-path implementer is dispatched synchronously (`run_in_background: false`) or polled in-turn, the turn never ends to await a completion notification, and the leash is never cleared to escape a block. The wording forms (prohibition + rationalization table + red flags) match writing-skills' prescription for knows-the-rule-skips-it-under-pressure failures, and carry observed-failure provenance from Scott's production incidents; a from-scratch RED/GREEN baseline is deferred to the backlog rather than re-run here.
+
+Tests port to a repo-level `test/` directory (excluded from the plugin payload by construction, since only `plugins/claude-kit/` ships), gate command `node --test test/*.test.js`, minus the relay-clause and ledger-genealogy tests whose mechanisms we dropped.
+
+## Sections of Work
+
+### 1. Library, CLI, gitignore, and library tests
+Port `kit-goal-lib.js` (goal state read/write/clear, `bindSession`, `planHead` with the anchored Status regex and BOM strip, `composeCondition` reworded for Daren and for the two-clause condition) and `kit-goal.js` (arm/clear/status CLI with clear aliases) into `plugins/claude-kit/hooks/`. Create the repo `.gitignore` covering `.kit/` (and the existing untracked local noise it should cover: nothing else today). Port `kit-goal-lib.test.js` into `test/`.
+Acceptance: `node --test test/*.test.js` passes; `node plugins/claude-kit/hooks/kit-goal.js arm|status|clear` round-trips in a scratch directory; arming refuses a missing or Complete plan with the reason; the condition text names Daren, not Scott, and contains no relay clause.
+Execution mode: delegate-capable.
+
+### 2. Stop hook, wiring, session-start surfacing, and hook tests
+Port `kit-goal-stop.js` trimmed to the two-clause allow order (no goal → allow; binding scope per the Approach; Complete/archived → auto-clear and allow; leading `BLOCKED:` with the mid-append retry → allow; else block with a reason naming the plan and the ways out, with no relay wording). Wire a `Stop` entry in `hooks.json`. Add armed-goal surfacing to `session-start.js` as an additive block ("kit goal armed for <plan>", sanitized), so no session is surprised by the hook. Port `kit-goal-stop.test.js` minus relay and ledger tests, keeping binding claims, self-injection resistance, BLOCKED retry/flush-race, auto-clear, and fail-open persistence tests.
+Acceptance: full test gate passes; a synthetic mid-plan stop payload is blocked and a `BLOCKED:`-leading one allowed (pinned by tests); `node -e "require(process.argv[1])" plugins/claude-kit/hooks/kit-goal-stop.js` exits 0 (the load-check seam, guarded by `require.main === module`); session-start emits the armed-goal block only when a goal is armed.
+Execution mode: delegate-capable.
+
+### 3. The /kit-goal skill
+Adapt `skills/kit-goal/SKILL.md`: arm/clear/status UX, the two-clause condition described in prose that defers to `composeCondition` as the single owner, the binding semantics (arm from the session that should hold the leash; re-arm is the recovery), and a first-arm note that the session must ensure the project's `.gitignore` covers `.kit/` before arming in a repo that lacks it.
+Acceptance: the skill file exists with quoted frontmatter description; no relay or chain-mode references; states the recovery move for a dead bound session.
+Execution mode: delegate-capable.
+
+### 4. Executing-work completion contract
+Add "The completion contract" section to `skills/executing-work/SKILL.md`: run every remaining unblocked section; a section boundary, a running gate, context pressure, and an awaited subagent are not stopping points; the do-not-end-turn list, rationalization table, and red-flags list adapted to our workflow (native summarization handles context; fresh-session timing stays Daren's call per the existing Context discipline section, which this section must not contradict); the `BLOCKED:` protocol (bare leading prefix, recap after, quoting the convention never releases); the under-a-leash dispatch rule (synchronous dispatch or in-turn polling, never end the turn on a completion notification, never clear the leash to escape); and a one-line pointer to `/kit-goal` as the optional arming mechanism, with the contract applying leash or no leash.
+Acceptance: the section exists and reads in the kit's voice; the existing Context discipline section is reconciled, not contradicted; the skill's description frontmatter is unchanged (per writing-skills, no process summaries in descriptions).
+Execution mode: delegate-capable.
+
+### 5. README and gate documentation
+README gains: `/kit-goal` in STRUCTURE and THE WORKFLOW, the `test/` directory and its gate command under MAINTAINER TOOLS, and the `.kit/` scratch-state convention. Add a backlog note (created in this effort as `docs/backlog.md` only if spec C has not yet created it; otherwise append) to baseline-test the ported completion-contract wording per writing-skills once it has seen real use.
+Acceptance: README references resolve to real paths; the backlog note exists.
+Execution mode: delegate-mechanical.
+
+## Out of Scope
+
+- The resume relay, compaction engine, chain mode, and ledger (not adopted, by decision).
+- Native `/goal` integration or aliasing.
+- Arming goals automatically from executing-work (arming stays Daren's explicit act).
+- The doctor tool (our install has no doctor; the load-check lives in tests).
+
+## Open Questions
+
+None. Trims and platform assumptions were decided with Daren on 2026-07-24.
+
+## Chapters
+
+(Appended by executing-work as sections complete. Leave empty at creation.)
