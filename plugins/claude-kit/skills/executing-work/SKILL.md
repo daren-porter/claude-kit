@@ -7,7 +7,43 @@ description: Autonomous execution of an approved spec or plan from docs/plans/. 
 
 The contract: once the spec is approved, proceed autonomously to completion. No per-step check-ins, no "shall I continue?", no gating individual edits. The spec is the agreement; execute it.
 
-Interrupt Daren only for: a contradiction inside the spec, a decision the spec does not cover with material consequences, destructive/irreversible actions, or a debugging dead end reached per the systematic-debugging skill's stop-and-report rules. Everything else is yours to resolve and record.
+Interrupt Daren only for: a contradiction inside the spec, a decision the spec does not cover with material consequences, destructive/irreversible actions, an external dependency only he can satisfy (a credential, a GUI action, a resource to provision), or a debugging dead end reached per the systematic-debugging skill's stop-and-report rules. Everything else is yours to resolve and record. This list and the completion contract's blocker set below are the same list.
+
+## The completion contract
+
+The spec is the goal. Once execution starts, run every remaining unblocked section to completion in this session. A section boundary is not a stopping point. A running build or test gate is not a stopping point. Context pressure is not a stopping point. An awaited subagent is not a stopping point. The only reason to stop mid-spec is a true blocker, and when you hit one you make it impossible to miss. This is the rule that fails most often under the pressure of a long run, so it is stated as a hard prohibition, not a preference.
+
+**Do not end your turn** to:
+
+- report progress between sections ("section 3 done, say the word and start section 4"). Close the section and start the next.
+- wait on a build or test gate ("holding for the gate, ~2 min"). Wait on it in-turn: background it and poll a readiness signal (the Monitor tool with an until-condition on a marker file or exit code; foreground sleeps are blocked by the harness), then continue when it returns.
+- manage context ("pausing here rather than open section 7 at the tail of a long run"). Summarization is native and automatic, and when to start a fresh session is Daren's call per Context discipline below, never your reason to halt.
+- await a dispatched subagent ("holding while the implementer builds section 3"). A background agent (`run_in_background: true`, the Agent-tool default) ends your turn to await its completion notification, and under an armed leash that turn-end is a stop the hook blocks. A wait is not a stop here either: keep the turn alive. Dispatch the critical-path implementer synchronously (`run_in_background: false`) so its whole run is one in-turn call; for a genuine parallel fan-out, poll the agents' output files in-turn exactly as you would a build gate. Never end the turn on a completion notification while a leash is armed, and never clear the leash to escape the block: that abandons the continuity the leash exists to hold.
+
+Rationalization table (the excuse, and why it is wrong):
+
+| The excuse | Why it is wrong |
+|---|---|
+| "This is a clean boundary to pause at." | Clean boundaries are for resuming, not for stopping with work left. Continue. |
+| "Holding for the gate." | A wait is not a stop. Poll the gate in-turn and continue. |
+| "It is the tail of a long run, safer to stop." | The Chapter plus the SessionStart resume hook protect you. A fresh session is Daren's call, not a stop condition. |
+| "Let me confirm before continuing." | The approved spec is the confirmation. Continue unless a true blocker hits. |
+| "I'll end the turn to await the dispatched agent's notification." | Awaiting is a wait, and a wait is not a stop. Dispatch synchronously (`run_in_background: false`) or poll in-turn; do not end the turn, and do not clear the leash to get out of the block. |
+
+Red flags that you are about to stop wrongly: "say the word and continue", "holding for", "paused here", "at the tail of", "ready to continue when you are", "holding while the agent builds", "awaiting the notification". If you are about to write one of these with unblocked work remaining, do not. Keep going.
+
+**Stop only for a true blocker, and make it loud.** The blocker set:
+
+- an external dependency only Daren can satisfy (a GUI action, a cloud resource that must be provisioned, a credential or secret you cannot reach),
+- a contradiction inside the spec, or a material decision the spec does not cover,
+- a destructive or irreversible action that needs his yes,
+- a systematic-debugging dead end.
+
+When you stop, the message's very first characters are `BLOCKED: <exactly what you need>`, so Daren sees it in seconds rather than discovering a silent halt hours later. The bare prefix opens the message: no close-out summary above it, no bold or heading wrapping it; any shipped-work recap goes after the BLOCKED paragraph. The `/kit-goal` Stop hook releases only on that exact leading prefix and deliberately ignores a `BLOCKED:` sitting mid-message (quoting the convention must never release the leash), so a summary-first stop bounces and costs an extra turn. A progress update is not a stop and must not be written as one.
+
+**Arming is optional, and it is Daren's.** `/kit-goal docs/plans/<plan>.md` arms a deterministic project-scoped leash on a plan run; the kit-goal skill owns that mechanism and its canonical condition. The hook is a backstop, not the mechanism: this contract holds leash or no leash, and arming stays Daren's explicit act.
+
+**Handoff.** When execution begins inside a conversation that was just brainstorming, say so in one line ("Spec approved, switching to autonomous execution of all N sections") so Daren sees the mode change and can scope it down ("just section 1") if he wants.
 
 ## Before starting (or resuming)
 

@@ -84,3 +84,11 @@ Decisions / Surprises: The skill deliberately drops the source's claim that nati
 Review Findings: APPROVED_WITH_CONCERNS. 1 Major fixed: the Arm section had no guard against the inert-leash case (an arm requested in prose writes state but nothing ever binds, since only the typed /kit-goal command-args claim); Arm now says to have Daren type the command from the session that should hold the leash. 2 Minors fixed: arm-replaces-any-armed-goal stated; re-arm snap-back to a still-open former holder named, with clear-first guidance for deliberate handoffs. 1 Minor (staging hygiene note about the parallel section) resolved by committing each section with its own Chapter.
 Next: 4. Executing-work completion contract
 Commit Model: Branch-and-PR
+
+### Chapter 4 - 2026-07-24
+Completed: 4. Executing-work completion contract
+Implemented By: implementer-opus (parallel with section 3; disjoint files)
+Decisions / Surprises: One pure-insertion section between the intro and Before starting; every other section byte-identical. The source's "run_in_background: true is the Agent-tool default" claim was dropped by the implementer as unverified, then restored by the orchestrator and independently confirmed by the reviewer against the installed Claude Code's tool schema. The handoff line was in the dispatch but not the spec's enumerated content; spec section 4 amended to enumerate it (flagged here per step 5).
+Review Findings: APPROVED_WITH_CONCERNS. 1 Major fixed: the intro's four-item interrupt list and the new five-item blocker set disagreed (external-dependency case missing from the intro), an inherited defect from the source; intro list now carries the item and states the two lists are the same list. 2 Minors fixed: "at the tail of" restored to the red-flags list; the in-turn gate-wait wording now names the Monitor-with-until pattern instead of a bare `until` that bounces off the harness's foreground-sleep guard. 1 Minor recorded: the handoff-line spec amendment above.
+Next: 5. README and gate documentation
+Commit Model: Branch-and-PR
