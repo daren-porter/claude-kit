@@ -61,4 +61,10 @@ None. Trims and platform assumptions were decided with Daren on 2026-07-24.
 
 ## Chapters
 
-(Appended by executing-work as sections complete. Leave empty at creation.)
+### Chapter 1 - 2026-07-24
+Completed: 1. Library, CLI, gitignore, and library tests
+Implemented By: implementer-opus
+Decisions / Surprises: CLI ported byte-identical; lib differs from source in exactly the composeCondition trim plus three comment-only rewrites the implementer flagged (bindSession comments referenced the relay file and genealogy ledger, mechanisms this kit does not adopt; comments now state the accurate stdin-payload rationale). Accepted: comments describing nonexistent mechanisms would be wrong documentation. Source's "Node v24" header claim dropped (this machine runs v20; `node --test <files>` works there). The test file deliberately pins the trim with a negative /relay/i assertion so a future re-port cannot quietly reintroduce clause (c). Fail-first evidence: the ported tests were run against a mirror carrying the source lib and failed on exactly the condition-wording assertion (23/1), proving they pin the change.
+Review Findings: APPROVED. 1 Minor fixed inline (inherited vacuous atomicity assertion checked a tmp filename armGoal never creates; now checks the pid-suffixed name). Security surfaces (control-char rejection, path-escape rejection, sanitize-before-print) verified byte-identical to source by the reviewer.
+Next: 2. Stop hook, wiring, session-start surfacing, and hook tests
+Commit Model: Branch-and-PR
