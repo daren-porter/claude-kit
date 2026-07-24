@@ -2,6 +2,7 @@
 
 Status: In Progress
 Commit Model: Branch-and-PR
+Fable Spend: Fable-led orchestration session; no delegate-fable sections
 Created: 2026-07-24
 
 ## Goal

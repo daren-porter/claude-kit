@@ -1,7 +1,8 @@
 # Orchestration Economics: Fable Plans, Cheaper Models Build
 
-Status: In Progress
+Status: Complete
 Commit Model: Branch-and-PR
+Fable Spend: Fable-led orchestration session; no delegate-fable sections
 Created: 2026-07-24
 
 ## Goal
@@ -90,4 +91,13 @@ Metrics: 0 review rounds (S5 trivial-mechanical with checksum-verified identical
 Decisions / Surprises: The three implementer Your-brief paragraphs are byte-identical (md5-verified). implementer-fable stays unpinned with its deliberateness comment intact. S6's implementer substituted "up into the top tier" for a briefed phrase containing a banned word; accepted. Chapter 1's carried-forward Minor is resolved: finishing-work's "model-pinned by design" sentence is now true on disk (qa-verifier sonnet, docs-curator opus).
 Review Findings: none this wave; the whole-changeset finishing pass reviews S6's doctrine summary for drift against the skills.
 Next: finishing-work
+Commit Model: Branch-and-PR
+
+### Chapter 3 (close-out) - 2026-07-24
+Completed: finishing pass over the whole effort.
+Implemented By: main session (orchestration) + qa-verifier + adversarial-reviewer (final pass)
+Metrics: 1 finishing review round; 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises: QA: PASS on all six sections' criteria, gate 58/58, plus two observations both acted on: the README gained the below-fable qualifier (later refined by the final review to name the ladder's top rung precisely), and the effort's own rule was applied to its own artifacts by adding the Fable Spend header to all three adoption specs. That header application initially leaked into every Chapter's Commit Model line (an over-broad sed); the final review caught it and the per-Chapter copies were removed, keeping the header-block line only. Final adversarial: APPROVED_WITH_CONCERNS, 4 Minors, all fixed: the README escalation shorthand, one surviving "fable tier" in finishing-work unified to mode, the per-Chapter header leak above, and a doctrine gap where a leash armed in a design session would block that session's own handoff stop (kit-goal's Arm section now routes arming to the execution session). Security folded into the adversarial passes per finishing-work (prose/frontmatter changeset). docs-curator deferred to the docs-lifecycle effort's finishing pass, same reasoning as the kit-goal effort's close-out.
+Review Findings: all fixed; nothing outstanding.
+Delivered: commits 6418791, 3083d6c, and this close-out commit on branch kit-adoptions.
 Commit Model: Branch-and-PR

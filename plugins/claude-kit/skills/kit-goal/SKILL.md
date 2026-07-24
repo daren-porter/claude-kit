@@ -37,7 +37,10 @@ The leash binds only to a session whose transcript carries the typed `/kit-goal`
 invocation itself. An arm requested in prose ("arm the kit goal for the plan")
 still writes the state, but no session ever binds and nothing enforces: a
 silently inert leash. When the request arrived that way, say so and have Daren
-type `/kit-goal <plan path>` from the session that should hold it. One goal per
+type `/kit-goal <plan path>` from the session that should hold it. The session
+that should hold it is the one executing the plan: a design session that only
+wrote the spec and is handing execution off does not arm (the leash would block
+its own handoff stop), so arm in the execution session instead. One goal per
 project: arming while another goal is armed, for any plan, replaces it and
 resets its binding.
 
