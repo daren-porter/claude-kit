@@ -29,7 +29,9 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
    - **`Status: Proposed`** (a kaizen deferred-promote stub parked here): flesh it out in place - fill in Goal, Approach, and Sections of Work, flip `Status:` to `In Progress`, reset Chapters to empty. Completing a stub is not overwriting a prior version.
    - **`In Progress` or `Complete`** (real prior work): increment the version (`_v2`, `_v3`, ...); never overwrite a prior version.
 
-   Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **main** for the design-entangled, tiny, or session-state-bound sections. When unsure between two, take the higher.
+   Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **delegate-fable** for a section that needs the strongest model but is still briefable (novel logic, a security-sensitive surface, subtle or cross-cutting correctness inside a settled design), **main** for the design-entangled, tiny, or session-state-bound sections. A section only earns a cheaper mode if its spec text is precise enough that an implementer with no conversation context can build it from the section text alone; write to that standard or assign the higher mode. The same test one level up separates **delegate-fable** from **main**: a strongest-model section whose spec will keep evolving in contact with the code stays main. When unsure between two, take the higher.
+
+   A **delegate-fable** assignment doubles as Fable spend authorization within the plan-included allotment, so name the expected Fable surface in the spec's `Fable Spend:` header where Daren sees it at approval time. Crossing into metered Fable is never authorized by a mode assignment alone: that takes Daren's explicit line in the same header, for this specific effort. `Fable Spend: none (cost hold)` holds the whole effort at the session model regardless of what the sections' modes say.
 
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
@@ -45,6 +47,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 Status: In Progress
 Commit Model: Review-Only | Branch-and-PR | Commit-and-Push
+Fable Spend: <expected Fable surface, e.g. "S2, finishing reviews"> | none (cost hold)
 Created: YYYY-MM-DD
 
 ## Goal
@@ -57,7 +60,8 @@ sessions (and post-compaction recovery) understand intent, not just steps.
 ## Sections of Work
 ### 1. <Section name>
 What gets built. Acceptance criteria as verifiable statements.
-Execution mode: main | delegate-capable | delegate-mechanical.
+Execution mode: main | delegate-fable | delegate-capable | delegate-mechanical.
+Tests: <optional> the behaviors this section must lock and the risk driving each.
 ### 2. ...
 
 ## Out of Scope
@@ -71,6 +75,8 @@ Unresolved items and who owns the answer.
 ```
 
 Specs stay at acceptance-criteria altitude: goal, approach, sections, verifiable criteria. Do not pre-write implementation code into the spec; detailed direction for delegated tasks is generated at dispatch time by executing-work, in contact with the actual code.
+
+Give a section the optional `Tests:` line where it carries real behavioral risk, and hold it to three constraints so it orients the implementer instead of confining one. It states **intent, never design**: what to lock and the risk driving each, never fixtures, seams, or structure, which are implementation knowledge the plan does not have. It is a **floor, never a ceiling**: the implementer's duty to settle the test question runs past whatever the line names. And it is **amendable on contact with the code** like any other spec claim, with the delta flagged in the Chapter.
 
 ## When not to use
 

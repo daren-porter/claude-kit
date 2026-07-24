@@ -51,8 +51,8 @@ Acceptance: one coherent paragraph before or within the Steps covering both revi
 Execution mode: delegate-capable.
 
 ### 5. Agent pins and brief-section alignment
-Add `model: sonnet` to `agents/qa-verifier.md` and `model: opus` to `agents/docs-curator.md` frontmatter. Align the "Your brief" sections of `implementer-opus.md` and `implementer-sonnet.md` with the upgraded dispatch contract (confirmed-vs-inferred assertions treated as unverified until checked, sibling-breadth expectation, pin tests, workaround bar), keeping the staging contract as is.
-Acceptance: pins present; the two implementer briefs and executing-work's dispatch-prompt paragraph name the same items; no other frontmatter changes.
+Add `model: sonnet` to `agents/qa-verifier.md` and `model: opus` to `agents/docs-curator.md` frontmatter. Align the "Your brief" sections of `implementer-opus.md`, `implementer-sonnet.md`, and `implementer-fable.md` with the upgraded dispatch contract (confirmed-vs-inferred assertions treated as unverified until checked, sibling-breadth expectation, pin tests, workaround bar), keeping the staging contract as is. (Amended during execution: implementer-fable added to the list per the section 1-2 review, so the top tier is not the one implementer without the upgraded intake.)
+Acceptance: pins present; the three implementer briefs and executing-work's dispatch-prompt paragraph name the same items; no other frontmatter changes.
 Execution mode: delegate-mechanical.
 
 ### 6. README MODEL TIERING section
@@ -74,4 +74,11 @@ Execution mode: delegate-mechanical.
 
 ## Chapters
 
-(Appended by executing-work as sections complete. Leave empty at creation.)
+### Chapter 1 - 2026-07-24
+Completed: Sections 1-4 (implementer-fable; executing-work orchestration; brainstorming; finishing-work) as one parallel wave over disjoint files
+Implemented By: implementer-opus x4 (parallel)
+Metrics: 1 review round (two paired adversarial reviews covering the wave with a cross-file consistency lens); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises: Wave dispatch chosen because the four files are disjoint and the spec pins the shared vocabulary; the paired reviews were briefed to hunt cross-file drift specifically. B4's implementer added a header-scoping clause the spec did not enumerate ("a header that only scopes which sections earn the fable tier leaves this default in force"); reviewer judged it a faithful consequence of the Approach: kept. B2's implementer flagged two byte-identical-constraint leftovers (step 1's mode list, the Implemented By line); orchestrator applied both.
+Review Findings: 4 Majors, all fixed: (1) the session-model doctrine contradicted the completion contract's Handoff paragraph (brainstorm-then-execute-in-place vs hand-off); Handoff now defers to the doctrine on Fable-led sessions. (2) The escalation ladder granted an escalated-to-fable section two attempts where the Approach says one; the ladder now gives escalatees exactly one fable dispatch, then the stall is raised. (3) implementer-fable would have been the only implementer without the upgraded brief intake; section 5's scope amended to include it. (4) brainstorming's header template carried an "n/a (Fable-led session)" form no skill defined; dropped. Minors fixed: tier/mode terminology unified on mode; the scout-banding "cheap default" now names the harness's default scout model with no override; implementer-fable's advisor paragraph moved out of the Status protocol and its "stronger model" gloss corrected for the top tier. Minor carried forward: finishing-work's "model-pinned by design" sentence is a forward reference that section 5 makes true; verify before close.
+Next: 5. Agent pins and brief-section alignment, then 6. README MODEL TIERING (parallel wave 2)
+Commit Model: Branch-and-PR
