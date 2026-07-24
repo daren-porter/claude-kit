@@ -27,6 +27,7 @@ claude-kit/                          (repo = the marketplace)
         csharp-style/                Daren's C# style + detailed reference (incl. test style)
         sql-style/                   T-SQL house style (Scott-baseline minus vetoes) + reference
         reconcile-claude-md/         Install/merge/overwrite the kit's recommended global CLAUDE.md into the user's live file
+        kit-goal/                    /kit-goal <plan> arms a deterministic project-scoped completion leash
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
         qa-verifier.md               Build, tests, acceptance criteria with evidence
@@ -37,11 +38,13 @@ claude-kit/                          (repo = the marketplace)
         council-member.md            Read-only design-council lens
         design-facilitator.md        Neutral design-council convergence judge
       hooks/
-        hooks.json                   Hook registrations (SessionStart only)
-        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance
+        hooks.json                   Hook registrations (SessionStart + Stop)
+        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal
+        kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
+  test/                              Hook test suite (repo-level, not shipped): node --test test/*.test.js
   setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
   docs/plans/                        Plan docs for work on this repo itself
 ```
@@ -84,6 +87,8 @@ Compaction recovery is deterministic: the SessionStart hook fires on startup, re
 
 Kaizen keeps the kit improving itself. Concrete friction with the kit (an ambiguous rule, a step that fought the work, a missing capability) is captured cheaply to a home-level inbox (`~/.claude-kaizen`) from any project; a kaizen pass reflects the notes into briefs, and a fresh kit-repo session applies them per writing-skills. It is offered only when the inbox has pending items (finishing-work's close-out, or the SessionStart nudge in the kit repo), so it never prompts on an uneventful session.
 
+`/kit-goal docs/plans/<plan>.md` arms a project-scoped completion leash for a plan run, enforced by a deterministic Stop hook (no LLM evaluator) whose state lives in `.kit/` (gitignored) and so survives crashes, /resume, and fresh windows. The hook allows a stop only when the plan is Complete or archived, or the last message leads with `BLOCKED:`; otherwise it blocks with a reason naming the plan. Clear with `/kit-goal clear`. The executing-work skill's completion contract holds leash or no leash; arming is Daren's explicit act.
+
 ## CONVENTIONS
 
 - Specs and plans: `docs/plans/` in each project, named `<project>_<content-type>_v1.md`, versions increment, never overwrite.
@@ -118,5 +123,7 @@ node tools/token-profiler.js
 ```
 
 Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
+
+The hook test suite lives in `test/` (repo-level, excluded from the plugin payload). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
 
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.

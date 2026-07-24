@@ -92,3 +92,11 @@ Decisions / Surprises: One pure-insertion section between the intro and Before s
 Review Findings: APPROVED_WITH_CONCERNS. 1 Major fixed: the intro's four-item interrupt list and the new five-item blocker set disagreed (external-dependency case missing from the intro), an inherited defect from the source; intro list now carries the item and states the two lists are the same list. 2 Minors fixed: "at the tail of" restored to the red-flags list; the in-turn gate-wait wording now names the Monitor-with-until pattern instead of a bare `until` that bounces off the harness's foreground-sleep guard. 1 Minor recorded: the handoff-line spec amendment above.
 Next: 5. README and gate documentation
 Commit Model: Branch-and-PR
+
+### Chapter 5 - 2026-07-24
+Completed: 5. README and gate documentation
+Implemented By: implementer-sonnet
+Decisions / Surprises: docs/backlog.md created ahead of the docs-lifecycle effort with a minimal header; that effort formalizes the archive-snapshot convention. Both backlog items landed (baseline-test the ported wording; pin the session-start surfacing).
+Review Findings: per-section review skipped (trivial, docs-only; the finishing pass covers it). Gate re-verified 58/58 by implementer and orchestrator.
+Next: finishing-work
+Commit Model: Branch-and-PR
