@@ -64,6 +64,17 @@ Execution mode: delegate-mechanical.
 
 None. Decisions taken with Daren on 2026-07-24; per-file adaptation judgment is recorded in Chapters.
 
+## Related
+
+One of three specs adapting Scott Applefeld's kit into this one, designed together on 2026-07-24: `kit-goal-port_spec_v1.md` (the `/kit-goal` completion leash and the completion contract) and `orchestration-economics_spec_v1.md` (session-model-as-mode doctrine, the fable implementation tier, dispatch-brief upgrades), both Complete and in `../archive/`.
+
 ## Chapters
 
-(Appended by executing-work as sections complete. Leave empty at creation.)
+### Chapter 1 - 2026-07-24
+Completed: Sections 1-2 (curating-docs + repo retrofit; blind-reviewer + paired review) as a parallel wave over disjoint files
+Implemented By: implementer-opus x2 (parallel)
+Metrics: 1 review round (parallel adversarial reviews per section); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises: The retrofit moved ten Complete plans (the spec said eight; kit-goal-port and orchestration-economics closed on this branch after the spec was written and were archived in the same pass; spec Goal's count left as written since the Approach's "every Status: Complete plan" governs). curating-docs folded the source's templates into the SKILL.md body per writing-skills (no references/ file). blind-reviewer ported byte-identical: the source carried nothing kit-specific to adapt. C1's implementer added the close-path-runs-in-main-session sentence (grounded in docs-curator's no-Bash design); kept.
+Review Findings: C1 APPROVED, 4 Minors, all fixed: create-path sentence repositioned after the spend paragraph and extended to cover the Proposed-stub index flip; kaizen's deferred-promote stubs now register in the index (one-line integration, a deliberate half-step past the section's enumerated integration points, recorded here as a spec deviation); finishing-work's close enumeration gained cross-referencing. C2 APPROVED_WITH_CONCERNS, 1 Major fixed: step 3's paired dispatch had no leash-safe execution path (inline reviewer returns mean no output file to poll; background dispatch trips the leash); step 3 now states the mechanism, synchronous dispatches in one message run concurrently in-turn. 3 Minors fixed: blind-reviewer's git show now passes --format= so commit messages stay unread (the one deviation from byte-identity with the source, deliberate); responding-to-review's trigger enumeration gained blind; the DONE_WITH_CONCERNS hand-off now names the adversarial reviewer and excludes the blind one. Judged inherent, not fixed: a changed-file list necessarily reveals feature-area paths to the blind reviewer; the contract withholds the intent story, which paths do not carry.
+Next: 3. Write guards: docs-write-guard, stop-docs-hygiene, session-start nudge
+Commit Model: Branch-and-PR

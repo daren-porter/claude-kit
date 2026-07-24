@@ -33,6 +33,8 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
    A **delegate-fable** assignment doubles as Fable spend authorization within the plan-included allotment, so name the expected Fable surface in the spec's `Fable Spend:` header where Daren sees it at approval time. Crossing into metered Fable is never authorized by a mode assignment alone: that takes Daren's explicit line in the same header, for this specific effort. `Fable Spend: none (cost hold)` holds the whole effort at the session model regardless of what the sections' modes say.
 
+   Then run the `curating-docs` create path: register the new file in `docs/README.md` with a one-line hook, or update its existing entry when fleshing a Proposed stub (the index marker flips to In Progress), and cross-reference in both directions any plan it builds on or supersedes.
+
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
    - **Branch-and-PR**: work happens on a feature branch; sections are committed there and finishing-work opens a pull request. The default for shared repos.

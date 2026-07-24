@@ -1,6 +1,6 @@
 ---
 name: responding-to-review
-description: "Use when a review agent returns findings, when Daren gives feedback or a correction, or before implementing a suggestion from either - especially when it seems wrong, unclear, or larger than the problem. Triggers: adversarial/security/qa/docs review output to adjudicate, a 'you're right' about to be typed, pushback you are tempted to swallow."
+description: "Use when a review agent returns findings, when Daren gives feedback or a correction, or before implementing a suggestion from either - especially when it seems wrong, unclear, or larger than the problem. Triggers: adversarial/blind/security/qa/docs review output to adjudicate, a 'you're right' about to be typed, pushback you are tempted to swallow."
 ---
 
 # Responding to Review
@@ -12,13 +12,13 @@ worth hearing, but "usually" is not "always." Evaluate before you act.
 
 ## The two sources
 
-**Review-agent findings** (adversarial-reviewer, security-reviewer, qa-verifier)
-are fallible. A finding can be wrong, out of scope, or built on context the agent
-lacked. Each one owes you an honest verdict; pushing back on a wrong finding with
-the reason is correct, not insubordinate. Adjudicate every finding - do not
-rubber-stamp, and do not reflexively defer. (docs-curator is the exception: its
-Drift Report is not a severity-rated finding to adjudicate but a signal you route
-to Daren per finishing-work.)
+**Review-agent findings** (adversarial-reviewer, blind-reviewer,
+security-reviewer, qa-verifier) are fallible. A finding can be wrong, out of
+scope, or built on context the agent lacked. Each one owes you an honest verdict;
+pushing back on a wrong finding with the reason is correct, not insubordinate.
+Adjudicate every finding - do not rubber-stamp, and do not reflexively defer.
+(docs-curator is the exception: its Drift Report is not a severity-rated finding
+to adjudicate but a signal you route to Daren per finishing-work.)
 
 **Daren's feedback** is trusted: implement once you understand it. Still verify
 scope when it is unclear, and still say so when you see a problem with it. Silence

@@ -191,6 +191,10 @@ Acceptance criteria:
 2. Whether brainstorming auto-offers the council or only on a flagged fork.
    Defaulted to offer-at-a-genuine-fork plus direct invocation. Owner: Daren.
 
+## Related
+
+Part of the `claude-kit_spec` chain, and the latest version in it. `claude-kit_spec_v1.md` built the kit and `claude-kit_spec_v2.md` folded in the Superpowers-informed improvements; this version adopts three capabilities from Scott's fork on top of both.
+
 ## Chapters
 
 ### Chapter 1 - 2026-06-17

@@ -73,6 +73,10 @@ Execution mode: delegate-mechanical.
 
 - Whether Opus advisor consultations actually succeed at orchestrator context sizes (owner: the experiment; record per-Chapter in Metrics).
 
+## Related
+
+One of three specs adapting Scott Applefeld's kit into this one, designed together on 2026-07-24: `kit-goal-port_spec_v1.md` (the `/kit-goal` completion leash and the completion contract) and `docs-lifecycle-and-guards_spec_v1.md` (docs lifecycle, branch and PR guards, the blind reviewer).
+
 ## Chapters
 
 ### Chapter 1 - 2026-07-24

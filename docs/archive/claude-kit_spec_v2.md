@@ -209,6 +209,10 @@ Acceptance criteria:
    author-and-review for this effort? Defaulted to author-and-review; revisit when
    the kaizen skill lands. Owner: Daren.
 
+## Related
+
+Part of the `claude-kit_spec` chain. `claude-kit_spec_v1.md` built the kit this version improves; `claude-kit_spec_v3.md` follows it with the Scott-informed adoptions. Where a later version restates a decision made here, the later version is the live one.
+
 ## Chapters
 
 ### Chapter 1 - 2026-06-17

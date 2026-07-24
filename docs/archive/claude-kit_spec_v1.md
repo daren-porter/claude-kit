@@ -188,6 +188,10 @@ Acceptance criteria:
 4. RESOLVED: GitHub destination is `daren-porter/claude-kit`, private.
 5. RESOLVED: hand-rolled fakes primary; NSubstitute as the sanctioned mocking library; AwesomeAssertions approved as the FluentAssertions 7.x continuation path.
 
+## Related
+
+Part of the `claude-kit_spec` chain. This version built the kit; `claude-kit_spec_v2.md` folded in the Superpowers-informed improvements; `claude-kit_spec_v3.md` followed with the Scott-informed adoptions. Where a later version restates a decision made here, the later version is the live one.
+
 ## Chapters
 
 ### Chapter 1 - 2026-06-10

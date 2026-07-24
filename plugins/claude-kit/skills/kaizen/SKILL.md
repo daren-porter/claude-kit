@@ -64,7 +64,9 @@ when you sit down to a pending brief.
      `docs/plans/` spec instead of a brief. If the design is not happening in this
      pass, still capture it now as a **Proposed**-status stub spec (the friction,
      the intent, and enough to pick it up cold) so the deferred-promote backlog
-     lives in `docs/plans/`, not as an ambiguous line in the inbox.
+     lives in `docs/plans/`, not as an ambiguous line in the inbox. Register the
+     stub in `docs/README.md` with a "(Proposed)" marker per the curating-docs
+     create path, so the index never omits a file the taxonomy owns.
    - **Route elsewhere:** not actually about the kit. A project learning goes to
      auto memory; a project convention to that project's CLAUDE.md. It leaves the
      inbox either way.

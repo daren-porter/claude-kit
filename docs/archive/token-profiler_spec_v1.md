@@ -170,6 +170,10 @@ cache-read and output multipliers and the per-model rates. Watch it fail first. 
 stays verification-by-run reconciled against a real session, as in Piece 1 - a
 golden-file test over changing transcripts would be brittle and low-value.
 
+## Related
+
+`token-efficiency-audit_spec_v1.md` is Piece 1 of the token-efficiency work: the standing-context audit that measured the fixed per-session floor this profiler measures the variable spend above.
+
 ## Chapters
 
 ### Chapter 1 - 2026-07-20

@@ -183,6 +183,10 @@ Verification is a single run reconciled against the known source sizes measured
 during recon (skill descriptions ~4.75 KB, agent descriptions ~3.13 KB, shipped
 CLAUDE.md ~4.76 KB), confirming the numbers line up and the report renders.
 
+## Related
+
+`token-profiler_spec_v1.md` is Piece 2 of the token-efficiency work. This piece measures the standing per-session floor; Piece 2 profiles the variable spend of the work above that floor from real session transcripts.
+
 ## Chapters
 
 ### Chapter 1 - 2026-07-20

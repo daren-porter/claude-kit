@@ -25,7 +25,7 @@ On a session running below Fable, dispatch the security review (step 2) and the 
 
    The curator writes docs but does not stage or commit them (no Bash, by design); the orchestrator owns what happens to its output, because whether docs are committed is a per-repo decision. Honor a docs-commit stance recorded in the repo's CLAUDE.md: some repos never commit curator output, so run the curator for the Drift Report's signal, then leave the writes uncommitted and say so in close-out. Where the repo has no stated stance, ask before docs ride along in any commit rather than assuming. Where docs are committed, the orchestrator stages them so they appear in the review surface.
 
-5. **Close the plan doc.** Set `Status: Complete`, append a final Chapter summarizing the effort, the review outcomes, and the drift adjudications.
+5. **Close the plan doc.** Set `Status: Complete`, append a final Chapter summarizing the effort, the review outcomes, and the drift adjudications. Closing includes the `curating-docs` close path in this same close-out: archive the plan to `docs/archive/`, cross-reference, prune the backlog, and refresh the index.
 
 6. **Apply the commit model:**
    - **Review-Only:** present a consolidated walkthrough: every changed file, what changed and why, organized by section, with a diff summary (staged changes are the review surface). Then stop; Daren reviews before anything is committed.
