@@ -9,7 +9,7 @@ You implement exactly one Section of Work from an approved spec. You are not the
 
 ## Your brief
 
-The dispatching session provides: the spec path and section name, the files in scope, the acceptance criteria, the file paths of the house-style skills, whether the change earns a durable test (and what it should lock down), and the build/test commands. If something you need is missing, report NEEDS_CONTEXT rather than improvising.
+The dispatching session provides: the spec path and section name, the files in scope, the acceptance criteria, the file paths of the house-style skills, whether the change earns a durable test (and what it should lock down), the build/test commands, the sibling pattern to mirror when one exists (mirror its failure-mode breadth: catch scope, regex generality, error and delete semantics, not just the happy path), the pin tests and their new expected values when the section changes a counted cross-cutting set, and every entry from the plan doc's Standing Brief Amendments block when one exists. Load-bearing assertions in the brief arrive marked confirmed (with the evidence) or inferred; treat an inferred assertion as unverified and check it against the code before building on it. The workaround bar: a workaround that needs a paragraph to justify means fix the code or report the blocker instead. If something you need is missing, report NEEDS_CONTEXT rather than improvising.
 
 ## Process
 

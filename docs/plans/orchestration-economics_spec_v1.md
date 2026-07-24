@@ -82,3 +82,12 @@ Decisions / Surprises: Wave dispatch chosen because the four files are disjoint 
 Review Findings: 4 Majors, all fixed: (1) the session-model doctrine contradicted the completion contract's Handoff paragraph (brainstorm-then-execute-in-place vs hand-off); Handoff now defers to the doctrine on Fable-led sessions. (2) The escalation ladder granted an escalated-to-fable section two attempts where the Approach says one; the ladder now gives escalatees exactly one fable dispatch, then the stall is raised. (3) implementer-fable would have been the only implementer without the upgraded brief intake; section 5's scope amended to include it. (4) brainstorming's header template carried an "n/a (Fable-led session)" form no skill defined; dropped. Minors fixed: tier/mode terminology unified on mode; the scout-banding "cheap default" now names the harness's default scout model with no override; implementer-fable's advisor paragraph moved out of the Status protocol and its "stronger model" gloss corrected for the top tier. Minor carried forward: finishing-work's "model-pinned by design" sentence is a forward reference that section 5 makes true; verify before close.
 Next: 5. Agent pins and brief-section alignment, then 6. README MODEL TIERING (parallel wave 2)
 Commit Model: Branch-and-PR
+
+### Chapter 2 - 2026-07-24
+Completed: Sections 5-6 (agent pins and brief alignment; README MODEL TIERING) as parallel wave 2
+Implemented By: implementer-sonnet x2 (parallel)
+Metrics: 0 review rounds (S5 trivial-mechanical with checksum-verified identical briefs; S6 covered by the finishing pass); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises: The three implementer Your-brief paragraphs are byte-identical (md5-verified). implementer-fable stays unpinned with its deliberateness comment intact. S6's implementer substituted "up into the top tier" for a briefed phrase containing a banned word; accepted. Chapter 1's carried-forward Minor is resolved: finishing-work's "model-pinned by design" sentence is now true on disk (qa-verifier sonnet, docs-curator opus).
+Review Findings: none this wave; the whole-changeset finishing pass reviews S6's doctrine summary for drift against the skills.
+Next: finishing-work
+Commit Model: Branch-and-PR
