@@ -65,6 +65,7 @@ Acceptance:
 Execution mode: main (design-entangled with S2; the pipeline text is the design).
 
 ### 4. Calibration replay
+Replay run 2026-08-05 to the gate; awaiting Daren's sign-off (Chapter 4).
 Replay at least one real past PR Daren already reviewed (he picks which): run the pipeline to the gate, no posting, and diff the output against his actual review. Judge on: no slop findings (every posted-candidate names its failure or practice), catches what he caught or the misses are defensible, comment text senior-dev-grade in tone and length. Tune S2/S3 wording on divergence; if a specific anti-slop rule demonstrably failed, run the writing-skills RED/GREEN loop on that rule. Brief the agent inline or update the plugin cache first (cache lag).
 Acceptance:
 - At least one replay run to the gate.
@@ -73,6 +74,7 @@ Acceptance:
 Execution mode: main (orchestration, MCP access, and Daren's adjudication).
 
 ### 5. Registration
+Completed: 2026-08-05 (Chapter 4).
 Add `pr-review` to the kit README's skill listing with a one-line description consistent with its siblings; confirm the docs index entry for this plan is accurate.
 Acceptance:
 - README lists the skill; `docs/README.md` entry verified.
@@ -128,4 +130,13 @@ Metrics: review rounds 1 (adversarial APPROVED_WITH_CONCERNS, blind CHANGES_REQU
 Decisions / Surprises: Three review findings were answered with live probes instead of caveats, all comment-only on PR #321 (threads 2714/2715, created and closed): `repo_list_pull_requests_by_repo_or_project` with `i_am_reviewer` verified live (also surfaced active PR #394 awaiting Daren's review); PR-level threads (no filePath, threadContext null) verified; file-level anchoring (filePath alone) verified; create-with-status Closed verified; thread status `Fixed` (=2) verified. Remaining dry-verified mechanics are now exactly two: casting a vote and toggling auto-complete, both marked confirm-on-first-live-use with the confirmation recorded to auto memory. changeType documented as a flags enum (delete=16, rename=8, combinations) after both reviewers caught the incomplete legend; the no-clone scratchpad is split code/ vs digests/ so the blind pass cannot trip over the intent story; AC-gap blockers post as PR-level threads; mixed blocker+suggestion verdicts post both sets of threads; re-review keys on any prior Daren thread or vote, not just unresolved threads.
 Review Findings: All three adversarial Majors fixed (unverified listing tool: probed live; auto-complete caveat restored; scratchpad contamination: directory split). All three blind Majors fixed (flags-enum masking with deleted-file representation; the same directory split; PR-level thread path for anchorless findings). All Minors from both fixed except none outstanding; notable Minors: system-thread filtering no longer keys on null threadContext (human PR-level comments share it), description parenthetical dropped to keep the frontmatter trigger-only, az read-coverage claim narrowed (no thread listing outside `az devops invoke`).
 Next: 4. Calibration replay
+Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-08-05
+Completed: 5. Registration
+Implemented By: main session
+Metrics: review rounds 0 (trivial carve-out: two listing lines); NEEDS_CONTEXT 0; escalations 0; advisor not observed this session
+Decisions / Surprises: pr-review registered under skills/ and pr-reviewer under agents/ in the kit README; the docs index entry from spec creation is still accurate. S4's replay also ran this session (its one open acceptance item is Daren's sign-off, so S5 closes first). Replay facts for the record: the local-clone path needed no fetch at all, because a squash-merged PR's net diff is the squash commit against its single parent (9736ed0^..9736ed0 here), and that is the preferred materialization for completed PRs since sandbox SSH fetch fails without agent keys. The reviewer trio (pr-reviewer inline-briefed per the plugin-cache-lag memory, blind, security) independently converged on the same top finding, the DeleteRetries NULL migration gap. The filter caught a real calibration hazard: security-reviewer sourced two findings to ASR.Eleos/docs/security-model.md, which postdates the PR (2026-07-14 vs. merge 2026-05-11) and is absent at the PR ref; both demoted from author-facing suggestions to Daren-facing notes after the ref check. Gate report delivered in-session; no posting (replay-only, PR completed).
+Review Findings: none (registration lines).
+Next: 4. Calibration replay sign-off (Daren), then finishing-work
 Commit Model: Commit-and-Push

@@ -30,9 +30,11 @@ claude-kit/                          (repo = the marketplace)
         kit-goal/                    /kit-goal <plan> arms a deterministic project-scoped completion leash
         curating-docs/               docs/ taxonomy: plan archival, backlog pruning, index and cross-references
         branch-hygiene/              Reap merged branches, recover stranded ones; the branch-reaper nudge hands off here
+        pr-review/                   Azure DevOps PR review: gather via connector, senior-dev-calibrated findings, gated posting under Daren's identity
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
         blind-reviewer.md            Diff-only correctness review, dispatched without the spec or intent story
+        pr-reviewer.md               Precision-calibrated incoming-PR review: finding bar, blocker/suggestion/note, comment drafts
         qa-verifier.md               Build, tests, acceptance criteria with evidence; pinned sonnet
         security-reviewer.md         OWASP + SOC 2 review, any production codebase (deep on C#/T-SQL; covers hooks, shell, config)
         docs-curator.md              Updates docs/, returns Drift Report; pinned opus
