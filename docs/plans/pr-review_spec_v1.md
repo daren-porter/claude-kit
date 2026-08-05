@@ -46,6 +46,7 @@ Acceptance:
 Execution mode: main (requires MCP access, which subagents lack).
 
 ### 2. pr-reviewer agent
+Completed: 2026-08-05 (Chapter 2).
 New agent at `plugins/claude-kit/agents/pr-reviewer.md`, read-only tools (Read, Grep, Glob, Bash), model unpinned. Precision-tuned, unlike the kit's recall-tuned reviewers, carrying the finding bar. Input contract: paths to materialized context (diff refs or changed-file list, PR description, AC text, existing-threads digest, optional practices doc). Output contract: findings in blocker/suggestion/note categories, each with file:line, what and why, fix direction, and its justification type (failure scenario, or practice violation with source). Anti-slop rules as prohibitions where writing-skills' failure-to-form table calls for them: verify absence before flagging it, no style nits absent a committed standard, no re-raising existing thread points, no praise or padding.
 Acceptance:
 - Passes `claude plugin validate`.
@@ -108,4 +109,13 @@ Decisions / Surprises: All probes ran against PR #321 (EleosCore, EleosIntegrati
 - Spec amendments this section: S1 rescoped to comment-only per Daren (no votes, no auto-complete, no reopen); S4 open question resolved to judging the gate report on #321 directly.
 Review Findings: per-section review skipped under the trivial carve-out (no code artifacts; changes are probe results plus this plan doc). The finishing pass covers the effort end to end.
 Next: 2. pr-reviewer agent
+Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-08-05
+Completed: 2. pr-reviewer agent
+Implemented By: main session
+Metrics: review rounds 1 (paired adversarial + blind, both APPROVED_WITH_CONCERNS); NEEDS_CONTEXT 0; escalations 0; advisor not observed this session
+Decisions / Surprises: The agent's core inversion is stated against the kit's other reviewers explicitly: their recall-over-precision license rests on an internal adjudication filter, and this agent's output reaches a teammate, so precision is the calibration and the finding bar (failure scenario, or practice violation with source) is the mechanism. Notes got their own bar (specific observation worth Daren's attention beyond the PR) after blind review showed the two-type bar strictly read made the category empty. The agent proposes an advisory vote; the orchestrator derives the posted vote from surviving findings.
+Review Findings: Adversarial Major fixed (committed docs now explicitly outrank prevailing conventions in the practice bar). Blind Major adjudicated no-change: the agent names the pr-review skill as its dispatcher one section before that skill lands; sequencing artifact under Commit-and-Push, closed by S3. Minors fixed: scratchpad-mode degradation policy added; --format= contamination hygiene dropped (commit messages are legitimate context for this agent); cannot-verify AC disposition stated; right-side line-number rule added; report-level no-padding prohibition added; NOTE split out of the comment-draft template; description overpromise corrected. No Minors left unaddressed.
+Next: 3. pr-review skill
 Commit Model: Commit-and-Push
