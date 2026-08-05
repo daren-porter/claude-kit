@@ -49,7 +49,7 @@ Every candidate finding is adjudicated in the main thread before Daren sees it:
 - Dedup across reviewers and against the existing human threads: a point a teammate already made is not raised again.
 - A claimed absence ("no error handling") without evidence the reviewer looked: verify it in the code yourself, or drop it.
 - Borderline calls default to dropping. A senior dev raises fewer, better points; the cost of a pedantic comment recurs on every PR the author brings.
-- Draft comments must read like a dev typed them into the review pane; strip assistant-prose tells ("Net effect:", "In essence,", "It's worth noting") before the gate.
+- Draft comments must read like a dev typed them into the review pane; strip assistant-prose tells ("Net effect:", "In essence,", "It's worth noting", "This ensures") before the gate.
 
 ## The gate (required; no posting path skips it)
 
@@ -57,7 +57,7 @@ Present to Daren, in the terminal:
 
 1. One line of PR context and any reduced-context or split-dispatch flags.
 2. AC coverage per criterion (met / gap / cannot verify), Daren's eyes only; the PR never gets a checklist comment.
-3. Findings by category, each with file:line, the one-to-three-sentence rationale, and the exact comment text that would post.
+3. Findings by category, each with file:line, the one-to-three-sentence rationale, the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
 4. The proposed vote and auto-complete action per the table below.
 
 Daren edits, vetoes, promotes notes to comments, or overrides the vote. Only his explicit go-ahead unlocks posting, one approval for the whole PR. A clean approve still waits here: a vote is an outward-facing act.
@@ -72,7 +72,7 @@ A mixed verdict takes the severest row's vote and posts threads for the blockers
 
 ## Post (only after the gate)
 
-- **Threads:** `repo_create_pull_request_thread` with `filePath` plus all four of rightFileStartLine/rightFileStartOffset/rightFileEndLine/rightFileEndOffset, spanning the finding's Anchor. When the comment ends in a fenced `suggestion` block, span the full replaced lines (offset 1 through last-line length plus 1): ADO renders the block as an applyable change, and Apply replaces exactly the anchored span (connector posting verified, thread 2717). Line numbers are new-side; a finding on deleted code anchors to the nearest surviving line or file-level (filePath alone, verified); a finding with no file at all (an AC gap) posts as a PR-level thread (no filePath, verified). Blockers and suggestions post Active; promoted notes post with `status: Closed` at creation (verified): visible, not demanded.
+- **Threads:** `repo_create_pull_request_thread` with `filePath` plus all four of rightFileStartLine/rightFileStartOffset/rightFileEndLine/rightFileEndOffset, spanning the finding's Anchor. When the comment ends in a fenced `suggestion` block, span the full replaced lines (offset 1 through last-line length plus 1): ADO renders the block as an applyable change and Apply replaces the anchored span (posting verified, thread 2717; confirm the Apply rendering on first real use like the vote, recorded in auto memory). Line numbers are new-side; a finding on deleted code anchors to the nearest surviving line or file-level (filePath alone, verified); a finding with no file at all (an AC gap) posts as a PR-level thread (no filePath, verified). Blockers and suggestions post Active; promoted notes post with `status: Closed` at creation (verified): visible, not demanded.
 - **Vote:** `repo_vote_pull_request` (Approved | ApprovedWithSuggestions | WaitingForAuthor; Rejected only as Daren's gate escalation). Fallback: `az repos pr set-vote`. Dry-verified: confirm on first live use and record the confirmation in auto memory.
 - **Auto-complete:** when posting unresolved threads and the PR has auto-complete set (check `autoCompleteSetBy`; an inferred field, unobservable on a completed PR), cancel it with `repo_update_pull_request` `autoComplete: false` so the author sees the feedback before merge. Fallback: `az repos pr update --auto-complete false`. Dry-verified like the vote: confirm on first live use and record it in auto memory.
 - Report back exactly what posted, with thread ids.

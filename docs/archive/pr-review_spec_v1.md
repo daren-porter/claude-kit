@@ -1,6 +1,6 @@
 # PR Review Skill (Azure DevOps)
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: in-session only (all sections main-thread; review dispatches inherit the session model); no delegate-fable sections
 Created: 2026-08-05
@@ -148,4 +148,13 @@ Metrics: review rounds n/a (Daren adjudicated the gate report directly); NEEDS_C
 Decisions / Surprises: Daren signed off ("a good run") with two calibration corrections, both applied. (1) Assistant-prose tells are banned from draft comments; the replay's blocker draft contained "Net effect:", exactly the pattern he flagged. pr-reviewer's comment-draft rules now state the banned tells plus a read-it-back test, the skill's filter re-checks before the gate, and the preference is saved to auto memory because it applies to all prose written as him. (2) ADO applyable suggestions: when a fix is concrete enough to stake exact text on, the comment ends with a fenced `suggestion` block; agent findings now carry an Anchor span, and posting spans full lines for suggestion-bearing comments because Apply replaces exactly the anchored span. Probe thread 2717 posted a real suggestion (line 52 of ELEOS.usp_MarkActionRequestDeleteFailed.sql at full-line span) via the connector; content and span match editor-authored comments, with Daren's visual confirmation of the Apply rendering the one open check (thread left Active for the eyeball; close it after).
 Review Findings: none this section (wording and contract additions; the finishing pass reviews the full changeset).
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 6 - 2026-08-05
+Completed: finishing pass; plan Complete
+Implemented By: main session
+Metrics: QA PASS (validate clean; hook suite 142/0/0); security dispatch skipped (all-prose changeset, finishing-work's stated predicate; the adversarial pass was the security read); docs-curator skipped (the deliverable is itself documentation, no code layer beneath to reconcile); final adversarial APPROVED_WITH_CONCERNS (1 Major, 6 Minors); advisor not observed this session
+Decisions / Surprises: The Major closed the one hole no per-section pass could see: pr-reviewer is the only component combining write-capable Bash (az is AAD-authenticated on this machine), the PR's identity, and no sight of the skill-level gate rule, so the agent file now carries its own explicit never-write-to-DevOps prohibition. Also fixed: the Anchor slot accepts `file` for file-level findings; the Apply-span claim carries the same first-real-use confirmation marker as the vote; the filter's tells list matches the agent's; the gate shows the anchor span for suggestion-bearing comments (the span is what Apply overwrites). Recorded rather than fixed: the prose-tells wording has a live RED but no GREEN run (extended the standing baseline-test backlog item); probe thread 2717 on PR #321 stays Active until Daren confirms the Apply rendering, and closing it then is the close-out's owned loose end. No drift adjudications (curator skipped).
+Review Findings: Major fixed; four Minors fixed; two recorded (RED/GREEN debt to backlog, 2717 closure owned here).
+Next: none (Complete). Small follow-ons run as post-close increments per finishing-work.
 Commit Model: Commit-and-Push
