@@ -65,7 +65,7 @@ Acceptance:
 Execution mode: main (design-entangled with S2; the pipeline text is the design).
 
 ### 4. Calibration replay
-Replay run 2026-08-05 to the gate; awaiting Daren's sign-off (Chapter 4).
+Completed: 2026-08-05 (run: Chapter 4; sign-off and calibration corrections: Chapter 5).
 Replay at least one real past PR Daren already reviewed (he picks which): run the pipeline to the gate, no posting, and diff the output against his actual review. Judge on: no slop findings (every posted-candidate names its failure or practice), catches what he caught or the misses are defensible, comment text senior-dev-grade in tone and length. Tune S2/S3 wording on divergence; if a specific anti-slop rule demonstrably failed, run the writing-skills RED/GREEN loop on that rule. Brief the agent inline or update the plugin cache first (cache lag).
 Acceptance:
 - At least one replay run to the gate.
@@ -139,4 +139,13 @@ Metrics: review rounds 0 (trivial carve-out: two listing lines); NEEDS_CONTEXT 0
 Decisions / Surprises: pr-review registered under skills/ and pr-reviewer under agents/ in the kit README; the docs index entry from spec creation is still accurate. S4's replay also ran this session (its one open acceptance item is Daren's sign-off, so S5 closes first). Replay facts for the record: the local-clone path needed no fetch at all, because a squash-merged PR's net diff is the squash commit against its single parent (9736ed0^..9736ed0 here), and that is the preferred materialization for completed PRs since sandbox SSH fetch fails without agent keys. The reviewer trio (pr-reviewer inline-briefed per the plugin-cache-lag memory, blind, security) independently converged on the same top finding, the DeleteRetries NULL migration gap. The filter caught a real calibration hazard: security-reviewer sourced two findings to ASR.Eleos/docs/security-model.md, which postdates the PR (2026-07-14 vs. merge 2026-05-11) and is absent at the PR ref; both demoted from author-facing suggestions to Daren-facing notes after the ref check. Gate report delivered in-session; no posting (replay-only, PR completed).
 Review Findings: none (registration lines).
 Next: 4. Calibration replay sign-off (Daren), then finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-08-05
+Completed: 4. Calibration replay
+Implemented By: main session
+Metrics: review rounds n/a (Daren adjudicated the gate report directly); NEEDS_CONTEXT 0; escalations 0; advisor not observed this session
+Decisions / Surprises: Daren signed off ("a good run") with two calibration corrections, both applied. (1) Assistant-prose tells are banned from draft comments; the replay's blocker draft contained "Net effect:", exactly the pattern he flagged. pr-reviewer's comment-draft rules now state the banned tells plus a read-it-back test, the skill's filter re-checks before the gate, and the preference is saved to auto memory because it applies to all prose written as him. (2) ADO applyable suggestions: when a fix is concrete enough to stake exact text on, the comment ends with a fenced `suggestion` block; agent findings now carry an Anchor span, and posting spans full lines for suggestion-bearing comments because Apply replaces exactly the anchored span. Probe thread 2717 posted a real suggestion (line 52 of ELEOS.usp_MarkActionRequestDeleteFailed.sql at full-line span) via the connector; content and span match editor-authored comments, with Daren's visual confirmation of the Apply rendering the one open check (thread left Active for the eyeball; close it after).
+Review Findings: none this section (wording and contract additions; the finishing pass reviews the full changeset).
+Next: finishing-work
 Commit Model: Commit-and-Push

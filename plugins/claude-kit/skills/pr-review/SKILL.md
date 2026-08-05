@@ -49,6 +49,7 @@ Every candidate finding is adjudicated in the main thread before Daren sees it:
 - Dedup across reviewers and against the existing human threads: a point a teammate already made is not raised again.
 - A claimed absence ("no error handling") without evidence the reviewer looked: verify it in the code yourself, or drop it.
 - Borderline calls default to dropping. A senior dev raises fewer, better points; the cost of a pedantic comment recurs on every PR the author brings.
+- Draft comments must read like a dev typed them into the review pane; strip assistant-prose tells ("Net effect:", "In essence,", "It's worth noting") before the gate.
 
 ## The gate (required; no posting path skips it)
 
@@ -71,7 +72,7 @@ A mixed verdict takes the severest row's vote and posts threads for the blockers
 
 ## Post (only after the gate)
 
-- **Threads:** `repo_create_pull_request_thread` with `filePath` plus all four of rightFileStartLine/rightFileStartOffset/rightFileEndLine/rightFileEndOffset. Line numbers are new-side; a finding on deleted code anchors to the nearest surviving line or file-level (filePath alone, verified); a finding with no file at all (an AC gap) posts as a PR-level thread (no filePath, verified). Blockers and suggestions post Active; promoted notes post with `status: Closed` at creation (verified): visible, not demanded.
+- **Threads:** `repo_create_pull_request_thread` with `filePath` plus all four of rightFileStartLine/rightFileStartOffset/rightFileEndLine/rightFileEndOffset, spanning the finding's Anchor. When the comment ends in a fenced `suggestion` block, span the full replaced lines (offset 1 through last-line length plus 1): ADO renders the block as an applyable change, and Apply replaces exactly the anchored span (connector posting verified, thread 2717). Line numbers are new-side; a finding on deleted code anchors to the nearest surviving line or file-level (filePath alone, verified); a finding with no file at all (an AC gap) posts as a PR-level thread (no filePath, verified). Blockers and suggestions post Active; promoted notes post with `status: Closed` at creation (verified): visible, not demanded.
 - **Vote:** `repo_vote_pull_request` (Approved | ApprovedWithSuggestions | WaitingForAuthor; Rejected only as Daren's gate escalation). Fallback: `az repos pr set-vote`. Dry-verified: confirm on first live use and record the confirmation in auto memory.
 - **Auto-complete:** when posting unresolved threads and the PR has auto-complete set (check `autoCompleteSetBy`; an inferred field, unobservable on a completed PR), cancel it with `repo_update_pull_request` `autoComplete: false` so the author sees the feedback before merge. Fallback: `az repos pr update --auto-complete false`. Dry-verified like the vote: confirm on first live use and record it in auto memory.
 - Report back exactly what posted, with thread ids.
