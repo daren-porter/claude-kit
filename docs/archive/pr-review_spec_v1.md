@@ -158,3 +158,12 @@ Decisions / Surprises: The Major closed the one hole no per-section pass could s
 Review Findings: Major fixed; four Minors fixed; two recorded (RED/GREEN debt to backlog, 2717 closure owned here).
 Next: none (Complete). Small follow-ons run as post-close increments per finishing-work.
 Commit Model: Commit-and-Push
+
+### Chapter 7 - 2026-08-05 (post-close increment)
+Completed: anchoring and comment-markdown refinements from Daren's probe inspection
+Implemented By: main session
+Metrics: adversarial delta pass APPROVED_WITH_CONCERNS (4 Minors: 3 fixed, 1 resolved by record); QA re-run scoped to validate (clean); NEEDS_CONTEXT 0; escalations 0; advisor not observed this session
+Decisions / Surprises: Daren confirmed the connector-posted suggestion renders with the Apply UI (thread 2717; closed after his confirmation). He also caught that the S1 probe's line anchor highlighted a single character: ADO offsets are character-exact, and that probe's 1..2 span was literally one character. The skill now mandates full-line spans (offset 1 through last-line length plus 1, computed from the file at the source ref) for every line-anchored thread; comment drafts use backtick code spans for code fragments; the filter extends the tells ban and the code-span standard to main-thread-drafted text (re-review replies, promoted notes). Confirmation state banked to auto memory: suggestion rendering confirmed, vote and auto-complete still pending first live gated use. Editor fact recorded: the editor pre-fills a suggestion block from the selected code; the connector path authors the replacement manually, which is why the anchored span must match the block exactly.
+Review Findings: 3 Minors fixed (source-ref computation pinned; "full lines" wording collision resolved; filter standard extended); 1 resolved by record (2717 closed this session). Unverified edge noted for the future: an anchor ending on an empty line computes end offset 1, and ADO's acceptance of that is untested.
+Next: none (Complete).
+Commit Model: Commit-and-Push
