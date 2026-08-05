@@ -36,6 +36,7 @@ The decisions that shape the build, with reasoning:
 ## Sections of Work
 
 ### 1. Connector write-path verification
+Completed: 2026-08-05 (Chapter 1).
 Probe the connector's write surface on PR #321 (an old PR of Daren's), comment surface only: create a thread anchored to file and line (correct file, line, and iteration context), reply, and update thread status, closing the test threads as cleanup. Do not re-open the PR, do not vote, do not touch auto-complete; nothing that changes the PR's actual status. Vote and auto-complete are verified dry instead: identify the connector tool or `az`/REST fallback and exact parameters, with live confirmation deferred to the first real gated use (safe because the gate has Daren approving the action). Verify the read side where shape is uncertain: acceptance-criteria field retrieval from a real PBI, work item discussion, PR iterations/changes. Record each capability, each gap, and the chosen fallback with exact tool names and quirks; the results feed S2/S3 text.
 Acceptance:
 - Thread create, reply, and status-update demonstrated live on PR #321, comment-only, test threads closed afterward.
@@ -86,6 +87,25 @@ Execution mode: main (trivial, and touches the same files as the effort's close-
 
 ## Open Questions
 
-- Which past PR(s) to replay in S4: Daren picks at execution time. (S1's test surface is settled: PR #321, comment-only, no status changes.)
+- S4 replays PR #321 to the gate (Daren designated it as the test vehicle for the effort). Since #321 is Daren's own PR and its reviewer approved without substantive comments, there is no past-review transcript to diff against; Daren judges the gate report directly. He may name an additional past PR if a comparison replay proves worth it.
 
 ## Chapters
+
+### Chapter 1 - 2026-08-05
+Completed: 1. Connector write-path verification
+Implemented By: main session
+Metrics: review rounds 0; NEEDS_CONTEXT 0; escalations 0; advisor not observed this session
+Decisions / Surprises: All probes ran against PR #321 (EleosCore, EleosIntegration project, org asr-solutions), comment-only per Daren. Findings for S2/S3:
+- **Resolving a bare PR id:** connector `repo_get_pull_request_by_id` requires repositoryId; `az repos pr show --id N --organization https://dev.azure.com/asr-solutions` resolves org-wide without repo/project (confirmed live). az is logged in via AAD but has no default org configured; every az command needs `--organization`.
+- **PR read shape (confirmed):** `repo_get_pull_request_by_id` with `includeWorkItemRefs: true` returns linked work item ids; description, reviewers with votes, isDraft, status, source/target refs, lastMergeSourceCommit/lastMergeTargetCommit (the refs local git diffs against), and completionOptions all present.
+- **Changes (confirmed):** `repo_get_pull_request_changes` with `includeDiffs: false` returns paths + changeType (1=add, 2=edit); with `includeDiffs: true` returns lineDiffBlocks with full original/modified line content and nextTop/nextSkip pagination. Verbose; remote-only fallback, prefer local git.
+- **Threads (confirmed):** `repo_list_pull_request_threads` includes system housekeeping threads (votes, auto-complete set/cancel, policy updates, "X joined as reviewer") with `threadContext: null`; the thread digest must filter author "Microsoft.VisualStudio.Services.TFS" and vote/auto-complete/policy system texts. Human file-anchored threads carry threadContext.
+- **Thread writes (confirmed live, thread 2713):** `repo_create_pull_request_thread` anchors with filePath + all four of rightFileStartLine/rightFileStartOffset/rightFileEndLine/rightFileEndOffset; response threadContext echoes the anchor. Right-file anchoring only, no left-file params: findings on deleted lines must anchor to a nearby surviving line or go file-level (filePath with no line params, inferred valid since position params are optional; verify on first use). `repo_reply_to_comment` (threadId) and `repo_update_pull_request_thread` (status; Closed=4) both confirmed.
+- **Vote (dry):** `repo_vote_pull_request` enum Approved/ApprovedWithSuggestions/NoVote/WaitingForAuthor/Rejected; auto-adds caller as reviewer. Fallback: `az repos pr set-vote --id N --vote approve|approve-with-suggestions|reject|reset|wait-for-author`. Live confirmation on first real gated use.
+- **Auto-complete (dry):** `repo_update_pull_request` has autoComplete boolean plus mergeStrategy/deleteSourceBranch/transitionWorkItems/bypassReason. Fallback: `az repos pr update --id N --auto-complete false`. Detection of current auto-complete state on an active PR is via autoCompleteSetBy (inferred from REST docs, not observable on a completed PR; verify on first use). Live confirmation on first real gated use.
+- **Work items (confirmed):** `wit_get_work_item` with a fields list returns Microsoft.VSTS.Common.AcceptanceCriteria as HTML (populated on PBI 21103); Tasks lack AC. The project param need not be the work item's home project (repo project worked; items actually live in "ASR Development - Scrum"). `wit_list_work_item_comments` returns HTML comments, sometimes enormous (embedded tables); digest, never inline raw.
+- **Ops note:** the MCP permission classifier had a transient outage mid-probe; a short retry recovered. The skill should treat connector errors as retryable before falling back to az.
+- Spec amendments this section: S1 rescoped to comment-only per Daren (no votes, no auto-complete, no reopen); S4 open question resolved to judging the gate report on #321 directly.
+Review Findings: per-section review skipped under the trivial carve-out (no code artifacts; changes are probe results plus this plan doc). The finishing pass covers the effort end to end.
+Next: 2. pr-reviewer agent
+Commit Model: Commit-and-Push
