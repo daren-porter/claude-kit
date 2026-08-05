@@ -36,9 +36,10 @@ The decisions that shape the build, with reasoning:
 ## Sections of Work
 
 ### 1. Connector write-path verification
-Probe the connector's write surface on a throwaway PR Daren designates (never a teammate's live PR): create a thread anchored to file and line (correct file, line, and iteration context), reply, resolve, cast each vote value, set and cancel auto-complete. Verify the read side where shape is uncertain: acceptance-criteria field retrieval from a real PBI, work item discussion, PR iterations/changes. Record each capability, each gap, and the chosen fallback (`az` or REST) with exact tool names and quirks; the results feed S2/S3 text.
+Probe the connector's write surface on PR #321 (an old PR of Daren's), comment surface only: create a thread anchored to file and line (correct file, line, and iteration context), reply, and update thread status, closing the test threads as cleanup. Do not re-open the PR, do not vote, do not touch auto-complete; nothing that changes the PR's actual status. Vote and auto-complete are verified dry instead: identify the connector tool or `az`/REST fallback and exact parameters, with live confirmation deferred to the first real gated use (safe because the gate has Daren approving the action). Verify the read side where shape is uncertain: acceptance-criteria field retrieval from a real PBI, work item discussion, PR iterations/changes. Record each capability, each gap, and the chosen fallback with exact tool names and quirks; the results feed S2/S3 text.
 Acceptance:
-- Every write action in the category table has a verified mechanism (connector or named fallback), demonstrated on the test PR.
+- Thread create, reply, and status-update demonstrated live on PR #321, comment-only, test threads closed afterward.
+- Vote and auto-complete each have a documented mechanism (connector tool or named fallback) verified dry, marked for live confirmation on first real gated use.
 - AC and work item discussion retrieval verified against a real PBI.
 - Findings recorded in this plan's Chapter for S3 to consume.
 Execution mode: main (requires MCP access, which subagents lack).
@@ -85,7 +86,6 @@ Execution mode: main (trivial, and touches the same files as the effort's close-
 
 ## Open Questions
 
-- Which throwaway repo/PR to use for S1's write probes: Daren designates at execution time.
-- Which past PR(s) to replay in S4: Daren picks at execution time.
+- Which past PR(s) to replay in S4: Daren picks at execution time. (S1's test surface is settled: PR #321, comment-only, no status changes.)
 
 ## Chapters
