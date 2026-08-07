@@ -1,10 +1,10 @@
 # claude-kit Docs
 
-This directory is the working library and project history for the kit itself: the active plans, the living backlog, and the archived record of finished efforts. It is repo-level material, a sibling of `README.md`, `plugins/`, `settings/`, and `test/`. Nothing here ships inside the installable plugin payload (`plugins/claude-kit/`), so none of it loads for someone who installs the plugin.
+This directory is the working library and project history for the kit itself: the active plans, the living documents, and the archived record of finished efforts. It is repo-level material, a sibling of `README.md`, `plugins/`, `settings/`, and `test/`. Nothing here ships inside the installable plugin payload (`plugins/claude-kit/`), so none of it loads for someone who installs the plugin.
 
 ## Folder map
 
-- **Root (`docs/`)** holds the stable documents about the solution and this index.
+- **Root (`docs/`)** holds the stable documents about the solution, the living documents (`backlog.md`, `kit-adoptions.md`), and this index.
 - **`plans/`** holds active plans only: `Status: In Progress` and `Status: Proposed` stubs. A plan moves to `archive/` in the close-out that completes or abandons it.
 - **`archive/`** holds finished and abandoned plans with their Chapters intact, and dated backlog snapshots. Immutable history; nothing there is live.
 
@@ -12,7 +12,6 @@ This directory is the working library and project history for the kit itself: th
 
 - **`plans/appsec-security-reviewer_spec_v1.md`** (Proposed) - whether non-.NET repos with real attack surface warrant a standing appsec reviewer, or a deeper adversarial security bullet suffices. Likely retired: the docs-lifecycle effort generalized `security-reviewer` to any production codebase, substantially answering the question (the stub's Related note has the details); Daren adjudicates.
 - **`plans/visual-companion_spec_v1.md`** (Proposed) - what a "visual companion" for this kit would render, in what medium, and whether to build one or adopt the superpowers version.
-- **`plans/kit-adoption-pass_spec_v1.md`** (In Progress) - a skill for the recurring inbound pass over Scott Applefeld's kit, plus `kit-adoptions.md` as its standing record: a cheapest-first read ladder that classifies off his docs and diffs rather than his code, a recorded-sha watermark, removals as a bounded set intersection, a queue Daren picks from, and a kit-repo SessionStart nudge when a pass goes stale.
 
 ## Living documents
 
@@ -23,6 +22,7 @@ This directory is the working library and project history for the kit itself: th
 
 Completed plans, most recent first.
 
+- **`archive/kit-adoption-pass_spec_v1.md`** - the `kit-adoption-pass` skill and `kit-adoptions.md`, its standing record: a five-step read ladder (orient, new capabilities, changed prose, adjudicate a survivor, read code) that classifies off Scott's docs and diffs rather than his code, a recorded-sha watermark, removals as a bounded set intersection, a ledger written before the pass offers a shortlist and one recommended next move, a `writing-skills` gate for the ported wording such a pass generates, and a kit-repo SessionStart nudge when a pass goes stale.
 - **`archive/pr-review_spec_v1.md`** - the `/pr-review` capability: connector-first Azure DevOps PR review with a precision-tuned pr-reviewer agent, senior-dev anti-slop calibration, applyable suggestion blocks, and gated posting under Daren's identity.
 - **`archive/docs-lifecycle-and-guards_spec_v1.md`** - the curated docs lifecycle (this library's own taxonomy), the branch and PR guard hooks, the blind reviewer paired per section, and the review-layer refinements.
 - **`archive/kit-goal-port_spec_v1.md`** - the `/kit-goal` completion leash: a deterministic Stop hook that holds an armed plan run to completion, plus executing-work's completion contract.
@@ -41,3 +41,5 @@ Completed plans, most recent first.
 The `curating-docs` skill owns the mechanics: it archives a plan when it closes, prunes the backlog, cross-references related plans, and refreshes this index. `finishing-work` calls it at close-out, `brainstorming` calls it when a new spec is written, and it can be invoked directly to tidy or retrofit a tree.
 
 Four plugin hooks give the taxonomy mechanical teeth: `docs-write-guard` denies a non-curator subagent any write into `docs/`, `stop-docs-hygiene` flags an unarchived Complete plan or scratch leaked into `docs/` at turn end, a `session-start` nudge repeats the unarchived-Complete flag at session start, and `pr-docs-guard` blocks opening a PR while `docs/` has uncommitted changes.
+
+One file here carries a machine contract, so editing it is not purely an editorial act. `kit-adoptions.md`'s `Last pass:` line is parsed by the session-start staleness nudge, which reads the first 2 KB of the file and matches a bare `Last pass: YYYY-MM-DD` line at column zero. Turning it into a heading or a list item, indenting it, appending anything after the date, or pushing it below that head read all kill the nudge silently, with no error anywhere. `test/session-start-adoption.test.js` runs the shipped file through the hook with only its date token rewritten, so a reformat fails the suite instead of going unnoticed until a pass is months overdue.

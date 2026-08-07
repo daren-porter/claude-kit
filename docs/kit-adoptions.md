@@ -10,7 +10,7 @@ compared periodically, and before this file existed each pass re-derived decisio
 earlier passes had already made and buried in archived specs.
 
 The `kit-adoption-pass` skill owns the procedure. This file is its state: a pass reads
-it first, and writes back to it last.
+it first, and writes back to it before offering Daren anything.
 
 **Inbound only.** Nothing here goes back to Scott. There is no outbound half.
 

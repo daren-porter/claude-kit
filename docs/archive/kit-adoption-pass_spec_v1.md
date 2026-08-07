@@ -1,6 +1,6 @@
 # Kit Adoption Pass
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only; no delegate-fable sections
 Created: 2026-08-07
@@ -91,7 +91,11 @@ The trap in step 1 stands, but it is now a smaller claim than the original desig
 his `docs/README.md` narrative is his framing of his own work, written for his readers,
 so it yields **candidates, never verdicts**. The measured run did not fail this way (it
 never read the narrative at all), so the warning is retained as reasoning rather than as
-an observed failure, and the skill states it as such.
+an observed failure. Section 3's clause then settled it differently: marking a claim
+honestly is not an admission path, and this one had neither a port nor a report behind
+it. Re-read under that rule it was never a behavioral claim at all, only the reason the
+ladder carries a separate adjudication step, so the skill states it as that. Chapter 3
+records the change.
 
 ### The watermark needs no new machinery
 
@@ -146,7 +150,10 @@ that way, since the usual case is that he agrees with the read and wants it buil
 What the skill still may not do is decide for him or fan out. One pass over 138 commits
 produced twenty candidates; dispatching a portfolio on its own initiative is the failure
 worth preventing, and that is a prohibition on **auto**-dispatch, not on offering. It
-also implements nothing inline and duplicates no pipeline the kit already has.
+also duplicates no pipeline the kit already has, and it implements nothing Daren has not
+picked. The prohibition is pick-gated rather than absolute: once he picks a settled,
+one-line change, doing it under the global rules is the right route, because
+`brainstorming` bounces trivial work and a bare port has no plan doc for `executing-work`.
 
 Ordering is load-bearing: **the ledger is written before any handoff.** A pass that
 offers first and records second loses its whole classification if the accepted work runs
@@ -234,8 +241,10 @@ Acceptance criteria:
   small portable wins. This is the ladder's load-bearing claim and it is the one grounded
   in a measured run.
 - The warning that his `docs/` narrative yields candidates and never verdicts is present
-  and marked as reasoning rather than as an observed failure, per `writing-skills`'
-  counter-case discipline. The RED did not reproduce it.
+  as the explanation of why the ladder carries a separate adjudication step, carrying no
+  evidential marker. Amended mid-effort: it was first retained with a reasoning-not-
+  observation marker, until Section 3's clause established that marking is not an
+  admission path. Chapter 3 records the reframe.
 - Removals are stated as the bounded set intersection with the literal command, plus the
   direction-signal caveat.
 - The four-verdict vocabulary matches Section 1's, and "too large to adjudicate here,
@@ -243,7 +252,9 @@ Acceptance criteria:
 - The pass ends with an offer: the skill states that it writes the ledger first, then
   presents the queue with a recommended next move Daren can accept immediately, routing
   to `brainstorming` or `executing-work`. It never dispatches without his pick, never
-  dispatches more than what he picked, and never implements inline.
+  dispatches more than what he picked, and never implements anything he has not picked.
+  After a pick, a settled one-line change may be done directly under the global rules; the
+  skill states that route and why `brainstorming` is wrong for it.
 - It routes ported behavior-shaping wording to Section 3's clause in `writing-skills`
   rather than restating the evidence bar.
 - A fresh-session dry read is coherent and contradicts no existing skill; in particular
@@ -397,7 +408,8 @@ Implemented By: main session (behavior-shaping prose in the kit's voice, per the
 Metrics: 3 review rounds; 0 NEEDS_CONTEXT; 0 escalations; advisor on
 Decisions / Surprises:
 - **The spec's ladder was wrong, and a RED proved it.** `writing-skills` requires RED before persisting, so two were run before the skill was written. Neither reproduced the failure the spec hypothesized (adjudicating off Scott's docs narrative). RED 1, given three named capabilities, read his archive specs unprompted. RED 2, given the real unguided task, never opened his `docs/` at all and worked from raw diffs, and its classification was **better than the hand pass**: it found ten portable items the docs-first sweep had missed, including a confirmed defect in this kit's own hooks (`process.exit(0)` after a stdout write, in four hooks; on `kit-goal-stop.js` a truncated write reads as no-block and silently releases the leash). The Approach's three-tier ladder was replaced with a five-step one whose new step 2 diffs changed prose, and the reason is now recorded as measured rather than assumed. The ten items were added to `docs/kit-adoptions.md`, and the hook defect was backlogged rather than fixed, since adoption is out of scope.
-- **The skill's honest value turned out to be continuity, not technique.** Since no RED showed an unguided agent classifying badly, the skill is written around what the state file buys (not re-deriving standing decisions) rather than around correcting behavior. The narrative warning is retained but marked as reasoning, not observation, and the debt is recorded in the backlog per Section 3's new clause. This section is that clause's first live instance.
+- **The skill's honest value turned out to be continuity, not technique.** Since no RED showed an unguided agent classifying badly, the skill is written around what the state file buys (not re-deriving standing decisions) rather than around correcting behavior.
+- **The narrative warning was reframed rather than marked, and that resolution came from applying Section 3's clause to this section's own work.** It was first retained with a "reasoning, not an observed failure" marker. Then Section 3's clause landed on the rule that marking a claim honestly is not itself an admission path: a claim with no port and no report behind it is cut or held to the normal bar, and this one had neither. Re-reading it under that rule showed it was never a behavioral claim at all, only the explanation of why the ladder carries a separate adjudication step, so it was rewritten as that. **It is therefore not a live instance of the clause and carries no debt** (`docs/backlog.md` records the closure and why the resolution is the useful part). An earlier draft of this Chapter claimed the opposite; QA caught the contradiction before archive.
 - **Daren reframed the ending mid-section.** The pass no longer hard-stops at the queue; it writes the ledger, then offers a recommended next move he can accept in one word. The prohibition narrowed from "never dispatches" to "never without his pick, never more than he picked", which preserves what the hard stop was actually protecting (no self-directed fan-out across a twenty-candidate window) and drops the round-trip it was costing. Spec Approach and criterion amended.
 - Deviation from the spec's Approach, minor: the spec said the skill "states the current path but instructs a pass to confirm it"; the skill instead reads the path from `docs/kit-adoptions.md` and confirms it there, so the path is not duplicated into shipped prose where it would drift again. Reviewer agreed the implementation is the better call.
 - **Length accepted at 226 lines against a 143-line previous maximum.** The leanness bar in `writing-skills` is standing per-session cost, which is the description alone; the body loads only when a pass runs, during an operation that reads far more than this from someone else's repo. Reviewer made the argument and I agree with it.
@@ -413,14 +425,14 @@ Commit Model: Commit-and-Push
 ### Chapter 4 - 2026-08-07
 Completed: 3. The ported-wording clause in `writing-skills`
 Implemented By: main session (the kit's most behavior-critical prose, and the clause moved in contact with the surrounding text exactly as the spec predicted)
-Metrics: 3 review rounds; 0 NEEDS_CONTEXT; 0 escalations; advisor on
+Metrics: 5 review rounds; 0 NEEDS_CONTEXT; 0 escalations; advisor on
 Decisions / Surprises:
 - **The first two drafts were walkable, and both reviewers proved it independently.** The clause began as "the source's provenance admits the wording, persist it", which is a loophole wearing a rule's clothes. Three separate defects: persisting first forecloses the very control the clause presumes was attempted (and `writing-skills:93-98` already said so); the ported case admitted wording on *assumed* provenance with nothing to check; and the closing disclaimer was an exemption clause trying to scope itself, the exact form this skill's own table says backfires.
 - **The blind reviewer's reframe did the most work: GREEN survives even when RED does not.** RED is what a borrowed-evidence case loses; whether a fresh subagent handed the wording actually complies is a different question and is still answerable. That became a third precondition. It then found that precondition decorative as written, since GREEN-as-defined re-runs the RED task, which on this path either does not exist or already passed. It is now a distinct followability probe with a stated failure signature.
 - **Final shape: a gated path with three observable preconditions**, two before persisting and one necessarily after, rather than a judgment call. Recorded attempt with a re-runnable description; provenance located at where the failure was *recorded*, not who mentioned it; then a followability probe. The cheap branch ("could not be constructed") is the strict one, and fails the gate unless the specific unstageable element is named.
 - **Coherence repairs the clause forced elsewhere in the file:** the RED bar's terminal "stop" now carries the conditional inline at the decision point rather than 18 lines downstream; the persistence-hold paragraph gained its own release for this path, since its trigger ("until RED has failed") by construction never fires here; the counter-case section's "nothing at all for judgment wording" gained the marked-uncovered exception; and the antipatterns list was qualified so a final scan does not strip the very marker the clause requires.
 - **Transit-widening bounded**, which was the last real hole: narrowing or restating the source's claim is covered and marked, but an extension asserting something the source never observed has no port behind it and is cut or held to the normal bar. Without that, an unevidenced belief could ship marked simply by being written in the same sentence as ported prose.
-- **Four review rounds, and the fourth found the root.** Rounds 1 to 3 fixed wording: the loophole, the unexecutable ordering, the incoherent covered/cut split. Round 4 named what was underneath all of them: every precondition was discharged by *the persisting agent's own prose about work nobody could see*. The RED bar one page above already solves this by demanding the rationalization verbatim, and the gate had not inherited that standard. It now does: each precondition names an artifact (the subagent's quoted output, a locator another person can follow, the probe's output), all three land in one backlog entry, and an entry missing any of them is not openable. That single change collapsed most of round 4's other findings.
+- **Five review rounds; the fourth found the root and the fifth found where that fix landed wrong.** Rounds 1 to 3 fixed wording: the loophole, the unexecutable ordering, the incoherent covered/cut split. Round 4 named what was underneath all of them: every precondition was discharged by *the persisting agent's own prose about work nobody could see*. The RED bar one page above already solves this by demanding the rationalization verbatim, and the gate had not inherited that standard. It now does: each precondition names an artifact (the subagent's quoted output, a locator another person can follow, the probe's output), all three land in the effort's Chapter with the backlog carrying a one-line debt and a pointer. That single change collapsed most of round 4's other findings.
 - **Stopping point, chosen deliberately.** The gate now demands exactly what the primary RED bar demands. Pushing further would require more evidence of the borrowed-evidence path than of the path it sits beside, which is backwards. Any self-reported gate is walkable by an agent willing to lie, including the original RED bar; parity with the neighbouring standard is the right bar, not perfection.
 Review Findings:
 - Round 1: adversarial CHANGES_REQUIRED (7 Major, 2 Minor), blind CHANGES_REQUIRED (1 Critical, 6 Major, 1 Minor).
@@ -433,4 +445,16 @@ Review Findings:
 - Round 4 also caught the companion `kit-adoption-pass` skill restating this gate as three steps while dropping the provenance clause, the backlog debt, and the stop-on-failed-probe. That is the summary-replaces-body drift `writing-skills` warns about, appearing in the same effort that wrote the warning. Cut to a pointer.
 - Not acted on, recorded so they are not mistaken for oversights: the whole path is structurally an absolute plus an annex, the form the file's own table names as backfiring; and whether the marking rule is general or scoped to the counter-case section. Both argue for restructuring the RED bar itself, which is outside this section.
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-08-07 (finishing-work close-out)
+Completed: finishing-work over the whole effort (4 sections; commits 49ede4c, 24edbd6, 573f55a, plus this close-out delta).
+QA verification: **PASS on every acceptance criterion across all four sections**, each cited to file:line. Plugin validates clean (the no-version warning is the documented convention). Test gate 158/158, run twice for flakiness, with `test/session-start-adoption.test.js` at 16/16 including the FIFO regression, which actually exercised the guard rather than degrading to a silent pass because `mkfifo` was present. The hook was spawned live against fixtures including the real shipped `docs/kit-adoptions.md`. QA also caught one documentation-integrity defect: Chapter 3 claimed Section 2 was the new clause's first live instance while `docs/backlog.md` recorded that case as closed with no debt. The backlog was right and Chapter 3 was stale; fixed before archive.
+Security review: **CLEAR** (fable override per the `Fable Spend:` header). It answered the four questions the delta raised: the `isFile` guard closes the accidental blocking-open hazard, leaving only a TOCTOU window that requires a local process deliberately racing the hook as the same principal, which the trusted-workspace premise does not defend against; the truncation-boundary guard fails only toward silence and admits no new mis-parse; the test-side `HOME` redirection cannot escape `mkdtemp`-created directories, so no fixture path can reach a real home; and the fail-open posture holds on every path. Two Minors, both handled: the skill now carries a data-not-instructions marker, since it is the one place the kit bulk-reads another author's behavior-shaping prose over the network, and the atomic `O_RDONLY | O_NONBLOCK` + `fstatSync` idiom is recorded on the backlogged sweep so the remaining call sites do not copy S4's stat-then-open.
+Final adversarial review: **CHANGES_REQUIRED, all three Majors inside the spec record rather than the code**, which is the right place for a whole-changeset pass to find them: the spec was about to be frozen into the archive still carrying an absolute no-implement-inline prohibition the shipped skill had replaced with a pick-gated route, a criterion describing the narrative warning's superseded intermediate draft, and a Chapter 4 metrics line reading 3 rounds against its own enumeration of 5. All amended. It verified rather than accepted the load-bearing factual claims: the window statistics exact, all 25 deleted files absent from this tree, the seven Bash-granting agents, the four stdout-writing hooks, and Chapter 3's 208-versus-396 measurement reproduced exactly. It confirmed the four cross-section artifacts agree on every machine contract.
+Docs curation: two drift items, both real. The root `README.md`'s `docs/` inventory omitted `kit-adoptions.md`, so the repo's two indexes disagreed about what `docs/` contains; fixed by hand, since it sits outside the curator's write scope. And the backlogged openSync sweep named three unguarded readers when there are four: `findCompletedUnarchived` was missing, which would have let whoever picked the item believe the sweep was complete while leaving a FIFO-hang path in a scan that runs on every session in every project. The curator fixed that and rewrote `docs/README.md`'s entries, adding a maintenance paragraph on the `Last pass:` machine contract and the test that guards it.
+Adjudications: the `kit-adoptions.md` "writes back to it last" summary was corrected to "before offering Daren anything", since offer-first-record-second is the named failure the ordering exists to prevent. The closed narrative-warning instance was pruned out of `docs/backlog.md`, whose header is active-items-only, with Chapter 3 keeping the full account.
+Learnings banked: the Scott-kit clone path, the watermark convention, and the two REDs' outcomes live in `docs/kit-adoptions.md` and the Chapters, which is where a future pass reads them.
+Note on process: Section 3 took five review rounds and Section 2 took three. That is not review theatre. Each round changed what an agent would do, and the pattern was consistent: a fix at round N introduced the defect found at round N+1, which is the honest cost of rewriting behavior-shaping prose under review rather than patching it. The stopping rule that ended it was parity, not perfection: the gate now demands exactly what the RED bar beside it demands.
+Next: none (effort complete).
 Commit Model: Commit-and-Push
