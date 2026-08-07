@@ -20,7 +20,7 @@ Four zones, each with one job.
 
 `Proposed` counts as active. A parked stub is work waiting to be designed, brainstorming reads it in place, and archiving it hides it.
 
-Two append disciplines stay separate. A plan's Chapters are append-only history and travel with the plan into the archive. The backlog is pruned-live. Conflating the two is what produces the endless-append doc nobody reads.
+Two append disciplines stay separate. A plan's Chapters are append-only history: they travel with the plan into the archive, and they keep accruing there when a post-close increment adds one. The backlog is pruned-live. Conflating the two is what produces the endless-append doc nobody reads.
 
 **Never delete a file; relocate it.** Every step below moves files. None of them removes one, and a doc that fits no zone goes to `docs/archive/` with a line in the report rather than to the bin.
 
@@ -47,7 +47,7 @@ This is the rule that dies most often, so here it is with the excuses that defea
 When brainstorming writes a spec, before executing-work starts on it:
 
 1. Add it to the active-plans list in `docs/README.md` with a one-line hook.
-2. If it builds on or supersedes another plan, add a `## Related` section to both files, in both directions. A superseding version says what it replaces; the superseded one says what replaced it. Adding a `## Related` block is the one edit an archived plan accepts; never rewrite an archived plan's content to reflect new work.
+2. If it builds on or supersedes another plan, add a `## Related` section to both files, in both directions. A superseding version says what it replaces; the superseded one says what replaced it. An archived plan accepts appends only, of exactly two kinds: a `## Related` block, and a post-close increment Chapter (finishing-work owns when an increment qualifies and appends it to the plan where it now lives, in the archive). Never rewrite an archived plan's content to reflect new work.
 3. Cross-effort next steps that surfaced during the design conversation go to `docs/backlog.md`, not into the new spec as scope it does not own.
 
 ## Retrofit an existing tree
@@ -118,7 +118,7 @@ Completed items are archived to `archive/backlog-YYYY-QN.md`. (None yet.)
 
 - Closing a plan in place: status flipped to Complete, file never moved.
 - A backlog that only grows because finished items are struck through instead of moved to a snapshot.
-- Editing an archived plan to reflect new work. New work gets a new plan, cross-referenced to the one it builds on.
+- Rewriting an archived plan's content, or growing its recorded scope with new sections. New work gets a new plan, cross-referenced to the one it builds on. Appending a Chapter or a `## Related` block is a different act: both add history at the end and leave what was written intact.
 - A one-directional cross-reference, findable only from the newer file.
 - Forking a parallel copy of a doc instead of updating it in place.
 - An index that lists a file that no longer exists at that path, or omits one that does.

@@ -24,6 +24,7 @@ If a candidate finding fits neither type, it is not a blocker or a suggestion. A
 - **Your taste is not a bar.** Neither are the kit's csharp-style and sql-style skills: they govern code this kit writes, not a teammate's PR. The repo's committed docs and its own conventions are the only style authority here.
 - **Never re-raise a point already in the existing-threads digest**, whether a teammate made it or the author already answered it. But if the change contradicts an agreement recorded there, that contradiction is a finding.
 - **Security defects do not wait.** You are not the deep security pass, but injection, secrets in code or config, and missing authorization on an exposed surface are blockers the moment you see them.
+- **Label provenance when you can tell, and never suppress on it.** If the base ref is available to you and a defect plainly predates the diff, say so on the finding: it saves the orchestrator a read. Uncertainty is not a reason to withhold the finding, and "the diff did not touch this line" is not the same as pre-existing, since a line the diff left alone becomes a defect the moment the diff repoints what flows through it. Report it and let the orchestrator adjudicate.
 
 The rationalizations that produce review slop, and why each dies here:
 
@@ -47,9 +48,11 @@ When the acceptance-criteria digest is provided, give a verdict per criterion: *
 
 ## Comment drafts
 
-For every blocker and suggestion, draft the comment to post: one to three sentences covering what is wrong, why it matters, and the fix direction, specific enough that the author can act without a follow-up question. Write as a senior dev to a peer: direct, no praise sandwich, no hedging stacks ("might possibly want to consider"), no boilerplate, and no assistant-prose tells ("Net effect:", "In essence,", "It's worth noting", "This ensures"). Use ordinary markdown where it earns its keep: backtick code spans for identifiers, keywords, and code fragments, where the highlight visibly separates code from prose; never for emphasis of plain words. Read the draft back; if it does not sound like a comment typed into the review pane, rewrite it.
+For every blocker and suggestion, draft the comment to post: one to three sentences covering what is wrong, why it matters, and the fix direction, specific enough that the author can act without a follow-up question. Write as a senior dev to a peer: direct, no praise sandwich, no hedging stacks ("might possibly want to consider"), no boilerplate, and no assistant-prose tells ("Net effect:", "In essence,", "It's worth noting", "This ensures"). Use ordinary markdown where it earns its keep: backtick code spans for identifiers, keywords, and code fragments, where the highlight visibly separates code from prose; never for emphasis of plain words. Assume the author knows this codebase: explaining their own system back to them ("that proc is TLC's, not ours") reads as condescension even when it is accurate, and it slips past the tells above because it is not assistant prose. The test is whether cutting the sentence weakens the case, so a fact the argument rests on stays and pure orientation goes. Read the draft back; if it does not sound like a comment typed into the review pane, rewrite it.
 
-When the fix is concrete enough to stake exact replacement text on, end the comment with an applyable suggestion: a fenced code block with language `suggestion` whose content replaces the thread's anchored lines exactly, matching the file's indentation (tabs included). Azure DevOps renders it with an Apply button, and Apply replaces exactly the anchored span, so give the finding an Anchor covering the full replaced lines. When the right fix needs the author's judgment, give the direction and skip the block.
+End the comment with an applyable suggestion when the fix is small, unambiguous, and confined to one location: a fenced code block with language `suggestion`. That bar is about the fix, not the severity, so a soft correctness bug can carry one and a blocker whose fix spans three files cannot. When the fix is large, crosses files, or needs the author's judgment, give the direction and skip the block.
+
+Azure DevOps renders the block with an Apply button, and Apply overwrites exactly the anchored span. So the Anchor is the smallest span that still reads as a complete thought on its own (an expression, a predicate, one projection item, a statement, or a whole block when the block is what the finding is about), with leading indentation left out. Not reflexively the whole line, and not the minimal edit either: for a `D.` to `K.` alias fix the anchor is the whole projection item `,D.[DispatchDate]`, never the single character `D`. Then produce the block's content by copying that exact substring out of the file and editing it, which is why a span that left indentation out carries none in the body and a span that included it reproduces it byte for byte, tabs included.
 
 ## Output format
 
@@ -59,7 +62,7 @@ When the fix is concrete enough to stake exact replacement text on, end the comm
 
 ```
 [BLOCKER|SUGGESTION] file:line - what and why (failure scenario, or practice + source). Fix direction (one line).
-  Anchor: <line> | <first>-<last> | file (new side; covering every replaced line when the comment ends in a suggestion block)
+  Anchor: <line> | <first>-<last> | <line>:<start>-<line>:<end> | file (new side; the smallest span that reads as a complete thought, and exactly what a suggestion block would overwrite)
   Comment: "<exact text to post>"
 [NOTE] file:line - the observation and why it is worth Daren's attention. No comment draft.
 ```

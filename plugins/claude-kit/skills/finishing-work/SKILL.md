@@ -46,7 +46,7 @@ Live use after `Status: Complete` often surfaces small follow-ons: a fix from re
 
 1. Implement the change per the executing-work section loop (delegate or main as its size warrants).
 2. Scope the review to the delta: an adversarial pass over just the changed files, and a security pass only if the change touched a security surface. Skip the full-changeset re-review; the effort already had one.
-3. Re-run QA only on the acceptance criteria the change could have affected, and append a Chapter marked as a post-close increment.
+3. Re-run QA only on the acceptance criteria the change could have affected, and append a Chapter marked as a post-close increment. The plan is in `docs/archive/` by now, and that is where the Chapter goes: appending it there is sanctioned (curating-docs, Register a new plan), not the archived-plan edit that skill prohibits.
 4. Apply the plan's commit model.
 
 The plan stays `Status: Complete`; increments accumulate as Chapters beneath it. Escalate back to a full finishing pass only when an increment grows into a body of work in its own right - several sections, or a design change - at which point it is a new effort with its own spec, not an increment.

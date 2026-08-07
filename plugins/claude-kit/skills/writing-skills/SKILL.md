@@ -95,6 +95,36 @@ already-persisted edit leaks into the RED and voids it as a control (a RED rep o
 cited the edited file's line numbers). Keep the new wording in the test prompt only
 until RED has failed, then persist it for GREEN.
 
+## When you meet a counter-case to a rule
+
+A kit rule asserting a factual property of an external system - an editor's anchor
+behavior, an API's accepted values, what a renderer emits - was usually written
+from having tried it. One trial is enough to write the rule and not enough to bound
+it, so the wording ends up reading as a property of the system when it is a report
+of one instance.
+
+That gap surfaces later, when you hit a case the rule does not cover. Decide which
+situation you are in before you either obey the rule or discard it:
+
+- **Contradicted.** You observed the very thing the rule asserts, and it came out
+  differently. The rule is wrong; fix it.
+- **Narrower than written.** You observed something the rule never tested. Both can
+  be true at once, so scope the rule rather than reversing it, and the confirmed
+  case stays confirmed.
+
+Do not resolve it by inventing a distinction the evidence never supported. That is
+the failure with teeth. Handed pr-review's old full-line anchor mandate alongside
+live sub-line anchors that demonstrably worked, a fresh agent reconciled the two by
+deciding full-line spans are what an agent computes and sub-line spans are what a
+human drags in the diff viewer. Nothing observed had said that. Preserving a
+mandate by fabrication is worse than either obeying or discarding it, because the
+invention outlives the session that made it.
+
+When you do fix the rule, record the observed instance beside the generalized
+claim, so the next session decides on evidence instead of repeating this. A clause
+does it; no citation apparatus, and nothing at all for wording that is judgment
+rather than observation.
+
 ## Antipatterns
 
 - A narrative ("the time we fixed X") instead of a reusable technique.
