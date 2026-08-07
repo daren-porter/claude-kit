@@ -37,9 +37,9 @@ pulls) and diffs `<watermark>..origin/main`.
 and the removals check has been run and recorded. **pending** counts as a verdict, so a
 window is adjudicated when nothing in it is unclassified, not when nothing in it is
 outstanding. Both halves are required: a window whose removals were never intersected is
-not classified, however many candidates carry verdicts. Eight of the ten candidates below
-are pending and the watermark still moved to `09c91a4`, because all ten were classified
-and the removals check was run.
+not classified, however many candidates carry verdicts. Most of the 2026-08-07 pass below
+is still pending and the watermark moved to `09c91a4` anyway, because every candidate in
+that window carries a verdict and the removals check was run.
 
 **The clone path is confirmed, not trusted.** It has moved once already:
 `archive/claude-kit_spec_v3.md` cites `~/repos/claude-kit-scott`, which no longer
@@ -149,6 +149,26 @@ and had already removed the context tripwire and relay machinery in an earlier u
 that records no usage figure. That is negative signal on the 2026-07-20 kaizen note
 about nudging a fresh session at Chapter boundaries, with the zero-usage evidence
 attaching to the compaction half only.
+
+**Found on the second sweep.** The first sweep classified off his `docs/` index, which is
+organized by effort and therefore describes **new capabilities** well and **changes to
+existing files** not at all. A second sweep over added-lines-only diffs of `skills/`,
+`agents/`, and `hooks/` found ten more items, all of them small, portable, and invisible
+to the first. This is why the skill's ladder carries both steps; the evidence is in the
+`kit-adoption-pass` spec (in `plans/` while the effort is open, `archive/` after).
+
+| Capability | Verdict | Reason |
+|---|---|---|
+| `process.exitCode = 0` replacing `process.exit(0)` after a stdout write | **pending, confirmed defect here** | Not a preference. Forcing the exit can discard a stdout write still in flight on a pipe. Verified 2026-08-07: four hooks in this kit have the shape (`session-start`, `stop-docs-hygiene`, `branch-reaper-nudge`, `kit-goal-stop`). `kit-goal-stop` is the serious one, where a truncated write reads as no-block and silently releases the leash. Backlogged. |
+| `qa-verifier`: sandbox `HOME`/`USERPROFILE` to a temp dir **before** the first probe, and split `UNVERIFIABLE` into `environment` versus `operator-only` | **pending, strong** | The sandbox rule is the exact hazard this effort's own Section 4 hit: `claudeMdSyncOffer` is not repo-gated, so an unsandboxed probe reads the real home. Learned here independently, which is the best argument for taking it. |
+| `docs-curator`: sweep by claim rather than by changed file (counts, enumerations, justifications, renamed paths), a required `CLAIMS SWEPT` block even at zero drift, `file:line` on every drift entry, and a ban on writing drift markers into shipped docs | **pending, strong** | Pure prose, drops straight in, and aimed at a failure this kit's curator can have today. |
+| `executing-work`: wait-is-not-a-stop, the `WAITING:` stop shape the leash allows without releasing, and capacity explicitly excluded from the blocker set | **pending, strong** | This kit runs the same leash with the same failure mode. Its completion contract already carries wait-is-not-a-stop; the `WAITING:` shape and the capacity exclusion are the new parts. |
+| `writing-skills`: close every enumeration with its class | **pending** | A list of instances reads as exhaustive the moment it ships, so an unlisted variant presents itself as licensed. One rule, high leverage on this kit's own authoring. |
+| `kaizen`: state the lesson, not the incident; and never write a note into the plugin cache | **pending** | The second half pairs with this kit's existing plugin-cache-lag knowledge. |
+| Style-skill path resolution ladder (`CLAUDE_PLUGIN_ROOT`, else the skill's own base directory's grandparent) replacing hardcoded literals in dispatch briefs | **pending** | Aimed squarely at the plugin-cache-lag problem this kit documents. |
+| `finishing-work`: bracket the review rounds with `git status --porcelain` captured before and compared after | **pending** | Catches a reviewer mutating the tree. Ten lines of prose, no platform coupling, and it is the general-case check that does not need the guard hook below. |
+| Reviewer per-finding `[confidence: high\|medium\|low]` alongside severity, with an explicit rule not to downgrade severity to hedge low confidence | **pending, coupled** | The rating itself is standalone and good. But the same commit adds sentences to five agents claiming "a kit hook enforces the no-write half mechanically", which is only true alongside `readonly-agent-guard`. Take both or delete those sentences; do not lift the prose alone. |
+| `curating-docs`: a "the header is a machine contract" section with a frozen table of exactly what an external parser reads from a plan doc | **pending, partial** | The table's contents are his engine's contract and do not apply. The idea of freezing and tabulating a machine-read header does, and this kit just created one (`Last pass:` in this file). |
 
 ### Carried from the pass of 2026-06-17
 

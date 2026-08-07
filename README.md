@@ -31,6 +31,7 @@ claude-kit/                          (repo = the marketplace)
         curating-docs/               docs/ taxonomy: plan archival, backlog pruning, index and cross-references
         branch-hygiene/              Reap merged branches, recover stranded ones; the branch-reaper nudge hands off here
         pr-review/                   Azure DevOps PR review: gather via connector, senior-dev-calibrated findings, gated posting under Daren's identity
+        kit-adoption-pass/           The inbound pass over Scott Applefeld's kit: watermarked window, cheapest-first read ladder, standing verdicts in docs/kit-adoptions.md
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
         blind-reviewer.md            Diff-only correctness review, dispatched without the spec or intent story
@@ -45,7 +46,7 @@ claude-kit/                          (repo = the marketplace)
         design-facilitator.md        Neutral design-council convergence judge
       hooks/
         hooks.json                   Hook registrations (SessionStart + PreToolUse + Stop)
-        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal; nudges on unarchived Complete plans
+        session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal; nudges on unarchived Complete plans; nudges when the Scott-kit adoption pass has gone stale (kit repo)
         kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
         docs-write-guard.js / stop-docs-hygiene.js Docs-library guards: non-curator subagent writes into docs/ denied; Stop-time unarchived-plan and scratch flags
         pr-docs-guard.js / merged-pr-push-guard.js / branch-reaper-nudge.js Branch/PR guards: dirty-docs PR block, merged-branch push block, reap/strand nudge
@@ -141,6 +142,6 @@ node tools/token-profiler.js
 
 Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
 
-The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. The one exception is `session-start.js`, verified manually so far (pinning it is a backlog item). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
+The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. `session-start.js` is partly covered: its adoption-staleness nudge is pinned and plan recovery is exercised alongside it, leaving four of its six blocks verified manually (pinning the rest is a backlog item). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
 
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.

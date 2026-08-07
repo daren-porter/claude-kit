@@ -12,7 +12,7 @@ This directory is the working library and project history for the kit itself: th
 
 - **`plans/appsec-security-reviewer_spec_v1.md`** (Proposed) - whether non-.NET repos with real attack surface warrant a standing appsec reviewer, or a deeper adversarial security bullet suffices. Likely retired: the docs-lifecycle effort generalized `security-reviewer` to any production codebase, substantially answering the question (the stub's Related note has the details); Daren adjudicates.
 - **`plans/visual-companion_spec_v1.md`** (Proposed) - what a "visual companion" for this kit would render, in what medium, and whether to build one or adopt the superpowers version.
-- **`plans/kit-adoption-pass_spec_v1.md`** (In Progress) - a skill for the recurring inbound pass over Scott Applefeld's kit, plus `kit-adoptions.md` as its standing record: a three-tier read ladder that classifies off his docs rather than his code, a recorded-sha watermark, removals as a bounded set intersection, a queue Daren picks from, and a kit-repo SessionStart nudge when a pass goes stale.
+- **`plans/kit-adoption-pass_spec_v1.md`** (In Progress) - a skill for the recurring inbound pass over Scott Applefeld's kit, plus `kit-adoptions.md` as its standing record: a cheapest-first read ladder that classifies off his docs and diffs rather than his code, a recorded-sha watermark, removals as a bounded set intersection, a queue Daren picks from, and a kit-repo SessionStart nudge when a pass goes stale.
 
 ## Living documents
 
