@@ -195,6 +195,8 @@ Acceptance criteria:
 
 Part of the `claude-kit_spec` chain, and the latest version in it. `claude-kit_spec_v1.md` built the kit and `claude-kit_spec_v2.md` folded in the Superpowers-informed improvements; this version adopts three capabilities from Scott's fork on top of both.
 
+`../plans/kit-adoption-pass_spec_v1.md` (Proposed, 2026-08-07) proposes turning this improvised pass into a skill. It treats this spec as a source of record for two things a later pass should not re-derive: the adjudication criterion (deliberate decision versus Scott-specific) and the deliberately-not-taken list.
+
 ## Chapters
 
 ### Chapter 1 - 2026-06-17

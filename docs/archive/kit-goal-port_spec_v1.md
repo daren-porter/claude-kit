@@ -64,6 +64,8 @@ None. Trims and platform assumptions were decided with Daren on 2026-07-24.
 
 One of three specs adapting Scott Applefeld's kit into this one, designed together on 2026-07-24: `orchestration-economics_spec_v1.md` (session-model-as-mode doctrine, the fable implementation tier, dispatch-brief upgrades) and `docs-lifecycle-and-guards_spec_v1.md` (docs lifecycle, branch and PR guards, the blind reviewer).
 
+`../plans/kit-adoption-pass_spec_v1.md` (Proposed, 2026-08-07) proposes turning this improvised pass into a skill. This spec is its live instance of ported wording taken on Scott's observed-failure provenance with its own RED/GREEN deferred, which that stub treats as a sub-problem to design alongside the skill.
+
 ## Chapters
 
 ### Chapter 1 - 2026-07-24
