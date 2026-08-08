@@ -63,16 +63,23 @@ auto-complete confirmation that commit `40c63b3` retired. `description:` is pres
 
 **A computed `[body revised]` marker, because generation alone is not enough.** Deriving
 the line from `description:` fixes the pr-review case but not the mcp-bridge case, where
-the body's own `description:` is stale too. So the index sidecar stores `hash(description)`
-plus the body mtime observed at last sync: the line refreshes silently when the hash
-changes, and emits `[body revised]` when mtime advanced while the hash did not. That is
-exactly the mcp-bridge signature (body rewritten, description untouched) and it suppresses
-the false alarm when the author updated both. Measured over the existing 55 records the
-marker fires on 7: two materially false, four true-but-incomplete, one clean false
-positive. It is descriptive and must not be renamed `[stale]`; it is not a truth claim.
-mtime is trustworthy here, verified: all 25 records carrying a `modified:` stamp match
-filesystem mtime within 5 seconds, `~/.claude-work` is not a git repo, and neither
-`backups/` nor `file-history/` touches memory files.
+the body's own `description:` is stale too. So the index sidecar records a hash of the
+description and a hash of the body: the line refreshes silently when the description hash
+changes, and emits `[body revised]` when the body hash changed while the description hash
+did not. That is exactly the mcp-bridge signature (body rewritten twice, description
+untouched) and it suppresses the false alarm when the author updated both. Measured over
+the existing 55 native records the equivalent comparison fires on 7: two materially false,
+four true-but-incomplete, one clean false positive. It is descriptive and must not be
+renamed `[stale]`; it is not a truth claim.
+
+**Amended in S1 (2026-08-08), from mtime to a content hash.** The design first specified
+`hash(description)` plus the body **mtime** at last sync, on measured evidence that mtime
+is trustworthy in the native store. S1's review showed that evidence does not transfer:
+the native store has no CLI rewriting records, but this tier stamps `applied:` into the
+record file, so **every apply-stamp advances mtime with the description and body
+unchanged** and a mtime-based marker would fire on every stamped record. That defeats the
+discriminating criterion the marker exists to satisfy. Hashing the body answers the actual
+question, is immune to stamping, and removes the mtime-trust question entirely.
 
 **Emission rides the SessionStart hook, and bodies are read directly.** The hook is the
 exercised, cwd-aware channel and already carries the sanitize idiom at
@@ -112,6 +119,26 @@ sessions (`4411daac`, `f4a5e902`, both pr-review runs whose prompts never mentio
 memory) the model reached a body by exact filename mid-task with no lookup step, and the
 only possible source of that filename was the injected index.
 
+## Standing Brief Amendments
+
+Folded into every later dispatch brief. Each entry earned its place by a review finding
+recurring across sites, so the guard travels with the workflow rather than being
+rediscovered per section.
+
+- **A guard applied at one door must be applied at every door.** S1's review surfaced this
+  twice in one changeset: the control-character refusal covered `description` but not
+  metadata values (exploitable through the sanctioned writer, forging the very field that
+  generates emitted context), and name validation covered the filename but not the parsed
+  frontmatter `name`. When you add a validation, sanitization, or bound, enumerate every
+  field and every entry point that reaches the same sink and cover all of them, then say in
+  your report which doors you enumerated.
+- **A silent drop is a defect, not a degradation.** Several S1 findings shared this shape: a
+  4-space-indented metadata block, a kebab-case metadata key, a bracket-less `applied:`
+  value, and a record whose frontmatter exceeded the read cap all vanished with `ok: true`
+  and no diagnostic. Where this tier cannot parse or cannot read something, it either
+  recovers deliberately or reports it in a count a caller can surface. Never both accept
+  and discard.
+
 ## Sections of Work
 
 ### 1. Tier, schema, and root
@@ -123,9 +150,20 @@ Define the frontmatter fields, the `MEMORY.md`-equivalent index file's role (a g
 artifact, not a hand-maintained one), and the directory's relationship to the native tier.
 This is the migration-costly decision in the whole effort: stamps and fields cannot be
 backfilled onto records that never carried them.
-Acceptance: the root exists with a documented schema; a record written by hand round-trips
-through the section 2 CLI; the schema doc states which fields are generated and which are
-authored, and states that nothing in this tier is written by the Write tool directly.
+Acceptance: the store root resolves and is created on first write, private to the operator
+(0700/0600, since S6 migrates records describing client production configuration into it);
+the schema is stated in full where the implementers of S2 through S4 will read it, naming
+which fields are authored and which are generated, and stating that the CLI is the only
+writer; a hand-authored record round-trips without losing metadata; the Open Question on
+the index file's shape is decided and recorded.
+
+Two acceptance clauses moved, recorded here rather than dropped. The original "round-trips
+through the section 2 CLI" belongs to S2, which does not exist yet; S1 satisfies the
+testable half by round-tripping hand-authored records through the library. The
+operator-facing schema documentation belongs to S7's skill, which is the surface a session
+actually reads; duplicating it in `docs/` now would create a second copy to drift, which is
+the defect this whole tier is built against. S1's obligation is that the schema is stated
+completely and in one place, which it is, in the library header.
 Execution mode: main.
 
 ### 2. The CLI
@@ -286,10 +324,86 @@ Execution mode: delegate-capable.
 - Section 3's execution mode. Assigned delegate-capable on the strength of a precise brief
   plus two real fixtures. Daren was offered the argument for raising it and did not take
   it; revisit if the implementer escalates.
-- Whether the tier's generated index file should be human-readable in the same
-  `MEMORY.md` shape as the native tier, or a machine format. Section 1 decides; the
-  argument for matching the native shape is that Daren can read it without a tool.
+- ~~Whether the tier's generated index file should be human-readable in the same
+  `MEMORY.md` shape as the native tier, or a machine format.~~ **Decided in S1
+  (2026-08-08): a machine-readable sidecar, not a `MEMORY.md`-shape file.** The sidecar
+  holds hashes and is regenerated on demand, and a second human-readable index file is
+  precisely the artifact that drifts from its records: shipping one would rebuild the
+  defect this tier exists to remove. The human-readable views are the session-start
+  emission (S4) and the CLI's list command (S2), both generated at read time from the
+  records themselves.
 
 ## Chapters
 
-(Appended by executing-work as sections complete.)
+### Chapter 1 - 2026-08-08
+Completed: 1. Tier, schema, and root
+Implemented By: main session (design-entangled: the schema is the effort's migration-costly decision)
+Metrics: 2 review rounds; 0 NEEDS_CONTEXT; 0 escalations; advisor off for this section
+Decisions / Surprises:
+- **The change signal moved from mtime to a content hash, and this is the round's real
+  find.** The adversarial reviewer showed the spec's mtime design was self-defeating *in
+  this tier*: `applied:` stamps live in the record file, so every stamp rewrites it and
+  advances mtime with description and body unchanged, which is exactly the condition S3
+  emits `[body revised]` on. The marker would have fired on every stamped record and
+  defeated its own discriminating criterion. The measured mtime-trust evidence came from
+  the native store, where nothing rewrites records, so it never transferred. Hashing
+  description and body separately answers the actual question and is immune to stamping.
+  Approach amended in place; S3's brief inherits it.
+- **Index shape decided (Open Question closed): a machine-readable sidecar, not a
+  `MEMORY.md`-shape file.** A second human-readable index is the artifact that drifts from
+  its records, which is the defect this tier exists to remove. Human-readable views are
+  generated at read time by S4's emission and S2's list command.
+- Two S1 acceptance clauses moved rather than dropped, both recorded in the section: the
+  CLI round-trip belongs to S2 (which does not exist yet), and the operator-facing schema
+  doc belongs to S7's skill, because duplicating the schema into `docs/` now would create
+  the second copy this design is built against. The schema is stated in full in the
+  library header, which is where S2 through S4's implementers read it.
+- Acceptance amended from "the root exists" to created-on-first-write. `ensureStore()` is
+  lazy at 0700, proven by a test that deletes the store and asserts recreation. Nothing
+  outside the repo was changed by this section.
+- Store and records are created 0700/0600 rather than inheriting the umask, because S6
+  migrates records describing client production configuration into this store.
+- Deferred to S7: `memory-lib.js` is missing from the repo tree listing in `README.md`.
+  S7's acceptance already covers the docs surfaces.
+Review Findings: paired review plus security, all three returning CHANGES_REQUIRED or
+CONCERNS on the first round. Three findings were reproduced independently by all three
+reviewers, each confirmed by running the code rather than reading it.
+- **Critical, fixed and proven closed.** The control-character refusal covered
+  `description` only while `serializeRecord` wrote metadata raw, so a newline in `origin:`
+  forged a `description:` line through the sanctioned writer, and `description` is what
+  generates emitted context. Chained, it also forged the frontmatter `name`, which
+  `recordPath()` would then join outside the store. All three demonstrated exploits now
+  return `ok:false` with nothing written; the transcript of that check is in the section's
+  verification.
+- **Critical, fixed.** A `frontmatterOnly` read returned a truncated `body` unmarked, and
+  writing that object back persisted the truncation (~2KB destroyed silently). Partial
+  reads are now flagged, the body is withheld, and `writeRecord` refuses a partial record.
+- **Critical, fixed.** The record `name` came from unvalidated frontmatter rather than the
+  validated filename. It is now taken from the filename, and a disagreeing frontmatter
+  name is reported rather than trusted or silently dropped.
+- **Major, fixed.** Silent drops: 4-space metadata indent, kebab-case metadata keys, a
+  bracket-less `applied:` value, and a record whose frontmatter exceeded the prefix cap all
+  parsed `ok:true` while losing data or becoming invisible to `listRecords`. Each now
+  either parses correctly or is counted in `skipped`.
+- **Major, fixed.** Fixed tmp path replaced with the pid-suffixed form `kit-goal-lib.js:150`
+  established, since this tier is shared across concurrent sessions; `unquote` no longer
+  strips quotes that are content; `kind` is validated against `KINDS`; `created`/`modified`
+  are generated in `writeRecord` rather than left to a caller; `applied` dates are format-
+  checked.
+- **Minor, fixed:** env override trimmed and resolved absolute, `recordPath` validates
+  rather than trusting callers, null/false metadata handled, comma-in-list-element refused,
+  symlinks counted consistently by both APIs, mtime read from the same descriptor as the
+  bytes.
+- **Recurrence rule applied.** "A guard at one door but not all doors" appeared twice in
+  one changeset (control chars on `description` only; validation on the filename only), and
+  "a silent drop" appeared four times. Both are now `Standing Brief Amendments`, so every
+  later dispatch inherits them instead of rediscovering them.
+Verification: `node --test test/memory-lib.test.js` 26/26; `node --test test/*.test.js`
+185/185, no regressions. One test was watched failing first and fixed a real gap (the
+bracket-less `applied:` normalization). One test from the first round was found **vacuous**
+by probing it and was rewritten: the colon-in-description case could not fail, because a
+top-level key match already takes the rest of the line. Probing it surfaced the newline
+hazard that was real and unguarded, which is how the injection class was found before the
+reviewers confirmed it.
+Next: 2. The CLI
+Commit Model: Commit-and-Push
