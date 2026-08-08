@@ -115,14 +115,33 @@ test('a spec-named file physically inside a reviews/ dir is still caught by SCRA
     } finally { rmDir(cwd); }
 });
 
-// The exemption touches only the scratch check, never the completed-unarchived one.
-test('a Complete spec still sitting in docs/plans/ is flagged as unarchived', () => {
+// The deliberate non-behavior. An unarchived Complete plan is session-start.js's
+// non-blocking nudge to give, not this hook's block: the predicate reads repo state
+// with no regard for what the session did, so blocking on it interrupted read-only
+// Q&A turns with an archiving demand about an unrelated plan. Re-adding the check
+// here is a regression, and this test is what catches it.
+test('a Complete spec still sitting in docs/plans/ does NOT block the stop', () => {
     const cwd = makeDir('sdh-complete-');
     try {
-        writeFile(path.join(cwd, 'docs', 'plans', 'proj_security-packet_spec_v1.md'), COMPLETE);
+        writeFile(path.join(cwd, 'docs', 'plans', 'proj_public-api_spec_v1.md'), COMPLETE);
+        const { blocked, reason } = runHook(cwd);
+        assert.strictEqual(blocked, false,
+            'the unarchived-Complete nudge belongs to session-start.js, not to a turn-end block; reason was: ' + reason);
+    } finally { rmDir(cwd); }
+});
+
+// The removal must not cost the scratch check its reach: a Complete plan and a
+// genuine leak in the same tree still blocks, and says only the leak.
+test('scratch still blocks alongside a Complete plan, and the reason names only the leak', () => {
+    const cwd = makeDir('sdh-both-');
+    try {
+        writeFile(path.join(cwd, 'docs', 'plans', 'proj_public-api_spec_v1.md'), COMPLETE);
+        writeFile(path.join(cwd, 'docs', 'plans', 'phase2_blind.md'), '# leaked review\n');
         const { blocked, reason } = runHook(cwd);
         assert.strictEqual(blocked, true);
-        assert.match(reason, /unarchived/);
+        assert.match(reason, /scratch leaked/);
+        assert.doesNotMatch(reason, /unarchived/,
+            'the Complete plan must not ride along in the scratch block');
     } finally { rmDir(cwd); }
 });
 
@@ -136,10 +155,13 @@ test('a clean docs/ tree (in-progress spec, no scratch) allows the stop', () => 
     } finally { rmDir(cwd); }
 });
 
+// The dirty fixture here must be a scratch leak, not a Complete plan: a Complete
+// plan no longer blocks at all, so it would pass this case vacuously whether the
+// loop guard worked or not.
 test('stop_hook_active short-circuits: a dirty tree does not re-block inside a continuation', () => {
     const cwd = makeDir('sdh-active-');
     try {
-        writeFile(path.join(cwd, 'docs', 'plans', 'proj_thing_spec_v1.md'), COMPLETE);
+        writeFile(path.join(cwd, 'docs', 'plans', 'phase1_qa.md'), '# leaked report\n');
         const res = spawnSync(process.execPath, [HOOK], {
             input: JSON.stringify({ cwd, hook_event_name: 'Stop', stop_hook_active: true }),
             encoding: 'utf8'

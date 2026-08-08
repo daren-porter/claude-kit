@@ -1,8 +1,26 @@
 # Appsec Security Reviewer for Non-.NET Repos
 
-Status: Proposed
+Status: Abandoned
 Commit Model: Commit-and-Push
 Created: 2026-07-14
+Closed: 2026-08-07
+
+## Why this was abandoned
+
+Adjudicated in the 2026-08-07 kaizen pass, on the reasoning the Related note below had already
+assembled. The docs-lifecycle effort (section 5, 2026-07-24) generalized `security-reviewer` to
+any production codebase, making JS/Node, shell, and configuration first-class and the
+procedure-only data-access model conditional on the project documenting it. That is
+substantially this stub's option 3, delivered. The friction that opened the stub was a Python
+repo getting a "you are Python now" dispatch override; that override is no longer needed,
+because the agent is no longer .NET-shaped.
+
+What the generalization did not settle is the narrower question of whether an appsec
+*specialist* beats a general reviewer carrying security bullets. That question is real but it
+is no longer pressing, and it was never what the friction was about. If it returns it will
+return with new evidence (a real miss by the generalized reviewer on a repo with genuine attack
+surface), and that evidence should open a fresh spec rather than revive this one, whose scope
+framing ("non-.NET repos need a separate agent") is now wrong at the premise.
 
 ## Related
 

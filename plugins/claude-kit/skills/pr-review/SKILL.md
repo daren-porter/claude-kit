@@ -70,7 +70,7 @@ Present to Daren, in the terminal:
 
 1. One line of PR context and any reduced-context or split-dispatch flags.
 2. AC coverage per criterion (met / gap / cannot verify), Daren's eyes only; the PR never gets a checklist comment.
-3. Findings by category, each with file:line, the base-ref verdict for any finding naming a code defect (introduced / newly broken / predates the PR), the one-to-three-sentence rationale, the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
+3. Findings by category, each with file:line, the base-ref verdict for any finding naming a code defect (introduced / newly broken / predates the PR), the rationale, scaled per the agent's depth rule (a self-evident miss earns a clause, a subtle mechanism earns sentences, and the analysis behind either runs full depth regardless), the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
 4. The proposed vote and auto-complete action per the table below.
 
 Daren edits, vetoes, promotes notes to comments, or overrides the vote. Only his explicit go-ahead unlocks posting, one approval for the whole PR. A clean approve still waits here: a vote is an outward-facing act.
