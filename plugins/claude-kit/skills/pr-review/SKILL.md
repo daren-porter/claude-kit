@@ -71,17 +71,19 @@ Present to Daren, in the terminal:
 1. One line of PR context and any reduced-context or split-dispatch flags.
 2. AC coverage per criterion (met / gap / cannot verify), Daren's eyes only; the PR never gets a checklist comment.
 3. Findings by category, each with file:line, the base-ref verdict for any finding naming a code defect (introduced / newly broken / predates the PR), the rationale, scaled per the agent's depth rule (a self-evident miss earns a clause, a subtle mechanism earns sentences, and the analysis behind either runs full depth regardless), the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
-4. The proposed vote and auto-complete action per the table below.
+4. The proposed vote per the table below.
 
 Daren edits, vetoes, promotes notes to comments, or overrides the vote. Only his explicit go-ahead unlocks posting, one approval for the whole PR. A clean approve still waits here: a vote is an outward-facing act.
 
-| Verdict | Vote | Threads | Auto-complete |
-|---|---|---|---|
-| Clean | Approve (10) | none | untouched |
-| Suggestions | Approve with suggestions (5) | unresolved, one per suggestion | canceled if set |
-| Blockers | Wait for author (-5) | unresolved, one per blocker | canceled if set |
+| Verdict | Vote | Threads |
+|---|---|---|
+| Clean | Approve (10) | none |
+| Suggestions | Approve with suggestions (5) | unresolved, one per suggestion |
+| Blockers | Wait for author (-5) | unresolved, one per blocker |
 
-A mixed verdict takes the severest row's vote and posts threads for the blockers and every surviving suggestion. Reject (-10) is never proposed; it is Daren's escalation at the gate. An unmet acceptance criterion is a blocker unless the work-item discussion shows it was consciously deferred, which makes it a note. Draft PRs get comments but no vote by default.
+**Auto-complete is left alone, deliberately.** The kit used to cancel it whenever unresolved threads posted, so the author would see feedback before the merge. The branch policies already guarantee that: completion needs all comments resolved plus an approving vote, so a Wait-for-author vote blocks the merge outright, and an Approve-with-suggestions cannot complete while threads are open. Cancelling bought nothing, and spent an outward-facing write stripping a convenience the author deliberately set. This one rests on a policy fact rather than a principle, so name the dependency: if a repo turns out to lack the comments-resolved or minimum-approval policy, the question reopens for that repo and nowhere else.
+
+A mixed verdict takes the severest row's vote and posts threads for the blockers and every surviving suggestion, with the suggestions marked per the Post section. Reject (-10) is never proposed; it is Daren's escalation at the gate. An unmet acceptance criterion is a blocker unless the work-item discussion shows it was consciously deferred, which makes it a note. Draft PRs get comments but no vote by default.
 
 The Threads column counts blockers and suggestions only. Predates-the-PR threads and promoted notes are orthogonal to every row: they set no vote and bar no Clean approve, so a clean PR carrying three pre-existing-finding threads is an ordinary outcome, not a contradiction of the first row.
 
@@ -96,7 +98,13 @@ The Threads column counts blockers and suggestions only. Predates-the-PR threads
 - **Status at creation.** Blockers and suggestions post Active. A promoted note posts `Closed` (verified): visible, not demanded. A predates-the-PR finding posts `Fixed`, which renders "Resolved": visible on the line, blocking nothing, demanding nothing. Post one only when it is specific, anchorable, and consequential, and fold same-class findings into a single thread to control volume. Its comment opens by saying the finding predates the PR and is not for this changeset, and never says who wrote the code: "this predates the PR" carries everything the author needs, and naming the author is exactly the orienting context the drafting bar cuts. A Resolved thread is not a backlog, so a finding that matters also becomes a work item.
 - **Status vocabulary.** The enum offers more values than the web UI can render. Use `Active`, `Pending`, `Fixed` (renders "Resolved"), `WontFix` (renders "Won't Fix"), and `Closed`. `ByDesign` and `Unknown` are accepted by the API and then render as "Unknown" on the live PR; never send either. Closing a thread where the author was right and nothing changed is `Closed`, not `Fixed` (nothing was fixed) and not `WontFix` (nothing was declined).
 - **Vote:** `repo_vote_pull_request` (Approved | ApprovedWithSuggestions | WaitingForAuthor; Rejected only as Daren's gate escalation). Fallback: `az repos pr set-vote`. Dry-verified: confirm on first live use and record the confirmation in auto memory.
-- **Auto-complete:** when posting unresolved threads and the PR has auto-complete set (check `autoCompleteSetBy`; an inferred field, unobservable on a completed PR), cancel it with `repo_update_pull_request` `autoComplete: false` so the author sees the feedback before merge. Fallback: `az repos pr update --auto-complete false`. Dry-verified like the vote: confirm on first live use and record it in auto memory.
+- **Marking suggestions on a mixed verdict.** When blockers and suggestions post together under one Wait-for-author vote, every thread arrives Active and reads identically. The vote says something in the review blocks the merge and never says which thread, and Active carries no severity, so nothing on the PR distinguishes the two of five the author must act on from the three they may ignore. Open each suggestion's comment with a marker, then the finding: **Suggestion, not a blocker** - implementing it is your call, but the thread still needs a reply, since the policy clears on resolution rather than on agreement. Four parts of that shape are deliberate.
+    - **Mark the suggestions, never the blockers.** The failure modes are not symmetric. A marker you forget leaves a suggestion reading as required, and the author does work they did not owe; a scheme that tagged blockers instead would leave a forgotten blocker reading as optional, which is how required work gets skipped. Take the failure that errs toward doing more.
+    - **Say the reply is still owed.** Without that clause the marker contradicts the PR's own behavior: the author reads "optional", then finds the PR will not complete until the thread is resolved. Optional means optional to *implement*, and the marker has to say so, or it reads as either a lie or a mistake.
+    - **Every thread still posts Active.** The marker changes what the comment says, not what the thread is. Posting a suggestion `Closed` to signal optionality drops it out of the author's resolution sweep and reads as already handled.
+    - **Not on an Approve-with-suggestions verdict.** There the vote already says every thread is optional, so a per-thread marker is noise. The asymmetry is the point: mark only where a mixed verdict has made the threads ambiguous.
+
+  The marker is fixed boilerplate and sits outside the depth scaling the reviewer applies: it is not explanation, so it neither counts toward a finding's depth nor licenses padding one. A one-clause finding stays one clause under it.
 - Report back exactly what posted, with thread ids.
 
 If the connector's write path is down, present the gate output as a manual checklist instead of silently half-posting.
