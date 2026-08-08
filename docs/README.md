@@ -10,6 +10,7 @@ This directory is the working library and project history for the kit itself: th
 
 ## Active plans
 
+- **`plans/cross-project-memory_spec_v1.md`** (In Progress) - a kit-owned tier for facts that span projects, whose session-start index is generated from the records rather than maintained beside them, because index currency is a byproduct of creating a memory and never of revising one (measured 15/15 against 0/8). Adapted from Scott's memq work as design input rather than ported.
 - **`plans/kit-denaming_spec_v1.md`** (Proposed) - what replaces the 137 personal-name references baked through the kit if it goes public, across five surfaces that want different answers, and why the adoption-pass surface is a consent question rather than a wording one.
 - **`plans/visual-companion_spec_v1.md`** (Proposed) - what a "visual companion" for this kit would render, in what medium, and whether to build one or adopt the superpowers version.
 
