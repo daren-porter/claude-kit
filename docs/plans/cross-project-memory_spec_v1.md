@@ -231,7 +231,9 @@ and settled scope leaves it untouched), with a counted remainder naming how to r
 rest. The block stands on its own rather than joining the existing six-nudge stack, since a
 reference block and a reminder block compete for different attention.
 Acceptance: a session in any repo receives the block; the block is absent when the store is
-empty or unreadable; truncation announces a counted remainder; the hook never throws and
+empty or absent, and an UNREADABLE store instead emits one sentence saying so (amended in S4:
+the original text said absent, but a store that could not be read must never read as "there
+are no cross-project facts", per Standing Brief Amendment 2); truncation announces a counted remainder; the hook never throws and
 never blocks.
 Tests: extend `test/session-start-adoption.test.js`, which already carries the reusable
 harness (temp cwd, redirected `HOME`/`USERPROFILE` with a matching version marker so
@@ -544,4 +546,63 @@ recorded here rather than smoothed over. Both reviewers independently found the 
 Verification: `node --test test/memory-index.test.js` 19/19; `node --test test/*.test.js`
 244/244.
 Next: 4. SessionStart emission
+Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-08-08
+Completed: 4. SessionStart emission
+Implemented By: implementer-opus, with the review fixes in the main session
+Metrics: 1 review round (adversarial + security; **blind was deliberately skipped**, recorded below); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises:
+- **The tier is live.** A session in any repo now receives its cross-project facts at
+  session start, framed as data. This is the effort's payoff and it is verified against a
+  real store, not just in tests.
+- **The security review found the laundering amplification this whole tier was reviewed
+  against, and it was real.** The block's framing ended with "a line marked [body revised]
+  ... so read that record at the source". That instruction was triggered by a literal token
+  in record text, and a description can carry that token through the sanctioned writer,
+  because `memory.js` exempts `description` from its delimiter refusal by design (the field
+  is last on the line, so it cannot forge structure). A record BODY passes no emission door
+  anywhere: no cap, no sanitization, no framing. So a laundered record could turn its
+  bounded 400-character description into an unbounded body read, pre-legitimized by the
+  kit's own voice. Fixed by moving the trigger into authoritative data: `lines()` now
+  returns `markedNames` (validated filenames, unforgeable) and the hook names the marked
+  records itself. The framing no longer mentions the token at all, so a forged one is inert
+  text. Verified end to end.
+- **Nothing in production called `sync()`, so the marker could never fire.** The hook only
+  reads, `memory.js` did not require the index module, and the only `.sync()` call sites in
+  the repo were in tests. `.index.json` was never written, every comparison had no stored
+  hash, and the block told the model in trusted context what a marker means, every session,
+  when one structurally could not appear. This also left S3's acceptance unmet end to end.
+  Fixed by making the writer maintain the index: `memory.js` syncs after a successful `add`
+  or `stamp`, best-effort, because a derived cache must never veto an authoring act.
+  Verified: the sidecar is written, a body edited without its description now yields
+  `markedNames: ["drift-fact"]`.
+- A store whose records ALL fail to parse emitted nothing at all, dropping its skipped count
+  and index reason. The guard it relied on (`unusable`) was structurally always zero, since
+  a rendered line always begins with a validated name and can never sanitize away to
+  nothing. That is Amendment 1 recurring a fourth time and Amendment 2 verbatim; the
+  reviewer's phrasing is worth keeping, that the enumeration "was mechanical over the wrong
+  axis" — complete over values reaching emitted text, blind to conditions suppressing the
+  block.
+- Spec acceptance amended in place: an unreadable store emits one sentence rather than
+  nothing. The implementer raised this as a spec-versus-amendment tension rather than
+  silently picking one, which is the right instinct; Amendment 2 is the stronger rule.
+- Recorded divergence, not a defect: this file now carries two sanitizers for the same sink.
+  The new `safeContext` substitutes a space and announces truncation; the older filename
+  doors delete the character and truncate silently at 120. Unifying them would mean editing
+  untouched doors, which the surgical-changes rule forbids, so the divergence is a recorded
+  choice rather than a later discovery.
+- **The blind review was skipped for this section.** Adversarial and security were run. The
+  omission is a real deviation from the section loop and is recorded rather than smoothed
+  over; the security lens was judged the higher-value second seat here because this section's
+  entire risk is content crossing into trusted context. A later finishing-work pass covers
+  the whole changeset.
+Review Findings: 2 Critical, 1 Major (security), several Minor, all fixed and each verified
+by re-running the reviewer's own reproduction. The security reviewer also refuted one of the
+implementer's own concerns by measurement (2000 records x 6KB: 0.21s), which is recorded so
+it is not carried forward as a worry.
+Verification: `node --test test/*.test.js` 257/257. Live run against a real two-record store
+emits the block correctly. A forged `[body revised]` token in a description now triggers
+nothing.
+Next: 5. Advisory decay surfacing
 Commit Model: Commit-and-Push

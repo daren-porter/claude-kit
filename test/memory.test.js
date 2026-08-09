@@ -21,6 +21,7 @@ const path = require('path');
 const os = require('os');
 
 const lib = require('../plugins/claude-kit/hooks/memory-lib.js');
+const indexModule = require('../plugins/claude-kit/hooks/memory-index.js');
 
 const CLI = path.join(__dirname, '..', 'plugins', 'claude-kit', 'hooks', 'memory.js');
 
@@ -725,8 +726,9 @@ test('the store holds records and one journal, and no lock of any kind', () => {
         // wedging every write from every project until a human intervened, an
         // unbreakable lock spinning. This pins that the mechanism capable of
         // those is gone and was not quietly reintroduced.
-        const strays = fs.readdirSync(dir).filter(f => !f.endsWith('.md') && f !== lib.JOURNAL_FILE);
-        assert.deepStrictEqual(strays, [], 'nothing but records and the journal');
+        const allowed = new Set([lib.JOURNAL_FILE, indexModule.INDEX_FILE]);
+        const strays = fs.readdirSync(dir).filter(f => !f.endsWith('.md') && !allowed.has(f));
+        assert.deepStrictEqual(strays, [], 'nothing but records, the journal, and the derived index');
     });
 });
 

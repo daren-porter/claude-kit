@@ -28,6 +28,11 @@
 
 
 const lib = require('./memory-lib.js');
+// The index sidecar is maintained by the writer. Nothing else can: the
+// SessionStart hook only reads, and an index nobody writes leaves every
+// `[body revised]` comparison with no stored hash to compare against, so the
+// marker could never fire while the emitted block promised it could.
+const index = require('./memory-index.js');
 
 // Advisory decay ranking. Nothing here retires, deletes, or rewrites
 // anything: the ranked list is a prompt for a human decision, which is why
@@ -294,6 +299,18 @@ function appliedDays(record) {
     return Array.from(new Set(fromRecord.concat(journal))).sort();
 }
 
+// Refresh the derived sidecar after a write. Deliberately best-effort: the
+// index is rebuildable from the records at any time, so a sidecar that could
+// not be written is a marker that misses once, not a failed write. Failing the
+// command here would let a derived cache veto an authoring act.
+function syncIndex() {
+    try {
+        index.sync();
+    } catch {
+        /* derived data; the next write or read rebuilds it */
+    }
+}
+
 function cmdAdd(args) {
     const [name, ...rest] = args;
     if (!name) return usage();
@@ -347,6 +364,7 @@ function cmdAdd(args) {
     }, clock.now, { mode: 'create' });
 
     if (!result.ok) return fail(result.reason);
+    syncIndex();
     out('created ' + render(lib.recordPath(name), 200));
 }
 
@@ -482,6 +500,7 @@ function cmdStamp(args) {
     const result = already ? { ok: true, already: true } : lib.appendApplied(name, today);
 
     if (!result.ok) return fail(result.reason);
+    syncIndex();
     out(result.already
         ? name + ' was already stamped on ' + today
         : 'stamped ' + name + ' on ' + today);

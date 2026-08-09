@@ -438,16 +438,25 @@ function lines() {
         if (!observed.ok) return observed;
 
         const out = [];
-        let marked = 0;
+        const markedNames = [];
         for (const record of observed.observations) {
             const mark = markerFor(index.entries[record.name], record);
-            if (mark) marked++;
+            if (mark) markedNames.push(record.name);
             out.push(renderLine(record, mark));
         }
+        const marked = markedNames.length;
         return {
             ok: true,
             lines: out,
             marked,
+            // The marked NAMES, not just a count. A consumer that has to grep
+            // the emitted text for the marker token is trusting record content
+            // to tell it which records are marked, and a description can carry
+            // that token: the writer exempts `description` from the delimiter
+            // refusal by design, so `--description "a fact [body revised]"` is
+            // accepted. Names come from the validated filename, so this is the
+            // authoritative channel.
+            markedNames,
             bodyUnknown: observed.bodyUnknown,
             unresolved: observed.unresolved,
             skipped: observed.skipped,
