@@ -514,10 +514,33 @@ Decisions / Surprises:
   everything inversion, which reports 12 of 20.
 - Spec section 3 still described the sidecar as storing body mtime; corrected in place to
   the content hash the S1 Chapter already amended the Approach to.
-Review Findings: the implementer ran nine mutation runs against its own guards, restoring
-the module byte-identically after each, and reported every guard biting with a distinct
-failure. I independently confirmed the load-bearing one: inverting the body-hash comparison
-breaks exactly 2 tests, so the marker is not vacuous. Full review round follows.
+Review Findings: the paired review ran AFTER the section commit rather than before, which
+inverts the section loop; the fixes landed in a follow-up commit and the deviation is
+recorded here rather than smoothed over. Both reviewers independently found the same MAJOR.
+- **`constructor` is a legal record name.** It passes the kebab-case pattern, and the
+  sidecar's maps were plain `{}` literals, so a lookup returned `Object.prototype`'s member
+  and the entry was dropped from the sidecar **uncounted** — Amendment 2 verbatim. Its
+  second face skipped the removal branch, so a deleted entry survived indefinitely with
+  `removed` never incremented. Fixed with `Object.create(null)` at all five construction
+  sites, including the four early-return rebuild paths I missed on the first pass. Pinned by
+  two tests that bite when the literals are restored.
+- **`exists()` recorded "I could not tell" as "it was deleted"** (blind reviewer). Any
+  `lstat` error, not just ENOENT, dropped the entry, discarding exactly the hashes the
+  retention branch exists to preserve; on a store designed to sync across machines, a
+  transient EIO on a child with a healthy parent is ordinary. Only ENOENT is a deletion now.
+  **My first attempt at this fix silently did not apply** (the match string omitted a
+  comment inside the `try`), and the suite stayed green because nothing covered it. Caught
+  by writing the test first and finding it still failed. Pinned with a stubbed `lstatSync`,
+  since there is no portable way to provoke EIO on a real path and an unpinned fix is one
+  that regresses quietly.
+- Minor, fixed: `lines()` read the store before the index, so a concurrent sync produced a
+  FALSE marker; reversed, so the same race now produces a missed one, which is the direction
+  the module argues for. `lines()`'s catch omitted the `unreadable` flag its own contract
+  promises. A hand-written `kind: []` parses to an empty array, which is truthy, so
+  truthiness was the wrong test at a render door.
+- Both reviewers confirmed the marker logic itself correct in every state, the partial-record
+  third state genuinely three-valued, and the sidecar lifecycle rebuilding rather than
+  erroring on all six corruption modes.
 Verification: `node --test test/memory-index.test.js` 19/19; `node --test test/*.test.js`
 244/244.
 Next: 4. SessionStart emission

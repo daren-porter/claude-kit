@@ -641,3 +641,86 @@ test('lines never writes the sidecar', () => {
         assert.strictEqual(fs.readFileSync(path.join(dir, index.INDEX_FILE), 'utf8'), before);
     });
 });
+
+test('a record named "constructor" is handled like any other, not swallowed by a prototype', () => {
+    // `constructor` passes the kebab-case name pattern, so a sidecar keyed by
+    // a plain {} literal returns Object.prototype's member for it. Both S3
+    // reviewers found this independently: the entry vanished from the sidecar
+    // uncounted, and its [body revised] marker could then never fire.
+    withStore(dir => {
+        seed('constructor', 'a fact whose name collides with a prototype member');
+        seed('ordinary', 'an ordinary fact for contrast');
+
+        const first = index.sync();
+        assert.strictEqual(first.ok, true, first.reason);
+        assert.strictEqual(first.added, 2, 'both are NEW on first sight, not one new and one changed');
+
+        setBody(dir, 'constructor', 'a rewritten body, description untouched');
+        setBody(dir, 'ordinary', 'a rewritten body, description untouched');
+
+        const marked = markedNames(index.lines());
+        assert.deepStrictEqual(marked.sort(), ['constructor', 'ordinary'],
+            'the prototype-named record must be markable like any other');
+    });
+});
+
+test('a deleted entry is counted as removed rather than vanishing uncounted', () => {
+    // The other face of the same prototype defect: `after[name]` inherited a
+    // truthy value, so the removal branch skipped, `removed` was never
+    // incremented, and the stale entry survived in the sidecar indefinitely.
+    withStore(dir => {
+        seed('constructor', 'a fact whose name collides with a prototype member');
+        seed('ordinary', 'an ordinary fact for contrast');
+        assert.strictEqual(index.sync().ok, true);
+
+        fs.rmSync(path.join(dir, 'constructor.md'));
+        const after = index.sync();
+
+        assert.strictEqual(after.ok, true, after.reason);
+        assert.strictEqual(after.removed, 1, 'the removal must be counted, not silently skipped');
+        assert.ok(!Object.prototype.hasOwnProperty.call(readSidecar(dir).records || {}, 'constructor'),
+            'and the entry must actually be gone from the sidecar');
+    });
+});
+
+test('a record whose stat fails for a reason other than absence is retained', () => {
+    // "I could not tell" must never be recorded as "it was deleted": that
+    // discards the hashes the retention branch exists to preserve, so a
+    // revision made while the store was briefly unreachable becomes
+    // invisible. The store is meant to be synced across machines, where a
+    // transient EIO or ESTALE on a child with a healthy parent is ordinary.
+    //
+    // Stubbed rather than provoked: there is no portable way to make lstat
+    // fail with EIO on a real path, and an unpinned fix is one that silently
+    // regresses.
+    withStore(dir => {
+        seed('flaky', 'a fact whose file briefly cannot be stat-ed');
+        seed('steady', 'a fact that stays reachable');
+        assert.strictEqual(index.sync().ok, true);
+        const before = readSidecar(dir).records;
+        assert.ok(before.flaky, 'precondition: the entry exists');
+
+        const realLstat = fs.lstatSync;
+        fs.lstatSync = function (target, ...rest) {
+            if (String(target).endsWith('flaky.md')) {
+                const err = new Error('EIO: i/o error, lstat');
+                err.code = 'EIO';
+                throw err;
+            }
+            return realLstat.call(fs, target, ...rest);
+        };
+        let after;
+        try {
+            // Remove it from the listing too, so the only thing keeping the
+            // entry is the retain-on-unknown decision.
+            fs.renameSync(path.join(dir, 'flaky.md'), path.join(dir, 'flaky.hidden'));
+            after = index.sync();
+        } finally {
+            fs.lstatSync = realLstat;
+        }
+
+        assert.strictEqual(after.ok, true, after.reason);
+        assert.strictEqual(after.removed, 0, 'an unknowable record is not a removal');
+        assert.ok(readSidecar(dir).records.flaky, 'its hashes must survive so a later revision is still visible');
+    });
+});

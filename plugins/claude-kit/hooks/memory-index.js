@@ -151,26 +151,29 @@ function readIndex() {
         // Absent and unreadable are separated by an lstat rather than folded
         // together: an absent sidecar is the normal first run, an unreadable
         // one is a condition an operator may need to hear about.
-        return { entries: {}, rebuilt: true, reason: exists(file) ? 'the index could not be read' : null };
+        return { entries: Object.create(null), rebuilt: true, reason: exists(file) ? 'the index could not be read' : null };
     }
     if (read.truncated) {
-        return { entries: {}, rebuilt: true, reason: 'the index exceeds ' + INDEX_READ_CAP + ' bytes' };
+        return { entries: Object.create(null), rebuilt: true, reason: 'the index exceeds ' + INDEX_READ_CAP + ' bytes' };
     }
     let parsed;
     try {
         parsed = JSON.parse(read.text);
     } catch {
-        return { entries: {}, rebuilt: true, reason: 'the index is not parsable JSON' };
+        return { entries: Object.create(null), rebuilt: true, reason: 'the index is not parsable JSON' };
     }
     if (!parsed || typeof parsed !== 'object' || parsed.version !== INDEX_VERSION) {
-        return { entries: {}, rebuilt: true, reason: 'the index is not version ' + INDEX_VERSION };
+        return { entries: Object.create(null), rebuilt: true, reason: 'the index is not version ' + INDEX_VERSION };
     }
     const records = parsed.records;
     if (!records || typeof records !== 'object') {
-        return { entries: {}, rebuilt: true, reason: 'the index has no records map' };
+        return { entries: Object.create(null), rebuilt: true, reason: 'the index has no records map' };
     }
 
-    const entries = {};
+    // Prototype-free: `constructor` passes the kebab-case name pattern, so a
+    // plain {} literal returns Object.prototype's member for it and the entry
+    // is silently dropped, uncounted. Found independently by two reviewers.
+    const entries = Object.create(null);
     let dropped = 0;
     for (const [name, entry] of Object.entries(records)) {
         // A name arriving from the sidecar's JSON is CONTENT, exactly like a
@@ -199,14 +202,20 @@ function hashField(value) {
     return undefined;
 }
 
+// Deliberately not two-valued. "I could not tell" must never be recorded as
+// "the record was deleted": that discards the very hashes the retention
+// branch exists to preserve, so a revision made while the store was briefly
+// unreachable becomes invisible afterwards. Only ENOENT is gone; every other
+// error retains. This store is meant to be synced across machines, where a
+// transient EIO or ESTALE on a child with a healthy parent is ordinary.
 function exists(file) {
     try {
         // lstat, not stat: a dangling symlink still occupies the name, and the
         // CLI settled on the same choice at its record door.
         fs.lstatSync(file);
         return true;
-    } catch {
-        return false;
+    } catch (err) {
+        return !(err && err.code === 'ENOENT');
     }
 }
 
@@ -334,7 +343,7 @@ function sync() {
 
         const index = readIndex();
         const before = index.entries;
-        const after = {};
+        const after = Object.create(null);
         let added = 0;
         let changed = 0;
         let unchanged = 0;
@@ -419,9 +428,14 @@ function sync() {
 // reason } or { ok:false, unreadable:true, reason }.
 function lines() {
     try {
+        // Index first, then observe. A concurrent sync landing between these
+        // two makes one side newer than the other either way; this ordering
+        // leaves the stored hash OLDER than the observed record, which yields
+        // a MISSED marker. The reverse ordering yields a FALSE one, and a
+        // marker that cries wolf is the failure this module argues against.
+        const index = readIndex();
         const observed = observeStore();
         if (!observed.ok) return observed;
-        const index = readIndex();
 
         const out = [];
         let marked = 0;
@@ -441,7 +455,9 @@ function lines() {
             reason: index.reason || null,
         };
     } catch (err) {
-        return { ok: false, reason: 'index generation failed: ' + lib.sanitize(err && err.message, 120) };
+        // `unreadable` is part of this function's contract, so it is carried
+        // on every failure path rather than only the expected one.
+        return { ok: false, unreadable: true, reason: 'index generation failed: ' + lib.sanitize(err && err.message, 120) };
     }
 }
 
@@ -453,10 +469,17 @@ function lines() {
 // `name` needs no neutralizing: it is the validated kebab-case file stem,
 // taken from the directory listing and never from record content. Everything
 // else ahead of the colon does, and the description stays last.
+// A hand-written `kind: []` parses to an empty array, which is truthy, and
+// `kind: [a, b]` parses to an array of two. Truthiness is the wrong test at a
+// render door; only a non-empty string is a usable scalar.
+function usableScalar(value) {
+    return typeof value === 'string' && value.trim() !== '';
+}
+
 function renderLine(record, marked) {
     const md = record.metadata || {};
-    const kind = md.kind ? label(md.kind) : 'unknown';
-    const machine = md.machine ? ' @' + label(md.machine) : '';
+    const kind = usableScalar(md.kind) ? label(md.kind) : 'unknown';
+    const machine = usableScalar(md.machine) ? ' @' + label(md.machine) : '';
     const mark = marked ? ' ' + BODY_REVISED_MARKER : '';
     return '- ' + record.name + ' [' + kind + ']' + machine + mark + ': '
         + render(record.description, lib.DESCRIPTION_MAX);
