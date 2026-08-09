@@ -101,6 +101,10 @@ const DESCRIPTION_MAX = 400;
 // both stores open.
 const KINDS = ['machine', 'platform'];
 
+// Bounds one metadata value, for the same reason DESCRIPTION_MAX bounds the
+// description: the frontmatter block must stay inside the prefix read.
+const METADATA_VALUE_MAX = 200;
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 // Metadata fields that are lists whatever their written form. Bracket syntax
@@ -184,6 +188,10 @@ function readCapped(file, cap) {
     }
     try {
         const stat = fs.fstatSync(fd);
+        // Matches listRecords' withFileTypes check. Without this the two APIs
+        // disagree: a symlinked record was invisible to the index but fully
+        // readable and writable by name, and stamping it silently replaced the
+        // link with a regular file while the real target went unstamped.
         if (!stat.isFile()) return null;
         const buf = Buffer.alloc(cap);
         const bytes = fs.readSync(fd, buf, 0, cap, 0);
@@ -245,7 +253,7 @@ function parseRecord(text, expectName) {
     const end = lines.indexOf('---', 1);
     if (end === -1) return { ok: false, reason: 'unterminated frontmatter block' };
 
-    const record = { name: '', description: '', metadata: {}, body: '' };
+    const record = { name: '', description: '', metadata: {}, extraTop: {}, body: '' };
     let declaredName = '';
     let inMetadata = false;
 
@@ -267,6 +275,16 @@ function parseRecord(text, expectName) {
         if (inMetadata) continue;
         if (top[1] === 'name') declaredName = unquote(top[2]);
         else if (top[1] === 'description') record.description = unquote(top[2]);
+        // A top-level key this schema does not model is CARRIED, not dropped
+        // and not refused. Dropping it destroys a hand-written `tags:` line on
+        // the next write, because serializeRecord emits only what it parsed.
+        // Refusing it (the first fix here) was worse: readRecord is the only
+        // reader, so a perfectly legible record became invisible to `get`,
+        // `list`, and `decay` alike, which is this tier's own worst failure
+        // wearing a guard's clothes. Carrying it round-trips the record
+        // unchanged and matches how serializeRecord already treats unknown
+        // metadata keys.
+        else record.extraTop[top[1]] = unquote(top[2]);
     }
 
     for (const field of LIST_FIELDS) {
@@ -298,7 +316,13 @@ function serializeRecord(record) {
     const known = order.filter(k => usable(md[k]));
     const extra = Object.keys(md).filter(k => !order.includes(k) && usable(md[k]));
 
-    const out = ['---', 'name: ' + record.name, 'description: ' + record.description, 'metadata:'];
+    const out = ['---', 'name: ' + record.name, 'description: ' + record.description];
+    // Top-level keys this schema does not model, carried through untouched so
+    // a hand-written field survives a stamp instead of vanishing.
+    for (const [k, v] of Object.entries(record.extraTop || {})) {
+        if (usable(v)) out.push(k + ': ' + v);
+    }
+    out.push('metadata:');
     for (const k of known.concat(extra)) {
         const v = md[k];
         out.push('  ' + k + ': ' + (Array.isArray(v) ? '[' + v.join(', ') + ']' : v));
@@ -333,10 +357,26 @@ function readRecord(name, opts) {
     const parsed = parseRecord(read.text, name);
     if (!parsed.ok) return parsed;
     parsed.record.mtimeMs = read.mtimeMs;
+    // Version token for compare-and-swap. A hash of the bytes actually read,
+    // not mtime: mtime is only as fine as the filesystem's timestamp
+    // granularity, so two writes landing in the same millisecond are
+    // indistinguishable and the swap passes when it should conflict. Measured
+    // under 20 concurrent stampers, mtime lost one update silently while
+    // every process reported success.
+    parsed.record.versionHash = read.truncated ? null : hashOf(read.text);
     parsed.record.descriptionHash = hashOf(parsed.record.description);
-    if (wantPrefix && read.truncated) {
-        // The body is incomplete, so it is withheld rather than handed over
-        // to be written back at its truncated length.
+    if (read.truncated) {
+        // ANY truncated read, prefix or full. The body is incomplete, so it
+        // is withheld rather than handed over to be written back at its
+        // truncated length, and no body hash is offered because hashing a
+        // truncated body would answer a question nobody asked.
+        //
+        // This guard covered the prefix path only until S2's review: `stamp`
+        // does a full read-modify-write, so a record past RECORD_READ_CAP was
+        // silently rewritten shorter, measured at 307KB in and 262KB out with
+        // a success message. The prefix path had the guard; its sibling did
+        // not. That is the Standing Brief Amendment about one door versus
+        // every door, recurring inside the module that first fixed it.
         parsed.record.partial = true;
         delete parsed.record.body;
     } else {
@@ -353,8 +393,14 @@ function listRecords() {
     let entries;
     try {
         entries = fs.readdirSync(storeRoot(), { withFileTypes: true });
-    } catch {
-        return { records: [], skipped: 0 };
+    } catch (err) {
+        // An absent store and an unreadable one are different answers and
+        // must not collapse into the same empty result. A store that exists
+        // but cannot be listed (permissions, a regular file at the root, an
+        // I/O error) reporting "no records" at exit 0 is this tier's worst
+        // failure: it says there are no facts when it simply could not look.
+        if (err && err.code === 'ENOENT') return { records: [], skipped: 0, unreadable: false };
+        return { records: [], skipped: 0, unreadable: true, reason: sanitize(err && err.message, 120) };
     }
     const records = [];
     let skipped = 0;
@@ -371,7 +417,84 @@ function listRecords() {
         records.push(result.record);
     }
     records.sort((a, b) => a.name.localeCompare(b.name));
-    return { records, skipped };
+    return { records, skipped, unreadable: false };
+}
+
+// The applied-day journal. Stamping used to rewrite the record to append a
+// day, which is a multi-process read-modify-write and cannot be made safe on
+// a plain file: measured at 8.3% silent loss with only TWO concurrent
+// stampers, every process reporting success. A compare-and-swap shrinks that
+// window but cannot close it, because two writers can both pass the swap
+// before either publishes.
+//
+// So a stamp does not touch the record at all. It appends one line to a
+// journal, and a small O_APPEND write is atomic: concurrent appends interleave
+// as whole lines rather than corrupting each other, so there is nothing to
+// swap on and nothing to lose. Duplicates are harmless because the reader
+// takes the distinct set, which is also what makes a retry unnecessary.
+//
+// It is the git-sync-friendly shape too: an append-only file merges as a line
+// union, where a rewritten frontmatter list would conflict.
+const JOURNAL_FILE = 'applied.jsonl';
+
+// One journal line, bounded so a corrupt file cannot make a reader allocate
+// without limit.
+const JOURNAL_LINE_MAX = 300;
+
+function journalPath() {
+    return path.join(storeRoot(), JOURNAL_FILE);
+}
+
+// Record that `name` was applied on `day`. Returns { ok } or { ok:false,
+// reason }; never throws. Idempotent by construction: a repeated day is a
+// duplicate line the reader folds away.
+function appendApplied(name, day, opts) {
+    const check = validateName(name);
+    if (!check.ok) return check;
+    if (!DATE_PATTERN.test(day)) return { ok: false, reason: 'applied day must be YYYY-MM-DD' };
+    const ensured = ensureStore();
+    if (!ensured.ok) return ensured;
+    try {
+        // One write call, one line, opened O_APPEND. Under PIPE_BUF this is
+        // atomic against concurrent appenders on a local filesystem.
+        fs.appendFileSync(journalPath(), JSON.stringify({ name, day }) + '\n', { encoding: 'utf8', mode: 0o600 });
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, reason: 'could not record the applied day: ' + sanitize(err.message, 120) };
+    }
+}
+
+// Every applied day in the journal, as a Map of name -> sorted distinct days.
+// A malformed line is counted rather than dropped silently and never aborts
+// the read: a journal is append-only, so a torn tail is a normal way to find
+// it after a crash. Returns { days, skipped }.
+function readAppliedJournal() {
+    const days = new Map();
+    let skipped = 0;
+    let text;
+    try {
+        text = fs.readFileSync(journalPath(), 'utf8');
+    } catch (err) {
+        if (err && err.code === 'ENOENT') return { days, skipped: 0 };
+        return { days, skipped: 0, unreadable: true };
+    }
+    for (const line of text.split('\n')) {
+        if (!line.trim()) continue;
+        if (line.length > JOURNAL_LINE_MAX) { skipped++; continue; }
+        let entry;
+        try {
+            entry = JSON.parse(line);
+        } catch {
+            skipped++;
+            continue;
+        }
+        if (!entry || !validateName(entry.name).ok || !DATE_PATTERN.test(entry.day)) { skipped++; continue; }
+        if (!days.has(entry.name)) days.set(entry.name, new Set());
+        days.get(entry.name).add(entry.day);
+    }
+    const sorted = new Map();
+    for (const [name, set] of days) sorted.set(name, Array.from(set).sort());
+    return { days: sorted, skipped };
 }
 
 // Create the store root if absent, private to the operator. The tier holds
@@ -386,12 +509,36 @@ function ensureStore() {
     }
 }
 
-// Validate every authored field, then write atomically (tmp + rename). The
-// tmp path carries the pid, matching kit-goal-lib.js: this tier is shared
-// across concurrent sessions of every project, so two writers must never
-// collide on one tmp path. Returns { ok, record } or { ok:false, reason };
-// never throws.
-function writeRecord(record, now) {
+// Validate every authored field, then publish atomically. The tmp path
+// carries the pid, matching kit-goal-lib.js: this tier is shared across
+// concurrent sessions of every project, so two writers must never collide on
+// one tmp path.
+//
+// `opts.mode` picks how the tmp file is published, and this is the whole of
+// the tier's concurrency control:
+//
+//   'create'  publish with linkSync, which fails EEXIST when the name is
+//             taken. Exclusive creation in one atomic syscall.
+//   'replace' publish with renameSync (the default), optionally guarded by
+//             `opts.expectVersion`: the target's content hash is compared
+//             just before the rename and a mismatch returns { conflict: true }
+//             rather than overwriting. Compare-and-swap.
+//
+// This replaced a lockfile. Two review rounds produced Criticals that were
+// all lock-lifecycle failures (a stale lock stealing, a reused pid wedging
+// every write from every project, an unbreakable lock spinning), and none of
+// them can exist without a lock. A pid is also meaningless in this store's
+// own future: the root was chosen so the store can be synced across machines,
+// where a pid recorded on one host says nothing on another. Optimistic
+// concurrency has no lifecycle to get wrong.
+//
+// The residual is a stat-to-rename window of microseconds in which a
+// concurrent writer can still land first. The caller retries; `stamp` records
+// a calendar day, so re-applying it is idempotent.
+//
+// Returns { ok, record }, or { ok:false, reason } and { ok:false, conflict:true }
+// for a lost CAS. Never throws.
+function writeRecord(record, now, opts) {
     if (!record || typeof record !== 'object') return { ok: false, reason: 'record is required' };
     const nameCheck = validateName(record.name);
     if (!nameCheck.ok) return nameCheck;
@@ -411,12 +558,22 @@ function writeRecord(record, now) {
     }
     for (const [key, value] of Object.entries(md)) {
         if (!usable(value)) { delete md[key]; continue; }
+        const keyCheck = validateFieldText(key, 'a metadata key');
+        if (!keyCheck.ok) return keyCheck;
         const values = Array.isArray(value) ? value : [value];
         for (const item of values) {
             const check = validateFieldText(String(item), 'metadata.' + key);
             if (!check.ok) return check;
             if (String(item).includes(',')) {
                 return { ok: false, reason: 'metadata.' + key + ' must not contain a comma' };
+            }
+            // Bounded for the same reason `description` is: an unbounded
+            // metadata value pushes the record's own frontmatter past the
+            // prefix read, which turns every list into a full 256KB re-read
+            // and, past RECORD_READ_CAP, writes a record that reads back as
+            // an unterminated block.
+            if (String(item).length > METADATA_VALUE_MAX) {
+                return { ok: false, reason: 'metadata.' + key + ' exceeds ' + METADATA_VALUE_MAX + ' characters' };
             }
         }
         md[key] = Array.isArray(value) ? value.map(String) : String(value);
@@ -427,19 +584,94 @@ function writeRecord(record, now) {
 
     // Stamps are generated here so they cannot be forgotten by a caller; the
     // spec calls them unbackfillable, which makes "the caller sets them" the
-    // wrong contract.
+    // wrong contract. But absent and malformed are different: a `created`
+    // that is present and unparsable is authored data, and silently replacing
+    // it with today both destroys it and resets the decay clock, so a
+    // years-old record would read as idle zero days and never surface as a
+    // decay candidate. Refuse instead.
     const stamp = now instanceof Date ? now : new Date();
-    if (!DATE_PATTERN.test(md.created || '')) md.created = stamp.toISOString().slice(0, 10);
+    if (md.created !== undefined && !DATE_PATTERN.test(md.created)) {
+        return { ok: false, reason: 'created must be YYYY-MM-DD; refusing to overwrite an unparsable one' };
+    }
+    if (!md.created) md.created = stamp.toISOString().slice(0, 10);
     md.modified = stamp.toISOString();
 
     const ensured = ensureStore();
     if (!ensured.ok) return ensured;
 
-    const finished = { name: record.name, description, metadata: md, body: record.body || '' };
+    // extraTop rides through: parseRecord carries unmodelled top-level keys
+    // precisely so a write-back does not destroy them, and rebuilding the
+    // record here without them would put the drop back one door further on.
+    const extraTop = Object.assign({}, record.extraTop);
+    for (const [key, value] of Object.entries(extraTop)) {
+        if (!usable(value)) { delete extraTop[key]; continue; }
+        // The key is emitted raw as `key: value`, so a newline in a KEY
+        // forges the line after it, including `description`. The metadata
+        // loop below has the same shape; both validate key and value, and
+        // both bound the length, because this block shares one frontmatter
+        // budget with the metadata it sits beside.
+        const keyCheck = validateFieldText(key, 'a top-level key');
+        if (!keyCheck.ok) return keyCheck;
+        if (!/^[A-Za-z][\w.-]*$/.test(key)) {
+            return { ok: false, reason: 'top-level key ' + sanitize(key, 40) + ' is not a usable key' };
+        }
+        const check = validateFieldText(String(value), key);
+        if (!check.ok) return check;
+        if (String(value).length > METADATA_VALUE_MAX) {
+            return { ok: false, reason: key + ' exceeds ' + METADATA_VALUE_MAX + ' characters' };
+        }
+        extraTop[key] = String(value);
+    }
+    const finished = { name: record.name, description, extraTop, metadata: md, body: record.body || '' };
     const file = recordPath(record.name);
     const tmp = file + '.tmp.' + process.pid;
+    const mode = (opts && opts.mode) || 'replace';
+    // A typo'd mode must not silently become an unguarded overwrite: this is
+    // the tier's only authoring path.
+    if (mode !== 'create' && mode !== 'replace') {
+        return { ok: false, reason: "mode must be 'create' or 'replace'" };
+    }
+    const expectVersion = opts && opts.expectVersion;
     try {
         fs.writeFileSync(tmp, serializeRecord(finished), { encoding: 'utf8', mode: 0o600 });
+        if (mode === 'create') {
+            // linkSync refuses to clobber, so the name is claimed or it is
+            // not, with no window between checking and claiming.
+            try {
+                fs.linkSync(tmp, file);
+            } catch (err) {
+                fs.unlinkSync(tmp);
+                if (err && err.code === 'EEXIST') return { ok: false, conflict: true, reason: 'a record named ' + record.name + ' already exists' };
+                if (err && (err.code === 'EPERM' || err.code === 'ENOSYS' || err.code === 'EXDEV')) {
+                    return { ok: false, reason: 'the store filesystem does not support hard links, which this tier uses to claim a name atomically' };
+                }
+                throw err;
+            }
+            // The record exists from the linkSync above; a failure to remove
+            // the second link is debris, not a failed write, and reporting it
+            // as one sends the operator to re-run an add that then says the
+            // name is taken.
+            try { fs.unlinkSync(tmp); } catch { /* orphan tmp, record is written */ }
+            return { ok: true, record: finished };
+        }
+        if (expectVersion !== undefined) {
+            // Compare-and-swap on content, checked as late as possible. The
+            // residual window is this read to the rename below; the caller
+            // verifies its change actually landed and retries, so a loss in
+            // that window is caught rather than assumed away.
+            // Through readCapped, so the bytes hashed here are normalized
+            // the same way readRecord normalized them. Hashing the raw file
+            // instead made a BOM'd record permanently unswappable: the two
+            // hashes could never agree, and the failure blamed a concurrent
+            // writer that did not exist. It also keeps every read in this
+            // module bounded.
+            const reread = readCapped(file, RECORD_READ_CAP);
+            const current = reread === null ? null : hashOf(reread.text);
+            if (current !== expectVersion) {
+                fs.unlinkSync(tmp);
+                return { ok: false, conflict: true, reason: 'the record changed while it was being updated' };
+            }
+        }
         fs.renameSync(tmp, file);
         return { ok: true, record: finished };
     } catch (err) {
@@ -454,6 +686,7 @@ module.exports = {
     RECORD_READ_CAP,
     NAME_MAX,
     DESCRIPTION_MAX,
+    METADATA_VALUE_MAX,
     storeRoot,
     recordPath,
     validateName,
@@ -465,5 +698,9 @@ module.exports = {
     readRecord,
     listRecords,
     ensureStore,
+    appendApplied,
+    readAppliedJournal,
+    journalPath,
+    JOURNAL_FILE,
     writeRecord,
 };

@@ -395,12 +395,92 @@ test('an absent store degrades to empty rather than throwing', () => {
     const prior = process.env.CLAUDE_KIT_MEMORY_DIR;
     process.env.CLAUDE_KIT_MEMORY_DIR = path.join(os.tmpdir(), 'kit-memory-does-not-exist-' + process.pid);
     try {
-        assert.deepStrictEqual(lib.listRecords(), { records: [], skipped: 0 });
+        const listed = lib.listRecords();
+        assert.deepStrictEqual(listed.records, []);
+        assert.strictEqual(listed.skipped, 0);
+        assert.strictEqual(listed.unreadable, false, 'absent is not unreadable');
         assert.strictEqual(lib.readRecord('anything').ok, false);
     } finally {
         if (prior === undefined) delete process.env.CLAUDE_KIT_MEMORY_DIR;
         else process.env.CLAUDE_KIT_MEMORY_DIR = prior;
     }
+});
+
+test('an unreadable store is distinguishable from an empty one', () => {
+    // S2 review: a store holding real records but chmod 000 reported "no
+    // records" at exit 0. Saying there are no facts when you could not look
+    // is this tier's worst failure.
+    if (process.platform === 'win32' || process.getuid && process.getuid() === 0) return;
+    withStore((dir) => {
+        lib.writeRecord(sampleRecord());
+        fs.chmodSync(dir, 0o000);
+        try {
+            const listed = lib.listRecords();
+
+            assert.strictEqual(listed.unreadable, true, 'must not read as an empty store');
+            assert.deepStrictEqual(listed.records, []);
+        } finally {
+            fs.chmodSync(dir, 0o700);
+        }
+    });
+});
+
+test('a truncated FULL read is flagged partial, not just a truncated prefix', () => {
+    // S2 review, reproduced by all three reviewers: `stamp` full-reads a
+    // record and writes it back, so a record past RECORD_READ_CAP was
+    // silently rewritten shorter (307KB in, 262KB out, exit 0). The guard
+    // existed on the prefix path and not on its sibling.
+    withStore((dir) => {
+        const huge = 'B'.repeat(lib.RECORD_READ_CAP + 5000);
+        fs.writeFileSync(path.join(dir, 'huge-body.md'),
+            `---\nname: huge-body\ndescription: a fact with an enormous body\nmetadata:\n  kind: platform\n---\n\n${huge}\n`, 'utf8');
+
+        const read = lib.readRecord('huge-body');
+
+        assert.strictEqual(read.ok, true);
+        assert.strictEqual(read.record.partial, true, 'a truncated full read must say so');
+        assert.strictEqual(read.record.body, undefined, 'the truncated body is withheld');
+        assert.strictEqual(read.record.bodyHash, undefined, 'no hash over a body we did not fully read');
+        // And the write door refuses it, so a read-modify-write cannot persist the truncation.
+        assert.strictEqual(lib.writeRecord(read.record).ok, false);
+        assert.ok(fs.readFileSync(path.join(dir, 'huge-body.md'), 'utf8').includes(huge), 'body intact on disk');
+    });
+});
+
+test('write refuses a present-but-unparsable created rather than overwriting it', () => {
+    // S2 review: a hand-written `created: 08/01/2024` was silently replaced
+    // with today, destroying authored data AND resetting the decay clock, so
+    // a years-old record would read as idle zero days and never surface.
+    withStore(() => {
+        const record = sampleRecord();
+        record.metadata.created = '08/01/2024';
+
+        const result = lib.writeRecord(record);
+
+        assert.strictEqual(result.ok, false);
+        assert.match(result.reason, /created must be YYYY-MM-DD/);
+    });
+});
+
+test('an unmodelled top-level frontmatter key is carried, not dropped and not refused', () => {
+    // Two review rounds shaped this one. S2 round 1: a hand-written `tags:`
+    // line vanished after a single stamp, because parseRecord ignored it and
+    // serializeRecord emits only what it parsed. S2 round 2: refusing it
+    // instead was worse, because readRecord is the only reader, so a legible
+    // record went invisible to `get`, `list`, and `decay` alike. Carrying it
+    // round-trips the record unchanged.
+    withStore((dir) => {
+        fs.writeFileSync(path.join(dir, 'has-tags.md'),
+            '---\nname: has-tags\ndescription: a fact\ntags: vpn netplan\nmetadata:\n  kind: platform\n---\n\nbody\n', 'utf8');
+
+        const read = lib.readRecord('has-tags');
+        assert.strictEqual(read.ok, true, 'the record stays readable');
+        assert.strictEqual(read.record.extraTop.tags, 'vpn netplan');
+
+        // And it survives a write-back, which is the failure that started this.
+        assert.strictEqual(lib.writeRecord(read.record).ok, true);
+        assert.match(fs.readFileSync(path.join(dir, 'has-tags.md'), 'utf8'), /^tags: vpn netplan$/m);
+    });
 });
 
 test('a directory named like a record does not throw', () => {

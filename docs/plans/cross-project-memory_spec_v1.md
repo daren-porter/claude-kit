@@ -132,6 +132,15 @@ rediscovered per section.
   frontmatter `name`. When you add a validation, sanitization, or bound, enumerate every
   field and every entry point that reaches the same sink and cover all of them, then say in
   your report which doors you enumerated.
+
+  **This recurred in S2 despite the amendment being in that brief, so enumerate against
+  code rather than against intent.** S1 fixed "a truncated body must not be written back"
+  on the prefix-read path; `readRecord`'s full-read path, eleven lines away in the same
+  function, kept the defect, and S2's `stamp` rewrote a 307KB record down to 262KB with a
+  success message. A second instance: the CLI chose `lstatSync` at the record door with an
+  explicit comment about dangling symlinks, then used `statSync` at the lock door two
+  functions away. The enumeration that works is mechanical, "grep every call site of this
+  function and every branch of this condition", not "think about where else this applies".
 - **A silent drop is a defect, not a degradation.** Several S1 findings shared this shape: a
   4-space-indented metadata block, a kebab-case metadata key, a bracket-less `applied:`
   value, and a record whose frontmatter exceeded the read cap all vanished with `ok: true`
@@ -167,7 +176,7 @@ completely and in one place, which it is, in the library header.
 Execution mode: main.
 
 ### 2. The CLI
-Authoring (with lock discipline, since the tier is shared across concurrent sessions of
+Authoring (with the concurrency guarantees below, since the tier is shared across concurrent sessions of
 every project), listing, retrieval by name as a **convenience and never the only path**
 (bodies stay directly `Read`-able per Approach; the CLI must not become a gate), and the
 ranked decay-candidate query that section 5 surfaces. Lives under `hooks/` per the
@@ -184,7 +193,7 @@ Acceptance: a record can be created, listed, retrieved, and stamped as applied f
 working directory; concurrent writes do not corrupt the store; every command exits
 non-zero with a sanitized message on bad input and never throws; no `process.exit()`
 appears in the new code.
-Tests: at minimum lock the lock discipline under concurrent write, duplicate-name refusal,
+Tests: at minimum lock the concurrency guarantees under real contention, duplicate-name refusal,
 and that a malformed or absent store yields a typed empty result rather than a throw. The
 risk: this CLI is the only authoring path, so a crash here is a lost fact.
 Execution mode: delegate-capable.
@@ -406,4 +415,74 @@ top-level key match already takes the rest of the line. Probing it surfaced the 
 hazard that was real and unguarded, which is how the injection class was found before the
 reviewers confirmed it.
 Next: 2. The CLI
+Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-08-08
+Completed: 2. The CLI
+Implemented By: implementer-opus (build, then a fix round), with the concurrency redesign and the library changes in the main session
+Metrics: 3 review rounds; 0 NEEDS_CONTEXT; 0 mode escalations (the ladder pointed at delegate-fable after round 2, the cost hold blocked it, and the stall went to Daren as the skill directs); 2 dispatches lost to API stalls, re-dispatched at the same mode since infrastructure failure is not a review failure; advisor off
+Decisions / Surprises:
+- **The concurrency primitive was replaced twice, and the second replacement is the one that
+  holds.** A store-wide lockfile was built first, per the spec. Rounds 1 and 2 produced
+  Criticals that were all lock-lifecycle failures: a stale lock stolen with no grace period,
+  a reused pid wedging every write from every project until a human deleted the file, an
+  unbreakable lock spinning at 100% CPU. Daren approved replacing it with optimistic
+  concurrency. Stress testing my own replacement then found it losing an applied day
+  silently, and round 3 measured the rate properly: **8.3% with two concurrent stampers,
+  every process reporting success.** Compare-and-swap on a plain file cannot close a
+  multi-process read-modify-write, because two writers can both pass the swap before either
+  publishes. The answer was to remove the shared mutable state rather than guard it: `stamp`
+  now appends one line to `applied.jsonl` and never rewrites the record. Verified at 20
+  concurrent stampers over five runs (20 of 20 days each) and 40 two-stamper trials (zero
+  losses). It is also the git-sync shape, an append-only file merging as a line union.
+- **I accepted a documented data-loss residual and the reviewer was right to refuse it.** I
+  had written twenty lines justifying the CAS window on "realistic use is one or two
+  stampers, where the window is microseconds". The measurement refuted both halves: the
+  losing window is rename-to-verify-read, which includes a 256KB buffer allocation and a
+  full parse, so milliseconds, and two stampers is where 8.3% was measured. Standing Brief
+  Amendment 2 carries no probability qualifier, and a workaround needing a paragraph of
+  justification is the signal the code is wrong. Recorded because the failure mode was mine,
+  not the implementer's.
+- Moving `applied` out of the record and into a journal is a schema change to S1's
+  migration-costly decision. It cost nothing because the store has no production records
+  yet, which made this the cheapest possible moment to make it. Hand-written `applied:`
+  frontmatter is still honored on read, unioned with the journal, so a migrated or
+  hand-authored record needs no conversion.
+- Two capabilities improved as a side effect: a record past `RECORD_READ_CAP` and a record
+  with an unparsable hand-written date can both be stamped now, because nothing rewrites
+  them. Both previously had to be refused.
+- `[body revised]`'s change detection also moved from mtime to a content hash, for the same
+  reason in reverse (S1 Chapter 1), so the two are now consistent.
+Review Findings: three rounds, every one returning CHANGES_REQUIRED or CONCERNS, and every
+round's Criticals reproduced with measurements rather than asserted.
+- **Round 1 (2 Critical, 8 Major).** `stamp` silently truncated any record past 256KB
+  (measured 307KB in, 262KB out, exit 0) because S1's truncated-body guard covered the
+  prefix read and not its sibling full read; `writeRecord` silently overwrote an unparsable
+  authored `created`, destroying it and resetting the decay clock; the lock acquire loop
+  spun forever on a lock it could not unlink; `listRecords` reported "no records" at exit 0
+  for a store it could not open; a failed pid write leaked the lock; EPIPE dumped 1245 bytes
+  of stack trace on `list | head`; `--machine` could forge the structure of a generated
+  line through the sanctioned writer.
+- **Round 2 (2 Critical, 5 Major).** The pid-liveness gate I asked for *replaced* the age
+  rule instead of joining it, so a dead-looking pid stole a fresh lock instantly and a
+  reused live pid wedged the store permanently. Also: my own S1 fix had over-corrected,
+  refusing unmodelled top-level frontmatter keys at the read door, which made a perfectly
+  legible record invisible to `get`, `list`, and `decay` at once. Those keys are now carried
+  through instead.
+- **Round 3 (2 Critical, 5 Major).** The measured CAS loss above; a test asserting an
+  invariant the same changeset documented as unattainable (18% flaky); a BOM'd record that
+  could never pass the CAS because the two sides hashed differently-normalized bytes; and
+  unvalidated, unbounded keys and values in the new `extraTop` path, where a newline in a
+  KEY forged the `description` line. All fixed and each verified closed by running the
+  reviewer's own reproduction.
+- **Recurrence rule applied twice.** Amendment 1 ("a guard at one door must be applied at
+  every door") recurred in round 1 despite already being in the brief, so it was sharpened
+  to demand a *mechanical* enumeration (grep every call site and every branch) rather than
+  reasoning about where else a guard applies. Amendment 2 ("a silent drop is a defect")
+  is what round 3 used to refuse my accepted residual, which is the amendment working.
+Verification: `node --test test/*.test.js` 225/225. Stress: 20 concurrent stampers x 5 runs
+all 20/20; 40 two-stamper trials, 0 losses. The four exploit shapes reviewers demonstrated
+(metadata-key newline forgery, extraTop-key forgery, oversized extraTop, unknown write
+mode) all refused with nothing written.
+Next: 3. Generated index sidecar and the `[body revised]` marker
 Commit Model: Commit-and-Push
