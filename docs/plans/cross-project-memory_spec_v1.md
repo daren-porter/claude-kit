@@ -199,9 +199,11 @@ risk: this CLI is the only authoring path, so a crash here is a lost fact.
 Execution mode: delegate-capable.
 
 ### 3. Generated index sidecar and the `[body revised]` marker
-The sidecar holding `hash(description)` and last-observed body mtime per record, the line
+The sidecar holding `hash(description)` and `hash(body)` per record (amended from
+last-observed mtime in S1; see Approach), the line
 generation from `description:`, and the marker computation. Silent refresh when the hash
-changes; `[body revised]` when mtime advanced and the hash did not. Absent sidecar
+changes; `[body revised]` when the body hash changed and the description hash did not.
+Absent sidecar
 rebuilds rather than errors.
 Acceptance: editing a record's body without touching `description:` makes the marker
 appear on the next emission; editing both refreshes the line silently with no marker;
@@ -485,4 +487,38 @@ all 20/20; 40 two-stamper trials, 0 losses. The four exploit shapes reviewers de
 (metadata-key newline forgery, extraTop-key forgery, oversized extraTop, unknown write
 mode) all refused with nothing written.
 Next: 3. Generated index sidecar and the `[body revised]` marker
+Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-08-08
+Completed: 3. Generated index sidecar and the `[body revised]` marker
+Implemented By: implementer-opus, with the test fixtures replaced in the main session
+Metrics: 1 review round pending at commit time (the implementer ran nine mutation checks of its own); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises:
+- **A security warning fired on this section and it was correct.** The implementer copied
+  two REAL memory records into `test/fixtures/memory/` as fixtures and staged them. One was
+  8KB of live client incident detail from the mcp-providers-connector engagement: commit
+  SHAs, Azure Container App revision identifiers, internal service architecture, an Entra
+  OBO token flow. This repo has an open plan for going public (`plans/kit-denaming`), and
+  the council's risk lens had already established that real records carry client-sensitive
+  content. Both fixtures were removed and replaced with synthesized records that carry the
+  same STRUCTURE (one whose body was rewritten while its description was never touched, one
+  whose description is current) and none of the content. A test needs the hash relationship,
+  not the incident. The implementer flagged the exposure itself in its report, which is the
+  right instinct; the fix was simply not its call to make from inside `docs/`-denied scope.
+- The synthesized fixture had to be padded past `FRONTMATTER_READ_CAP`, because one
+  assertion deliberately exercises the full-record read path rather than the bounded prefix.
+  That size is part of what the fixture tests, so the padding is real content rather than
+  filler.
+- Marker fire rate over the seeded set: 2 of 20, 10%, against the 7 of 55 (13%) calibration
+  measured on the live native store. The rate assertion is what catches the fires-on-
+  everything inversion, which reports 12 of 20.
+- Spec section 3 still described the sidecar as storing body mtime; corrected in place to
+  the content hash the S1 Chapter already amended the Approach to.
+Review Findings: the implementer ran nine mutation runs against its own guards, restoring
+the module byte-identically after each, and reported every guard biting with a distinct
+failure. I independently confirmed the load-bearing one: inverting the body-hash comparison
+breaks exactly 2 tests, so the marker is not vacuous. Full review round follows.
+Verification: `node --test test/memory-index.test.js` 19/19; `node --test test/*.test.js`
+244/244.
+Next: 4. SessionStart emission
 Commit Model: Commit-and-Push
