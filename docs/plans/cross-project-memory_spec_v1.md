@@ -141,6 +141,17 @@ rediscovered per section.
   explicit comment about dangling symlinks, then used `statSync` at the lock door two
   functions away. The enumeration that works is mechanical, "grep every call site of this
   function and every branch of this condition", not "think about where else this applies".
+
+  **S5's late review found the fifth instance, and it names an axis the first four missed:
+  a guard belongs at every door of its KIND, including doors the section did not write.**
+  S5 added no file reads at all. It routed the SessionStart hook through
+  `readAppliedJournal`, which had always used a plain `readFileSync` while every other file
+  door in this tier opens `O_NONBLOCK` and checks the descriptor. A FIFO at `applied.jsonl`
+  then hung every session start on the box indefinitely, and `/dev/zero` there took 13.5GB
+  of RSS before the kernel killed it. So the enumeration also runs over the doors a change
+  newly EXPOSES: when a section puts an existing reader on a new path, that reader's
+  guarantees become the new path's guarantees, and they have to be checked against the
+  contract of the surface it just joined rather than the one it was written for.
 - **A silent drop is a defect, not a degradation.** Several S1 findings shared this shape: a
   4-space-indented metadata block, a kebab-case metadata key, a bracket-less `applied:`
   value, and a record whose frontmatter exceeded the read cap all vanished with `ok: true`
@@ -283,6 +294,16 @@ both data-quality bugs are corrected.
 Execution mode: main.
 
 ### 7. Skill, routing rule, and docs
+**Reordered ahead of S6 (2026-08-09).** S6 cannot proceed without Daren's adjudication of
+its three sensitive records, and it edits records in his live project memory stores. S7
+needs nothing from him. Beyond the gate, the order is better on merits: S7 writes the
+routing doctrine that says what belongs in this tier, and S6 is that doctrine applied to
+eleven records, so making the eleven calls against a written rule beats making them ad hoc
+and then writing the rule to match. S7 also runs in the **main thread** rather than its
+recorded delegate-capable mode: it writes under `docs/`, which the docs-write-guard denies a
+non-curator subagent, and its prose is behavior-shaping, so `writing-skills`' bar and the
+RED gate below are judgment the brief cannot carry.
+
 A skill stating how sessions write to this tier and, critically, the routing ladder: a
 learned fact that spans projects goes here, a project-specific fact stays in the native
 project store, and a recurring working preference is doctrine that graduates to the global
@@ -641,4 +662,84 @@ including one that emitted a wrong count from the otherwise-finished hook. Live 
 for a freshly created record, and for an aged one emits the count with explicit
 "nothing is retired, rewritten, or removed by this".
 Next: 6. Seed migration and content pass
+Commit Model: Commit-and-Push
+
+### Chapter 6 - 2026-08-09
+Completed: S5's owed paired review, plus its fix round (no new section)
+Implemented By: main session (the fixes are surgical across three files and the review
+context is the working state); adversarial + blind + security reviewers dispatched in parallel
+Metrics: 1 review round, run late and deliberately; 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises:
+- **The review that was owed found a session-start hang, which is the strongest argument
+  yet for not letting a section close without one.** S5 shipped with its paired review
+  recorded as owed. That review's first finding is that S5 put the applied journal on the
+  SessionStart path while the journal reader was the one file door in the tier using a
+  plain `readFileSync`. A FIFO at `applied.jsonl` hung the hook forever (base exits in
+  25ms; HEAD was killed at 8s having emitted nothing, losing plan recovery and every other
+  block), and a symlink to `/dev/zero` there reached 13.5GB RSS before SIGKILL. Both
+  reproduced by two reviewers independently, and both now measured fixed: 24ms and 42MB.
+- **A dangling symlink was reading as an absent journal, which silently defeated S5's own
+  guard.** `stat` reports ENOENT through a broken link, so the journal returned the
+  absent-store branch with no `unreadable` flag, `journalUnreadable` stayed false, and the
+  nudge emitted a count computed as though nothing had ever been stamped. The door lstats
+  now, the way the record doors already did. This is the finding that most justifies the
+  blind seat: it is invisible unless you ask what the code does rather than what it meant.
+- **All three reviewers independently reproduced the same defect at the CLI door**, which
+  is the one the hook's own comment nominated as the recovery path: `cmdDecay` dropped
+  `journalUnreadable`, so `decay` printed records stamped yesterday as "applied on 0 days,
+  idle 200d" at exit 0. It refuses non-zero now, because presenting a ranking computed
+  from an input nobody could read is the accept-and-discard shape this tier refuses. The
+  comment claiming the memory block covered this was false (that block never reads the
+  journal) and is corrected rather than left as a trap for the next reviewer.
+- **I sided with the blind reviewer against Chapter 5's recorded adjudication on
+  `journalSkipped`, and against the security reviewer, who verified the old reasoning and
+  let it stand.** Chapter 5 accepted the field going unprinted because a lost applied day
+  can only make a record look idler, never fresher. That reasoning is about the direction
+  of the error, not about whether to disclose it, and the blind reviewer measured the
+  consequence: a torn journal tail took the nudge from silent to "1 record is idle". Both
+  surfaces exist to inform a human retirement decision, and neither can be weighed against
+  a caveat it never carried. The count now announces itself as an upper bound, which costs
+  one clause. Recorded as a reversal of a prior Chapter's decision, not as a new finding.
+- Also fixed, each reproduced first: the hook discarded `unevaluated` on a zero candidate
+  count, so a store where nothing could be ranked said nothing at all (Amendment 2, and
+  Chapter 4's defect recurring on the same axis); the hook and the CLI resolved two
+  different clocks, so the debug seam moved the list while leaving the nudge on the wall
+  clock and falsified the "cannot disagree" comment (the seam is single-sourced in
+  `memory-lib.js` now); `Math.max(...days)` could throw `RangeError` against the function's
+  own never-throws contract; `appendApplied` had the same missing regular-file check on the
+  write side, hanging `stamp` on a FIFO; and the emitted command path was bounded for
+  LENGTH where the sink needed QUOTING, so a long or quote-bearing install path emitted a
+  command that silently did something else.
+- **A schema correction that S6 depends on.** The library header, which the plan names as
+  the tier's single authoritative schema statement, still described the pre-S2 stamping
+  model: `applied:` as a generated field and stamps as rewriting the record. Since S2 a
+  stamp appends to the journal and never touches the record. S6 migrates records carrying
+  hand-written `applied:` frontmatter and would have read that header as authority.
+- Two findings deliberately not fixed, with reasons. The double store sweep (the hook lists
+  records once for the index and again for the ranking) stays: two of three reviewers
+  measured it and cleared it (48ms and 60-to-70ms), and the remaining substance is a
+  two-snapshot window inherent to any hook that reads twice. And no durable test was
+  written for the `RangeError`: provoking it needs a journal of ~150k distinct days, and the
+  2MB journal cap added here structurally bounds the union near the engine's spread limit,
+  so the reduce is belt to the cap's braces. Both are here rather than discovered later.
+- Dispatch lesson worth carrying: the blind reviewer opened its report by noting its
+  dispatch was contaminated, because I gave it the two modules' stated behavioral contracts
+  as orientation. It was right to flag it. Its findings rest on measured base-versus-HEAD
+  behavior rather than on those statements, so nothing is tainted, but the line between
+  necessary orientation and the intent story needs stating in the skill; jotted to the
+  kaizen inbox.
+Review Findings: 1 Critical, 5 Major, 8 Minor across the three reviewers, every Critical and
+Major reproduced by running code rather than asserted. All Criticals and Majors fixed; the
+two Minors above are justified here. Amendment 1 was sharpened again, to cover doors a
+change exposes rather than only doors it writes.
+Verification: `node --test test/*.test.js` 272/272, up from 264, with **eight new tests each
+watched failing first against the exact pre-fix code** (the four journal-door and reporting
+guards mutated back one at a time; every test failed for its own defect and no other).
+Concurrency re-measured because the write primitive changed: 20 concurrent stampers x 5 runs,
+20/20 days each, and 40 two-stamper trials with 0 losses, matching Chapter 2. Live runs
+confirm all three emitted sentence forms, and the four journal shapes (FIFO, dangling
+symlink, directory, /dev/zero) now refuse in ~22ms at exit 1 instead of hanging or
+fabricating.
+Next: 7. Skill, routing rule, and docs (reordered ahead of S6, which is gated on Daren's
+three sensitive-record adjudications; the reordering is argued in the section-7 note)
 Commit Model: Commit-and-Push

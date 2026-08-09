@@ -240,14 +240,12 @@ function invisibleReason(field) {
         + ' they hide text from a reader opening the record directly';
 }
 
+// The seam itself lives in the library so the hook resolves the same clock:
+// while it lived here, CLAUDE_KIT_MEMORY_NOW moved this command's list without
+// moving the nudge's count, and the two could disagree about the very number
+// the nudge sends a reader here to check.
 function resolveNow() {
-    const raw = process.env.CLAUDE_KIT_MEMORY_NOW;
-    if (!raw || !raw.trim()) return { ok: true, now: new Date() };
-    const parsed = new Date(raw.trim());
-    if (Number.isNaN(parsed.getTime())) {
-        return { ok: false, reason: 'CLAUDE_KIT_MEMORY_NOW is not a parsable date: ' + render(raw, 60) };
-    }
-    return { ok: true, now: parsed };
+    return lib.resolveNow();
 }
 
 // UTC throughout, matching the library's generated `created` and `modified`.
@@ -471,7 +469,21 @@ function cmdDecay(args) {
 
     const ranked = lib.rankDecay({ now: clock.now });
     if (!ranked.ok) return fail(ranked.unreadable ? unreadableStore(ranked) : ranked.reason);
-    const { candidates, unevaluated, skipped } = ranked;
+    const { candidates, unevaluated, skipped, journalUnreadable, journalTruncated, journalSkipped } = ranked;
+
+    // An unreadable journal takes every stamp with it, so every record falls
+    // back to `created` and the list becomes a set of records claiming "applied
+    // on 0 days" that were in fact stamped yesterday. Printing that list with a
+    // warning above it would still be presenting a fabricated ranking as the
+    // ranking, and this command is the surface the nudge sends a reader to when
+    // it suppresses itself for the same reason. So it refuses, non-zero, the
+    // way an unreadable store already does: an input nobody could read must
+    // never come back as an answer.
+    if (journalUnreadable) {
+        return fail('the applied-day journal at ' + render(lib.journalPath(), 200)
+            + ' could not be read, so every stamp is missing and no ranking here would be real.'
+            + ' Fix or move that file and run this again.');
+    }
 
     if (!candidates.length) out('no decay candidates');
     for (const c of candidates) {
@@ -487,6 +499,17 @@ function cmdDecay(args) {
     }
     if (skipped > 0) {
         out('(' + skipped + ' entr' + (skipped === 1 ? 'y' : 'ies') + ' skipped as unreadable or malformed)');
+    }
+    // Both inflate idleness by losing applied days, so the list above may name
+    // records that are not really idle. Said out loud rather than left for the
+    // reader to infer from a number that looks exact.
+    if (journalTruncated) {
+        out('(the applied-day journal is larger than ' + lib.JOURNAL_READ_CAP
+            + ' bytes, so the newest stamps were not read and this list may be too long)');
+    }
+    if (journalSkipped > 0) {
+        out('(' + journalSkipped + ' applied-day journal entr' + (journalSkipped === 1 ? 'y' : 'ies')
+            + ' could not be read, so this list may be too long)');
     }
 }
 

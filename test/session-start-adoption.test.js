@@ -650,10 +650,13 @@ test('a store whose records all fail to parse says so rather than emitting nothi
 // the session sees and the list it is sent to cannot disagree.
 
 const DECAY = /^(\d+) cross-project memory record\(s\) have been idle longer than their use-adjusted threshold/m;
+// The zero-candidate form, which exists only to carry records the ranking
+// could not evaluate. A count of zero with nothing else to say emits nothing.
+const DECAY_NONE = /^No cross-project memory record is idle past its use-adjusted threshold/m;
 
 // The emitted block carrying the decay nudge, or null.
 function decayBlock(context) {
-    const found = blocksOf(context).filter((b) => DECAY.test(b));
+    const found = blocksOf(context).filter((b) => DECAY.test(b) || DECAY_NONE.test(b));
     assert.ok(found.length <= 1, 'the decay nudge must be exactly one block; got ' + found.length);
     return found[0] || null;
 }
@@ -752,9 +755,12 @@ test('recorded use delays candidacy rather than granting immunity', () => {
     try {
         // Never applied, so idle 200 days against the unextended 30: a candidate.
         seedAged(store, 'never-applied', 200);
-        // Applied on ten distinct days, the last of them 50 days ago. Ten days
-        // would extend by 70; the cap holds it to 60, for a 90-day threshold
-        // that 50 days of idleness has not reached.
+        // Applied on ten distinct days, the last of them 50 days ago, so the
+        // threshold is 90 with the extension capped at 60 and 100 without: 50
+        // days of idleness has not reached either, which is what makes this a
+        // pin on the delay and NOT on the cap. The cap itself is pinned CLI-side
+        // (test/memory.test.js, the long-dead case), where raising EXTEND_CAP_DAYS
+        // fails an assertion; raising it leaves every case in this file green.
         seedAged(store, 'well-used', 200, [59, 58, 57, 56, 55, 54, 53, 52, 51, 50]);
 
         const { status, context } = runHook(cwd, store);
@@ -780,8 +786,11 @@ test('a record that cannot be ranked is counted in the nudge, not dropped', () =
         fs.writeFileSync(path.join(store, 'undated-fact.md'),
             '---\nname: undated-fact\ndescription: a hand written record with no created date\nmetadata:\n  kind: platform\n---\n\nbody\n');
 
-        const nudge = decayBlock(runHook(cwd, store).context);
-        assert.ok(nudge, 'expected the decay nudge; context was: ' + nudge);
+        const context = runHook(cwd, store).context;
+        const nudge = decayBlock(context);
+        // The context, not the null being asserted: interpolating `nudge` here
+        // printed "context was: null" and hid the output that explains why.
+        assert.ok(nudge, 'expected the decay nudge; context was: ' + context);
         assert.strictEqual(DECAY.exec(nudge)[1], '1');
         assert.match(nudge, /1 more could not be ranked/);
         assert.ok(!nudge.includes('undated-fact'), 'still a count, not a list: ' + nudge);
@@ -836,6 +845,151 @@ test('an unreadable applied-day journal suppresses the nudge rather than inflati
         assert.match(memoryBlock(context) || '', /^- idle-fact \[platform\]/m);
         assert.match(context, PLAN_RECOVERY);
     } finally { rmDir(cwd); rmDir(store); }
+});
+
+// A directory in the journal's place is the shape that fails fast. These are the
+// three that do not, and the reason the guard needs all four: the journal reader
+// went onto the SessionStart path with a plain readFileSync while every other
+// file door in this tier opens O_NONBLOCK and checks the descriptor.
+//
+// A FIFO is the one that costs the most. openSync on it blocks until a writer
+// appears, and no try/catch can rescue a call that never returns, so a single
+// stray fifo in the store wedges EVERY session start on the box, losing plan
+// recovery and every other block along with the nudge.
+test('a FIFO applied-day journal does not hang session start', () => {
+    const cwd = makeKitRepo('ssd-fifojournal-', null, true);
+    const store = makeDir('ssd-fifojournalstore-');
+    try {
+        seedAged(store, 'idle-fact', 200);
+        fs.rmSync(path.join(store, 'applied.jsonl'), { force: true });
+        const made = spawnSync('mkfifo', [path.join(store, 'applied.jsonl')], { encoding: 'utf8' });
+        // No mkfifo (Windows, or a stripped image): nothing to pin here.
+        if (made.error || made.status !== 0) return;
+
+        const { status, context } = runHook(cwd, store);
+        // status null is the spawn timeout, which is what a hang looks like.
+        assert.strictEqual(status, 0, 'a FIFO journal must be refused, not blocked on');
+        assert.strictEqual(decayBlock(context), null,
+            'a journal nobody could read has no trustworthy count: ' + context);
+        assert.match(context, PLAN_RECOVERY);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// A dangling symlink is the quiet one. `stat` reports ENOENT through a broken
+// link, so the journal read as ABSENT: no unreadable flag, every stamp erased,
+// and the nudge emitting a count computed as though nothing had ever been
+// applied. Absent and unreadable have to stay different answers, which is why
+// the door lstats. The record doors in this tier already did.
+test('a dangling symlink applied-day journal reads as unreadable, not as absent', () => {
+    const cwd = makeKitRepo('ssd-linkjournal-', null, true);
+    const store = makeDir('ssd-linkjournalstore-');
+    try {
+        // Stamped yesterday, so it is a candidate ONLY if its stamps are lost.
+        seedAged(store, 'used-daily', 200, [1]);
+        const journal = path.join(store, 'applied.jsonl');
+        assert.strictEqual(decayBlock(runHook(cwd, store).context), null,
+            'a stamped record is not idle while its journal is readable');
+
+        fs.rmSync(journal, { force: true });
+        try {
+            fs.symlinkSync(path.join(store, 'no-such-journal.jsonl'), journal);
+        } catch {
+            return; // No symlink privilege (Windows without developer mode).
+        }
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(decayBlock(context), null,
+            'a broken link is a journal that cannot be read, not one that is absent: ' + context);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// Zero candidates is not the same as nothing to report. A store whose records
+// all carry unusable dates has zero candidates AND zero basis for that zero, so
+// returning early on the count alone dropped the one number that mattered.
+// Standing Brief Amendment 2, and the same shape as the all-unparsable store the
+// memory block already reports.
+test('zero candidates still reports records the ranking could not evaluate', () => {
+    const cwd = quietCwd('ssd-zerounranked-');
+    const store = makeDir('ssd-zerounrankedstore-');
+    try {
+        // Parses cleanly, so it is not `skipped`; no created date, so it cannot
+        // be ranked. Nothing here is idle, so the candidate count is zero.
+        for (const name of ['undated-one', 'undated-two']) {
+            fs.writeFileSync(path.join(store, name + '.md'),
+                '---\nname: ' + name + '\ndescription: a hand written record with no created date\n'
+                + 'metadata:\n  kind: platform\n---\n\nbody\n');
+        }
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        const nudge = decayBlock(context);
+        assert.ok(nudge, 'two unrankable records must not vanish; context was: ' + context);
+        assert.match(nudge, DECAY_NONE);
+        assert.match(nudge, /but 2 could not be ranked/);
+        // Still a count and never a list, in the zero form too.
+        assert.ok(!nudge.includes('undated-one'), 'the nudge enumerated a record: ' + nudge);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// A torn tail is the normal way to find an append-only file after a crash, so
+// it must not suppress the nudge the way an unreadable journal does. But the
+// lost days can only push records INTO the count, so the number is a ceiling
+// and has to say so: a count that looks exact is the thing a reader weighs a
+// retirement decision against.
+test('unreadable journal entries make the count an announced upper bound', () => {
+    const cwd = quietCwd('ssd-tornjournal-');
+    const store = makeDir('ssd-tornjournalstore-');
+    try {
+        seedAged(store, 'idle-fact', 200);
+        seedAged(store, 'used-fact', 200, [1]);
+        const journal = path.join(store, 'applied.jsonl');
+        const clean = runHook(cwd, store).context;
+        assert.strictEqual(DECAY.exec(decayBlock(clean))[1], '1', 'baseline: ' + clean);
+        assert.ok(!decayBlock(clean).includes('upper bound'), 'no caveat when nothing was lost');
+
+        // Tear the tail, the way an interrupted append leaves it.
+        const lines = fs.readFileSync(journal, 'utf8').split('\n').filter(Boolean);
+        fs.writeFileSync(journal, lines.map((l) => l.slice(0, -4)).join('\n') + '\n', 'utf8');
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        const nudge = decayBlock(context);
+        assert.ok(nudge, 'a torn tail must not silence the nudge; context was: ' + context);
+        assert.strictEqual(DECAY.exec(nudge)[1], '2', 'the lost stamp inflates the count: ' + nudge);
+        assert.match(nudge, /treat the count as an upper bound/);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// The nudge's stated contract is that its count and the list it sends a reader
+// to cannot disagree. That held for the arithmetic and not for its input: the
+// clock was resolved in the CLI alone, so the debug seam moved the list while
+// leaving the nudge on the wall clock.
+test('the hook and the CLI resolve the same clock', () => {
+    const cwd = quietCwd('ssd-clockseam-');
+    const store = makeDir('ssd-clockseamstore-');
+    const prior = process.env.CLAUDE_KIT_MEMORY_NOW;
+    try {
+        seedAged(store, 'aging-fact', 40);
+        assert.strictEqual(DECAY.exec(decayBlock(runHook(cwd, store).context))[1], '1',
+            'idle 40 days against the unextended 30 is a candidate');
+
+        // Ten days after the record was created, it is not idle yet.
+        process.env.CLAUDE_KIT_MEMORY_NOW = utcDaysAgo(30);
+        assert.strictEqual(decayBlock(runHook(cwd, store).context), null,
+            'the hook must measure idleness against the same today the CLI does');
+
+        // And an unusable seam value is silence, never a fallback to now: the
+        // hook has no business answering a question with a date nobody asked for.
+        process.env.CLAUDE_KIT_MEMORY_NOW = 'not-a-date';
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(decayBlock(context), null, 'a bad clock is not a count: ' + context);
+        assert.match(memoryBlock(context) || '', /^- aging-fact \[platform\]/m);
+    } finally {
+        if (prior === undefined) delete process.env.CLAUDE_KIT_MEMORY_NOW;
+        else process.env.CLAUDE_KIT_MEMORY_NOW = prior;
+        rmDir(cwd); rmDir(store);
+    }
 });
 
 // It is a reminder, so it belongs in the nudge stack rather than beside the

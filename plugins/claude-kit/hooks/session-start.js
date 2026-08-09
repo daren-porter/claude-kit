@@ -222,6 +222,22 @@ function safeContext(value, cap) {
     return clean.length > cap ? clean.slice(0, cap) + ' [truncated]' : clean;
 }
 
+// The `node "<path>" <sub>` invocation the memory blocks point at. The path is
+// this hook's own directory rather than store content, so the hazard is not
+// injection; it is that safeContext bounds LENGTH where this sink needs
+// QUOTING. The value lands inside a double-quoted argument, so a truncation
+// marker turns the command into one that silently does something else, and a
+// quote or backtick in the install path breaks out of the quoting. Both are
+// answered by declining to print a path that cannot survive the sink: the
+// subcommand alone is still actionable, where a subtly wrong absolute path is
+// worse than none.
+function memoryCommand(sub) {
+    const file = path.join(__dirname, 'memory.js');
+    const safe = safeContext(file, 200);
+    if (safe !== file || /["`\\]/.test(safe)) return '`memory.js ' + sub + '` in the claude-kit plugin hooks directory';
+    return '`node "' + safe + '" ' + sub + '`';
+}
+
 // A count arriving from another module, coerced. Every number that reaches the
 // emitted text passes here, so a missing, negative, or NaN count can never be
 // interpolated into a sentence that claims it.
@@ -312,9 +328,10 @@ function crossProjectMemory() {
 // same function, so the count and the list it points at cannot disagree.
 // memory.js itself cannot be required: it runs main() on load.
 //
-// An unreadable store is silence for this nudge alone. It is not swallowed:
-// the memory block above says so out loud, and a nudge whose whole content is
-// a count has no count to name when the store could not be read.
+// An unreadable store is silence for this nudge alone, and the memory block
+// below reports it in its own voice, so nothing is swallowed: a nudge whose
+// whole content is a count has no count to name when the store could not be
+// read.
 function decayCandidates() {
     // Lazy require, matching crossProjectMemory above: a plugin cache without
     // the lib degrades to silence rather than taking the hook down.
@@ -323,20 +340,25 @@ function decayCandidates() {
     // The applied-day journal is the other input, and its failure does not
     // show up in the ranking: a journal that cannot be read takes every stamp
     // with it, so records in daily use fall back to `created` and rank as
-    // idle. The count would then be inflated, possibly to the whole store,
-    // with nothing here for a session to weigh it against. Recovered
-    // deliberately rather than emitted with a caveat: this nudge's entire
-    // contract is that its count and the list it points at agree. The `decay`
-    // command still lists everything, which is where a reader can compare the
-    // ranking against what they remember stamping.
+    // idle. The count would then be inflated, possibly to the whole store.
+    // Recovered by silence rather than a caveat because there is nothing left
+    // to caveat: with every stamp gone the number is not a high estimate, it
+    // is unrelated to idleness. Note that the memory block does NOT cover this
+    // one (it never reads the journal), and `decay` now refuses for the same
+    // reason, so this failure is loud only where a human ran a command.
     if (ranked.journalUnreadable) return null;
 
     const count = safeCount(Array.isArray(ranked.candidates) ? ranked.candidates.length : 0);
-    if (count === 0) return null;
-    // Records the ranking could not evaluate are carried through rather than
-    // dropped: without them the count reads as the whole store's answer when
-    // it is not.
-    return { count, unevaluated: safeCount(ranked.unevaluated) };
+    // Records the ranking could not evaluate, and applied days it could not
+    // read, are carried through rather than dropped. Both change what the
+    // count means: unevaluated records are outside it, and lost applied days
+    // can only push a record into it. Returning early on a zero count would
+    // discard them, which is how a store where nothing could be ranked said
+    // nothing at all.
+    const unevaluated = safeCount(ranked.unevaluated);
+    const lostDays = safeCount(ranked.journalSkipped) + (ranked.journalTruncated ? 1 : 0);
+    if (count === 0 && unevaluated === 0) return null;
+    return { count, unevaluated, inflated: lostDays > 0 };
 }
 
 function main() {
@@ -509,10 +531,19 @@ function main() {
         // The path is this hook's own directory, not store content, and the
         // counts are integers computed here - nothing from a record reaches
         // this sentence.
-        const unranked = decay.unevaluated > 0
-            ? `, and ${decay.unevaluated} more could not be ranked`
+        // A count of zero is only ever emitted alongside unranked records, so
+        // the sentence has to lead with them rather than with a nothing, and
+        // "more" is wrong when there is nothing for them to be more than.
+        const reason = ' could not be ranked (an unusable created or applied date)';
+        const lead = decay.count === 0
+            ? `No cross-project memory record is idle past its use-adjusted threshold, but ${decay.unevaluated}${reason}`
+            : `${decay.count} cross-project memory record(s) have been idle longer than their use-adjusted threshold${decay.unevaluated > 0 ? `, and ${decay.unevaluated} more${reason}` : ''}`;
+        // Lost applied days can only push a record INTO the count, so the
+        // number is a ceiling rather than a measurement, and it says so.
+        const inflated = decay.inflated
+            ? ' Some applied-day entries could not be read, so treat the count as an upper bound.'
             : '';
-        blocks.push(`${decay.count} cross-project memory record(s) have been idle longer than their use-adjusted threshold${unranked}. Nothing is retired, rewritten, or removed by this: the ranking is advisory and every call on a record stays a human one. Run \`node "${safeContext(path.join(__dirname, 'memory.js'), 200)}" decay\` to see the ranked list. Reminder, not a blocker.`);
+        blocks.push(`${lead}. Nothing is retired, rewritten, or removed by this: the ranking is advisory and every call on a record stays a human one.${inflated} Run ${memoryCommand('decay')} to see the ranked list. Reminder, not a blocker.`);
     }
 
     if (memory && memory.unreadable) {
@@ -522,7 +553,7 @@ function main() {
         if (memory.remainder > 0) {
             // Truncation announces a counted remainder and how to reach the
             // rest. The path is this hook's own directory, not store content.
-            notes.push(`${memory.remainder} more record(s) are held in this tier and are not listed above; run \`node "${safeContext(path.join(__dirname, 'memory.js'), 200)}" list\` to read them all.`);
+            notes.push(`${memory.remainder} more record(s) are held in this tier and are not listed above; run ${memoryCommand('list')} to read them all.`);
         }
         if (memory.skipped > 0) {
             notes.push(`${memory.skipped} file(s) in the store could not be read or parsed, so their facts are missing from the list above.`);

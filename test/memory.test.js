@@ -628,6 +628,72 @@ test('an impossible date is never rolled over into a plausible one', () => {
     });
 });
 
+// This command is where the nudge sends a reader when it suppresses itself, so
+// it is the one surface that must not answer with a ranking it knows is fiction.
+// An unreadable journal takes every stamp with it, and a record stamped
+// yesterday then prints as "applied on 0 days, idle 200d" at exit 0: an
+// affirmative false claim about its own history, aimed at a retirement decision.
+test('decay refuses rather than ranking a store whose applied journal it cannot read', () => {
+    withStore(dir => {
+        assert.strictEqual(addSample(dir, 'used-daily').status, 0);
+        const created = path.join(dir, 'used-daily.md');
+        fs.writeFileSync(created, fs.readFileSync(created, 'utf8').replace(/created: \d{4}-\d{2}-\d{2}/, 'created: 2026-01-20'));
+        assert.strictEqual(run(dir, ['stamp', 'used-daily'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-08T09:00:00Z' }).status, 0);
+
+        // Readable: the stamp is honored and nothing is idle.
+        const healthy = run(dir, ['decay'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-09T12:00:00Z' });
+        assert.strictEqual(healthy.status, 0, healthy.stderr);
+        assert.match(healthy.stdout, /no decay candidates/);
+
+        // A directory in its place is the portable unreadable journal.
+        fs.rmSync(lib.journalPath());
+        fs.mkdirSync(lib.journalPath());
+        const broken = run(dir, ['decay'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-09T12:00:00Z' });
+        assertNotKilled(broken, 'decay on an unreadable journal');
+        assert.notStrictEqual(broken.status, 0, 'an input nobody could read must not exit 0');
+        assert.match(broken.stderr, /could not be read/);
+        // And above all: no fabricated ranking on stdout.
+        assert.doesNotMatch(broken.stdout, /used-daily/);
+        assert.doesNotMatch(broken.stdout, /applied on 0 days/);
+        assert.doesNotMatch(broken.stdout, /no decay candidates/);
+    });
+});
+
+// A torn tail is normal after a crash, so it stays a caveat rather than a
+// refusal. But the lost day can only push a record into the list, so the list
+// says it may be too long instead of leaving a reader to infer it.
+test('decay flags journal entries it could not read as inflating the list', () => {
+    withStore(dir => {
+        assert.strictEqual(addSample(dir, 'used-daily').status, 0);
+        const created = path.join(dir, 'used-daily.md');
+        fs.writeFileSync(created, fs.readFileSync(created, 'utf8').replace(/created: \d{4}-\d{2}-\d{2}/, 'created: 2026-01-20'));
+        assert.strictEqual(run(dir, ['stamp', 'used-daily'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-08T09:00:00Z' }).status, 0);
+        // One good line kept, one corrupt line appended.
+        fs.appendFileSync(lib.journalPath(), '{"name":"used-daily","day":"2026-0\n');
+
+        const res = run(dir, ['decay'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-09T12:00:00Z' });
+        assert.strictEqual(res.status, 0, res.stderr);
+        assert.match(res.stdout, /1 applied-day journal entry could not be read, so this list may be too long/);
+    });
+});
+
+// The write side of the same door. appendFileSync carried no regular-file check,
+// so a FIFO at this name blocked `stamp` until something opened the other end.
+test('stamp refuses a journal that is not a regular file rather than blocking on it', () => {
+    withStore(dir => {
+        assert.strictEqual(addSample(dir, 'fifo-target').status, 0);
+        assert.strictEqual(lib.ensureStore().ok, true);
+        fs.rmSync(lib.journalPath(), { force: true });
+        const made = spawnSync('mkfifo', [lib.journalPath()], { encoding: 'utf8' });
+        if (made.error || made.status !== 0) return; // No mkfifo on this platform.
+
+        const res = run(dir, ['stamp', 'fifo-target'], { CLAUDE_KIT_MEMORY_NOW: '2026-08-08T09:00:00Z' });
+        assertNotKilled(res, 'stamp onto a FIFO journal');
+        assert.notStrictEqual(res.status, 0, 'a stamp that recorded nothing must not report success');
+        assert.doesNotMatch(res.stdout, /stamped/);
+    });
+});
+
 test('concurrent stamps of distinct days do not lose an update', async () => {
     await withStoreAsync(async dir => {
         assert.strictEqual(addSample(dir, 'contended').status, 0);
