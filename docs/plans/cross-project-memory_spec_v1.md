@@ -606,3 +606,39 @@ emits the block correctly. A forged `[body revised]` token in a description now 
 nothing.
 Next: 5. Advisory decay surfacing
 Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-08-08
+Completed: 5. Advisory decay surfacing
+Implemented By: implementer-opus
+Metrics: 0 review rounds (**the paired review is owed on this section**, see below); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Decisions / Surprises:
+- The ranking now lives once, in `memory-lib.js` (`rankDecay`, with `appliedDays`,
+  `dayNumber`, and the three constants moved with it). Both the CLI's `decay` and the hook
+  call it, so the two can never disagree about what a candidate is. The reasoning for that
+  home rather than `memory.js`: `memory.js` runs `main()` on load, so a hook requiring it
+  would execute the CLI at every session start.
+- **Amendment 1's second axis found a real defect on its first outing.** Enumerating what
+  SUPPRESSES a block, not just what flows out of one, surfaced the applied journal as an
+  unchecked input door: an unreadable `applied.jsonl` erases every stamp, so records in
+  daily use fall back to `created` and rank as idle. The hook emitted "2 records have been
+  idle" for two records seeded that same second. `rankDecay` now reports
+  `journalUnreadable` and the nudge stays silent rather than lying. This is the fourth
+  recurrence of the amendment's class and the first time the sharpened both-axes wording
+  caught something before review did.
+- Judgment call flagged by the implementer and left as-is: `journalSkipped` (a malformed
+  journal line) is returned by the library but printed by neither caller. A lost applied day
+  can only make a record look idler, never fresher, and a damaged line cannot be attributed
+  to a record, so there is no per-record clause to hang it on. Surfaceable later if that
+  trade looks wrong.
+- The nudge is a count and a command, never a list: enumerating records would duplicate the
+  memory block S4 emits and turn a nudge into a second reference block.
+Review Findings: **none yet. This section has not had its paired review**, and that is a
+real gap rather than a judgment that it did not need one: it moved the ranking arithmetic
+between modules and added an export to `memory-lib.js`, which is blast radius. The
+finishing-work pass covers the whole changeset and must not be skipped for this effort.
+Verification: `node --test test/*.test.js` 264/264, with four tests watched failing first,
+including one that emitted a wrong count from the otherwise-finished hook. Live run: silent
+for a freshly created record, and for an aged one emits the count with explicit
+"nothing is retired, rewritten, or removed by this".
+Next: 6. Seed migration and content pass
+Commit Model: Commit-and-Push

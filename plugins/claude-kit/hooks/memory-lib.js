@@ -497,6 +497,135 @@ function readAppliedJournal() {
     return { days: sorted, skipped };
 }
 
+// Advisory decay ranking. It lives here rather than in the CLI because two
+// surfaces read it: `memory.js decay`, which prints the ranked list, and the
+// SessionStart hook, which nudges with the candidate count. Two copies of this
+// arithmetic would drift, and the nudge would then send a session to a command
+// that shows a different set than the one it was counted from.
+//
+// Nothing here retires, deletes, or rewrites anything: the ranking is a prompt
+// for a human decision (Daren, 2026-08-08), which is why these can be seeds
+// rather than tuned values.
+//
+//   idleDays  = days since the most recent applied day, or since `created`
+//               when the record was never applied
+//   extension = min(distinctAppliedDays * EXTEND_PER_APPLIED_DAY, EXTEND_CAP_DAYS)
+//   candidate when idleDays > SUMMARIZE_AFTER_DAYS + extension
+//
+// Use buys time rather than immunity. A record applied on many distinct days
+// has proven itself and earns a longer runway, while the cap stops an old
+// streak from propping up a record nothing has touched in a year.
+const SUMMARIZE_AFTER_DAYS = 30;
+const EXTEND_PER_APPLIED_DAY = 7;
+const EXTEND_CAP_DAYS = 60;
+
+// A YYYY-MM-DD day as a whole UTC day number, or null. The shape check is not
+// enough on its own: Date.UTC rolls over, so 2026-13-45 becomes 2027-02-14 and
+// 2026-02-31 becomes 2026-03-03, and both would rank at a date nobody wrote.
+// Reconstructing the components from the result and comparing is what turns an
+// impossible date into the null the callers already handle (`stamp` refuses,
+// the ranking counts it as unrankable) instead of a plausible wrong answer.
+function dayNumber(day) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day));
+    if (!m) return null;
+    const [year, month, date] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const ms = Date.UTC(year, month - 1, date);
+    if (Number.isNaN(ms)) return null;
+    const back = new Date(ms);
+    if (back.getUTCFullYear() !== year || back.getUTCMonth() + 1 !== month || back.getUTCDate() !== date) {
+        return null;
+    }
+    return Math.floor(ms / 86400000);
+}
+
+// Every day a record was applied: the union of the journal (where stamps land)
+// and any `applied:` written by hand into the record. The journal is the write
+// path; the frontmatter form is tolerated so a hand-authored or migrated
+// record keeps its history without a conversion step. An already-read
+// readAppliedJournal() result can be passed in, so ranking a whole store reads
+// the journal once and measures every record against the same snapshot.
+function appliedDays(record, journal) {
+    const fromRecord = (record && record.metadata && Array.isArray(record.metadata.applied))
+        ? record.metadata.applied
+        : [];
+    const read = (journal && journal.days) ? journal : readAppliedJournal();
+    const days = read.days.get(record && record.name) || [];
+    return Array.from(new Set(fromRecord.concat(days))).sort();
+}
+
+// Rank every readable record for decay against `opts.now` (a Date, defaulting
+// to the real clock). Returns
+//   { ok: false, unreadable: true, reason }   the store exists and cannot be read
+//   { ok: true, candidates, unevaluated, skipped, journalUnreadable, journalSkipped }
+// with candidates most-idle first and then by name, each carrying its record
+// and the numbers that put it there. An unreadable store is never an empty
+// one: answering "no candidates" about a store nobody could look at is the
+// accept-and-discard shape this tier refuses, so it is a separate result the
+// caller has to handle, and a record whose dates cannot be read is counted in
+// `unevaluated` rather than ranked at a made-up age. Never throws.
+//
+// The journal is the other input that can fail, and its failure is invisible
+// in the ranking itself: a journal that cannot be read takes every stamp with
+// it, so records in daily use fall back to `created` and rank as idle. That
+// cannot be inferred from the candidate list, so it is reported here rather
+// than swallowed, along with the count of journal entries that could not be
+// parsed (a lost applied day can only make a record look idler than it is).
+// What to do about it is the caller's call, because the two surfaces differ:
+// `decay` prints a list a reader can weigh against what they remember
+// stamping, while a nudge carrying nothing but an integer cannot be weighed
+// at all.
+function rankDecay(opts) {
+    const now = (opts && opts.now) || new Date();
+    const today = (now instanceof Date && !Number.isNaN(now.getTime()))
+        ? dayNumber(now.toISOString().slice(0, 10))
+        : null;
+    if (today === null) return { ok: false, unreadable: false, reason: 'the clock is not a usable date' };
+
+    const listed = listRecords();
+    if (listed.unreadable) return { ok: false, unreadable: true, reason: listed.reason };
+
+    const journal = readAppliedJournal();
+    const candidates = [];
+    let unevaluated = 0;
+    for (const record of listed.records) {
+        const rawDays = appliedDays(record, journal).map(dayNumber);
+        const days = rawDays.filter(n => n !== null);
+        // An applied entry this code cannot parse makes the record's whole use
+        // history untrustworthy, so it is counted rather than ranked on the
+        // entries that happened to survive. Dropping the bad one and ranking
+        // the rest fabricates idleness: a record applied yesterday through an
+        // unparsable date read as idle 219 days and sorted to the top of the
+        // candidate list. `stamp` already refuses this same record.
+        if (rawDays.length !== days.length) {
+            unevaluated++;
+            continue;
+        }
+        const created = dayNumber(record.metadata && record.metadata.created);
+        const lastUsed = days.length ? Math.max(...days) : created;
+        if (lastUsed === null || lastUsed === undefined) {
+            // No usable date at all, so idleness is unknowable. Counted and
+            // reported rather than ranked at a made-up age.
+            unevaluated++;
+            continue;
+        }
+        const distinct = new Set(days).size;
+        const extension = Math.min(distinct * EXTEND_PER_APPLIED_DAY, EXTEND_CAP_DAYS);
+        const threshold = SUMMARIZE_AFTER_DAYS + extension;
+        const idleDays = today - lastUsed;
+        if (idleDays > threshold) candidates.push({ record, idleDays, threshold, distinct });
+    }
+
+    candidates.sort((a, b) => b.idleDays - a.idleDays || a.record.name.localeCompare(b.record.name));
+    return {
+        ok: true,
+        candidates,
+        unevaluated,
+        skipped: listed.skipped,
+        journalUnreadable: journal.unreadable === true,
+        journalSkipped: journal.skipped || 0,
+    };
+}
+
 // Create the store root if absent, private to the operator. The tier holds
 // facts that can describe production configuration, so 0700/0600 rather than
 // inheriting a 0022 umask.
@@ -700,6 +829,8 @@ module.exports = {
     ensureStore,
     appendApplied,
     readAppliedJournal,
+    appliedDays,
+    rankDecay,
     journalPath,
     JOURNAL_FILE,
     writeRecord,

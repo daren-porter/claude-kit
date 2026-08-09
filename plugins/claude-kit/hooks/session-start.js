@@ -298,6 +298,47 @@ function crossProjectMemory() {
     };
 }
 
+// How many records in the cross-project tier have gone idle past their
+// use-adjusted threshold, or null when there is nothing to nudge about (no
+// candidates, an absent or unreadable store, or a plugin cache without the
+// lib). A COUNT, never a list: the memory block already carries the records
+// themselves, and enumerating them here would duplicate it and turn a
+// one-line reminder into a second reference block. The count is reduced from
+// the ranking the moment it arrives, so no record name or description is ever
+// in reach of the emitted text.
+//
+// The ranking is deliberately NOT computed here. memory-lib owns it and
+// `memory.js decay`, the command this nudge sends the session to, reads the
+// same function, so the count and the list it points at cannot disagree.
+// memory.js itself cannot be required: it runs main() on load.
+//
+// An unreadable store is silence for this nudge alone. It is not swallowed:
+// the memory block above says so out loud, and a nudge whose whole content is
+// a count has no count to name when the store could not be read.
+function decayCandidates() {
+    // Lazy require, matching crossProjectMemory above: a plugin cache without
+    // the lib degrades to silence rather than taking the hook down.
+    const ranked = require('./memory-lib.js').rankDecay();
+    if (!ranked || !ranked.ok) return null;
+    // The applied-day journal is the other input, and its failure does not
+    // show up in the ranking: a journal that cannot be read takes every stamp
+    // with it, so records in daily use fall back to `created` and rank as
+    // idle. The count would then be inflated, possibly to the whole store,
+    // with nothing here for a session to weigh it against. Recovered
+    // deliberately rather than emitted with a caveat: this nudge's entire
+    // contract is that its count and the list it points at agree. The `decay`
+    // command still lists everything, which is where a reader can compare the
+    // ranking against what they remember stamping.
+    if (ranked.journalUnreadable) return null;
+
+    const count = safeCount(Array.isArray(ranked.candidates) ? ranked.candidates.length : 0);
+    if (count === 0) return null;
+    // Records the ranking could not evaluate are carried through rather than
+    // dropped: without them the count reads as the whole store's answer when
+    // it is not.
+    return { count, unevaluated: safeCount(ranked.unevaluated) };
+}
+
 function main() {
     // Parse Hook Payload.
     let payload = {};
@@ -414,8 +455,19 @@ function main() {
         // Never let the memory read break recovery or the session.
     }
 
+    // Decay surfacing is additive and must never affect plan recovery. It is a
+    // reminder rather than reference material, so it joins the nudge stack
+    // above the memory block. Null at zero candidates, which is what keeps it
+    // from dragging the hook past the early return on its own.
+    let decay = null;
+    try {
+        decay = decayCandidates();
+    } catch {
+        // Never let the decay ranking break recovery or the session.
+    }
+
     // Emit Additional Context.
-    if (activePlans.length === 0 && completedUnarchived.length === 0 && kaizenCount === 0 && !claudeMdOffer && !goalArmed && adoptionStaleDays === null && !memory) return;
+    if (activePlans.length === 0 && completedUnarchived.length === 0 && kaizenCount === 0 && !claudeMdOffer && !goalArmed && adoptionStaleDays === null && !memory && !decay) return;
 
     const blocks = [];
 
@@ -451,6 +503,16 @@ function main() {
 
     if (adoptionStaleDays !== null) {
         blocks.push(`This is the claude-kit repo and the last adoption pass over Scott's kit was ${adoptionStaleDays} days ago. At a natural stopping point, consider running one (see the kit-adoption-pass skill). Reminder, not a blocker.`);
+    }
+
+    if (decay) {
+        // The path is this hook's own directory, not store content, and the
+        // counts are integers computed here - nothing from a record reaches
+        // this sentence.
+        const unranked = decay.unevaluated > 0
+            ? `, and ${decay.unevaluated} more could not be ranked`
+            : '';
+        blocks.push(`${decay.count} cross-project memory record(s) have been idle longer than their use-adjusted threshold${unranked}. Nothing is retired, rewritten, or removed by this: the ranking is advisory and every call on a record stays a human one. Run \`node "${safeContext(path.join(__dirname, 'memory.js'), 200)}" decay\` to see the ranked list. Reminder, not a blocker.`);
     }
 
     if (memory && memory.unreadable) {

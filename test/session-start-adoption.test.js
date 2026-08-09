@@ -637,3 +637,227 @@ test('a store whose records all fail to parse says so rather than emitting nothi
     assert.match(block, /could not be read or parsed/);
     assert.match(block, /must not be read as/);
 });
+
+// ---------------------------------------------------------------------------
+// The advisory decay nudge.
+//
+// A count of records that have gone idle past their use-adjusted threshold,
+// and the command that ranks them. It is a nudge, not reference material: the
+// memory block above already carries the records, so this one must never
+// enumerate them, and nothing it says may read as though a record has been or
+// will be removed. The ranking itself is memory-lib's `rankDecay`, the same
+// function `memory.js decay` formats, so the cases below pin that the count
+// the session sees and the list it is sent to cannot disagree.
+
+const DECAY = /^(\d+) cross-project memory record\(s\) have been idle longer than their use-adjusted threshold/m;
+
+// The emitted block carrying the decay nudge, or null.
+function decayBlock(context) {
+    const found = blocksOf(context).filter((b) => DECAY.test(b));
+    assert.ok(found.length <= 1, 'the decay nudge must be exactly one block; got ' + found.length);
+    return found[0] || null;
+}
+
+// YYYY-MM-DD for `days` before now in UTC, which is the calendar the ranking
+// runs on: `created`, the journal, and the hook's own clock are all UTC, so a
+// local-time fixture would be off by a day for half the world.
+function utcDaysAgo(days) {
+    return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+}
+
+// Seed one record with a chosen age and, optionally, applied days. The applied
+// days go through the journal rather than frontmatter, because the journal is
+// where `stamp` actually writes them and so is what a real store holds.
+function seedAged(dir, name, createdDaysAgo, appliedDaysAgo) {
+    const prior = process.env.CLAUDE_KIT_MEMORY_DIR;
+    process.env.CLAUDE_KIT_MEMORY_DIR = dir;
+    try {
+        const written = memoryLib.writeRecord({
+            name,
+            description: 'a fact about ' + name,
+            metadata: { kind: 'platform', created: utcDaysAgo(createdDaysAgo) },
+            body: 'body of ' + name,
+        }, new Date(), { mode: 'create' });
+        assert.strictEqual(written.ok, true, 'seeding ' + name + ': ' + written.reason);
+        for (const day of appliedDaysAgo || []) {
+            const stamped = memoryLib.appendApplied(name, utcDaysAgo(day));
+            assert.strictEqual(stamped.ok, true, 'stamping ' + name + ': ' + stamped.reason);
+        }
+    } finally {
+        if (prior === undefined) delete process.env.CLAUDE_KIT_MEMORY_DIR;
+        else process.env.CLAUDE_KIT_MEMORY_DIR = prior;
+    }
+}
+
+// The ages here sit far from the 30-day threshold in both directions, so a run
+// crossing UTC midnight between fixture and spawn cannot reclassify a record.
+test('idle records nudge with their count and point at the ranking command', () => {
+    const cwd = quietCwd('ssd-count-');
+    const store = makeDir('ssd-countstore-');
+    try {
+        seedAged(store, 'idle-one', 120);
+        seedAged(store, 'idle-two', 200);
+        seedAged(store, 'fresh-fact', 3);
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        const nudge = decayBlock(context);
+        assert.ok(nudge, 'expected the decay nudge; context was: ' + context);
+        assert.strictEqual(DECAY.exec(nudge)[1], '2', 'the fresh record is not a candidate: ' + nudge);
+        // It points at the command rather than carrying the ranking itself.
+        assert.match(nudge, /memory\.js" decay/);
+        // A count, not a list: enumerating here would duplicate the memory
+        // block below it and turn a one-line nudge into a second reference
+        // block. No record name and no description may appear.
+        for (const name of ['idle-one', 'idle-two', 'fresh-fact']) {
+            assert.ok(!nudge.includes(name), 'the nudge enumerated a record: ' + nudge);
+        }
+        assert.ok(!nudge.includes('a fact about'), 'the nudge carried a description: ' + nudge);
+        // Nothing retires, ever. The wording must not read as though a record
+        // has been or will be removed.
+        assert.match(nudge, /Nothing is retired, rewritten, or removed/);
+        assert.match(nudge, /Reminder, not a blocker\.$/);
+        // And the records themselves are still listed by their own block.
+        assert.match(memoryBlock(context), /^- idle-one \[platform\]/m);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// Silence at zero, and it must not drag the hook past its early return on its
+// own: a store with records but nothing idle emits the memory block and only
+// the memory block.
+test('a store with nothing idle raises no decay nudge', () => {
+    const cwd = quietCwd('ssd-fresh-');
+    const store = makeDir('ssd-freshstore-');
+    try {
+        seedAged(store, 'fresh-one', 2);
+        seedAged(store, 'fresh-two', 29);
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(decayBlock(context), null, 'nothing is idle: ' + context);
+        assert.strictEqual(blocksOf(context).length, 1,
+            'only the memory block had anything to say: ' + context);
+        assert.match(memoryBlock(context), /^- fresh-one \[platform\]/m);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// Reinforcement is the whole reason the ranking is use-adjusted: a record
+// applied on many distinct days earns a longer runway, so the same idleness
+// that makes an unapplied record a candidate leaves it alone. Both records are
+// listed by the memory block, which is what proves the exclusion is the
+// ranking rather than a record the store could not read.
+test('recorded use delays candidacy rather than granting immunity', () => {
+    const cwd = quietCwd('ssd-used-');
+    const store = makeDir('ssd-usedstore-');
+    try {
+        // Never applied, so idle 200 days against the unextended 30: a candidate.
+        seedAged(store, 'never-applied', 200);
+        // Applied on ten distinct days, the last of them 50 days ago. Ten days
+        // would extend by 70; the cap holds it to 60, for a 90-day threshold
+        // that 50 days of idleness has not reached.
+        seedAged(store, 'well-used', 200, [59, 58, 57, 56, 55, 54, 53, 52, 51, 50]);
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        const nudge = decayBlock(context);
+        assert.ok(nudge, 'expected the decay nudge; context was: ' + context);
+        assert.strictEqual(DECAY.exec(nudge)[1], '1',
+            'use must delay candidacy for well-used: ' + nudge);
+        const block = memoryBlock(context);
+        assert.match(block, /^- well-used \[platform\]/m);
+        assert.match(block, /^- never-applied \[platform\]/m);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// A record whose dates cannot be read is not a record with nothing to say
+// about it. It is counted in the nudge rather than dropped, so the count is
+// never read as complete when it is not. Standing Brief Amendment 2.
+test('a record that cannot be ranked is counted in the nudge, not dropped', () => {
+    const cwd = quietCwd('ssd-unrankable-');
+    const store = makeDir('ssd-unrankablestore-');
+    try {
+        seedAged(store, 'idle-fact', 120);
+        fs.writeFileSync(path.join(store, 'undated-fact.md'),
+            '---\nname: undated-fact\ndescription: a hand written record with no created date\nmetadata:\n  kind: platform\n---\n\nbody\n');
+
+        const nudge = decayBlock(runHook(cwd, store).context);
+        assert.ok(nudge, 'expected the decay nudge; context was: ' + nudge);
+        assert.strictEqual(DECAY.exec(nudge)[1], '1');
+        assert.match(nudge, /1 more could not be ranked/);
+        assert.ok(!nudge.includes('undated-fact'), 'still a count, not a list: ' + nudge);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// No store and an unreadable store are both silence for this nudge: there is
+// no count to name in either case. The unreadable one is still reported by the
+// memory block, which is the surface that owns that distinction, and neither
+// case may take the rest of the hook down.
+test('an absent or unreadable store raises no decay nudge', () => {
+    const absent = quietCwd('ssd-absent-');
+    try {
+        const { status, context } = runHook(absent);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(context, '',
+            'an absent store must not drag the hook past its early return: ' + context);
+    } finally { rmDir(absent); }
+
+    const cwd = makeKitRepo('ssd-unreadable-', null, true);
+    const store = path.join(makeDir('ssd-badstore-'), 'store');
+    try {
+        fs.writeFileSync(store, 'not a directory\n', 'utf8');
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(decayBlock(context), null,
+            'a store nobody could read has no candidate count: ' + context);
+        assert.match(context, MEMORY_UNAVAILABLE);
+        assert.match(context, PLAN_RECOVERY);
+    } finally { rmDir(cwd); rmDir(path.dirname(store)); }
+});
+
+// The other input the ranking depends on, and the one whose failure is
+// invisible in the result: a journal that cannot be read takes every stamp
+// with it, so records in daily use fall back to `created` and rank as idle.
+// The nudge would then claim a count it has no basis for, and a block whose
+// whole content is an integer gives the session nothing to weigh it against.
+// A directory where applied.jsonl should be is the portable EISDIR.
+test('an unreadable applied-day journal suppresses the nudge rather than inflating it', () => {
+    const cwd = makeKitRepo('ssd-nojournal-', null, true);
+    const store = makeDir('ssd-nojournalstore-');
+    try {
+        seedAged(store, 'idle-fact', 200);
+        seedAged(store, 'used-fact', 200);
+        fs.mkdirSync(path.join(store, 'applied.jsonl'));
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.strictEqual(decayBlock(context), null,
+            'no stamp history means no trustworthy count: ' + context);
+        // Suppression, not a crash: everything else still emits.
+        assert.match(memoryBlock(context) || '', /^- idle-fact \[platform\]/m);
+        assert.match(context, PLAN_RECOVERY);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// It is a reminder, so it belongs in the nudge stack rather than beside the
+// reference material: after the other reminders, ahead of the memory block,
+// and with none of them displaced.
+test('the decay nudge coexists with the other blocks and lands ahead of the memory block', () => {
+    const cwd = makeKitRepo('ssd-together-', doc(`Last pass: ${daysAgo(45)}`), true);
+    const store = makeDir('ssd-togetherstore-');
+    try {
+        seedAged(store, 'idle-shared-fact', 150);
+
+        const { status, context } = runHook(cwd, store);
+        assert.strictEqual(status, 0);
+        assert.match(context, PLAN_RECOVERY);
+        assertNudged(context, 45);
+        const nudge = decayBlock(context);
+        assert.ok(nudge, 'expected the decay nudge; context was: ' + context);
+        const blocks = blocksOf(context);
+        assert.ok(blocks[0].startsWith('Session is starting.'), 'plan recovery stays first');
+        assert.ok(blocks[blocks.length - 1].startsWith('Cross-project memory:'),
+            'the reference block still lands last: ' + context);
+        assert.ok(blocks.indexOf(nudge) < blocks.length - 1,
+            'the nudge sits in the reminder stack, ahead of the reference block: ' + context);
+    } finally { rmDir(cwd); rmDir(store); }
+});

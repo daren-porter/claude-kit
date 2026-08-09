@@ -34,21 +34,10 @@ const lib = require('./memory-lib.js');
 // marker could never fire while the emitted block promised it could.
 const index = require('./memory-index.js');
 
-// Advisory decay ranking. Nothing here retires, deletes, or rewrites
-// anything: the ranked list is a prompt for a human decision, which is why
-// these can be seeds rather than tuned values.
-//
-//   idleDays  = days since the most recent applied day, or since `created`
-//               when the record was never applied
-//   extension = min(distinctAppliedDays * EXTEND_PER_APPLIED_DAY, EXTEND_CAP_DAYS)
-//   candidate when idleDays > SUMMARIZE_AFTER_DAYS + extension
-//
-// Use buys time rather than immunity. A record applied on many distinct days
-// has proven itself and earns a longer runway, while the cap stops an old
-// streak from propping up a record nothing has touched in a year.
-const SUMMARIZE_AFTER_DAYS = 30;
-const EXTEND_PER_APPLIED_DAY = 7;
-const EXTEND_CAP_DAYS = 60;
+// Advisory decay ranking lives in memory-lib as `rankDecay`, because the
+// SessionStart hook nudges with the same candidate count and cannot require
+// this file (it runs main() on load). This command formats what that function
+// ranks; nothing here retires, deletes, or rewrites anything.
 
 // Concurrency. The library's tmp+publish write prevents a torn file but not
 // a lost update: two concurrent stamps each read, each append a day, and the
@@ -268,37 +257,6 @@ function dayOf(date) {
     return date.toISOString().slice(0, 10);
 }
 
-// The shape check is not enough on its own: Date.UTC rolls over, so
-// 2026-13-45 becomes 2027-02-14 and 2026-02-31 becomes 2026-03-03, and both
-// would rank in the decay query at a date nobody wrote. Reconstructing the
-// components from the result and comparing is what turns an impossible date
-// into the null the callers already handle (stamp refuses, decay counts it as
-// unrankable) instead of a plausible wrong answer.
-function dayNumber(day) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(day));
-    if (!m) return null;
-    const [year, month, date] = [Number(m[1]), Number(m[2]), Number(m[3])];
-    const ms = Date.UTC(year, month - 1, date);
-    if (Number.isNaN(ms)) return null;
-    const back = new Date(ms);
-    if (back.getUTCFullYear() !== year || back.getUTCMonth() + 1 !== month || back.getUTCDate() !== date) {
-        return null;
-    }
-    return Math.floor(ms / 86400000);
-}
-
-function appliedDays(record) {
-    // The union of the journal (where stamps land) and any `applied:` written
-    // by hand into the record. The journal is the write path; the frontmatter
-    // form is tolerated so a hand-authored or migrated record keeps its
-    // history without a conversion step.
-    const fromRecord = (record && record.metadata && Array.isArray(record.metadata.applied))
-        ? record.metadata.applied
-        : [];
-    const journal = lib.readAppliedJournal().days.get(record && record.name) || [];
-    return Array.from(new Set(fromRecord.concat(journal))).sort();
-}
-
 // Refresh the derived sidecar after a write. Deliberately best-effort: the
 // index is rebuildable from the records at any time, so a sidecar that could
 // not be written is a marker that misses once, not a failed write. Failing the
@@ -496,7 +454,7 @@ function cmdStamp(args) {
     const read = lib.readRecord(name, { frontmatterOnly: true });
     if (!read.ok) return fail(read.reason);
 
-    const already = appliedDays(read.record).includes(today);
+    const already = lib.appliedDays(read.record).includes(today);
     const result = already ? { ok: true, already: true } : lib.appendApplied(name, today);
 
     if (!result.ok) return fail(result.reason);
@@ -510,44 +468,10 @@ function cmdDecay(args) {
     if (args.length) return fail('decay takes no arguments');
     const clock = resolveNow();
     if (!clock.ok) return fail(clock.reason);
-    const todayNumber = dayNumber(dayOf(clock.now));
 
-    const listed = lib.listRecords();
-    if (listed.unreadable) return fail(unreadableStore(listed));
-    const records = listed.records;
-    const skipped = listed.skipped;
-    const candidates = [];
-    let unevaluated = 0;
-
-    for (const record of records) {
-        const rawDays = appliedDays(record).map(dayNumber);
-        const days = rawDays.filter(n => n !== null);
-        // An applied entry this code cannot parse makes the record's whole use
-        // history untrustworthy, so it is counted rather than ranked on the
-        // entries that happened to survive. Dropping the bad one and ranking
-        // the rest fabricates idleness: a record applied yesterday through an
-        // unparsable date read as idle 219 days and sorted to the top of the
-        // candidate list. `stamp` already refuses this same record.
-        if (rawDays.length !== days.length) {
-            unevaluated++;
-            continue;
-        }
-        const created = dayNumber(record.metadata && record.metadata.created);
-        const lastUsed = days.length ? Math.max(...days) : created;
-        if (lastUsed === null || lastUsed === undefined) {
-            // No usable date at all, so idleness is unknowable. Counted and
-            // reported rather than ranked at a made-up age.
-            unevaluated++;
-            continue;
-        }
-        const distinct = new Set(days).size;
-        const extension = Math.min(distinct * EXTEND_PER_APPLIED_DAY, EXTEND_CAP_DAYS);
-        const threshold = SUMMARIZE_AFTER_DAYS + extension;
-        const idleDays = todayNumber - lastUsed;
-        if (idleDays > threshold) candidates.push({ record, idleDays, threshold, distinct });
-    }
-
-    candidates.sort((a, b) => b.idleDays - a.idleDays || a.record.name.localeCompare(b.record.name));
+    const ranked = lib.rankDecay({ now: clock.now });
+    if (!ranked.ok) return fail(ranked.unreadable ? unreadableStore(ranked) : ranked.reason);
+    const { candidates, unevaluated, skipped } = ranked;
 
     if (!candidates.length) out('no decay candidates');
     for (const c of candidates) {
