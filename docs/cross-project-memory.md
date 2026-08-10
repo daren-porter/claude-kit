@@ -120,7 +120,11 @@ Gotchas worth knowing before you author:
 
 Record content crosses into trusted model context at one door, the SessionStart memory block, and that door is narrow by construction. Only the generated line crosses, never a body. Each line is reduced to printable ASCII with whitespace collapsed, capped at 700 characters with truncation announced, and the block is capped at 30 lines. `description` is last on every line so nothing in it can displace a field after it, and every value ahead of it has `[`, `]`, `@`, and `:` neutralized at both the write door and the render door. Marked records are named from validated filenames rather than from record text.
 
-A record body passes no emission door at all. It reaches context only when someone reads the file, so the guards against control characters, bidi overrides, and zero-width characters sit at the CLI's write door, the only door a body enters through. A hand-edited body bypasses them, which is the accepted cost of keeping bodies plain files.
+A record body passes no emission door at all, so the guards against control characters, bidi overrides, and zero-width characters sit at the CLI's write door. Two qualifications matter, and an earlier draft of this section got both wrong.
+
+That door is no longer the only one a body enters through: correcting a record is a hand edit, which is the sanctioned path since the CLI has no update verb, and a hand edit is subject to no validation at all. `memory.js reindex` is the door that re-checks every record against the write-door validators afterwards, and running it after a hand edit is part of the procedure rather than optional.
+
+And a body does not reach context only when a human chooses to read it. When the `[body revised]` marker fires, the emitted block tells the session to read that record at the source, so the kit itself orders the read. The marker is triggered from validated filenames rather than from record text, so a record cannot nominate itself, but the consequence stands: a body planted at the write door and then hand-edited is content the kit will point a model at. That is acceptable today because writing to the store requires the same access that would let you edit `~/.claude/settings.json` directly. It stops being acceptable if bodies ever arrive from somewhere other than this machine, which is the inbound half of the git-sync question and a reason `reindex` exists.
 
 The kit's trust architecture as a whole is not written down yet; `docs/security-model.md` is an open backlog item.
 
