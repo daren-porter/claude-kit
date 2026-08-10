@@ -881,3 +881,112 @@ trusting the reports; `~/.claude-kit-memory/` was never created by any of the 17
 Next: 6. Seed migration and content pass (gated: needs Daren's three sensitive-record
 adjudications)
 Commit Model: Commit-and-Push
+
+### Chapter 8 - 2026-08-10
+Completed: 6. Seed migration and content pass (the last section)
+Implemented By: main session (per the spec's mode; the adjudications and the per-record
+descriptions are the design work); adversarial reviewer plus an independent loss-and-leakage
+auditor dispatched in parallel
+Metrics: 1 review round; 0 NEEDS_CONTEXT; 0 escalations; advisor off; 2 review dispatches
+Decisions / Surprises:
+- **The tier holds real facts now.** 12 source records became 14 tier records under
+  `~/.claude-kit-memory/` (0700/0600), and a session in any repo receives all 14 at start.
+  **The Goal's own test passes:** a claude-kit session now receives the ADO `filePath`
+  leading-slash fact that only EleosCore's store held on 2026-08-07, and the claude-kit record
+  that recorded it as "never recorded" now agrees with it. That failure cannot happen the same
+  way again.
+- **Daren's three adjudications, recorded here because this Chapter is their durable home**
+  (the two split records also carry theirs in prose; the connector had nowhere else, which the
+  reviewer correctly flagged):
+  1. `reference_dev_box_vpn_netplan` **split**. The netplan/keyfile mechanism moved as
+     `netplan-drops-nm-vpn-secrets` (`kind: machine`). The Horizon connection parameters
+     (gateway 66.170.45.146, account, LAN, profile names) stayed in the EleosCore store, since
+     they are engagement detail and this tier is the designated future git-sync root.
+  2. `reference_eleos_db_deployment_convention` **split three ways**. To the tier:
+     `sql-verification-without-a-local-db` and `linux-checkout-breaks-sql-consolidation`
+     (machine), and `utf16le-sql-breaks-diffs` (platform, since it is a git and ADO property
+     rather than an ELEOS one). Everything else stayed, including both sensitive passages: the
+     client TMS TRUSTWORTHY/`owner=sa` setup and the `dbo` grant override. Verified still in
+     the project store and absent from the tier.
+  3. `eleos-platform-connector` **added to the move set** (it was not among the spec's eleven)
+     and moved whole with its token-scope sentence intact, because describing a token's scope
+     without the token is the guardrail and cutting it would make the record more dangerous.
+- **The paired review changed three of my own calls, and one was a fact I destroyed.** Details
+  under Review Findings. The one worth naming here: I compressed bodies while migrating and
+  dropped "verify by inspection plus repo unit tests (mock `IDatabaseService`, assert the proc
+  name, params and `CommandType.StoredProcedure`)" entirely, then overwrote the source record,
+  so the only surviving copy was a session-scoped `/tmp` backup. Both reviewers found it
+  independently. Restored. The lesson is specific: a migration that rewrites prose is not a
+  move, and the diff against a pre-migration backup is the only thing that proves it was one.
+- **`created` now carries each record's real date rather than the migration date.** I had set
+  it to today deliberately, reasoning that the native schema never stored a creation date so
+  "today" was the honest unknown. Both reviewers argued the opposite and the measurement
+  settles it: with all 14 stamped today, every record crosses the 30-day threshold on the same
+  future day with identical idle counts, so the ranking cannot discriminate at all. Each
+  source record's `modified` (or its file mtime) was available the whole time, and
+  `CLAUDE_KIT_MEMORY_NOW` exists for exactly this. Dates now span 2026-06-27 to 2026-08-07,
+  and `decay` correctly ranks 5 candidates at 33 to 44 idle days instead of 14 at zero.
+- **The advisory decay nudge fired on its first real day, and that is correct.** Five of the
+  seeded facts have not been applied in over a month. The tier is telling the truth about its
+  own contents on day one.
+- **`origin` refuses a comma**, so 6 of 14 `add` calls failed on values like "EleosCore, PR
+  395". The comma guard exists for list fields; `origin` is documented as a free label. Worked
+  around by rewording. Left as a finding rather than a code change, since S6 is a content
+  section, and jotted to the kaizen inbox.
+- Not fixed, with reasons. Four tier records bundle more than one correction in their
+  description (mean 363 chars against the 119 the Approach measured on the native store),
+  because their source records did and S6's mandate was to move records rather than re-cut
+  them; a stamp on a four-fact record cannot say which fact was used, which is the real cost.
+  And 15 dangling `[[wikilinks]]` predate this migration in the native stores; the scan that
+  found them is baselined against the backup, which showed the migration introduced exactly
+  one (now fixed) rather than seven.
+Review Findings: the adversarial reviewer returned CHANGES_REQUIRED with 7 Major and 6 Minor;
+the independent auditor found 8 losses and confirmed no new leakage. Both were run against a
+pre-migration backup rather than a git diff, since none of this section's work is in the repo.
+- **Major, fixed: a fact lost outright** (the unit-test verification axis above).
+- **Major, fixed: the netplan split duplicated its generic half into both stores.** Two
+  sentences about split-tunnel routing were verbatim in the tier record and the project record,
+  which is the two-copies-that-drift shape this whole effort exists to remove, introduced by me
+  in the act of removing it. The project record now carries only the parameters.
+- **Major, fixed: `created` discarded** (above).
+- **Major, fixed: 7 dangling cross-references** left where moved records used to be referenced,
+  and 8 of the 10 whole moves left no forwarding pointer. Every link now names its tier record,
+  and the eleos-core store carries a forwarding note for the connector. Baselining showed only
+  one of the seven was genuinely introduced; the rest resolve by frontmatter `name:` rather
+  than filename, which my first scan got wrong and the reviewer's did not.
+- **Major, fixed: two `machine:` labels were inverted against the schema's own contract.**
+  `sandbox-git-ssh-fetch` was labelled to this box when the spec's own Approach says its
+  trigger is sandbox execution mode, and `linux-checkout-breaks-sql-consolidation` likewise
+  when its trigger is an LF checkout. Both labels dropped. `ado-ssh-key-expiry` keeps no label,
+  since the expiry policy is account-level, and its two genuinely box-specific sentences now
+  say so inline.
+- **Major, fixed: the connector's token scope was escalated into the emitted line.** Daren
+  approved moving the record with the sentence intact, which meant in the body. I had promoted
+  it into `description`, which is the line injected into every session in every project and the
+  line a later git sync publishes, with more detail than the old index line carried. The grant
+  enumeration is back in the body; the description carries the correction without it.
+- **Major, fixed: the connector adjudication had no durable record** outside a scratchpad
+  script. It is in this Chapter now, which is what the acceptance clause asks for.
+- Minors fixed: 7 dropped concretes restored (the DataBroker Hub SSH URL, the SignalRHub
+  open decision and its evidence, the stale-`id_rsa` caveat, `Dapper GridReader`, `[SISTERDB]`,
+  `tlc_schema_info.csv`, the `git show "clients/<Name>:ASR.Eleos/<path>"` read form); `modified`
+  bumped on the 8 hand-edited native records; and the mcp-bridge body's two superseded
+  diagnoses now say so inline, so a reader who stops early no longer gets the wrong answer.
+- **No leakage.** The auditor enumerated every credential, IP, hostname, username, client
+  identifier, grant and DDL statement now in the tier and confirmed each was already present in
+  the project stores before the move. The only newly written value anywhere is the
+  `machine: daren-ubuntu` label. Credentials, the VPN gateway and account, and every
+  GRANT/TRUSTWORTHY/DDL statement stayed behind, as adjudicated.
+Both data-quality bugs fixed and verified, not reworded: the superseded root cause is corrected
+at the mcp-providers-connector index line AND in the record's own `description` (it was stale in
+both), and the `filePath` contradiction is resolved with the confirmation, its evidence, and a
+note that the two stores disagreed for four hours on 2026-08-07. A third instance of the same
+drift was found and fixed while there: the same record and its index line still advertised the
+vote as dry-verified and auto-complete as pending, both of which had been settled.
+Verification: 14/14 records resolve by name from any cwd; none appears in any project store
+index; zero dangling index lines and zero orphan records across all stores; the tier emits 14
+lines into a session in an unrelated cwd; `listRecords` reports 14 with 0 skipped after the hand
+edits; `node --test test/*.test.js` 272/272. Every reviewer finding re-verified mechanically
+after fixing rather than assumed.
+Next: finishing-work
+Commit Model: Commit-and-Push
