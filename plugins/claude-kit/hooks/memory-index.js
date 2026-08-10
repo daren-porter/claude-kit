@@ -488,7 +488,10 @@ function usableScalar(value) {
 
 function renderLine(record, marked) {
     const md = record.metadata || {};
-    const kind = usableScalar(md.kind) ? label(md.kind) : 'unknown';
+    // The enum, not neutralized free prose: this slot is presented to the
+    // model as typed, so a hand-written value outside KINDS reads as unknown.
+    // memory.js's list door does the same; both must, or they disagree.
+    const kind = KINDS.includes(md.kind) ? md.kind : 'unknown';
     const machine = usableScalar(md.machine) ? ' @' + label(md.machine) : '';
     const mark = marked ? ' ' + BODY_REVISED_MARKER : '';
     return '- ' + record.name + ' [' + kind + ']' + machine + mark + ': '

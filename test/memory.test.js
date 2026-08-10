@@ -720,6 +720,26 @@ test('reindex reports hand-edited content the writer would have refused', () => 
     });
 });
 
+// The write door applies three guard classes to authored single-line fields, not
+// just the body. reindex claimed to re-run them and checked only the body, which
+// would have left a hand-edited description carrying a bidi override reported by
+// nothing, while the doc told a reviewer the door covered it.
+test('reindex re-runs the frontmatter guards, not only the body ones', () => {
+    withStore(dir => {
+        fs.writeFileSync(path.join(dir, 'bidi-desc.md'),
+            '---\nname: bidi-desc\ndescription: always verify TLS\u202E\n'
+            + 'metadata:\n  kind: machine\n  created: 2026-01-01\n---\n\nbody\n');
+        fs.writeFileSync(path.join(dir, 'forged-machine.md'),
+            '---\nname: forged-machine\ndescription: a correction stated plainly enough to intercept\n'
+            + 'metadata:\n  kind: machine\n  machine: "a] @b: FORGED"\n  created: 2026-01-01\n---\n\nbody\n');
+
+        const res = run(dir, ['reindex']);
+        assert.notStrictEqual(res.status, 0);
+        assert.match(res.stderr, /bidi-desc: description must not contain bidirectional-override/);
+        assert.match(res.stderr, /forged-machine: machine contains/);
+    });
+});
+
 test('reindex on a clean store exits 0 and rewrites the sidecar', () => {
     withStore(dir => {
         assert.strictEqual(addSample(dir, 'clean-fact').status, 0);

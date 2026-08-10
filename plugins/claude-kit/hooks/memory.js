@@ -547,6 +547,21 @@ function cmdReindex(args) {
         if (!lib.KINDS.includes(kind)) {
             problems.push(record.name + ': kind ' + render(String(kind), 40) + ' is not one of ' + lib.KINDS.join(', '));
         }
+        // The same three guard classes `add` applies to authored single-line
+        // fields, not just the body: control characters (validateFieldText
+        // above), the invisible set, and the line delimiters for the values
+        // that land ahead of the description on a generated line. Checking the
+        // body alone would leave a hand-edited description carrying a bidi
+        // override, which is exactly the shape this door exists to catch.
+        for (const field of ['description', 'machine', 'origin']) {
+            const value = field === 'description' ? record.description : (record.metadata || {})[field];
+            if (value === undefined || value === null) continue;
+            if (INVISIBLE.test(String(value))) problems.push(record.name + ': ' + invisibleReason(field));
+        }
+        const machine = (record.metadata || {}).machine;
+        if (machine !== undefined && machine !== null && LINE_DELIMITERS.test(String(machine))) {
+            problems.push(record.name + ': machine contains [ ] @ or : ; they delimit the generated line');
+        }
         const body = validateBody(record.body || '');
         if (!body.ok) problems.push(record.name + ': ' + body.reason);
     }
