@@ -102,6 +102,18 @@ until RED has failed, then persist it for GREEN. On the gated path below, where 
 construction never fails, the hold releases once that path's first two preconditions have
 been **done and their artifacts recorded**, never on the writing-up alone.
 
+**The wording is not the only thing that leaks; so does the answer.** A fixture restaging a
+situation this repo has already resolved leaves a second route to the conclusion open: the
+commit, the archived plan, the Chapter that recorded the decision. One RED lost all three of
+its reps that way (2026-08-10), each reaching the recorded answer rather than deriving it,
+one through `git show <sha>:docs/plans/...`, one through a `docs/archive/` grep, one by
+reading the commit. Instructing the subagent not to look is not a control, and a fresh agent
+that checks its premises will look and is right to. The test is whether the answer is on
+disk, not whether the fixture told it to stay away: a fixture asking for a decision this
+repo already made has one to find, and a fixture asking for a behavior has none. Stage an
+isomorph with the specifics changed, or a situation the repo has never resolved, and read
+what the rep actually opened before you count it.
+
 ## When a local RED is not available
 
 Sometimes the evidence for a rule is real but not yours to re-run: wording **ported** from
