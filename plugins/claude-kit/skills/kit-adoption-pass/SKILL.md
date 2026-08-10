@@ -184,6 +184,19 @@ this window reworked, and both headers.
 `Last pass: YYYY-MM-DD`, nothing following the date. Not a heading, not a list item, not
 bold. That file states the rest of the contract.
 
+**If the window held zero commits** (the pinned sha is already the recorded watermark),
+there is no pass section: a run that classified nothing has no classification to record.
+Write a short working-session section instead, and say in its first line that the window
+was empty, so a later reader can tell this apart from a window that held candidates and
+rejected every one. Then work the pending queue and go to step 7.
+
+- `Watermark:` is a no-op, since the pinned sha is the sha already recorded.
+- `Last pass:` still advances. The condition above is met, vacuously but genuinely: zero
+  candidates all carry a verdict, and the removals check ran over an empty range. An empty
+  window is a complete pass rather than an interrupted one, the header records when the two
+  kits were last compared, and this run compared them. Leaving it behind on a quiet upstream
+  makes the staleness nudge fire at every session start until Scott happens to push.
+
 **If the pass is interrupted before every candidate has a verdict,** write the pass
 section with what you have, leave both headers untouched, and say in the section which
 candidates were never reached. The next pass then re-runs the same window and skips what

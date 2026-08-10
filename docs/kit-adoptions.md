@@ -122,7 +122,11 @@ adopted as-is, which is the normal case.
 
 A second run the same day. `origin/main` was still `09c91a4`, so the window was empty and
 there was nothing to classify; no pass section is recorded for a zero-commit window, and
-neither header moved. What the run did instead was work the pending queue, and four
+neither header moved. **That last clause is not the rule.** This run fell on the same day
+at the same sha, so both headers already held the right values and leaving them alone
+decided nothing. `kit-adoption-pass` step 6 now carries the empty-window branch, under
+which `Watermark:` is the no-op and `Last pass:` still advances; a later zero-commit pass
+follows the skill rather than this sentence. What the run did instead was work the pending queue, and four
 entries below gained evidence they did not have. Each is marked `verified 2026-08-07 (2nd
 run)` in place rather than restated here.
 
