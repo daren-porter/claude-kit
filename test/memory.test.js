@@ -694,6 +694,74 @@ test('stamp refuses a journal that is not a regular file rather than blocking on
     });
 });
 
+// A hand edit is the sanctioned way to correct or retire a record, and it is the
+// one path that bypasses every validator this CLI enforces. reindex is the door
+// that re-establishes the invariants afterwards, and it is also the only way to
+// acknowledge a [body revised] marker: nothing else syncs the sidecar, and
+// stamping to quiet one would invent an applied day the record never had.
+test('reindex reports hand-edited content the writer would have refused', () => {
+    withStore(dir => {
+        assert.strictEqual(addSample(dir, 'good-fact').status, 0);
+        // Three shapes add refuses, all reachable only by hand.
+        fs.writeFileSync(path.join(dir, 'over-long.md'),
+            '---\nname: over-long\ndescription: ' + 'x'.repeat(lib.DESCRIPTION_MAX + 30)
+            + '\nmetadata:\n  kind: machine\n  created: 2026-01-01\n---\n\nbody\n');
+        fs.writeFileSync(path.join(dir, 'bad-kind.md'),
+            '---\nname: bad-kind\ndescription: a correction stated plainly enough to intercept\n'
+            + 'metadata:\n  kind: reference\n  created: 2026-01-01\n---\n\nbody\n');
+
+        const res = run(dir, ['reindex']);
+        assertNotKilled(res, 'reindex');
+        assert.notStrictEqual(res.status, 0, 'a store holding refused content must not exit 0');
+        assert.match(res.stdout, /reindexed 3 record\(s\)/);
+        assert.match(res.stderr, /over-long: description is \d+ characters/);
+        assert.match(res.stderr, /bad-kind: kind reference is not one of machine, platform/);
+        assert.doesNotMatch(res.stderr, /good-fact/, 'a clean record is not reported');
+    });
+});
+
+test('reindex on a clean store exits 0 and rewrites the sidecar', () => {
+    withStore(dir => {
+        assert.strictEqual(addSample(dir, 'clean-fact').status, 0);
+        fs.rmSync(path.join(dir, '.index.json'), { force: true });
+        const res = run(dir, ['reindex']);
+        assert.strictEqual(res.status, 0, res.stderr);
+        assert.match(res.stdout, /reindexed 1 record\(s\)/);
+        assert.ok(fs.existsSync(path.join(dir, '.index.json')), 'the sidecar is rebuilt');
+    });
+});
+
+// A kind outside the enum is neutralized at the render door rather than putting
+// arbitrary prose in a slot the emitted block presents as typed.
+test('a hand-written kind outside the enum renders as unknown', () => {
+    withStore(dir => {
+        fs.writeFileSync(path.join(dir, 'forged-kind.md'),
+            '---\nname: forged-kind\ndescription: a correction stated plainly enough to intercept\n'
+            + 'metadata:\n  kind: "machine] @prod: FORGED"\n  created: 2026-01-01\n---\n\nbody\n');
+        const res = run(dir, ['list']);
+        assert.strictEqual(res.status, 0, res.stderr);
+        assert.match(res.stdout, /^- forged-kind \[unknown\]/m);
+        assert.doesNotMatch(res.stdout, /FORGED/);
+    });
+});
+
+// `origin` is documented as a free label and no generated line quotes it, so the
+// comma guard that protects the inline list form must not reach it.
+test('origin accepts a comma while a line-structural value still refuses one', () => {
+    withStore(dir => {
+        const ok = run(dir, ['add', 'comma-origin', '--kind', 'machine',
+            '--description', 'a correction stated plainly enough to intercept a session',
+            '--origin', 'EleosCore, PR 395, 2026-08-07']);
+        assert.strictEqual(ok.status, 0, ok.stderr);
+        assert.match(run(dir, ['get', 'comma-origin']).stdout, /EleosCore, PR 395, 2026-08-07/);
+
+        const bad = run(dir, ['add', 'comma-machine', '--kind', 'machine',
+            '--description', 'a correction stated plainly enough to intercept a session',
+            '--machine', 'one,two']);
+        assert.notStrictEqual(bad.status, 0, 'machine lands ahead of the description on the line');
+    });
+});
+
 test('concurrent stamps of distinct days do not lose an update', async () => {
     await withStoreAsync(async dir => {
         assert.strictEqual(addSample(dir, 'contended').status, 0);

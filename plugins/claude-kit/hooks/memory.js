@@ -8,6 +8,7 @@
 //   memory.js get <name>
 //   memory.js stamp <name>
 //   memory.js decay
+//   memory.js reindex
 //
 // Every filesystem operation and every field validation lives in
 // memory-lib.js; this file is argument parsing, the concurrency choices
@@ -39,13 +40,11 @@ const index = require('./memory-index.js');
 // this file (it runs main() on load). This command formats what that function
 // ranks; nothing here retires, deletes, or rewrites anything.
 
-// Concurrency. The library's tmp+publish write prevents a torn file but not
-// a lost update: two concurrent stamps each read, each append a day, and the
-// later write erases the earlier one's. This tier is shared across concurrent
-// sessions of every project, so both write paths are optimistic rather than
-// locked. `add` publishes with linkSync, which fails EEXIST and so claims the
-// name in one atomic syscall. `stamp` reads, modifies, and publishes under a
-// compare-and-swap on the record's mtime, retrying on a lost race.
+// Concurrency. This tier is shared across concurrent sessions of every
+// project, so neither write path takes a lock. `add` publishes with linkSync,
+// which fails EEXIST and so claims the name in one atomic syscall. `stamp`
+// does not touch the record at all: it appends one line to the applied
+// journal, which is why there is no read-modify-write to guard here.
 //
 // This replaced a store-wide lockfile after two review rounds in which every
 // Critical was a lock-lifecycle failure: a stale lock stolen with no grace
@@ -114,6 +113,13 @@ function render(value, cap) {
 // brackets survive it. Neutralized rather than dropped: a hand-edited record
 // must still appear in the listing, just without the power to forge the
 // fields after it, and `get` still shows the record verbatim.
+// `kind` is a closed enum, so a hand-edited value outside it renders as
+// `unknown` rather than putting arbitrary prose in a slot the emitted block
+// presents to the model as typed. `reindex` is what reports it.
+function safeKind(value) {
+    return lib.KINDS.includes(value) ? value : 'unknown';
+}
+
 function label(value) {
     return render(String(value == null ? '' : value).replace(LINE_DELIMITERS_ALL, ' '), LABEL_CAP);
 }
@@ -158,6 +164,7 @@ function usage() {
         '       memory.js get <name>',
         '       memory.js stamp <name>',
         '       memory.js decay',
+        '       memory.js reindex',
         '',
     ].join('\n'));
     process.exitCode = 1;
@@ -261,9 +268,11 @@ function dayOf(date) {
 // command here would let a derived cache veto an authoring act.
 function syncIndex() {
     try {
-        index.sync();
+        const result = index.sync();
+        return !!(result && result.ok);
     } catch {
         /* derived data; the next write or read rebuilds it */
+        return false;
     }
 }
 
@@ -349,9 +358,7 @@ function cmdList(args) {
         const machine = record.metadata && record.metadata.machine
             ? ' @' + label(record.metadata.machine)
             : '';
-        const recordKind = record.metadata && record.metadata.kind
-            ? label(record.metadata.kind)
-            : 'unknown';
+        const recordKind = safeKind(record.metadata && record.metadata.kind);
         out('- ' + record.name + ' [' + recordKind + ']' + machine + ': '
             + render(record.description, lib.DESCRIPTION_MAX));
     }
@@ -513,6 +520,48 @@ function cmdDecay(args) {
     }
 }
 
+// Re-establish the store's invariants after a hand edit, which is the
+// sanctioned way to correct or retire a record and the one path that bypasses
+// this CLI's validators. Two jobs, because they are the same job: the sidecar
+// is re-synced, which is what ACKNOWLEDGES a `[body revised]` marker (nothing
+// else clears one, since the hook deliberately never writes and `stamp` would
+// invent an applied day the record never had), and every record is re-checked
+// against the write-door validators, which is what catches a hand edit that
+// wrote something `add` would have refused. Reporting only; it never edits a
+// record, because deciding what a bad record should say is a human's call.
+function cmdReindex(args) {
+    if (args.length) return fail('reindex takes no arguments');
+
+    const listed = lib.listRecords();
+    if (listed.unreadable) return fail(unreadableStore(listed));
+
+    const problems = [];
+    for (const record of listed.records) {
+        const check = lib.validateFieldText(record.description, 'description');
+        if (!check.ok) problems.push(record.name + ': ' + check.reason);
+        else if (String(record.description || '').length > lib.DESCRIPTION_MAX) {
+            problems.push(record.name + ': description is ' + record.description.length
+                + ' characters, over the ' + lib.DESCRIPTION_MAX + ' the writer allows, so its emitted line is truncated');
+        }
+        const kind = record.metadata && record.metadata.kind;
+        if (!lib.KINDS.includes(kind)) {
+            problems.push(record.name + ': kind ' + render(String(kind), 40) + ' is not one of ' + lib.KINDS.join(', '));
+        }
+        const body = validateBody(record.body || '');
+        if (!body.ok) problems.push(record.name + ': ' + body.reason);
+    }
+
+    const synced = syncIndex();
+    out('reindexed ' + listed.records.length + ' record(s)'
+        + (listed.skipped > 0 ? ', ' + listed.skipped + ' unreadable or unparsable' : '')
+        + (synced === false ? ' (the index sidecar could not be written)' : ''));
+    if (!problems.length) return;
+    // Non-zero: a store holding content the writer would have refused is a
+    // state to fix, not a report to skim past.
+    process.exitCode = 1;
+    for (const p of problems) process.stderr.write('memory: ' + p + '\n');
+}
+
 function main() {
     tolerateClosedPipe(process.stdout, process.stderr);
     tolerateClosedPipe(process.stderr, process.stdout);
@@ -524,6 +573,7 @@ function main() {
         else if (cmd === 'get') cmdGet(args);
         else if (cmd === 'stamp') cmdStamp(args);
         else if (cmd === 'decay') cmdDecay(args);
+        else if (cmd === 'reindex') cmdReindex(args);
         else usage();
     } catch (err) {
         // This CLI is the only authoring path, so a crash here is a lost

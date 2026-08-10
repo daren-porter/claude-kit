@@ -1,6 +1,6 @@
 # Cross-Project Memory Tier
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: none (cost hold)
 Created: 2026-08-08
@@ -259,7 +259,10 @@ surface, in the register the kaizen count and adoption-staleness blocks already 
 Nothing retires; the block states counts and points at the CLI.
 Acceptance: a store with no idle records emits nothing; a store with idle records emits one
 line naming the count and the command; the ranking demotes records with recorded recent
-application.
+application. **Amended in S6's review (2026-08-09):** silence requires no candidates AND no
+unrankable records, since a store where nothing could be ranked reporting nothing at all is
+Amendment 2's silent drop; a zero-candidate store with an unrankable record emits the count of
+those instead.
 Execution mode: delegate-capable.
 
 ### 6. Seed migration and content pass
@@ -989,4 +992,91 @@ lines into a session in an unrelated cwd; `listRecords` reports 14 with 0 skippe
 edits; `node --test test/*.test.js` 272/272. Every reviewer finding re-verified mechanically
 after fixing rather than assumed.
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 9 - 2026-08-10 (close-out)
+Completed: finishing-work over the whole effort
+Implemented By: main session; qa-verifier, then security-reviewer, adversarial-reviewer and
+docs-curator dispatched in parallel
+Metrics: QA PASS on first run; 1 review round; 0 escalations; advisor off. **Both whole-changeset
+reviews ran at the session model, not Fable, per the recorded `Fable Spend: none (cost hold)`.**
+A later Fable pass would be reading a changeset that never had its strongest-model look.
+Outcome: **the tier is built, live, and holding 14 real facts.** A session in any repo receives
+them at start. The 2026-08-07 failure the Goal names is closed and verified closed.
+Review outcomes:
+- **QA: PASS.** Every acceptance clause across all seven sections verified by running code,
+  diffing the pre-migration backup, or reading a named passing test, with amended clauses graded
+  in their amended form. 276/276 tests. It also caught one thing the section reviews missed: S7
+  fixed the write *destination* on two `pr-review` lines but left their stale *state* claims, so a
+  session following them verbatim would try to re-add a confirmed fact. Fixed.
+- **Adversarial: CHANGES_REQUIRED, all fixed.** One Critical, mine and introduced by a Chapter 8
+  review fix: my `replace(...,1)` hit the description instead of the body, splicing frontmatter
+  commentary into the middle of a correction and pushing it to 423 characters, so the emitted line
+  truncated mid-sentence. The tier's central mechanism, broken on one of its own founding records,
+  in the channel the whole effort exists to serve. Un-spliced and back to 337.
+- **Two advisory surfaces shipped with no way to acknowledge either**, found independently by both
+  reviewers. Nothing but `add`/`stamp` syncs the sidecar, so a `[body revised]` marker persisted
+  forever and the only outs were stamping (inventing an applied day) or deleting the sidecar
+  (suppressing every marker). Closed with a `reindex` verb that re-syncs and, in the same pass,
+  re-checks every record against the write-door validators, which also closes the security
+  reviewer's Major: hand edits are now the sanctioned correction path and they bypass every
+  validator, so the store needed a door that re-establishes its invariants.
+- **`kind` was a closed enum at the write door and unvalidated at both render doors**, so a
+  hand-written value put arbitrary prose in a slot the emitted block presents as typed. And two
+  records still carried `kind: machine` after Chapter 8 dropped their `machine:` labels on the
+  reasoning that their triggers are a tool mode and a checkout rather than a box: the label door
+  was fixed and the kind door was not, which is Amendment 1 in miniature. Both now `platform`.
+- **Dead compare-and-swap machinery in the tier's only writer** (`expectVersion`, `versionHash`,
+  an unreachable conflict branch, and a comment naming a caller that no longer calls it), plus
+  `memory.js`'s header still describing the pre-S2 CAS-on-mtime design and contradicting itself six
+  lines later. Chapter 6 fixed that staleness in the sibling header and stopped there. Removed.
+- **The skill's only runnable command was cwd-relative** and ENOENTs from any session cwd, in the
+  section whose RED gate concluded that reachability is the live failure mode. Now uses
+  `<plugin-root>`, matching kit-goal's precedent.
+- Minors fixed: `markedNames` was capped independently of the lines shown, so past the cap it could
+  name a record as having "the line above" when it had none; the dead `unusable` counter; `$` not
+  refused in the emitted command path; both tmp publishes now open `wx`, which closes a FIFO hang
+  and a mode-inheritance hole at once; `modified` bumped on all 14 records and the skill's hand-edit
+  guidance now says to bump it; and the eleos-core forwarding note, which Chapter 8 had spliced onto
+  the front of an unrelated sentence, moved to its own paragraph with an index-level pointer added.
+- **Security: CONCERNS, the Major fixed.** No credential or key material anywhere in the tier, and
+  every injection shape thrown at the emission door held: the Chapter 4 laundering fix, the Chapter
+  6 read doors, the Chapter 3 prototype fix. Prototype pollution is closed structurally, since both
+  frontmatter key patterns require a leading letter. Nothing found is reachable by a party who is
+  not already inside the account.
+- Four new durable tests, the two that pin existing behavior watched failing first by mutation.
+Drift adjudications (docs-curator), all presented rather than reconciled silently:
+- **D1, D2, D6 were likely mistakes and are fixed**, not adjudicated away: the stale CLI header,
+  the unrunnable command, and the comma guard reaching `origin` (which had rejected 6 of 14 seed
+  migrations against a schema that documents the field as a free label; the guard now skips it,
+  since no emitted line quotes `origin`).
+- **D4 was a stale spec, not stale code:** S5's acceptance said "a store with no idle records emits
+  nothing" while the code correctly also reports unrankable records. The spec text is amended in
+  place; the code was right.
+- **D3 is resolved by the curator's own pass:** S7's docs-index clause was met at the root README
+  but `docs/` held no document for the tier. It now has two, and the index carries them.
+- **Deliberate deviations, riding into the record as decisions:** S1's relocated operator-schema
+  clause is answered by a pointer rather than a second copy (Chapter 7); four tier records bundle
+  more than one correction in their description because their sources did and S6's mandate was to
+  move records rather than re-cut them; and the spec's "follows the :310 idiom exactly" is not
+  literal, since the new sanitizer announces truncation where the older doors truncate silently.
+Open, and Daren's to decide rather than mine:
+- **Residual sync exposure.** Git sync is Out of Scope and unbuilt, but the store is its designated
+  root. The auditor named three clusters worth a decision before any sync: the connector record's
+  token scope, the client-to-TMS roster in `eleos-tl2000-as400-tms` plus the client-branch record,
+  and the two `ado-ssh-*` records forming an authentication map for the org from this box. Nothing
+  is a credential; the question is whether "local project store" and "travels between machines" are
+  the same exposure, and they are not.
+- **`docs/security-model.md` still does not exist** (a standing backlog item). The trust-boundary
+  section of the new `docs/cross-project-memory.md` is the closest thing and is not a substitute.
+Machine state changed outside the repo, named per the honesty rule: `~/.claude-kit-memory/` was
+created and holds 14 records; ten project-store records were deleted and six rewritten;
+`~/.claude-work/projects/-home-daren/memory/` was **removed entirely**, since its only record was
+one of the twelve migrated and an index pointing at nothing is worse than no index; and
+`assets/CLAUDE.md` changed, so a CLAUDE.md reconcile offer will appear at the next session start.
+A pre-migration backup of every project store is in this session's scratchpad, which is reaped.
+Verification: `node --test test/*.test.js` 276/276; plugin payload validation passes; `reindex`
+reports 14 records clean; the hook emits 14 lines into a session in an unrelated cwd; `decay` ranks
+5 candidates by real age rather than firing on all 14 at once.
+Next: complete
 Commit Model: Commit-and-Push

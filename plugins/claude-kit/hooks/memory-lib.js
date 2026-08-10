@@ -373,7 +373,6 @@ function readRecord(name, opts) {
     // indistinguishable and the swap passes when it should conflict. Measured
     // under 20 concurrent stampers, mtime lost one update silently while
     // every process reported success.
-    parsed.record.versionHash = read.truncated ? null : hashOf(read.text);
     parsed.record.descriptionHash = hashOf(parsed.record.description);
     if (read.truncated) {
         // ANY truncated read, prefix or full. The body is incomplete, so it
@@ -741,10 +740,10 @@ function ensureStore() {
 //
 //   'create'  publish with linkSync, which fails EEXIST when the name is
 //             taken. Exclusive creation in one atomic syscall.
-//   'replace' publish with renameSync (the default), optionally guarded by
-//             `opts.expectVersion`: the target's content hash is compared
-//             just before the rename and a mismatch returns { conflict: true }
-//             rather than overwriting. Compare-and-swap.
+//   'replace' publish with renameSync (the default), overwriting whatever
+//             is at the name. No caller uses this today: `add` creates and
+//             `stamp` appends to the journal instead of rewriting a record,
+//             so this mode exists for a future editing verb.
 //
 // This replaced a lockfile. Two review rounds produced Criticals that were
 // all lock-lifecycle failures (a stale lock stealing, a reused pid wedging
@@ -753,10 +752,6 @@ function ensureStore() {
 // own future: the root was chosen so the store can be synced across machines,
 // where a pid recorded on one host says nothing on another. Optimistic
 // concurrency has no lifecycle to get wrong.
-//
-// The residual is a stat-to-rename window of microseconds in which a
-// concurrent writer can still land first. The caller retries; `stamp` records
-// a calendar day, so re-applying it is idempotent.
 //
 // Returns { ok, record }, or { ok:false, reason } and { ok:false, conflict:true }
 // for a lost CAS. Never throws.
@@ -786,7 +781,12 @@ function writeRecord(record, now, opts) {
         for (const item of values) {
             const check = validateFieldText(String(item), 'metadata.' + key);
             if (!check.ok) return check;
-            if (String(item).includes(',')) {
+            // The comma delimits the inline LIST form, so it is refused for
+            // list fields and for values that land ahead of the description on
+            // a generated line. `origin` is neither: the schema documents it as
+            // a free label and no emitted line quotes it, and refusing a comma
+            // there rejected "EleosCore, PR 395" on 6 of 14 seed migrations.
+            if (key !== 'origin' && String(item).includes(',')) {
                 return { ok: false, reason: 'metadata.' + key + ' must not contain a comma' };
             }
             // Bounded for the same reason `description` is: an unbounded
@@ -853,9 +853,11 @@ function writeRecord(record, now, opts) {
     if (mode !== 'create' && mode !== 'replace') {
         return { ok: false, reason: "mode must be 'create' or 'replace'" };
     }
-    const expectVersion = opts && opts.expectVersion;
     try {
-        fs.writeFileSync(tmp, serializeRecord(finished), { encoding: 'utf8', mode: 0o600 });
+        // 'wx' refuses an existing path, so a planted FIFO cannot block this
+        // write and a planted regular file cannot donate its permissions to the
+        // published record through renameSync.
+        fs.writeFileSync(tmp, serializeRecord(finished), { encoding: 'utf8', mode: 0o600, flag: 'wx' });
         if (mode === 'create') {
             // linkSync refuses to clobber, so the name is claimed or it is
             // not, with no window between checking and claiming.
@@ -875,24 +877,6 @@ function writeRecord(record, now, opts) {
             // name is taken.
             try { fs.unlinkSync(tmp); } catch { /* orphan tmp, record is written */ }
             return { ok: true, record: finished };
-        }
-        if (expectVersion !== undefined) {
-            // Compare-and-swap on content, checked as late as possible. The
-            // residual window is this read to the rename below; the caller
-            // verifies its change actually landed and retries, so a loss in
-            // that window is caught rather than assumed away.
-            // Through readCapped, so the bytes hashed here are normalized
-            // the same way readRecord normalized them. Hashing the raw file
-            // instead made a BOM'd record permanently unswappable: the two
-            // hashes could never agree, and the failure blamed a concurrent
-            // writer that did not exist. It also keeps every read in this
-            // module bounded.
-            const reread = readCapped(file, RECORD_READ_CAP);
-            const current = reread === null ? null : hashOf(reread.text);
-            if (current !== expectVersion) {
-                fs.unlinkSync(tmp);
-                return { ok: false, conflict: true, reason: 'the record changed while it was being updated' };
-            }
         }
         fs.renameSync(tmp, file);
         return { ok: true, record: finished };

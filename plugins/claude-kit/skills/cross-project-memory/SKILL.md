@@ -55,12 +55,15 @@ retiring it: its scope is wider than the global rule's, so it is not a pure dupl
 validation, the generated stamps, the duplicate-name refusal, and the append-only applied
 journal. Never create one with the Write tool.
 
-The CLI lives at `hooks/memory.js` under the plugin root; from this skill's base directory
-(`<plugin>/skills/cross-project-memory/`) that is `../../hooks/memory.js`. The session-start
-memory block, when one was emitted, prints the fully resolved `node "<path>" list` form.
+The CLI lives at `hooks/memory.js` under the plugin root. Use the plugin root in the command
+itself rather than a relative path: this skill's base directory is
+`<plugin-root>/skills/cross-project-memory/`, so `../../hooks/memory.js` is only correct if your
+cwd happens to be that directory, and from a session cwd it is a module-not-found stack trace.
+The session-start memory block, when one was emitted, prints the fully resolved
+`node "<abs path>" list` form, which is the cheapest way to recover the directory.
 
 ```
-node ../../hooks/memory.js add <name> --kind <machine|platform> --description "<text>" \
+node <plugin-root>/hooks/memory.js add <name> --kind <machine|platform> --description "<text>" \
     [--machine <label>] [--origin <label>] [--body "<text>"]
 ```
 
@@ -75,13 +78,17 @@ The full field schema is in the same library header as the ladder, and is delibe
 restated here: a second copy of a contract is the defect this tier was built to remove.
 
 **Correcting and retiring are hand operations, and the CLI has no verb for either.** Its verbs
-are `add`, `list`, `get`, `stamp`, `decay`. So revising a record means editing the file at its
+are `add`, `list`, `get`, `stamp`, `decay`, and `reindex`, none of which edits a record's text. So revising a record means editing the file at its
 path directly, which is supported rather than forbidden: S3's `[body revised]` marker exists
 precisely to surface a body that was edited while its description was not. Retiring one means
 deleting the file, and that is a human's call made against the body, never a session's
-housekeeping. Two consequences worth holding: after a hand edit, fix the `description` too if
-the correction changed what the record advertises, and a hand-edited record gets none of the
-CLI's validation, so keep it inside the schema.
+housekeeping. Three consequences worth holding. Fix the `description` too if the correction changed what the
+record advertises, and bump `modified`, which the schema calls generated on every write and which
+a hand edit will not touch for you. And a hand-edited record gets none of the CLI's validation, so
+run `memory.js reindex` afterwards: it re-checks every record against the write-door validators,
+reports anything `add` would have refused, and re-syncs the derived index. That sync is also the
+only way to ACKNOWLEDGE a `[body revised]` marker, since the hook never writes and stamping to
+quiet one would invent an applied day the record never had.
 
 ## Reading
 
@@ -108,8 +115,11 @@ the decay ranking.
 Nothing here ever retires, rewrites, or removes a record on its own. `memory.js decay` ranks
 candidates by idleness adjusted for recorded use, and the session-start nudge reports a count.
 Both are prompts for a human decision made against the body. Treat a candidate as a question,
-and expect the ranking to be wrong sometimes: its input is a usage stamp that is weakly
-produced by construction.
+and expect the ranking to be wrong sometimes: its input is a usage stamp that is weakly produced
+by construction. Concretely, a store nobody stamps saturates, because every record then measures
+its idleness from `created` against a flat 30-day threshold with no use extension: the seeded set
+reaches all 14 candidates about a month after migration. Stamping when you actually apply a
+record is what keeps that from happening, and it is the only honest way to quiet the nudge.
 
 ## Antipatterns
 

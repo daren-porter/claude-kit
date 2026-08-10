@@ -107,6 +107,7 @@ const BODY_REVISED_MARKER = '[body revised]';
 // position. `marked` is therefore the authoritative count of markers and a
 // grep of the emitted text is not.
 const LINE_DELIMITERS = /[[\]@:]/g;
+const KINDS = ['machine', 'platform'];
 
 const LABEL_CAP = 60;
 

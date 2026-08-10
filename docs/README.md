@@ -4,15 +4,21 @@ This directory is the working library and project history for the kit itself: th
 
 ## Folder map
 
-- **Root (`docs/`)** holds the stable documents about the solution, the living documents (`backlog.md`, `kit-adoptions.md`), and this index.
+- **Root (`docs/`)** holds the stable documents about the solution (`architecture.md`, plus one document per feature area), the living documents (`backlog.md`, `kit-adoptions.md`), and this index.
 - **`plans/`** holds active plans only: `Status: In Progress` and `Status: Proposed` stubs. A plan moves to `archive/` in the close-out that completes or abandons it.
 - **`archive/`** holds finished and abandoned plans with their Chapters intact, and dated backlog snapshots. Immutable history; nothing there is live.
 
 ## Active plans
 
-- **`plans/cross-project-memory_spec_v1.md`** (In Progress) - a kit-owned tier for facts that span projects, whose session-start index is generated from the records rather than maintained beside them, because index currency is a byproduct of creating a memory and never of revising one (measured 15/15 against 0/8). Adapted from Scott's memq work as design input rather than ported.
 - **`plans/kit-denaming_spec_v1.md`** (Proposed) - what replaces the 137 personal-name references baked through the kit if it goes public, across five surfaces that want different answers, and why the adoption-pass surface is a consent question rather than a wording one.
 - **`plans/visual-companion_spec_v1.md`** (Proposed) - what a "visual companion" for this kit would render, in what medium, and whether to build one or adopt the superpowers version.
+
+## Solution documents
+
+The stable description of what the kit is and how it behaves. The root `README.md` owns the static shape (directory tree, install, workflow doctrine, model tiering); these cover runtime behavior and feature areas, and point back rather than restating it.
+
+- **`architecture.md`** - runtime architecture: which processes fire on which event, the eight session-start blocks and their order, the five state locations (only one of which is inside a repo), the data flow in each direction, the trust boundaries, and the external integrations.
+- **`cross-project-memory.md`** - the kit-owned memory tier for facts that span projects: the store at `~/.claude-kit-memory/`, the two session-start blocks, the generated index line and its `[body revised]` marker, advisory decay, every failure mode, and how to operate it. The record schema and the routing ladder are deliberately not restated here; they live once, in `plugins/claude-kit/hooks/memory-lib.js`'s header.
 
 ## Living documents
 
@@ -23,6 +29,7 @@ This directory is the working library and project history for the kit itself: th
 
 Completed plans, most recent first.
 
+- **`archive/cross-project-memory_spec_v1.md`** - the kit-owned tier for facts that span projects, built in seven sections 2026-08-08 to 2026-08-10. Its session-start index is generated from the records rather than maintained beside them, because index currency is a byproduct of creating a memory and never of revising one (measured 15/15 against 0/8). Adapted from Scott's memq work as design input rather than ported. Two findings worth the reread: stamping moved out of the record into an append-only journal after compare-and-swap was measured losing an applied day 8.3% of the time, and S7's RED gate falsified its own section's premise, so the wording it was meant to justify was cut instead of shipped. Live behavior and operation are documented in `cross-project-memory.md`.
 - **`archive/appsec-security-reviewer_spec_v1.md`** (Abandoned) - whether non-.NET repos with real attack surface warranted a standing appsec reviewer. Abandoned 2026-08-07: the docs-lifecycle effort had already generalized `security-reviewer` to any production codebase, which was this stub's own option 3, and the friction that opened it (a Python repo needing a dispatch override) no longer occurs.
 - **`archive/kit-adoption-pass_spec_v1.md`** - the `kit-adoption-pass` skill and `kit-adoptions.md`, its standing record: a five-step read ladder (orient, new capabilities, changed prose, adjudicate a survivor, read code) that classifies off Scott's docs and diffs rather than his code, a recorded-sha watermark, removals as a bounded set intersection, a ledger written before the pass offers a shortlist and one recommended next move, a `writing-skills` gate for the ported wording such a pass generates, and a kit-repo SessionStart nudge when a pass goes stale.
 - **`archive/pr-review_spec_v1.md`** - the `/pr-review` capability: connector-first Azure DevOps PR review with a precision-tuned pr-reviewer agent, senior-dev anti-slop calibration, applyable suggestion blocks, and gated posting under Daren's identity.

@@ -58,7 +58,7 @@ claude-kit/                          (repo = the marketplace)
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
   test/                              Hook test suite (repo-level, not shipped): node --test test/*.test.js
   setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
-  docs/                              Curated docs library: README index, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
+  docs/                              Curated docs library: README index, architecture.md, cross-project-memory.md, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
 ```
 
 The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"source": "./plugins/claude-kit"` - relative paths resolve against the repo root and work because the marketplace is added via git. Additional plugins later: add a folder under `plugins/` and a second entry in the catalog.

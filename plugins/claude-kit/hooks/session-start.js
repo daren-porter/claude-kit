@@ -234,8 +234,16 @@ function safeContext(value, cap) {
 function memoryCommand(sub) {
     const file = path.join(__dirname, 'memory.js');
     const safe = safeContext(file, 200);
-    if (safe !== file || /["`\\]/.test(safe)) return '`memory.js ' + sub + '` in the claude-kit plugin hooks directory';
+    if (safe !== file || /["`\\$]/.test(safe)) return '`memory.js ' + sub + '` in the claude-kit plugin hooks directory';
     return '`node "' + safe + '" ' + sub + '`';
+}
+
+// A marked record OUTSIDE the emitted set must not be named alongside "the
+// line above may understate them": past the 30-line cap it has no line above.
+// The note is about lines that were shown, so the names are filtered to them.
+function markedWithin(generated, shown) {
+    const visible = new Set(shown.map(line => String(line).replace(/^- /, '').split(' ')[0]));
+    return generated.markedNames.filter(n => visible.has(n));
 }
 
 // A count arriving from another module, coerced. Every number that reaches the
@@ -301,7 +309,7 @@ function crossProjectMemory() {
         unusable,
         skipped,
         markedNames: Array.isArray(generated.markedNames)
-            ? generated.markedNames.slice(0, MEMORY_INDEX_MAX_LINES).map(n => safeContext(n, 80)).filter(Boolean)
+            ? markedWithin(generated, shown).map(n => safeContext(n, 80)).filter(Boolean)
             : [],
         // `unresolved` is a subset of `bodyUnknown` - a record whose re-read
         // failed still has no body hash - so this one count covers both
