@@ -31,7 +31,7 @@ This applies to investigation and technical questions too, not only to changes: 
 
 ## Plans, Chapters, Memory
 - Specs and plans live in docs/plans/ in each project; the brainstorming skill owns the format and versioning, executing-work appends Chapters. The plan doc is the single source of truth for intent and state.
-- Durable codebase learnings (build quirks, conventions, gotchas) go to auto memory, not the plan doc.
+- Durable learnings (build quirks, conventions, gotchas) go to memory, not the plan doc, and "memory" is three destinations. A fact you cannot state without naming something that exists only in the current repo goes to that project's auto memory. Anything else durable - a machine, an account, a hosted platform, a vendor API - goes to the kit-owned cross-project tier, created through its CLI rather than the Write tool. A recurring working preference is doctrine and belongs in these rules instead of either store. The cross-project-memory skill carries the test and the mechanics.
 - Kaizen self-monitoring: if, while working, the kit itself (its skills, agents, rules, workflow) creates friction - a rule that was ambiguous or wrong, a step that fought the work, or a capability you wished it had and it lacked - jot one line to `~/.claude-kaizen/notes.md` (date, the friction, where it surfaced). Capture only concrete kit friction; not "went fine" or praise, not a project-specific gotcha (that goes to auto memory), not your own one-off mistake. Zero notes is the normal, healthy case; do not go looking. Full bar and the kaizen pass are in the kaizen skill.
 
 ## Context Conservation

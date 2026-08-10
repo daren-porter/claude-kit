@@ -4,8 +4,10 @@
 // (this box drops VPN secrets on netplan reload) and platform facts (this
 // product's deployment convention). Project-specific facts stay in Claude
 // Code's native per-project auto-memory, which this kit does not touch, and
-// recurring working preferences are doctrine that graduates to the global
-// CLAUDE.md through reconcile-claude-md rather than accumulating here.
+// recurring working preferences are doctrine rather than facts: they belong in
+// the kit's recommended global rules (assets/CLAUDE.md in the kit repo, which
+// reconcile-claude-md then distributes to the live file; that skill applies the
+// baseline and cannot author a rule) rather than accumulating here.
 //
 // The store roots at ~/.claude-kit-memory/, deliberately outside both
 // ~/.claude and ~/.claude-work. Those directories hold .credentials.json,

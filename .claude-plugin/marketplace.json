@@ -9,7 +9,7 @@
     {
       "name": "claude-kit",
       "source": "./plugins/claude-kit",
-      "description": "Workflow skills (brainstorm/execute/finish), four review agents, systematic debugging, C# and T-SQL style guides, and compaction-recovery hooks.",
+      "description": "Workflow skills (brainstorm/execute/finish), four review agents, systematic debugging, C# and T-SQL style guides, a cross-project memory tier, and compaction-recovery hooks.",
       "author": {
         "name": "Daren Porter",
         "email": "daren@asr-solutions.com"

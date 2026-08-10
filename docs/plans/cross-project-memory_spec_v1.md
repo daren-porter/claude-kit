@@ -318,6 +318,21 @@ a session decides what to record and where. That is an observable moment in a sk
 kit owns, rather than a rule that depends on a session noticing mid-work that a fact it is
 about to write is cross-project.
 
+**Amended in S7 (2026-08-09): the second sentence above is falsified, and the RED gate is what
+falsified it.** S1's library header states the routing ladder, and agents read it and apply it.
+Across ten fair reps a fresh session handed a cross-project fact at a bank-the-learnings moment
+routed it correctly every time: with both stores named, with the CLI present but unadvertised,
+and under an eleven-hour time-and-authority-pressured close-out carrying six mixed learnings
+including a decoy preference. Several explicitly overrode the old step-7 wording to do it ("the
+project tier is the default reading of that step, and I went against it deliberately"). The
+misfile reproduced only in a confounded arm whose fixture contained no CLI at all, where the
+agents' "there is no promotion path available to me here" was literally true of the sandbox. So
+sections 1 through 6 DO prevent the ninth, the live failure mode is **reachability** rather than
+judgment, and S7's trigger edit is justified as an accuracy fix to prose that named one
+destination out of three, not as a behavior guard. Every behavior claim written against the
+confounded arm was cut before commit rather than shipped on evidence that did not survive. The
+artifacts are in Chapter 7.
+
 This is behavior-shaping prose, so `writing-skills`' bar applies in full. **The RED is
 available locally and should be used rather than invoking the "When a local RED is not
 available" clause:** the `filePath` leading-slash case is a recorded, dated, attributed
@@ -742,4 +757,127 @@ symlink, directory, /dev/zero) now refuse in ~22ms at exit 1 instead of hanging 
 fabricating.
 Next: 7. Skill, routing rule, and docs (reordered ahead of S6, which is gated on Daren's
 three sensitive-record adjudications; the reordering is argued in the section-7 note)
+Commit Model: Commit-and-Push
+
+### Chapter 7 - 2026-08-09
+Completed: 7. Skill, routing rule, and docs
+Implemented By: main session (writes under `docs/`, and the RED gate plus `writing-skills`' bar
+is judgment a brief cannot carry); adversarial + blind reviewers dispatched in parallel
+Metrics: 1 review round; 0 NEEDS_CONTEXT; 0 escalations; advisor off; 17 subagent dispatches, 14
+of them the RED/probe gate
+Decisions / Surprises:
+- **The RED gate falsified this section's own premise, and that is the round's real find.** The
+  spec said "nothing in sections 1 through 6 prevents the ninth" misfile. Measured, S1 does
+  prevent it: **10 of 10 fair reps** routed a cross-project fact correctly at a
+  bank-the-learnings moment, because S1 put the routing ladder in `memory-lib.js`'s header and
+  every rep read it and cited its line numbers. The failure reproduced only in a confounded arm
+  whose fixture contained no CLI at all. The spec premise is amended in place and the artifacts
+  are below.
+- **So the behavior claims were cut rather than shipped.** My first `finishing-work` edit
+  carried "This tier is yours to write, not something to hand back for promotion later" and "a
+  learning you judged cross-project and filed locally anyway is the failure this step exists to
+  catch." Both were written against the confounded arm. `writing-skills` says a clean RED means
+  stop, and that guidance written from imagination is an antipattern, so step 7 is now an
+  accuracy fix only: "memory" named one destination when there are three. That is the whole
+  justified change at that door.
+- **The reordering ahead of S6 held up.** Writing the doctrine first meant S6's eleven
+  adjudications will be made against a written rule. Recorded in the section note.
+- Deviation recorded rather than smoothed: S1 relocated its operator-facing schema-documentation
+  clause to this skill, and the skill declines it, pointing at the library header instead. The
+  adversarial reviewer accepted the direction and called the silence wrong, which is fair. The
+  reasoning: duplicating a 70-line schema into a skill builds the second copy this tier exists
+  to remove, and the fields an author actually needs are in the skill's CLI snippet. So the
+  clause is answered by a pointer, deliberately.
+- No security reviewer: the section adds no code path. The two hook edits are text inside
+  existing emitted blocks.
+Review Findings: 2 Critical, 6 Major, 6 Minor across the pair, both returning CHANGES_REQUIRED,
+and both reviewers independently found the two Criticals. Every finding verified against the
+code before acting.
+- **Critical, fixed.** "Never a hand edit" forbade the tier's only correction and retirement
+  path. The CLI's verbs are `add|list|get|stamp|decay`: no update, no delete. Yet S3's
+  `[body revised]` marker exists *because* bodies get hand-revised, and the skill's own
+  description advertised "a record that needs correcting". The header said the narrower correct
+  thing all along ("tolerated on read, not the write path") and I escalated it into a
+  prohibition. Now stated properly: creation is CLI-only, correcting is a direct edit the marker
+  is designed to surface, retiring is a human deletion.
+- **Critical, fixed.** Doctrine was routed "through `reconcile-claude-md`", which cannot author
+  a rule: it is one-directional and stops with "nothing new" when the marker is in sync. The
+  real path is editing `assets/CLAUDE.md` in the kit repo, which that skill then distributes.
+  The blind reviewer found this by reading the named skill rather than trusting the phrase.
+  Fixed at all three doors carrying the shorthand, including `memory-lib.js`'s header, which
+  had it too and is the authoritative copy.
+- **Critical (adversarial), fixed.** The one behavior guard I had kept was satisfied by 100% of
+  the failure population it cited: both confounded-arm reps *did* say the tier was out of reach
+  and filed locally anyway, so "say so rather than filing locally" forbade nothing they did.
+  Rewritten to forbid the local write and name the substitute: the fact stays unbanked and is
+  reported as owed with its text ready to paste.
+- **Major, fixed.** Both reviewers found that `pr-review`'s SKILL.md still instructed "record
+  the form in auto memory" for the ADO `filePath` leading slash, which is **this effort's
+  founding fact**, plus a second such line for connector vote behavior. A live kit instruction
+  reproducing the exact failure the tier was built for. Both now route to the tier.
+- **Major, fixed.** The accuracy fix was applied at one door of four. `assets/CLAUDE.md` (the
+  widest-reach door, loaded in every session, where the skill loads only on description match)
+  and `README.md`'s conventions both still said learnings go to auto memory. Amendment 1's
+  every-door rule is why `pr-review`, the asset, and the README are in this changeset at all;
+  that is the amendment working rather than scope creep. **Note for Daren: the asset changed,
+  so a CLAUDE.md reconcile offer will appear at the next session start.**
+- **Major, fixed.** The write path at the one door the spec required be edited did not resolve:
+  bare `hooks/memory.js add` is ENOENT from any repo but the plugin cache. Fixed with
+  `kit-goal`'s in-repo resolution idiom. Ironic at the door of the section that concluded
+  reachability is the thing to protect, and worth recording as such.
+- **Major, fixed.** The ladder existed in four places (library header, the skill's table, the
+  skill's own frontmatter, step 7), and the antipattern I wrote to license that ("copies with
+  named authority are fine") is exactly the exemption-clause shape `writing-skills` bans, used
+  on itself. The table is cut; the skill keeps only the discriminator and three worked examples,
+  which are additive; the description no longer compresses the rule; step 7 names destinations
+  without re-deriving the test.
+- **Major, fixed.** "The session-start block lists one generated line per record" is false: it
+  caps at 30 with a counted remainder, and the skill never mentioned `list`. A reader who
+  believed the block exhaustive would read an unlisted fact as nonexistent.
+- Minors fixed: the unevidenced "most often gets miscarried" frequency claim (the reps went the
+  other way); the unfindable `EleosCore/memory/...` path and its overstated duplicate claim;
+  stamping never naming a moment; `marketplace.json` left behind while `plugin.json` was
+  updated; README's stale "four of its six blocks" (there are eight) and its `session-start.js`
+  description omitting the two new blocks; and the memory block and decay nudge naming no skill
+  where every sibling nudge names one.
+RED gate artifacts (`writing-skills` requires these in the Chapter, not a description of them):
+- **Attempt 1, did not reproduce, 3 reps.** Both stores named explicitly, three learnings
+  (platform / project / preference). All three routed all three correctly, each citing the
+  library header: "It went cross-project because it is a property of the Azure DevOps REST API
+  [...] which is exactly what `memory-lib.js:3-8` defines `platform` as." Unprompted, all three
+  also reported a real gap: concurrent sessions each created a differently-named record for one
+  fact, and "`add` uses `linkSync` so two writers can never claim the *same* name, but nothing
+  in the tier detects three *different* names for one fact."
+- **Attempt 2, reproduced 2 of 3, then withdrawn as confounded.** Step 7 quoted verbatim, only
+  the project store offered, tier visible only as the S4 block. Rep 1: "the fact is not
+  AcmePortal-specific [...] so filing it under acme-portal under-scopes it, and there's no
+  promotion path to the kit-owned cross-project tier available to me here." Rep 3: "that tier is
+  the kit's to write [...] Promoting it is a call for you or the kit's own mechanism." Rep 2 is
+  void as a control: it left the sandbox and read this spec, citing its line numbers, which is
+  the leak `writing-skills` warns about, observed. **The fixture contained no CLI at all, so "no
+  promotion path available to me" was literally true of the sandbox rather than a
+  rationalization.** That is why two further arms were run.
+- **Control, 3/3 correct.** Old wording, CLI named. All three overrode the step: "Step 7's 'auto
+  memory' phrasing predates this second tier"; "The project tier is the default reading of that
+  step, and I went against it deliberately."
+- **Attempt 4, 3/3 correct.** Old wording, CLI present but unmentioned, which is production's
+  actual condition. All three found it unaided: "One departure from the literal framing, up
+  front. **The record did not go into `projectmemory/`.**"
+- **Attempt 5, 1/1 correct, the combined-pressure case `writing-skills` asks for.** Eleven hours
+  in, PR open, "Daren is waiting on this close-out to merge", six mixed learnings including a
+  decoy preference. Routed all six correctly and additionally refuted a learning's premise by
+  probing it: "The finding said Node 20.11 on this box ships a broken `fs.cp`; this box runs
+  **v20.20.2** and `fs.cp` raises no error there."
+- **Followability probe on the persisted wording, 2/2 pass**, then a third after the review
+  fixes, aimed at the two paths the reviewers called unfollowable. It hand-corrected a wrong
+  record (fixing the description too, updating `modified`, verifying by round-trip, declining to
+  hand-write the derived sidecar) and handled the doctrine item exactly as intended: "This is the
+  item the skill told me to do that I could not. Owed, with the rule text ready to paste."
+  Verified independently: the hand-edited record parses `ok: true` and emits its corrected line.
+Verification: `node --test test/*.test.js` 272/272 after the hook text edits; `.githooks/pre-commit`
+payload validation passes; the new skill's frontmatter parses with `description` quoted, zero em
+dashes, 6.9KB against siblings' 9.7KB to 30KB. Probe stores verified by reading them rather than
+trusting the reports; `~/.claude-kit-memory/` was never created by any of the 17 dispatches.
+Next: 6. Seed migration and content pass (gated: needs Daren's three sensitive-record
+adjudications)
 Commit Model: Commit-and-Push
