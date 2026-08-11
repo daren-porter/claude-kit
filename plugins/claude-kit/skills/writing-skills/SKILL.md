@@ -138,6 +138,21 @@ the wording is persisted and the third after; **the section does not close until
 all three**, and a debt pointer that resolves to a Chapter missing any of them is an open
 gate, not a closed one.
 
+**A change with no plan doc has no Chapter, and there the home is the commit that carries
+the wording.** That is the `kaizen` case, and it is a home rather than an exception: a
+commit message has no line budget to truncate quoted output, it is atomic with the wording
+it evidences, and a sha in the debt line resolves on any machine and in any clone, which a
+path into someone's home directory does not. Two things follow, and they are the Chapter's
+ordering rules in the only form a change without sections can take them. **Before the
+wording is persisted, "recorded" means captured as verbatim text you could commit right
+then** - a drafted message body, or a `.kit/` file folded in at commit time - and never a
+summary you mean to write up afterward from memory, which is the walk this gate exists to
+block. Neither home witnesses the ordering, the Chapter no more than the commit, which is
+why precondition 1 demands the prompt as well: what shows a rep ran before the edit is the
+prompt carrying the wording, not any timestamp. And **the commit is not made until its
+message carries all three artifacts**, the probe included, which is the
+section-does-not-close rule for a change that has no sections.
+
 1. **You attempted a local RED.** Artifact: the fresh subagent's actual output, quoted, not
    a report of it. Two outcomes, carrying different bars.
    - **Did not reproduce.** Several reps, and the entry carries their output, so a clean run
@@ -202,9 +217,12 @@ Bound what you claim:
   so it can weigh the rule against its own observations instead of treating it as locally
   proven; a marker naming no source sends it hunting through an archived backlog. This is
   the one place the "nothing at all for judgment wording" rule below yields.
-- **Record the debt in `docs/backlog.md`**: one line, naming the wording and pointing at the
-  Chapter that holds the artifacts. This clause holds the rule, the Chapter holds the
-  evidence, and the backlog holds the open instances. The debt closes on one of two
+- **Record the debt in `docs/backlog.md`**: one line, naming the wording and pointing at
+  whichever of the two homes above holds the artifacts, the Chapter or the commit sha. This
+  clause holds the rule, that home holds the evidence, and the backlog holds the open
+  instances. A sha pointer costs one ordering: the line cannot sit in the commit it cites,
+  so it lands in a second commit after it, and amending the first to fold the line in
+  rewrites the sha the line just cited. The debt closes on one of two
   observable events: a session where the failure the wording guards actually occurs, or a
   session where the rule was applied and the record shows what it changed. "It seems to be
   working" closes nothing, and neither does time. Retiring the wording also closes it.

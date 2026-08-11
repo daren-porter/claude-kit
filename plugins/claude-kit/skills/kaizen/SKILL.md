@@ -96,6 +96,11 @@ trusting it), commit it (the kit repo is Commit-and-Push; a promoted spec follow
 its own recorded commit model), then archive the brief out of `briefs/`. When the pass already runs inside the kit repo, Phase 1 and Phase 2
 collapse into one session.
 
+**When the change took writing-skills' borrowed-evidence path, that commit message is
+where its three artifacts live**, because a pass has no plan doc and so no Chapter to hold
+them, and the commit is not made until it carries them. The brief never does: the artifacts
+are produced when the change is applied, and the brief was written before that.
+
 ## Offering a pass
 
 Never offer on an uneventful session. Offer only when the inbox has pending items,
