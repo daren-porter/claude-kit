@@ -37,6 +37,37 @@ These are not one problem. They are five, and they want different answers:
    named author is normal. Worth an explicit decision so the sweep does not strip it reflexively.
 5. **The upstream kit's owner.** See below. The hard case, and the only one with a blocker in it.
 
+## Amended 2026-08-11: the fork model changes this stub's answer, and its order
+
+Daren confirmed publishing is real but unscheduled, and described the future state now parked in
+`kit-distribution_spec_v1.md`: a core kit that others fork into their own personal kits, merging
+core's updates and reshaping them to their own styles and philosophies. Three consequences for
+this stub, and the first is a hazard.
+
+**Do not execute this sweep before the fork model is decided.** The choice below is not free
+anymore, and picking the wrong option costs 137 edits twice. A role noun ("the operator") flattens
+the kit's voice for *every* forker exactly as it would for Daren, and if forks are the point then
+the sweep's product has to be a *parameterized* identity that a fork fills in with its own owner,
+not a de-personalized one. Those two sweeps touch the same 137 sites and produce different text,
+so running this standalone risks doing the work in a form the fork work then has to undo.
+
+**The configured-operator option's stated price is gone.** This stub priced it at "a configuration
+surface the kit does not have today." The fork model requires a personalization surface anyway
+(the first-run flow, the style samples, the CLAUDE.md reconcile), so the cost is now shared rather
+than attributable to de-naming, which makes option 3 the favored answer instead of the expensive
+one. What remains to design is the fallback when it is unset, since a fork that never configures a
+name must still read well.
+
+**The hard case below is dissolved by architecture, not by consent.** Category 5 assumed the
+Scott-naming surface must either be de-named or cleared with Scott. Neither is needed: the
+adoption ledger already lives in `docs/`, which `docs/README.md:3` states does not ship inside
+the installable payload, so a forker's ledger is fork-local by construction and Daren's ledger
+naming Scott stays in Daren's own fork. Core ships the *skill* with a parameterized upstream and
+ships no ledger at all. The consent question does not disappear, but it moves: it attaches to
+whether Scott is credited publicly, which is a courtesy question about attribution rather than a
+blocker on a wording sweep. The clone path and watermark become fork-local configuration for the
+same reason.
+
 ## The decision a design pass must make first
 
 What replaces direct address? The options are not cosmetically equivalent, because several
