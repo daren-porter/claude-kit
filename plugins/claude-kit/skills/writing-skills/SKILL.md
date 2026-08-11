@@ -93,18 +93,41 @@ for any change to behavior-shaping content, the kit's own skills included. The o
 path around it is the gated one below, for evidence that is real but not yours to
 re-run, and it substitutes different work rather than less.
 
-**Run RED before you persist the wording, when the test subagent can read the
-repo.** Baseline-testing a kit skill edit from inside the kit repo is a trap: a
-subagent with repo access can read the SKILL.md you just saved, so an
-already-persisted edit leaks into the RED and voids it as a control (a RED rep once
-cited the edited file's line numbers). Keep the new wording in the test prompt only
-until RED has failed, then persist it for GREEN. On the gated path below, where RED by
+**Run RED before you persist the wording, and keep it out of three places: the repo, the
+scratchpad, and the RED prompt.** Baseline-testing a kit skill edit from inside the kit repo
+is a trap: a subagent with repo access can read the SKILL.md you just saved, so an
+already-persisted edit leaks into the RED and voids it as a control (a RED rep once cited the
+edited file's line numbers). The RED prompt is barred for the same reason: the prompt that
+carries the wording is GREEN's, and RED's whole job is to fail without it. **The scratchpad
+is the worst of the three**, because fixtures point subagents into it by construction, the
+report and the sample input and the file the rep is sent to read all living there. A rep once
+found the candidate wording beside its own fixture, read it, and reported the contamination
+itself (2026-08-11, the operator having deliberately kept the draft out of the repo and put it
+there instead), so "out of the repo" is the wrong test and passing it is no comfort.
+
+**Persist when the arm is done, not when the first rep fails.** Several reps make an arm, and
+a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording lives in your
+own context and in no file you wrote.
+
+Absolute absence is not the bar, because it is not available: the harness records prompts and
+tool results alike into this session's transcript and a per-subagent sibling under
+`<configBase>/projects/`, owned by the same user the reps run as, so the wording is on
+readable disk from the moment you draft it (verified 2026-08-11). What you control is which
+paths a rep has reason to walk, and a rep working a fixture has every reason to open the
+skill file and none to open a transcript directory. Those three are where that bites in
+practice rather than an exhaustive list, since any other directory you point a fixture into
+inherits the same property, and past them what is left is detection: read what each rep
+actually opened before you count it. On the gated path below, where RED by
 construction never fails, the hold releases once that path's first two preconditions have
 been **done and their artifacts recorded**, never on the writing-up alone.
 
 **The wording is not the only thing that leaks; so does the answer.** A fixture restaging a
 situation this repo has already resolved leaves a second route to the conclusion open: the
-commit, the archived plan, the Chapter that recorded the decision. One RED lost all three of
+commit, the archived plan, the Chapter that recorded the decision. Nor are those routes all
+in-repo, which matters when the fixture imitates real work rather than a decision: other
+sessions' scratchpads persist on the machine, so a rep sent to review a fictional PR found
+a real gate report for the very PR the fixture was modelled on (2026-08-11) and reasoned
+from it. Give the fixture identifiers nothing on this disk already answers. One RED lost all three of
 its reps that way (2026-08-10), each reaching the recorded answer rather than deriving it,
 one through `git show <sha>:docs/plans/...`, one through a `docs/archive/` grep, one by
 reading the commit. Instructing the subagent not to look is not a control, and a fresh agent
