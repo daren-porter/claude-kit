@@ -154,22 +154,39 @@ message carries all three artifacts**, the probe included, which is the
 section-does-not-close rule for a change that has no sections.
 
 1. **You attempted a local RED.** Artifact: the fresh subagent's actual output, quoted, not
-   a report of it. Two outcomes, carrying different bars.
-   - **Did not reproduce.** Several reps, and the entry carries their output, so a clean run
-     is as checkable as a failing one.
-   - **Could not be constructed.** Name the element you cannot stage **and the substitute
-     you tried**, with the substitute's output and where it fell short: "I compressed the
+   a report of it. **Which outcome you are on turns on whether your rep entered the state the
+   rule guards**, never on whether it came back clean: a fixture staging the case the rule does
+   NOT guard produces a clean run by construction, which is not evidence of anything. So ask
+   what state the rule is about, then ask whether the rep was in it, and only then read the
+   result. Four answers; only the last two are this section's, and they carry different bars:
+
+   - **In the state, and the failure appeared.** Your RED fired, so you are on the normal bar
+     above with a real local RED and none of this section's costs attach. The easiest answer
+     to walk past, because a rep that read as fine overall can still carry the defect in its
+     output, which is why you read the output rather than the rep's summary of itself.
+   - **Not in the state, and the state is stageable.** You have not attempted the RED yet.
+     Restage it, and do not file the clean run under either branch below: a rep that was never
+     in the guarded state cannot speak to what happens inside it.
+   - **Did not reproduce.** The rep was in that state and behaved correctly anyway. Several
+     reps, and the entry carries their output, so a clean run is as checkable as a failing
+     one.
+   - **Could not be constructed.** You could not stage that state at all. Name the element you
+     cannot stage **and the substitute you tried**, with the substitute's output and where it
+     fell short: "I compressed the
      session to forty turns of synthetic context, and here is what came back." Naming the
      element alone is never enough, because "their harness", "their platform", and "a long
      live session" are the entry conditions restated, and a gate discharged by restating its
      own entry condition is paperwork. Without a substitute that actually ran, this branch
      **fails the gate**; it is the cheap branch, so it is the strict one.
 
-   Attempt it **first**, and record the prompt alongside the output, since that is the only
-   thing that can show it: the prompt demonstrates the wording was supplied in-prompt rather
-   than readable from the repo, which is what the leak mechanism above actually cares about.
-   Output alone proves the rep ran, not that it ran before the edit, and the record and the
-   edit land in the same commit either way, so git witnesses nothing.
+   Attempt it **first**, and record the prompt alongside the output, since the prompt is the
+   only thing that can show either of the two things a later reader has to check. On a rep
+   carrying the new wording, it shows the wording was supplied in-prompt rather than read off
+   the repo, which is what the leak mechanism above cares about; output alone proves the rep
+   ran, not that it ran before the edit, and the record and the edit land in the same commit
+   either way, so git witnesses nothing. On a substitute, which carries no new wording at
+   all, it shows instead **which state the substitute actually staged**, so the branch you
+   claimed above is checkable rather than asserted.
 2. **You can locate the failure someone else recorded.** Artifact: a locator another person
    could follow. For a port, the file and section of their spec, Chapter, or incident
    write-up. For a report, a date or a transcript path. **A detailed account with no locator
