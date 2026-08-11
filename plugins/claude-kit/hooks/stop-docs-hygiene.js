@@ -103,4 +103,3 @@ function main() {
 }
 
 try { main(); } catch { /* never trap the session */ }
-process.exit(0);

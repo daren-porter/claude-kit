@@ -85,8 +85,7 @@ function main() {
         + `never as a follow-up. Commit the docs work into the branch (the finishing-work close-out runs `
         + `curating-docs), then open the PR.\n`
     );
-    process.exit(2); // deny
+    process.exitCode = 2; // deny: set rather than forced, so the stderr write flushes
 }
 
 try { main(); } catch { /* fail open */ }
-process.exit(0);

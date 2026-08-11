@@ -152,4 +152,3 @@ function main() {
 }
 
 try { main(); } catch { /* never break a session over a hook */ }
-process.exit(0);

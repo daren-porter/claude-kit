@@ -609,4 +609,3 @@ try {
 } catch {
     // Never break a session over a hook.
 }
-process.exit(0);

@@ -143,8 +143,7 @@ function main() {
         + `integration branch. The branch is frozen (pushed is not merged). Put any post-merge record in a `
         + `new doc PR against the integration branch instead of pushing here.\n`
     );
-    process.exit(2);
+    process.exitCode = 2; // deny: set rather than forced, so the stderr write flushes
 }
 
 try { main(); } catch { /* fail open */ }
-process.exit(0);

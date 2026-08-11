@@ -407,5 +407,4 @@ function main() {
 // kit-goal-lib.js dependency resolves, without executing the hook.
 if (require.main === module) {
     try { main(); } catch { /* never trap the session: any error allows the stop */ }
-    process.exit(0);
 }

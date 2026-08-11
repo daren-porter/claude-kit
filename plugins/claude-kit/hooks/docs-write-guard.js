@@ -103,8 +103,7 @@ function main() {
         + `and the durable record is the plan's Chapter. Write to .kit/ instead, or return the content `
         + `in your final message.\n`
     );
-    process.exit(2);           // deny
+    process.exitCode = 2;      // deny: set rather than forced, so the stderr write flushes
 }
 
 try { main(); } catch { /* fail open */ }
-process.exit(0);

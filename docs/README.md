@@ -22,7 +22,7 @@ The stable description of what the kit is and how it behaves. The root `README.m
 
 ## Living documents
 
-- **`backlog.md`** - cross-effort next steps, active items only. Finished items move to a dated snapshot in `archive/`.
+- **`backlog.md`** - cross-effort next steps, active items only. Finished items move to a dated snapshot in `archive/`; the first is `archive/backlog-2026-Q3.md`.
 - **`kit-adoptions.md`** - the standing record of what this kit has taken, reshaped, refused, or not yet decided from Scott Applefeld's kit, plus the watermark a pass diffs from. Written by the `kit-adoption-pass` skill; its `Last pass:` header is parsed by the session-start staleness nudge.
 
 ## Archive
