@@ -49,6 +49,7 @@ Every candidate finding is adjudicated in the main thread before Daren sees it:
 - Dedup across reviewers and against the existing human threads: a point a teammate already made is not raised again.
 - A claimed absence ("no error handling") without evidence the reviewer looked: verify it in the code yourself, or drop it.
 - Borderline calls default to dropping. A senior dev raises fewer, better points; the cost of a pedantic comment recurs on every PR the author brings.
+- **A comment is the miss plus only what the reader cannot see from the line it anchors to**, and that holds whether you drafted it or the reviewer did. When naming the miss is the whole explanation, the comment is that one clause and it is finished: "`SmtpTimeoutSeconds` is read at line 88 but the `Notifications` section never sets it" is a complete comment, and walking on through what it binds to, the guard it trips and the environments affected spends the author's attention on the inference they already drew. Spend sentences only where a competent reader could look straight at the anchored line and not see the defect: the concurrent path, the lock ordering, the reason the tests pass anyway. The practice source and the failure scenario belong to the gate's rationale, which Daren reads; quoting them into the comment is the same padding wearing a citation. What scales is the prose, never the analysis, and a reviewer's draft that arrives at one clause is finished rather than thin, so trim to that shape as readily as you write to it.
 - Draft comments must read like a dev typed them into the review pane; strip assistant-prose tells ("Net effect:", "In essence,", "It's worth noting", "This ensures") before the gate. The same standard, backtick code spans for code included, covers text the main thread drafts itself: re-review replies and promoted notes.
 - Assume the reader knows this codebase. Explaining their own system back to them ("that proc is TLC's, not ours") reads as condescension even when it is accurate, and it survives the tells check above because it is not assistant prose. The test is whether cutting the sentence weakens the case: "line 129 already excludes NULLs by comparison" stays, because it is why the reader can tell local rows are safe; ownership and orientation go.
 
@@ -70,7 +71,7 @@ Present to Daren, in the terminal:
 
 1. One line of PR context and any reduced-context or split-dispatch flags.
 2. AC coverage per criterion (met / gap / cannot verify), Daren's eyes only; the PR never gets a checklist comment.
-3. Findings by category, each with file:line, the base-ref verdict for any finding naming a code defect (introduced / newly broken / predates the PR), the rationale, scaled per the agent's depth rule (a self-evident miss earns a clause, a subtle mechanism earns sentences, and the analysis behind either runs full depth regardless), the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
+3. Findings by category, each with file:line, the base-ref verdict for any finding naming a code defect (introduced / newly broken / predates the PR), the rationale, scaled per the depth scaling above (a self-evident miss earns a clause, a subtle mechanism earns sentences, and the analysis behind either runs full depth regardless), the exact comment text that would post, and the anchor span whenever the comment ends in a suggestion block: the span is what Apply overwrites.
 4. The proposed vote per the table below.
 
 Daren edits, vetoes, promotes notes to comments, or overrides the vote. Only his explicit go-ahead unlocks posting, one approval for the whole PR. A clean approve still waits here: a vote is an outward-facing act.
@@ -104,7 +105,7 @@ The Threads column counts blockers and suggestions only. Predates-the-PR threads
     - **Every thread still posts Active.** The marker changes what the comment says, not what the thread is. Posting a suggestion `Closed` to signal optionality drops it out of the author's resolution sweep and reads as already handled.
     - **Not on an Approve-with-suggestions verdict.** There the vote already says every thread is optional, so a per-thread marker is noise. The asymmetry is the point: mark only where a mixed verdict has made the threads ambiguous.
 
-  The marker is fixed boilerplate and sits outside the depth scaling the reviewer applies: it is not explanation, so it neither counts toward a finding's depth nor licenses padding one. A one-clause finding stays one clause under it.
+  The marker is fixed boilerplate and sits outside the comment's depth scaling: it is not explanation, so it neither counts toward a finding's depth nor licenses padding one. A one-clause finding stays one clause under it.
 - Report back exactly what posted, with thread ids.
 
 If the connector's write path is down, present the gate output as a manual checklist instead of silently half-posting.
