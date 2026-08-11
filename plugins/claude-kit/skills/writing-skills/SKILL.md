@@ -179,6 +179,14 @@ section-does-not-close rule for a change that has no sections.
      own entry condition is paperwork. Without a substitute that actually ran, this branch
      **fails the gate**; it is the cheap branch, so it is the strict one.
 
+   The two branches want different amounts of evidence on purpose, and the reason is that they
+   are not measuring the same thing. Did-not-reproduce asserts a behavioral negative, which one
+   clean sample barely supports, so it takes several reps. A substitute measures no behavior at
+   all: a fixture that cannot reach the guarded state will not reach it on the fifth run either,
+   so reps add nothing, and what it has to establish is that you reached for the element rather
+   than what happened when you did. So do not read the single substitute as the lower bar and
+   file a single clean in-state rep beside it.
+
    Attempt it **first**, and record the prompt alongside the output, since the prompt is the
    only thing that can show either of the two things a later reader has to check. On a rep
    carrying the new wording, it shows the wording was supplied in-prompt rather than read off
