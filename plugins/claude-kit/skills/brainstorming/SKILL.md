@@ -19,6 +19,8 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 3. **One question at a time.** Ask the question whose answer most changes the design. Wait for the answer before asking the next. Do not front-load a questionnaire.
 
+   **When the question you are about to ask is about appearance** (a layout, a palette, a theme, a page mockup, two designs compared), offer the visual companion below before asking it, and do not push a screen until Daren has accepted. The trigger is the question in front of you rather than a forecast of the session, so a brainstorm that turns visual on its fourth question still gets the offer there; and offering costs one message, where a screen written into his repo without consent costs tokens he did not agree to spend. Do not defer the offer to a later turn you control, for the same reason step 2 gives about the council.
+
 4. **Feel out the corners.** Edge cases, failure modes, integration points, performance characteristics, who consumes the output, what happens on re-run, what already exists that solves a similar shape.
 
 5. **Present options with tradeoffs** when a real decision exists. State a recommendation and the reason. Disagree openly with Daren's framing when warranted; he wants the arguments, not agreement. Hold the position under pushback and move on new facts, not tone. If a genuine fork surfaces only here, one that scope check (step 2) did not see, offer the `design-council` under the same juice-vs-squeeze rule rather than letting it slide.
@@ -35,12 +37,31 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
    Then run the `curating-docs` create path: register the new file in `docs/README.md` with a one-line hook, or update its existing entry when fleshing a Proposed stub (the index marker flips to In Progress), and cross-reference in both directions any plan it builds on or supersedes.
 
+   If the visual companion was used, delete `.kit/visuals/current.html` and the `NNN-*.html` archive now, say in one line how many screens went, and leave `frame.css` in place. The screens were scaffolding; what the spec you just wrote has to carry is the decision itself, as values rather than a reference to a picture that no longer exists. Anything worth keeping is promoted while the session is running, not rescued here: these files are gitignored and never committed, so there is nothing to recover from.
+
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
    - **Branch-and-PR**: work happens on a feature branch; sections are committed there and finishing-work opens a pull request. The default for shared repos.
    - **Commit-and-Push**: commit and push to origin as sections complete. For greenfield or personal projects where Claude authors most of the work and Daren has said main is fine.
 
 9. **Spec self-review.** Before handing the spec to executing-work, read it once with fresh eyes and fix inline: placeholders (TBD, TODO, "handle appropriately"), sections that contradict each other, requirements that could be read two ways (pick one, make it explicit), and scope that drifted past the goal. A defect caught here is a sentence to fix; the same defect found mid-execution is rework. Fix and move on; no re-review ceremony.
+
+## The visual companion
+
+A static HTML file in Daren's own browser, styled by a frame this skill ships. Nothing leaves
+the machine, which is what makes it usable for client work, and he answers in the terminal.
+
+Offer it in its own message rather than bolted onto a question, and be straight about the cost:
+
+> "Some of this might be easier to settle if I show you rather than describe it. I can put
+> mockups, palettes and comparisons in your browser as we go, as static files on your machine.
+> Rendering them costs tokens. Want it available?"
+
+Accepting makes it available for the rest of the session. It does not mean later questions go to
+the browser by default.
+
+The mechanics, the on-disk paths, the class catalogue and the spec-write sweep are in
+`references/visual-companion.md`. Read it before the first push.
 
 ## Spec format
 
