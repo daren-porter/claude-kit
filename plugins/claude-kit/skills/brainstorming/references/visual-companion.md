@@ -223,9 +223,11 @@ say in one line how many screens went.** Two constraints on that:
   a tweak of Daren's, and the copy-only-when-absent rule above exists precisely so that tweak
   survives into later sessions. A sweep that takes it makes that rule unobservable.
 - **Anything worth keeping is promoted before the sweep, not rescued after.** The files are
-  gitignored and were never committed, so there is no git object to recover and no undo. When a
+  untracked and were never committed, so there is no git object to recover and no undo. When a
   screen looks like it is worth more than the decision it produced, say so at that moment and
-  let Daren decide, rather than raising it at sweep time when the answer arrives too late.
+  let Daren decide. Do not save it up for a confirmation prompt at sweep time: Daren asked for
+  the cleanup to be automatic, so the sweep does not stop to ask, which is exactly why the
+  asking has to happen earlier.
 
 Promotion means the screen's *content* becomes text in the spec, which is the only form
 `curating-docs` has a home for: its zone table has no entry for an HTML mockup, and a file
@@ -233,5 +235,6 @@ dropped into `docs/` unregistered is a defect by its own index rule. If Daren wa
 file kept, that is his to put somewhere; do not invent a docs zone for it.
 
 A session that ends without writing a spec leaves the screens behind. That is fine and there is
-no hook chasing it: the directory is gitignored, costs a few KB, and the next spec-write in that
-project sweeps it. This is a deliberate non-feature, not an oversight.
+no hook chasing it: the directory is untracked, costs a few KB, and the next spec-write in that
+project sweeps it, because that sweep is gated on what is in the directory rather than on
+whether that session used the companion. This is a deliberate non-feature, not an oversight.

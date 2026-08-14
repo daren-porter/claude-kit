@@ -78,8 +78,16 @@ on evidence.
 brainstorming writes the spec, so that is where the sweep belongs. What persists is the
 decision recorded in the spec, which is lossless for the things this is used on (hex values
 and layout choices survive prose). The sweep reports what it removed rather than deleting
-silently. A screen that genuinely deserves to outlive the session is promoted deliberately
-into that project's committed `docs/`, as Daren's call during the session.
+silently.
+
+**Amended during execution:** this originally said a screen worth keeping is promoted into that
+project's committed `docs/`, and Section 2's criteria required that hatch. Review found it
+collides with `curating-docs`, whose zone table has no entry for an HTML mockup and whose index
+rule makes an unregistered file under `docs/` a defect. Promotion therefore means the screen's
+*content* becomes text in the spec, decided during the session. If Daren wants the file itself,
+that is his to place; the skill does not invent a docs zone for it. The sweep also keys off the
+contents of `.kit/visuals/` rather than whether the current session used the companion, so an
+abandoned brainstorm's screens are cleared by the next spec-write instead of never.
 
 **Deliberately not built:** a stale-file nudge for sessions that end without writing a spec.
 Leftovers sit in a gitignored directory costing a few KB, and a SessionStart hook for that
@@ -167,49 +175,75 @@ Acceptance criteria:
   oversight.
 - The offer is for a tool, not a mode: accepting it does not route later questions through
   the browser by default.
-- The skill's step 7 gains the sweep of `.kit/visuals/` at spec-write, reporting in one line
-  what was removed, plus the documented escape hatch for promoting a screen into the
-  project's committed `docs/`.
+- The skill's step 7 gains the sweep at spec-write, reporting in one line what was removed. It
+  deletes `current.html` and the `NNN-*.html` archive and spares `frame.css`, and it is gated on
+  what the directory holds rather than on whether this session used the companion. (Amended
+  during execution, on review: the original criterion said "the sweep of `.kit/visuals/`", which
+  taken literally destroyed the `frame.css` that the copy-only-when-absent rule exists to
+  preserve. The promotion hatch it also required moved from a file in `docs/` to content in the
+  spec; see the Approach amendment for why.)
 - No wording in either file claims live update, click-back, or an events stream.
 
 Execution mode: main.
 
-### 3. Baseline-test the browser-versus-terminal rule, and cut it
+### 3. Baseline-test the browser-versus-terminal rule
 
-The decision rule shapes behavior and had no locator behind it, so it earned a RED before
-being written down anywhere. Section 2 deliberately left it out so that ordering held. The RED
-ran first, came back clean, and **the rule is cut rather than persisted**; the capability
-documentation ships without it.
+Status: **RED complete, outcome awaiting Daren's call on the predicate.** The rule is not in
+`brainstorming/SKILL.md` and does not go in without that call.
 
-The criteria as met, with the plan's conditional branch resolved:
+The rule shapes behavior and had no locator behind it, so it earned a RED before being written
+down anywhere. Section 2 left it out so that ordering held. The candidate wording was never in
+the repo, the scratchpad, or any rep prompt; it is recorded verbatim in Chapter 3, because a
+conclusion about a text nobody can read is not auditable.
 
-- The RED staged the state the rule guards: the companion already accepted AND already used
-  successfully for a genuinely visual question, with the next question conceptual (what
-  archiving means) on a deliberately UI-adjacent topic, which is superpowers' own counter-case
-  shape. It ran in a self-contained scratch project outside the kit repo, so this spec, which
-  describes the rule, was not on the reps' path.
-- The candidate wording was never in the repo, the scratchpad, or any rep prompt.
-- Four reps ran; three were in state and counted. The fourth was discarded on two independent
-  grounds: it opened this spec while hunting for `frame.css` (caught by checking what each rep
-  actually opened, and self-reported), and it was confounded anyway because the capability did
-  not yet exist on disk. Its objection, that a rule about reaching for the browser cannot be
-  baselined on an agent with no browser to reach for, was taken and closed by placing a real
-  `frame.css` in the fixture for the third counted rep.
-- **All three counted reps behaved defensibly**, by two different routes: one declined the
-  browser on the merits, and two pushed a consequence visualization while keeping the argument
-  and the recommendation in the terminal. Verbatim rationalizations are in the Chapter.
-- **The rule is cut, and on a stronger basis than a bare clean run.** Superpowers' version
-  routes "what does X mean?" to the terminal; two of three reps pushed anyway, each justifying
-  it on the merits and each producing good work. Porting it would have suppressed judgment the
-  reps exercised correctly, so the wording would have made behavior worse rather than merely
-  failing to improve it.
-- `brainstorming/SKILL.md` therefore gains no decision rule. The one retained sentence about
-  the offer's scope ("Accepting makes it available for the rest of the session. It does not
-  mean later questions go to the browser by default") states what Daren is agreeing to rather
-  than instructing the agent, and is behavior all three reps exhibited unprompted.
-- Three counted reps was the threshold, named in the plan before any rep ran so it could not be
-  chosen after seeing results, because `writing-skills` says only "several" and a threshold the
-  agent picks is discharged by whatever it picks.
+**The fixture.** A scratch project (`red-tideline`) outside the kit repo, with the companion
+already accepted AND already used successfully for a genuinely visual question, and the next
+question conceptual: what archiving means, offered as three readings, on a deliberately
+UI-adjacent surface. That is superpowers' own counter-case shape.
+
+**What the reps did.** Four in-state reps, and the behavior is completely stable: **all four
+pushed a browser screen**, all four rendered the UI consequences of each reading rather than
+tabling prose, all four kept the recommendation and the argument in the terminal, and all four
+argued explicitly that seeing the difference beat reading it. No rep treated the accepted
+companion as a mode, and none pushed instead of thinking.
+
+**Why the outcome is not decided here.** The plan pre-registered the tempted failure as
+"pushing a browser screen for a question that is conceptual rather than visual". Read literally
+that predicate is met by all four reps, so the RED fired and the rule is justified. Read as
+what the rule is actually for, whether the browser gets reached for when it does not help, no
+rep failed, and porting a rule that routes "what does X mean?" to the terminal would forbid a
+judgment four independent reps made and defended. The two readings give opposite outcomes on
+identical evidence, the plan does not resolve which governs, and that choice decides what
+ships. It is recorded here rather than settled, because an earlier pass of this section resolved
+it silently in favour of cutting and a review caught that as a post-hoc predicate change.
+
+**Process failures in this section, recorded because they bound what the evidence supports:**
+
+- A first arm of four reps was run before `frame.css` existed in the fixture. One of those was
+  discarded for the capability being absent, and two others were counted despite being in the
+  same condition, which is incoherent. Only the isolated fourth rep of that arm was genuinely
+  in state. The arm was re-run with the capability present and one identical prompt.
+- That first arm also used four hand-paraphrased prompts, so a threshold counted across them
+  measured prompt variance as much as behavior.
+- One rep in the first arm opened this spec while hunting for the missing `frame.css`. The
+  isolation claim ("not on the reps' path") was therefore false, and the two grounds for
+  discarding it were not independent: the missing capability caused the leak.
+- Both arms ran their reps concurrently against one shared `current.html`, so the reps
+  overwrote each other's screens. One re-run rep noticed and audited what it found. That does
+  not affect whether a rep chose to push, which is its own act, but it does contaminate any
+  judgment of the artifacts, and a future arm needs one fixture copy per rep.
+- The earlier claim that the wording "would have made behavior worse" is retracted. Every rep
+  ran without the wording, so there was no treatment arm and nothing here can distinguish the
+  rule blocking those pushes from the rule's own test permitting them.
+
+**One correction to Section 2's record.** `brainstorming/SKILL.md` does now carry
+question-classification wording, at step 3: the offer is triggered "when the question you are
+about to ask is about appearance". That clause was added to fix a defect both reviewers blocked
+on, the offer having no anchor in the numbered process, and the structural anchor is the form
+`writing-skills` prescribes for a missed required element. But the trigger half is behavior-shaping
+wording of the same species this section gated, and it has neither a locator nor a RED. It is
+recorded as an accepted deviation rather than claimed to be absent, and it is the second thing
+needing Daren's call.
 
 Execution mode: main.
 
@@ -256,10 +290,23 @@ Next: 3. Baseline-test the browser-versus-terminal rule, and cut it
 Commit Model: Commit-and-Push
 
 ### Chapter 3 - 2026-08-14
-Completed: 3. Baseline-test the browser-versus-terminal rule, and cut it
+Completed: 3. Baseline-test the browser-versus-terminal rule (RED complete; outcome open, see below)
 Implemented By: main session (RED reps dispatched as general-purpose subagents)
-Metrics: 1 review round (adversarial alone, changeset is docs-only); 4 RED reps, 3 counted; 0 escalations; advisor on, not consulted during execution
-Decisions / Surprises: Run first, ahead of Section 2, because `writing-skills` requires the RED before the wording exists anywhere and Section 2 would have put it in the repo. **Outcome: the rule is cut.** Three in-state reps all behaved defensibly, one declining the browser on the merits and two pushing a consequence visualization while keeping the argument and recommendation in the terminal. Superpowers' rule routes "what does X mean?" to the terminal, so porting it would have forbidden what two independent reps did well: the wording would have made behavior worse, not merely failed to improve it. I briefly called the RED fired on rep 3's behavior before reading its reasoning, and had to correct that: it explicitly refused the A/B/C format and used the browser only for "the one part of the argument prose cannot carry". Verbatim rationalizations, per-rep contamination detection, and the full record are in the scratchpad at `s3-red-record.md`; the decisive quotes are reproduced in the amended Section 3.
-Review Findings: (recorded when the review returns)
-Next: finishing-work
+Metrics: 2 review rounds (adversarial alone both times, changeset is docs-only); 7 RED reps across two arms, 4 counted; 0 escalations; advisor on, not consulted during execution
+Decisions / Surprises: Run first, ahead of Section 2, because `writing-skills` requires the RED before the wording exists anywhere. The second arm's result is unambiguous and stable: four in-state reps, four pushes, every one reasoned. What is NOT settled is whether that counts as the failure, because the pre-registered predicate and the rule's actual purpose disagree; Section 3 states the fork. Three self-inflicted method failures, all mine and all now recorded in Section 3: I counted two first-arm reps that were in the same capability-absent condition I used to disqualify a third; I reinterpreted the pass/fail predicate after seeing results and flagged a far smaller amendment in the same document while leaving that one silent; and I ran reps concurrently against one shared output path so they overwrote each other. I also called the RED "fired" mid-effort on a rep's behavior before reading its reasoning, then retracted that.
+
+**The candidate wording under test, verbatim** (superpowers 5.1.0, `skills/brainstorming/visual-companion.md`, "When to Use"): "Decide per-question, not per-session. The test: **would the user understand this better by seeing it than reading it?**" It routes to the browser for "UI mockups", "Architecture diagrams", "Side-by-side visual comparisons", "Design polish", "Spatial relationships"; and to the terminal for "Requirements and scope questions, 'what does X mean?'", "Conceptual A/B/C choices", "Tradeoff lists", "Technical decisions", "Clarifying questions". It closes: "A question *about* a UI topic is not automatically a visual question."
+
+**Second arm, three identical prompts, capability present.** All three pushed. Verbatim:
+- Rerun A: "pushed a new visual companion screen framing the archiving decision as three options, each rendered as a paired mockup showing the same three lists in both surfaces a list appears in [...] It states a recommendation rather than presenting a neutral menu." Its message: "so you can see what actually differs rather than reading me describe it."
+- Rerun B: "I didn't give you three neutral choices, because they aren't peers. My pick is A, with the reasoning sitting next to each mockup rather than in prose here."
+- Rerun C: "Three candidates, each labelled by the job it does rather than the mechanism, plus a matrix of what actually differs between them [...] I'd pick **A** [...] To be straight with you, A is the *more* expensive build, not the cheaper one."
+
+**First arm (four reps, capability absent for reps 1 to 3; only rep 4 in state).** Rep 1 declined the browser: "I'm not pushing a visual for this one. The unsettled thing isn't what archiving looks like, it's which operations stay legal [...] Reusing it here would have been momentum, not fit." Its transcript shows it observed the missing `frame.css` before deciding, so the decline is confounded. Rep 3 pushed and refused the ballot format: "I deliberately did not use the `options` A/B/C format [...] The visual uses `split` for the main-view contrast, which is the one part of the argument prose cannot carry." Rep 2 was discarded, having opened this spec while hunting for `frame.css` and self-reporting it: "Its Section 3 stages a baseline test whose fixture is exactly this shape [...] so do not score this as a rep." Rep 4, the one in-state rep of that arm, pushed.
+
+**Contamination detection method**, kept because it is the only control available once the wording exists on disk: every rep's transcript was grepped for the files it actually opened before its result was counted. Reps 1, 3, 4 and all three reruns touched only fixture paths; rep 2 opened `docs/plans/visual-companion_spec_v1.md`.
+
+**Incidental validation.** Rerun C had only `frame.css`, never the reference file, and still placed content inside `#claude-content` and used no remote resources, choosing a system font stack. That is evidence the Section 1 header-comment fix for the unpadded-render MAJOR works on an agent that reads the stylesheet.
+Review Findings: Adversarial (job 1) returned 2 CRITICAL, 3 MAJOR, 3 MINOR against this section's first recorded outcome, and all were valid. The two CRITICALs (counted reps that were out of state, and a post-hoc predicate change) are why the arm was re-run and why the outcome is now open rather than decided. Fixed from the same review: the untestable "would have made behavior worse" claim is retracted, the candidate wording is recorded verbatim above, the evidence now lives in this Chapter rather than an ephemeral scratchpad path, the false isolation and "independent grounds" claims are corrected, and the "gains no decision rule" claim is corrected because step 3's trigger clause is exactly that. Job 2 of the same review confirmed the sweep rewrite genuinely resolves both earlier CRITICALs rather than moving them, and raised 2 MAJOR plus 2 MINOR on it, all fixed: the sweep trigger contradicted the reference and left abandoned-session screens permanent, the `docs/` promotion hatch contradicted the spec unrecorded, "gitignored" was false in the no-gitignore branch, and one justification asserted a false impossibility.
+Next: BLOCKED on Daren's call on the predicate and on the step-3 trigger clause; then finishing-work.
 Commit Model: Commit-and-Push
