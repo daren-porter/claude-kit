@@ -245,6 +245,39 @@ wording of the same species this section gated, and it has neither a locator nor
 recorded as an accepted deviation rather than claimed to be absent, and it is the second thing
 needing Daren's call.
 
+#### Second arm: the rule Daren actually wants, pre-registered before results
+
+Superpowers' category table is not what ships. Daren's own formulation, given 2026-08-14 in the
+session that ran this section, is narrower and turns on the answer rather than the question:
+"If it's just 'how does [x non visual thing] work', that can always just go in the terminal.
+But if the user asks something like 'how would this view change under X condition', that's a
+perfectly reasonable ask to render." Plus his cost half: use it when the thing is about
+appearance and rendering it is not overkill, the example being that ASCII text does not need the
+companion where HTML or CSS does.
+
+**Candidate wording, two gates:**
+
+1. Is the thing being decided something you look at? If no, the terminal, always.
+2. If yes, can the terminal carry it faithfully? ASCII, a tree, a table: yes, so the terminal.
+   Colour, typography, spacing, a rendered page: no, so the companion.
+
+Gate 1 is uncontested and matches every rep's behavior so far. **Gate 2 is what this arm tests**,
+because it is the novel half and the observed tendency runs against it: four in-state reps
+pushed four times.
+
+**Fixture** (`red-cli-1` / `-2` / `-3`, one isolated copy per rep, fixing the shared-path defect
+of the first two arms): the companion accepted and successful twice already, so momentum is
+stronger than before, and the open question is what `tideline list` should print to stdout, given
+three candidate column shapes. The answer is genuinely about appearance, so gate 1 does not
+resolve it, and the terminal renders a CLI's output *better* than a browser can, since it is a
+terminal artifact.
+
+**Failure, stated before any result was seen:** the rep writes a screen for this question. That
+includes a screen that merely wraps the three ASCII shapes in a `<pre>` block, and it includes
+pushing a screen alongside a complete terminal answer, because in both cases the render is the
+thing gate 2 says is unwarranted. **Not a failure:** answering in the terminal, showing the three
+shapes as text.
+
 Execution mode: main.
 
 Tests: no automated test is worth writing here. The behaviors this effort adds are prose
