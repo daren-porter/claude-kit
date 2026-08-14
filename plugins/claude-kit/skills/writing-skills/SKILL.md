@@ -63,6 +63,14 @@ bulletproofs one failure backfires on another:
 | Omits a required element from something it already produces | A structural slot: a REQUIRED field in the template it fills | Prose reminders near the template |
 | Behavior should depend on a condition | A conditional on an observable predicate ("if the brief exists, reference it") | An unconditional rule plus exemption clauses |
 
+**Ask what already produces the behavior before you write anything.** The structural-slot row
+is a form to reach for and also a question to ask first: when a template the agent fills, a
+hook that rejects the bad output, or an earlier step in the same skill already forces the
+element, prose repeating it changes nothing and adds a rule every session then carries. The
+kit stays lean by subtraction here as much as by declining new files, and a baseline test will
+not tell you this on its own, since a rep held in line by the existing mechanism looks exactly
+like a rep that did not need the rule.
+
 Two rules govern any rule you write, not just the four forms above:
 - **No nuance clauses.** "Don't X unless it matters" reopens the negotiation.
   Express a real exception as its own conditional on something observable.
@@ -78,16 +86,22 @@ agent's behavior with and without the wording:
 1. **RED:** give a fresh subagent a realistic task that tempts the failure,
    without the new guidance. Watch it fail; record the rationalization verbatim.
    If it does not fail, or you could not build a task that would, there is nothing to fix
-   - stop. The one exception is evidence that is real but not yours to re-run, ported or
-   reported, and it costs three recorded artifacts rather than a claim: see "When a local
-   RED is not available".
+   - stop. **Before you read a clean run that way, check the rep was in the state the rule
+   guards, and then what produced its compliance.** A fixture staging the case the rule does
+   not cover comes back clean by construction, so that run says the RED has not been attempted
+   yet rather than that there is nothing to fix; and a rep that was in the state can comply
+   because something else in the kit already forces the behavior, which is a finding about the
+   draft rather than about the rule. Both live in the four answers under "When a local RED is
+   not available", and they read any clean run, not only that section's. The one exception is
+   evidence that is real but not yours to re-run, ported or reported, and it costs three
+   recorded artifacts rather than a claim: see that same section.
 2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run.
    The agent should now comply.
 3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it
    holds. For discipline rules, combine pressures (time + sunk cost + authority);
    single pressures are weak tests.
 
-Run several reps - one sample lies - and read every flagged result yourself, since
+Run three reps at least - one sample lies - and read every flagged result yourself, since
 template echoes masquerade as both failures and successes. This is the standard
 for any change to behavior-shaping content, the kit's own skills included. The one
 path around it is the gated one below, for evidence that is real but not yours to
@@ -105,7 +119,7 @@ found the candidate wording beside its own fixture, read it, and reported the co
 itself (2026-08-11, the operator having deliberately kept the draft out of the repo and put it
 there instead), so "out of the repo" is the wrong test and passing it is no comfort.
 
-**Persist when the arm is done, not when the first rep fails.** Several reps make an arm, and
+**Persist when the arm is done, not when the first rep fails.** The three reps make an arm, and
 a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording lives in your
 own context and in no file you wrote.
 
@@ -190,9 +204,17 @@ section-does-not-close rule for a change that has no sections.
    - **Not in the state, and the state is stageable.** You have not attempted the RED yet.
      Restage it, and do not file the clean run under either branch below: a rep that was never
      in the guarded state cannot speak to what happens inside it.
-   - **Did not reproduce.** The rep was in that state and behaved correctly anyway. Several
-     reps, and the entry carries their output, so a clean run is as checkable as a failing
-     one.
+   - **Did not reproduce.** The rep was in that state and behaved correctly anyway. Three reps
+     at least, and the entry carries their output, so a clean run is as checkable as a failing
+     one. **Then ask what produced the compliance before you file it here**, because these four
+     answers classify the rep's state and not the cause of its behavior. When something already
+     in the kit forces the result - a REQUIRED field in the template the rep fills, a hook that
+     rejects the bad output, a step the surrounding skill already orders - the finding is that
+     the draft is redundant and the change is to cut it, which is a better outcome than
+     admitting it and one this branch otherwise buries. When nothing does, and the rep simply
+     worked the problem well enough to route around wording that was wrong, that is a real
+     did-not-reproduce and the wording may still be worth fixing on its own evidence: prose
+     that only capable readers survive is a defect whether or not a rep trips on it.
    - **Could not be constructed.** You could not stage that state at all. Name the element you
      cannot stage **and the substitute you tried**, with the substitute's output and where it
      fell short: "I compressed the
@@ -204,7 +226,7 @@ section-does-not-close rule for a change that has no sections.
 
    The two branches want different amounts of evidence on purpose, and the reason is that they
    are not measuring the same thing. Did-not-reproduce asserts a behavioral negative, which one
-   clean sample barely supports, so it takes several reps. A substitute measures no behavior at
+   clean sample barely supports, so it takes the three reps. A substitute measures no behavior at
    all: a fixture that cannot reach the guarded state will not reach it on the fifth run either,
    so reps add nothing, and what it has to establish is that you reached for the element rather
    than what happened when you did. So do not read the single substitute as the lower bar and
@@ -240,7 +262,7 @@ Then persist, and run the third:
    rule's territory**, which is all the task has to be. It does not have to stage the
    failure, so the could-not-be-constructed branch can always run this. Check that it
    applies the rule correctly; it fails if the subagent misapplies the rule or has to ask
-   what it means. Several reps for a pass, since one clean run tells you little. A single
+   what it means. Three reps at least for a pass, since one clean run tells you little. A single
    failure is enough to act on.
 
    **A failed probe is not a regret, it is a stop.** Revert the wording, or fix it and
