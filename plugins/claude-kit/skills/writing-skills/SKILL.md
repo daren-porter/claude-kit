@@ -116,7 +116,7 @@ carries the wording is GREEN's, and RED's whole job is to fail without it. **The
 is the worst of the three**, because fixtures point subagents into it by construction, the
 report and the sample input and the file the rep is sent to read all living there. A rep once
 found the candidate wording beside its own fixture, read it, and reported the contamination
-itself (2026-08-14, the operator having deliberately kept the draft out of the repo and put it
+itself (2026-08-11, the operator having deliberately kept the draft out of the repo and put it
 there instead), so "out of the repo" is the wrong test and passing it is no comfort.
 
 **Persist when the arm is done, not when the first rep fails.** The three reps make an arm, and
@@ -126,7 +126,7 @@ own context and in no file you wrote.
 Absolute absence is not the bar, because it is not available: the harness records prompts and
 tool results alike into this session's transcript and a per-subagent sibling under
 `<configBase>/projects/`, owned by the same user the reps run as, so the wording is on
-readable disk from the moment you draft it (verified 2026-08-14). What you control is which
+readable disk from the moment you draft it (verified 2026-08-11). What you control is which
 paths a rep has reason to walk, and a rep working a fixture has every reason to open the
 skill file and none to open a transcript directory. Those three are where that bites in
 practice rather than an exhaustive list, since any other directory you point a fixture into
@@ -140,7 +140,7 @@ situation this repo has already resolved leaves a second route to the conclusion
 commit, the archived plan, the Chapter that recorded the decision. Nor are those routes all
 in-repo, which matters when the fixture imitates real work rather than a decision: other
 sessions' scratchpads persist on the machine, so a rep sent to review a fictional PR found
-a real gate report for the very PR the fixture was modelled on (2026-08-14) and reasoned
+a real gate report for the very PR the fixture was modelled on (2026-08-11) and reasoned
 from it. Give the fixture identifiers nothing on this disk already answers. One RED lost all three of
 its reps that way (2026-08-10), each reaching the recorded answer rather than deriving it,
 one through `git show <sha>:docs/plans/...`, one through a `docs/archive/` grep, one by
