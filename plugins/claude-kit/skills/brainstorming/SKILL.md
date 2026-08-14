@@ -33,7 +33,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
    Assign each Section of Work an execution mode per executing-work's model policy: **delegate-capable** for delegated work by default, **delegate-mechanical** only for a genuinely mechanical, well-bounded section, **delegate-fable** for a section that needs the strongest model but is still briefable (novel logic, a security-sensitive surface, subtle or cross-cutting correctness inside a settled design), **main** for the design-entangled, tiny, or session-state-bound sections. A section only earns a cheaper mode if its spec text is precise enough that an implementer with no conversation context can build it from the section text alone; write to that standard or assign the higher mode. The same test one level up separates **delegate-fable** from **main**: a strongest-model section whose spec will keep evolving in contact with the code stays main. When unsure between two, take the higher.
 
-   A **delegate-fable** assignment doubles as Fable spend authorization within the plan-included allotment, so name the expected Fable surface in the spec's `Fable Spend:` header where Daren sees it at approval time. Crossing into metered Fable is never authorized by a mode assignment alone: that takes Daren's explicit line in the same header, for this specific effort. `Fable Spend: none (cost hold)` holds the whole effort at the session model regardless of what the sections' modes say.
+   A **delegate-fable** assignment doubles as Fable spend authorization within the plan-included allotment, so name the expected Fable surface in the spec's `Fable Spend:` header where Daren sees it at approval time. Crossing into metered Fable is never authorized by a mode assignment alone: that takes Daren's explicit line in the same header, for this specific effort. `Fable Spend: none (cost hold)` holds the whole effort at the session model regardless of what the sections' modes say. **Write one of the two recognized forms and never a bare "none":** either name the surface ("S2, finishing reviews") or write the cost hold in full. A header like `none (no delegate-fable sections)` looks precise and is not, because finishing-work reads this field to decide whether its own reviews take the fable override, and that header answers a question about sections while appearing to answer a question about the whole effort. If no section earns fable and the finishing reviews should still get it, say so: `Fable Spend: finishing reviews only`.
 
    Then run the `curating-docs` create path: register the new file in `docs/README.md` with a one-line hook, or update its existing entry when fleshing a Proposed stub (the index marker flips to In Progress), and cross-reference in both directions any plan it builds on or supersedes.
 
@@ -74,7 +74,7 @@ The mechanics, the on-disk paths, the class catalogue and the spec-write sweep a
 
 Status: In Progress
 Commit Model: Review-Only | Branch-and-PR | Commit-and-Push
-Fable Spend: <expected Fable surface, e.g. "S2, finishing reviews"> | none (cost hold)
+Fable Spend: <expected Fable surface, e.g. "S2, finishing reviews" or "finishing reviews only"> | none (cost hold)
 Created: YYYY-MM-DD
 
 ## Goal

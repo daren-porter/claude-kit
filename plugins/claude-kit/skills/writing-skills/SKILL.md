@@ -135,6 +135,15 @@ actually opened before you count it. On the gated path below, where RED by
 construction never fails, the hold releases once that path's first two preconditions have
 been **done and their artifacts recorded**, never on the writing-up alone.
 
+**Reps that run in parallel need one fixture each.** The leak rules are about what a rep can
+read; this one is about what two reps can write. Three reps dispatched at once against a fixture
+holding a single output path overwrote each other, and the tell was a rep reporting that "the file
+was rewritten on disk by an outside process twice while I worked", then auditing what it found and
+keeping the better version, so its artifact was partly another rep's (2026-08-14). Whether a rep
+took the action under test is still its own act and survives this, but any judgment of what it
+produced does not. Copy the fixture once per rep and point each rep at its own copy. The failure is
+silent unless a rep happens to mention it, so do not rely on noticing.
+
 **The wording is not the only thing that leaks; so does the answer.** A fixture restaging a
 situation this repo has already resolved leaves a second route to the conclusion open: the
 commit, the archived plan, the Chapter that recorded the decision. Nor are those routes all
