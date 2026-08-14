@@ -19,7 +19,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 3. **One question at a time.** Ask the question whose answer most changes the design. Wait for the answer before asking the next. Do not front-load a questionnaire.
 
-   **When the question you are about to ask is about appearance** (a layout, a palette, a theme, a page mockup, two designs compared), offer the visual companion below before asking it, and do not push a screen until Daren has accepted. The trigger is the question in front of you rather than a forecast of the session, so a brainstorm that turns visual on its fourth question still gets the offer there; and offering costs one message, where a screen written into his repo without consent costs tokens he did not agree to spend. Do not defer the offer to a later turn you control, for the same reason step 2 gives about the council.
+   **Offer the visual companion before you show Daren anything, and wait for his yes.** Offer at the point you first judge that a question would land better shown than described. Making that judgment is yours; acting on it without asking is not, because a screen written into his repo costs tokens he did not agree to spend. Offer at that moment rather than deferring to a later turn you control, for the same reason step 2 gives about the council, and note that a brainstorm can turn visual on its fourth question as easily as its first.
 
 4. **Feel out the corners.** Edge cases, failure modes, integration points, performance characteristics, who consumes the output, what happens on re-run, what already exists that solves a similar shape.
 

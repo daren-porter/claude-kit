@@ -186,10 +186,11 @@ Acceptance criteria:
 
 Execution mode: main.
 
-### 3. Baseline-test the browser-versus-terminal rule
+### 3. Baseline-test the browser-versus-terminal rule, and write none
 
-Status: **RED complete, outcome awaiting Daren's call on the predicate.** The rule is not in
-`brainstorming/SKILL.md` and does not go in without that call.
+Status: **complete. No decision rule ships.** Two arms, seven in-state reps, and the reps
+discriminated perfectly in both directions without any rule present, which is what a rule here
+would have encoded.
 
 The rule shapes behavior and had no locator behind it, so it earned a RED before being written
 down anywhere. Section 2 left it out so that ordering held. The candidate wording was never in
@@ -236,14 +237,15 @@ it silently in favour of cutting and a review caught that as a post-hoc predicat
   ran without the wording, so there was no treatment arm and nothing here can distinguish the
   rule blocking those pushes from the rule's own test permitting them.
 
-**One correction to Section 2's record.** `brainstorming/SKILL.md` does now carry
-question-classification wording, at step 3: the offer is triggered "when the question you are
-about to ask is about appearance". That clause was added to fix a defect both reviewers blocked
-on, the offer having no anchor in the numbered process, and the structural anchor is the form
-`writing-skills` prescribes for a missed required element. But the trigger half is behavior-shaping
-wording of the same species this section gated, and it has neither a locator nor a RED. It is
-recorded as an accepted deviation rather than claimed to be absent, and it is the second thing
-needing Daren's call.
+**Step 3's clause, and how the arms changed it.** A first version triggered the offer "when the
+question you are about to ask is about appearance", with a list of appearance categories. Review
+was right that this was question-classification wording of the species this section gated, added
+with no locator and no RED. The arms then made it unnecessary: routing is the part the reps do
+reliably, so the clause now mandates only what they cannot do for themselves, which is get
+Daren's consent before writing into his repo. It anchors the offer in the numbered process (the
+form `writing-skills` prescribes for a missed required element, and the shape step 2 already uses
+for the council), leaves the judgment of when a question would land better shown to the agent,
+and carries no category list.
 
 #### Second arm: the rule Daren actually wants, pre-registered before results
 
@@ -276,7 +278,37 @@ terminal artifact.
 includes a screen that merely wraps the three ASCII shapes in a `<pre>` block, and it includes
 pushing a screen alongside a complete terminal answer, because in both cases the render is the
 thing gate 2 says is unwarranted. **Not a failure:** answering in the terminal, showing the three
-shapes as text.
+shapes as text. (Pre-registered in commit `f0376c0`, before any of the three reps returned.)
+
+**Result: 3 of 3 declined the browser, and no screen was written in any of the three fixtures.**
+Each derived gate 2 unprompted, and two of them went further than the gate does by noting the
+browser would actively distort the comparison rather than merely fail to help it: "your terminal
+is the actual output device: your real width, your real monospace font, no themed background
+flattering it. A browser page would give option B an arbitrarily generous width and make it look
+better than it is."
+
+#### The conclusion, and why it is not the one that was retracted
+
+Across the two arms, seven in-state reps with no rule present:
+
+| Arm | The browser would | Reps | Behavior |
+|---|---|---|---|
+| Archiving semantics | add fidelity (the list view under each reading) | 4 | 4 pushed |
+| CLI output shape | subtract fidelity (a terminal artifact) | 3 | 3 declined |
+
+That is perfect discrimination, in both directions, on exactly the axis a rule here would encode.
+So **no decision rule is written**: neither superpowers' category table, which the second arm's
+premise abandoned, nor the two-gate version, whose novel half the reps applied on their own.
+
+This is a different claim from the one retracted earlier, and the distinction matters. The
+retracted claim was that the wording "would have made behavior worse", which no arm could test
+because no arm ran with the wording. The claim now is that **the failure the wording guards does
+not occur**, which is precisely what a RED measures, and it was measured in both directions
+against a predicate committed before the results existed.
+
+Per `red-gate-clean-still-ships`, a clean RED means the behavior wording has nothing to fix, not
+that the section ships nothing: Section 2's capability documentation ships, and the accuracy
+fixes that came out of review ship with it.
 
 Execution mode: main.
 
@@ -323,9 +355,9 @@ Next: 3. Baseline-test the browser-versus-terminal rule, and cut it
 Commit Model: Commit-and-Push
 
 ### Chapter 3 - 2026-08-14
-Completed: 3. Baseline-test the browser-versus-terminal rule (RED complete; outcome open, see below)
+Completed: 3. Baseline-test the browser-versus-terminal rule, and write none
 Implemented By: main session (RED reps dispatched as general-purpose subagents)
-Metrics: 2 review rounds (adversarial alone both times, changeset is docs-only); 7 RED reps across two arms, 4 counted; 0 escalations; advisor on, not consulted during execution
+Metrics: 2 review rounds (adversarial alone both times, changeset is docs-only); 10 RED reps across three arms, 7 counted; 0 escalations; advisor on, not consulted during execution
 Decisions / Surprises: Run first, ahead of Section 2, because `writing-skills` requires the RED before the wording exists anywhere. The second arm's result is unambiguous and stable: four in-state reps, four pushes, every one reasoned. What is NOT settled is whether that counts as the failure, because the pre-registered predicate and the rule's actual purpose disagree; Section 3 states the fork. Three self-inflicted method failures, all mine and all now recorded in Section 3: I counted two first-arm reps that were in the same capability-absent condition I used to disqualify a third; I reinterpreted the pass/fail predicate after seeing results and flagged a far smaller amendment in the same document while leaving that one silent; and I ran reps concurrently against one shared output path so they overwrote each other. I also called the RED "fired" mid-effort on a rep's behavior before reading its reasoning, then retracted that.
 
 **The candidate wording under test, verbatim** (superpowers 5.1.0, `skills/brainstorming/visual-companion.md`, "When to Use"): "Decide per-question, not per-session. The test: **would the user understand this better by seeing it than reading it?**" It routes to the browser for "UI mockups", "Architecture diagrams", "Side-by-side visual comparisons", "Design polish", "Spatial relationships"; and to the terminal for "Requirements and scope questions, 'what does X mean?'", "Conceptual A/B/C choices", "Tradeoff lists", "Technical decisions", "Clarifying questions". It closes: "A question *about* a UI topic is not automatically a visual question."
@@ -340,6 +372,12 @@ Decisions / Surprises: Run first, ahead of Section 2, because `writing-skills` r
 **Contamination detection method**, kept because it is the only control available once the wording exists on disk: every rep's transcript was grepped for the files it actually opened before its result was counted. Reps 1, 3, 4 and all three reruns touched only fixture paths; rep 2 opened `docs/plans/visual-companion_spec_v1.md`.
 
 **Incidental validation.** Rerun C had only `frame.css`, never the reference file, and still placed content inside `#claude-content` and used no remote resources, choosing a system font stack. That is evidence the Section 1 header-comment fix for the unpadded-render MAJOR works on an agent that reads the stylesheet.
+**Third arm (gate 2), three isolated fixtures, one identical prompt, predicate committed in `f0376c0` before any result.** All three declined the browser; no screen was written anywhere. Verbatim:
+- Rep 1: "I'm putting these in the terminal rather than the browser companion. The companion won a colour palette and a settings-row layout because neither survives translation to text. This one is text, and your terminal is the actual output device: your real width, your real monospace font, no themed background flattering it. A browser page would give option B an arbitrarily generous width and make it look better than it is."
+- Rep 2: "I'm not putting this one in the browser. The palettes and the settings row belonged there: they're rendered in a browser natively, so HTML showed them at full fidelity. This is monospace stdout. An HTML `<pre>` in Firefox is *lower* fidelity than your own terminal at your own width and font, plus it costs you a context switch."
+- Rep 3: "No visual for this one, it's monospace text so the terminal shows it at full fidelity and a browser would only distort it."
+
+Rep 2's answer independently covers the `<pre>`-wrapper case that the pre-registered predicate named as a failure, which is the one escape a sympathetic reader might otherwise have allowed.
 Review Findings: Adversarial (job 1) returned 2 CRITICAL, 3 MAJOR, 3 MINOR against this section's first recorded outcome, and all were valid. The two CRITICALs (counted reps that were out of state, and a post-hoc predicate change) are why the arm was re-run and why the outcome is now open rather than decided. Fixed from the same review: the untestable "would have made behavior worse" claim is retracted, the candidate wording is recorded verbatim above, the evidence now lives in this Chapter rather than an ephemeral scratchpad path, the false isolation and "independent grounds" claims are corrected, and the "gains no decision rule" claim is corrected because step 3's trigger clause is exactly that. Job 2 of the same review confirmed the sweep rewrite genuinely resolves both earlier CRITICALs rather than moving them, and raised 2 MAJOR plus 2 MINOR on it, all fixed: the sweep trigger contradicted the reference and left abandoned-session screens permanent, the `docs/` promotion hatch contradicted the spec unrecorded, "gitignored" was false in the no-gitignore branch, and one justification asserted a false impossibility.
-Next: BLOCKED on Daren's call on the predicate and on the step-3 trigger clause; then finishing-work.
+Next: finishing-work
 Commit Model: Commit-and-Push
