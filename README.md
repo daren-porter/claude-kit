@@ -16,6 +16,8 @@ claude-kit/                          (repo = the marketplace)
                                      commit counts as a new version)
       skills/
         brainstorming/               Design conversation → spec in docs/plans/ + commit model
+          assets/frame.css           Visual companion frame: styles the static screens a session writes to a project's .kit/visuals/
+          references/visual-companion.md  The push loop, on-disk conventions, class catalogue and sweep
         executing-work/              Autonomous section loop: implement, verify, review, Chapter
         finishing-work/              QA, security, docs curation, final review, close-out
         systematic-debugging/        Root-cause discipline before proposing fixes
@@ -54,11 +56,12 @@ claude-kit/                          (repo = the marketplace)
         memory.js / memory-lib.js / memory-index.js The cross-project memory tier: authoring CLI, shared library (the record schema lives in its header), generated index sidecar and the [body revised] marker
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
+                                     (assets/ also exists at skill level, for a file a session copies into a project rather than into the user's config: see brainstorming/assets/)
   .githooks/pre-commit               Validates the plugin payload on commits that touch it; wire with git config core.hooksPath .githooks
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
   test/                              Hook test suite (repo-level, not shipped): node --test test/*.test.js
   setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
-  docs/                              Curated docs library: README index, architecture.md, cross-project-memory.md, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
+  docs/                              Curated docs library: README index, architecture.md, security-model.md, cross-project-memory.md, visual-companion.md, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
 ```
 
 The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"source": "./plugins/claude-kit"` - relative paths resolve against the repo root and work because the marketplace is added via git. Additional plugins later: add a folder under `plugins/` and a second entry in the catalog.

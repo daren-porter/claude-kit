@@ -37,7 +37,7 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
    Then run the `curating-docs` create path: register the new file in `docs/README.md` with a one-line hook, or update its existing entry when fleshing a Proposed stub (the index marker flips to In Progress), and cross-reference in both directions any plan it builds on or supersedes.
 
-   Then sweep the visual companion's screens: if `.kit/visuals/` holds a `current.html` or any `NNN-*.html`, delete those and say in one line how many went, leaving `frame.css` in place. Gate this on what is in the directory rather than on whether this session used the companion, so a brainstorm that was abandoned before its spec does not leave screens nobody ever clears. What the spec you just wrote has to carry is the decision itself, as values rather than a reference to a picture that no longer exists. Anything worth keeping is promoted while the session is running, not rescued here: these files are untracked and never committed, so there is nothing to recover from.
+   Then sweep the visual companion's screens: resolving `.kit/visuals/` from the repo root, delete any `current.html`, `NNN-*.html` archive and `share-NNN-*.html` flattened copy, say in one line how many went, and leave `frame.css` in place. Those three patterns only, never a wider glob. Gate this on what is in the directory rather than on whether this session used the companion, so a brainstorm that was abandoned before its spec does not leave screens nobody ever clears. What the spec you just wrote has to carry is the decision itself, as values rather than a reference to a picture that no longer exists. Anything worth keeping is promoted while the session is running, not rescued here: these files are untracked and never committed, so there is nothing to recover from.
 
 8. **Agree on the commit model** and record it in the spec header:
    - **Review-Only**: changes accumulate uncommitted; sections are staged as they complete, and the staged diff (git diff --staged) is Daren's review surface before anything is committed. Common for smaller changesets in big existing projects.
@@ -48,8 +48,12 @@ Explore the problem space WITH Daren in conversation, then capture the agreement
 
 ## The visual companion
 
-A static HTML file in Daren's own browser, styled by a frame this skill ships. Nothing leaves
-the machine, which is what makes it usable for client work, and he answers in the terminal.
+A static HTML file in Daren's own browser, styled by a frame this skill ships, which he answers
+in the terminal. Two hard rules in the reference keep the page inert: the only URL in a screen is
+the stylesheet, and a screen contains no script and no form. Read them before the first push,
+because they are what the local-only design rests on, and they bound the network only: what you
+choose to render into a screen is a separate question, and real client data in a mockup is still
+that data on disk.
 
 Offer it in its own message rather than bolted onto a question, and be straight about the cost:
 

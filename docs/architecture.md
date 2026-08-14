@@ -6,7 +6,9 @@ This document covers what the kit does while a session runs: which processes fir
 
 The kit ships as one plugin, `plugins/claude-kit/`, installed from the `daren` marketplace. At runtime it presents four kinds of thing, and only one of them is code the kit controls end to end.
 
-Hooks are short-lived Node processes the harness spawns on an event, registered in `hooks/hooks.json`. They are the kit's only deterministic behavior: no model reads them, no model can decline them. Skills are markdown loaded on description match, so their influence is advisory and depends on the model reading them. Agents are markdown definitions dispatched as subagents with a declared tool grant. Assets are files the kit ships for distribution elsewhere, and there is one, `assets/CLAUDE.md`, which `reconcile-claude-md` folds into the user's live `~/.claude/CLAUDE.md`.
+Hooks are short-lived Node processes the harness spawns on an event, registered in `hooks/hooks.json`. They are the kit's only deterministic behavior: no model reads them, no model can decline them. Skills are markdown loaded on description match, so their influence is advisory and depends on the model reading them. Agents are markdown definitions dispatched as subagents with a declared tool grant.
+
+Assets are files the kit ships to be installed somewhere other than the plugin, and there are two of them, at two directory levels and on two different delivery models. `assets/CLAUDE.md` sits at the plugin root and is folded into the user's live `~/.claude/CLAUDE.md` by `reconcile-claude-md`, which offers first and backs up before every write. `skills/brainstorming/assets/frame.css` is the kit's first skill-level asset: a session copies it verbatim into the working tree of whatever project is being brainstormed, at `.kit/visuals/frame.css`, and only when it is absent, so a tweak made there survives later sessions. Nothing merges it and no hook touches it. The reference instructs the session to resolve the source from the skill's own base directory rather than the cwd, since the copy runs from wherever the brainstormed project is; that is the same resolution precedent `reconcile-claude-md` states for the plugin-root asset. `visual-companion.md` covers it.
 
 Hooks and agents load from the installed plugin cache (`~/.claude/plugins/cache`), not from this checkout. An edit in the repo is inert until `/plugin update claude-kit`, which is why no hook can verify its own change in the session that wrote it.
 
@@ -40,10 +42,12 @@ Only one of the kit's five state locations is inside a repo.
 | State | Location | Written by |
 |---|---|---|
 | Plans, Chapters, docs library | `docs/` in each project | Sessions, via the workflow skills |
-| Kit goal leash | `.kit/` per repo, gitignored | `kit-goal.js`, read by `kit-goal-stop.js` |
+| Kit working state | `.kit/` per repo | `kit-goal.js` writes `goal-state.json` (read by `kit-goal-stop.js`); a brainstorming session writes `visuals/` |
 | Cross-project memory tier | `~/.claude-kit-memory/` | `hooks/memory.js` only |
 | Kaizen inbox | `~/.claude-kaizen/notes.md` | Any session, one line at a time |
 | CLAUDE.md reconcile state | `~/.claude/.claude-kit-md-version` and `.claude-kit-md-base.md` | `reconcile-claude-md` |
+
+`.kit/` is the kit's designated per-repo scratch zone rather than the leash's private file. `docs-write-guard`'s deny text and `stop-docs-hygiene`'s flag text both route working artifacts there, `kit-goal.js` writes `goal-state.json`, and the visual companion writes `visuals/`, which is the first content in that tree authored by a session rather than by a hook. The ignore is a convention each project acquires, not a property of the location, and the two writers acquire it differently. `kit-goal` checks that the project's `.gitignore` covers `.kit/` and adds the line if not, which leaves two gaps: a project with no `.gitignore`, and a project whose ignores name a narrower path that a substring check passes wrongly. The visual companion resolves both, because a screen can hold project-confidential content where goal state cannot: it confirms with `git check-ignore -q` on the actual path, which honors global, nested and narrow ignores, and when that fails it writes `.kit/.gitignore` containing `*`, which ignores itself, needs no git repo, and touches no file the project already tracks. That idiom is the one worth spreading to `kit-goal`; see `backlog.md`.
 
 Claude Code's native per-project auto-memory is a sixth store the kit reads about but does not own and does not touch. It lives under the active config directory, which on this machine means `~/.claude-work/projects/<encoded-repo-path>/memory/`. The cross-project tier sits beside it, which is why the routing question (which store does this fact belong in) has a documented answer rather than a convention.
 
@@ -67,7 +71,7 @@ Anything a hook writes into `additionalContext` is trusted context: the model re
 
 The second boundary is the tool grant on subagents. It is declarative except where a hook makes it mechanical: `docs-write-guard` is the one enforced case, denying a non-curator subagent any write into `docs/`. Seven agents that are read-only by intent still grant Bash, which is a known gap tracked in `kit-adoptions.md`.
 
-The kit's trust architecture is not yet written down as such. `docs/security-model.md` is an open backlog item, and the generalized `security-reviewer` agent reads that file first when it exists.
+The kit's trust architecture is written down in `docs/security-model.md`, which the generalized `security-reviewer` agent reads first. It carries the two bounding premises, the trusted-channel table, the project write surfaces the kit creates, the one operator-initiated egress path, and what the kit does not defend against.
 
 ## External integrations
 
@@ -78,3 +82,4 @@ No hook depends on a network call succeeding. `branch-reaper-nudge.js`'s bounded
 ## Feature documents
 
 - `cross-project-memory.md` - the kit-owned tier for facts that span projects: store layout, the two session-start blocks, the generated line and its `[body revised]` marker, advisory decay, failure modes, and how to operate it.
+- `visual-companion.md` - `brainstorming`'s browser-viewed screens: the three shipped files, the `.kit/visuals/` footprint and its sweep, the superpowers port with its licence obligation and every change from the source, the failure modes, and why no browser-versus-terminal rule ships. No code runs in this feature, so it appears nowhere in the hook execution model above.

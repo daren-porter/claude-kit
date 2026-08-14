@@ -133,10 +133,40 @@ omits a `stop_hook_active` loop guard, so it re-blocks every stop until an allow
 That is the completion leash working as designed, and it is bounded by the harness's consecutive-
 block cap rather than by anything the kit controls. `stop-docs-hygiene` does carry the loop guard.
 
+## Project write surfaces the kit creates
+
+Two, both under `.kit/` per repo and both machine-local. `.kit/goal-state.json` is the goal
+leash, written by `kit-goal.js` and guarded at the write door (see the trusted-channel table).
+`.kit/visuals/` is the visual companion's screens, written by a session following
+`brainstorming`, and it is the only kit surface whose contents can be project-confidential:
+screens are mockups of the thing under design. Three properties bound it. A screen is inert by
+rule, the only URL in one being its stylesheet and script and form elements barred, so opening
+one makes no request. The directory is confirmed ignored before the first write, with
+`.kit/.gitignore` containing `*` when the project's own ignores do not cover it, so a later
+`git add -A` cannot stage a mockup. And the screens are swept at spec-write. None of the three
+is enforced by a hook; all three are skill instructions, so they hold to the extent the model
+follows them, which is the general caveat in the fail-open section below.
+
+## Operator-initiated egress
+
+One path, and it is the only place any kit skill moves project content off the machine.
+`brainstorming` can flatten a screen into a single self-contained file to share, and an Artifact
+is one destination for that file. It is gated three ways in `references/visual-companion.md`:
+flattening and sending are separate permissions, the destination is named as off-machine when
+consent is asked, and any repo that is not Daren's own is treated as client material for which no
+off-machine destination is proposed. Gating by instruction rather than by mechanism, so it is a
+discipline, not a control.
+
 ## What the kit does not defend against
 
 - A hostile local user, or any attacker who already has the operator's uid. See the same-uid
   premise; the kit cannot be a boundary against the account it runs as.
+- Its own instructions being ignored. The two sections above are the clearest case: a screen's
+  inertness, the ignore check, and the sharing gates are prose a model follows, with no hook
+  behind any of them. A pre-existing `.kit/visuals/frame.css` is also trusted unverified on the
+  copy-only-when-absent rule, and CSS alone can exfiltrate through `url()` and attribute
+  selectors. That sits on the trusted-workspace side of the premise above, so it is recorded
+  rather than mitigated.
 - A hostile repository. See the trusted-workspace premise.
 - A hostile MCP server or connector. Tool results are treated as data, but the kit has no
   mechanism to validate a connector's honesty.

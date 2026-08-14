@@ -107,7 +107,7 @@ body.framed { height: 100vh; overflow: hidden; }
 .header h1 { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); }
 /* A right-side caption slot. The source's green connection dot is removed: a
    static file has no liveness to report. */
-.header .status { font-size: 0.7rem; color: var(--text-secondary); display: flex; align-items: center; gap: 0.4rem; }
+.header .status { font-size: 0.7rem; color: var(--text-secondary); }
 
 .main { flex: 1; overflow-y: auto; }
 #claude-content { padding: 2rem; min-height: 100%; }

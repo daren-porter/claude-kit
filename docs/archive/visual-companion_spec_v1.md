@@ -1,6 +1,6 @@
 # Visual Companion
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: none (no delegate-fable sections)
 Created: 2026-07-14
@@ -130,7 +130,15 @@ Acceptance criteria:
   plugin and version it came from.
 - The click-dependent rules are removed rather than carried inert: the `.indicator-bar`
   block and the `.option.selected` / `.selected .letter` state rules. The presentation
-  classes they sat beside are kept.
+  classes they sat beside are kept. (Amended during execution, because this list read as
+  exhaustive and is not: review added `.card.selected`, `cursor: pointer` on `.option` and
+  `.card`, the `transform` and `box-shadow` lift on `.card:hover`, and `.header .status::before`
+  with `.status` recoloured off `--success`, all being the same click-or-server residue; dropped
+  `--selected-bg` and `--selected-border` from both `:root` blocks once unused; and added one
+  rule with no upstream equivalent, `body.framed`, replacing the source's unconditional
+  `html, body { height: 100%; overflow: hidden; }` viewport lock. The complete port record is in
+  `docs/visual-companion.md`, which is where a later re-sync against a superpowers upgrade should
+  start, not here.)
 - Every custom property the retained rules reference is still defined in the base `:root`
   block, and every token the `prefers-color-scheme: dark` block overrides exists in the base
   block, so deleting the selection rules leaves no dangling variable in either direction.
@@ -188,14 +196,30 @@ Execution mode: main.
 
 ### 3. Baseline-test the browser-versus-terminal rule, and write none
 
-Status: **complete. No decision rule ships.** Two arms, seven in-state reps, and the reps
-discriminated perfectly in both directions without any rule present, which is what a rule here
-would have encoded.
+Status: **complete. No decision rule ships.** Three arms testing two conditions, seven in-state
+reps, and the reps discriminated perfectly in both directions without any rule present, which is
+what a rule here would have encoded.
 
 The rule shapes behavior and had no locator behind it, so it earned a RED before being written
-down anywhere. Section 2 left it out so that ordering held. The candidate wording was never in
-the repo, the scratchpad, or any rep prompt; it is recorded verbatim in Chapter 3, because a
-conclusion about a text nobody can read is not auditable.
+down anywhere. Section 2 left it out so that ordering held. It is recorded verbatim in Chapter 3,
+because a conclusion about a text nobody can read is not auditable.
+
+**The isolation of the candidate was broken partway through, and the honest account is per-arm
+rather than blanket.** No rep prompt ever carried it, in any arm. But it reached the scratchpad at
+17:05:19Z as `s3-candidate-wording.md`, while the second arm's three reps were still running and
+their fixture sat in a child of that directory, and it reached the tracked spec in commit
+`3cfba5c` at 17:12:30Z, 24 minutes before the third arm ran with this repo as its cwd. Both are
+breaches of the rule this kit states in `writing-skills`, which names the scratchpad the worst of
+the three places and bars persisting until the arm is done. So only the first arm ran under a
+clean control by construction.
+
+What rescues the result is detection rather than prevention, which is what that same rule says is
+actually available. Every counted rep's transcript was checked for what it opened: no `git`
+command of any kind, no repo-rooted `grep` or `find`, every file read confined to its own fixture,
+and no occurrence of `s3-candidate-wording`, `visual-companion_spec`, or any phrase from the
+candidate. That holds for first-arm rep 4, all three second-arm reps, and all three third-arm
+reps. The conclusion therefore stands on evidence, but a later reader should weigh it knowing the
+control was procedural for one arm and evidential for two.
 
 **The fixture.** A scratch project (`red-tideline`) outside the kit repo, with the companion
 already accepted AND already used successfully for a genuinely visual question, and the next
@@ -208,15 +232,24 @@ tabling prose, all four kept the recommendation and the argument in the terminal
 argued explicitly that seeing the difference beat reading it. No rep treated the accepted
 companion as a mode, and none pushed instead of thinking.
 
-**Why the outcome is not decided here.** The plan pre-registered the tempted failure as
-"pushing a browser screen for a question that is conceptual rather than visual". Read literally
-that predicate is met by all four reps, so the RED fired and the rule is justified. Read as
-what the rule is actually for, whether the browser gets reached for when it does not help, no
-rep failed, and porting a rule that routes "what does X mean?" to the terminal would forbid a
-judgment four independent reps made and defended. The two readings give opposite outcomes on
-identical evidence, the plan does not resolve which governs, and that choice decides what
-ships. It is recorded here rather than settled, because an earlier pass of this section resolved
-it silently in favour of cutting and a review caught that as a post-hoc predicate change.
+**Why this arm could not decide the outcome on its own.** The plan pre-registered this arm's
+tempted failure as "pushing a browser screen for a question that is conceptual rather than
+visual". Read literally, all four reps met it, so the RED fired and the rule is justified. Read
+as what the rule is for, whether the browser gets reached for when it does not help, no rep
+failed. The two readings gave opposite outcomes on identical evidence, and the arm contained
+nothing that could separate them: a predicate counting pushes cannot distinguish a rep exercising
+judgment from a rep rendering indiscriminately, because both push. That is the defect in the
+operationalization, and it is why an earlier pass of this section, which resolved the ambiguity
+silently in favour of cutting, was correctly caught as a post-hoc predicate change.
+
+**The third arm is what resolves it, and the literal reading is the one that loses.** Put the
+same reps in a case where the browser subtracts fidelity and they decline, three for three,
+against a predicate committed before the results. That is the discriminating evidence this arm
+lacked: reps that rendered indiscriminately would have rendered there too. So the pushes here
+were judgment, the crude predicate mis-specified the failure by counting a behavior instead of
+naming a mistake, and no rule ships. Stated plainly because the reasoning matters more than the
+verdict: the literal predicate is not being reinterpreted after the fact, it is being falsified
+by a later arm designed to test it in the opposite direction.
 
 **Process failures in this section, recorded because they bound what the evidence supports:**
 
@@ -247,7 +280,7 @@ form `writing-skills` prescribes for a missed required element, and the shape st
 for the council), leaves the judgment of when a question would land better shown to the agent,
 and carries no category list.
 
-#### Second arm: the rule Daren actually wants, pre-registered before results
+#### Third arm: the rule Daren actually wants, pre-registered before results
 
 Superpowers' category table is not what ships. Daren's own formulation, given 2026-08-14 in the
 session that ran this section, is narrower and turns on the answer rather than the question:
@@ -263,7 +296,11 @@ companion where HTML or CSS does.
 2. If yes, can the terminal carry it faithfully? ASCII, a tree, a table: yes, so the terminal.
    Colour, typography, spacing, a rendered page: no, so the companion.
 
-Gate 1 is uncontested and matches every rep's behavior so far. **Gate 2 is what this arm tests**,
+Gate 1 is uncontested, though note it is satisfied purposively rather than literally by the
+earlier arm: the subject there was what archiving *means*, which sounds non-visual, while the
+answer the reps rendered was how the list view changes, which is something you look at. That is
+the gate working as intended, and it is also why a predicate keyed to the question's phrasing
+rather than the answer's form mis-sorts these cases. **Gate 2 is what this arm tests**,
 because it is the novel half and the observed tendency runs against it: four in-state reps
 pushed four times.
 
@@ -289,7 +326,7 @@ better than it is."
 
 #### The conclusion, and why it is not the one that was retracted
 
-Across the two arms, seven in-state reps with no rule present:
+Across the two conditions, seven in-state reps with no rule present:
 
 | Arm | The browser would | Reps | Behavior |
 |---|---|---|---|
@@ -340,7 +377,7 @@ inspection than to pin.
 Completed: 1. Frame asset
 Implemented By: implementer-sonnet, returned DONE_WITH_CONCERNS; orchestrator applied all review fixes in the main thread
 Metrics: 2 review rounds (blind, then adversarial after a re-dispatch); 0 NEEDS_CONTEXT; 0 escalations; advisor on, not consulted during execution
-Decisions / Surprises: The spec's criteria described runtime outcomes in a brainstormed project rather than what gets built, so the section was rescoped before dispatch to build the asset (`assets/frame.css`) and move the on-disk conventions to Section 2, which is where they are written down. The implementer's concern was a defect in my brief: my keep-list said `.card*`, which literally retains `.card.selected`, while two greps I mandated and step 4's stated expectation are only satisfiable if it is removed. It removed it and flagged the contradiction rather than picking a side silently. Correct call, my fault. The port is byte-identical for every retained rule, verified independently by diffing the extracted source CSS body (deletions only, no additions or modifications). Criterion 3 was amended during execution: it asked for every token in both `:root` blocks, which the source does not do and should not, since `--success`, `--warning` and `--error` are base-only and the cascade makes that correct.
+Decisions / Surprises: The spec's criteria described runtime outcomes in a brainstormed project rather than what gets built, so the section was rescoped before dispatch to build the asset (`assets/frame.css`) and move the on-disk conventions to Section 2, which is where they are written down. The implementer's concern was a defect in my brief: my keep-list said `.card*`, which literally retains `.card.selected`, while two greps I mandated and step 4's stated expectation are only satisfiable if it is removed. It removed it and flagged the contradiction rather than picking a side silently. Correct call, my fault. As delivered by the implementer the port was deletions only, verified independently by diffing the extracted source CSS body: no additions, no modified rules. That is no longer literally true of the shipped file, and QA caught the summary standing unqualified: the review fixes below add one rule (`body.framed`) and modify one retained rule (`.header .status`, recoloured with its `::before` dot dropped), plus intra-rule property deletions for the cursor and lift. Every one of those is disclosed individually here and in the file's own header comment, but "deletions only" describes the port, not the shipped asset. Criterion 3 was amended during execution: it asked for every token in both `:root` blocks, which the source does not do and should not, since `--success`, `--warning` and `--error` are base-only and the cascade makes that correct.
 Review Findings: Blind raised 3 MAJOR, all fixed: the extracted stylesheet's `html, body { overflow: hidden }` turned "content too long" into "content silently unreachable" for any document omitting the `.main` wrapper (reproduced headless), so the viewport lock is now opt-in via `body.framed`; the verbatim MIT port shipped without the permission notice and no repo-root licence covers it, so the full notice is in the file header where it travels with the plugin cache; and `cursor: pointer` plus the card lift promised a click this kit has no channel for. Adversarial then raised 1 MAJOR and 6 MINOR. The MAJOR was mine: the header comment I added documented a plain-body path that renders edge-to-edge unpadded, proved by render, so content is now documented as belonging inside `#claude-content`. Fixed MINORs: the word "MIT" had vanished when the permission notice replaced "Licensed MIT."; my comment's literal angle-bracket `body` tripped the section's own mandated grep; and `.header .status`'s green dot was the source's WebSocket connection light, the same false promise as the cursor, so the dot is removed and `.status` is now a plain caption slot. Noted not fixed: `--accent-hover` and `--warning` unused (documented as an author palette), `.pros-cons` missing upstream's breakpoint, and the retained hover border tint (kept deliberately, now said so in the comment). Both reviewers independently re-established byte fidelity after the fixes.
 Next: 2. Companion guide and brainstorming wiring
 Commit Model: Commit-and-Push
@@ -350,7 +387,7 @@ Completed: 2. Companion guide and brainstorming wiring
 Implemented By: main session
 Metrics: 1 review round (adversarial and blind in parallel); 0 NEEDS_CONTEXT; 0 escalations; advisor on, not consulted during execution
 Decisions / Surprises: Started inside Section 1's review window, which the section loop allows for a disjoint later section, and its one dependency (the class catalogue) was re-verified against the final asset before closing. The reference follows this kit's `references/` convention rather than superpowers' sibling layout. No durable test: no kit test pins any skill's pointer to its support files, `csharp-style`'s included, so adding the first one here to guard a rename is not worth the inconsistency. Section 1's MAJOR propagated here and neither reviewer could have known it: my canonical screen template used the unpadded plain-body path, so the documented recipe would have produced flush-to-the-edge screens on a tool whose whole job is visual fidelity.
-Review Findings: Both reviewers independently returned CRITICAL on the same defect, which is the strongest signal in this effort: the sweep deleted all of `.kit/visuals/`, destroying the `frame.css` a rule 26 lines earlier said must survive, and it deleted gitignored never-committed files with a keep-predicate that could not fire before the delete. The sweep is rewritten in both files: scoped to `current.html` and the `NNN-*.html` archive, `frame.css` explicitly spared, promotion required before the sweep rather than rescued after, and promotion routed to text in the spec because `curating-docs` has no zone for an HTML mockup and an unregistered file in `docs/` is a defect by its own index rule. Other MAJORs fixed: my dark-mode claim was false and actively misleading (`--success`, `--warning` and `--error` are all base-only, not just `--warning`); a screen could reference remote fonts or CDNs, which would falsify the "nothing leaves the machine" rationale by leaking a client machine's IP and referrer, now a hard rule; `assets/frame.css` was unresolvable at runtime from an arbitrary cwd, now resolved from the skill's base directory per the `reconcile-claude-md` precedent; the loop omitted its first-push prerequisites, now a step 0; the archive copy read as a second Write of the same document, doubling the per-push tokens this design exists to save, now a `cp`; and the offer had no anchor in the numbered process, now a conditional at step 3 on an observable trigger (the question in front of you is about appearance) following the design-council precedent in the same file. MINORs fixed: archive numbering rule, `.label` example, the 700px boundary, the absolute-path instruction, the missing-`.gitignore` branch, the non-existent "end-of-session" sweep trigger, attribution for guidance reworked from superpowers, and a duplicated opening paragraph trimmed for leanness. Both reviewers confirmed no decision rule was smuggled back in.
+Review Findings: Both reviewers independently returned CRITICAL on the same defect, which is the strongest signal in this effort: the sweep deleted all of `.kit/visuals/`, destroying the `frame.css` a rule 26 lines earlier said must survive, and it deleted gitignored never-committed files with a keep-predicate that could not fire before the delete. The sweep is rewritten in both files: scoped to `current.html` and the `NNN-*.html` archive, `frame.css` explicitly spared, promotion required before the sweep rather than rescued after, and promotion routed to text in the spec because `curating-docs` has no zone for an HTML mockup and an unregistered file in `docs/` is a defect by its own index rule. Other MAJORs fixed: my dark-mode claim was false and actively misleading (`--success`, `--warning` and `--error` are all base-only, not just `--warning`); a screen could reference remote fonts or CDNs, which would falsify the "nothing leaves the machine" rationale by leaking a client machine's IP and referrer, now a hard rule; `assets/frame.css` was unresolvable at runtime from an arbitrary cwd, now resolved from the skill's base directory per the `reconcile-claude-md` precedent; the loop omitted its first-push prerequisites, now a step 0; the archive copy read as a second Write of the same document, doubling the per-push tokens this design exists to save, now a `cp`; and the offer had no anchor in the numbered process, now anchored at step 3 following the design-council precedent in the same file. (That anchor's trigger clause was itself replaced during Section 3: the appearance-category wording it first carried is gone, and what ships names consent rather than a category. See Section 3.) MINORs fixed: archive numbering rule, `.label` example, the 700px boundary, the absolute-path instruction, the missing-`.gitignore` branch, the non-existent "end-of-session" sweep trigger, attribution for guidance reworked from superpowers, and a duplicated opening paragraph trimmed for leanness. Both reviewers confirmed no decision rule was smuggled back in.
 Next: 3. Baseline-test the browser-versus-terminal rule, and cut it
 Commit Model: Commit-and-Push
 
@@ -378,6 +415,25 @@ Decisions / Surprises: Run first, ahead of Section 2, because `writing-skills` r
 - Rep 3: "No visual for this one, it's monospace text so the terminal shows it at full fidelity and a browser would only distort it."
 
 Rep 2's answer independently covers the `<pre>`-wrapper case that the pre-registered predicate named as a failure, which is the one escape a sympathetic reader might otherwise have allowed.
-Review Findings: Adversarial (job 1) returned 2 CRITICAL, 3 MAJOR, 3 MINOR against this section's first recorded outcome, and all were valid. The two CRITICALs (counted reps that were out of state, and a post-hoc predicate change) are why the arm was re-run and why the outcome is now open rather than decided. Fixed from the same review: the untestable "would have made behavior worse" claim is retracted, the candidate wording is recorded verbatim above, the evidence now lives in this Chapter rather than an ephemeral scratchpad path, the false isolation and "independent grounds" claims are corrected, and the "gains no decision rule" claim is corrected because step 3's trigger clause is exactly that. Job 2 of the same review confirmed the sweep rewrite genuinely resolves both earlier CRITICALs rather than moving them, and raised 2 MAJOR plus 2 MINOR on it, all fixed: the sweep trigger contradicted the reference and left abandoned-session screens permanent, the `docs/` promotion hatch contradicted the spec unrecorded, "gitignored" was false in the no-gitignore branch, and one justification asserted a false impossibility.
+Review Findings: Adversarial (job 1) returned 2 CRITICAL, 3 MAJOR, 3 MINOR against this section's first recorded outcome, and all were valid. The two CRITICALs (counted reps that were out of state, and a post-hoc predicate change) are why the arm was re-run, and a third arm then settled it in the opposite direction. Fixed from the same review: the untestable "would have made behavior worse" claim is retracted, the candidate wording is recorded verbatim above, the evidence now lives in this Chapter rather than an ephemeral scratchpad path, the false isolation and "independent grounds" claims are corrected, and the "gains no decision rule" claim is corrected because step 3's trigger clause is exactly that. Job 2 of the same review confirmed the sweep rewrite genuinely resolves both earlier CRITICALs rather than moving them, and raised 2 MAJOR plus 2 MINOR on it, all fixed: the sweep trigger contradicted the reference and left abandoned-session screens permanent, the `docs/` promotion hatch contradicted the spec unrecorded, "gitignored" was false in the no-gitignore branch, and one justification asserted a false impossibility.
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-08-14 (close-out)
+Completed: finishing-work
+Implemented By: main session; qa-verifier, security-reviewer, adversarial-reviewer, docs-curator
+Metrics: QA 1 round; security 1 round; final adversarial 1 round; curator 1 round; advisor on, not consulted during execution. **Fable downgrade flagged:** the skill defaults the security and final adversarial passes to a `fable` override, and both ran at the session model instead, because this spec's `Fable Spend: none (no delegate-fable sections)` header is ambiguous between "no Fable authorized" and "only scopes section modes". Crossing into metered Fable needs explicit per-effort authorization, which that header does not grant, so the conservative reading won. A later Fable pass would be reading a changeset that never had its strongest-model review; the header ambiguity is itself a kaizen item.
+
+**QA: PASS.** 277 tests green, plugin validation clean (the version warning is the documented pre-existing one), every acceptance criterion checked including two verified by headless Chromium render rather than by reading code. Two findings, both fixed: the class catalogue's typography group had no code example, and Chapter 1's "deletions only, no additions or modifications" was true of the implementer's port and false of the shipped asset once review fixes added `body.framed` and recoloured `.header .status`. QA also disconfirmed a contamination path nobody had checked, that a live-updated plugin cache could have exposed RED reps to this repo's draft: the installed cache is frozen at a June 2026 snapshot.
+
+**Security: CONCERNS, four MAJOR, all fixed.** The design's central claim was an instruction rather than a property. The resource ban was an open enumeration, so it became an allowlist ("the only URL anywhere in a screen is `href="frame.css"`"), which is grep-testable and covers the case a list misses: an `<iframe>` of the client's live site for comparison, fetched from this machine with this machine's cookies. Nothing barred an inline `<script>`, and a `file://` page with inline JS can exfiltrate freely, so script, inline handlers and `<form action>` are now barred outright. The flattened share copy, the one artifact built to travel, had no named path and was the single file the sweep missed; it is now `.kit/visuals/share-NNN-*.html`, swept first, with flattening and sending as separate permissions and "any repo that is not Daren's own is client material" replacing an untestable "wrong for client work". And the absolute claim in SKILL.md is scoped, because "use real content" was being licensed by a network-axis claim while posing a data-axis risk. `docs/security-model.md` gained the new project write surface, the one operator-initiated egress path, and an entry under what the kit does not defend against, since none of the three properties is hook-enforced. `frame.css` itself came back clean under hostile inspection.
+
+**Final adversarial: CHANGES_REQUIRED, two CRITICAL, both fixed, and the first is the one worth remembering.** "The candidate wording was never in the repo, the scratchpad, or any rep prompt" was false: it reached the scratchpad at 17:05:19Z while second-arm reps were running in a child of that directory, and the tracked spec at 17:12:30Z, 24 minutes before the third arm ran with this repo as its cwd. Both breach the rule this kit added to `writing-skills` the same morning, which names the scratchpad the worst of the three. Detection rescued the result rather than prevention: no counted rep ran a `git` command, searched the repo, or read outside its fixture. The claim is now per-arm and honest. The second CRITICAL: the section declared the predicate fork unresolved and then resolved it, with the discrimination table quietly using the purposive reading a prior review had flagged as post-hoc. Rewritten to say which reading governs and why, the argument being that the third arm falsifies the literal predicate rather than reinterpreting it. Also fixed: a ported per-screen option threshold with a behavioral rationale ("past that he is comparing rather than deciding") shipped through no gate at all, which is the same failure as the rule this effort cut, so it is gone; step 0's copy would have failed on a first push before `mkdir -p`; the wireframe example missed three class groups, the identical gap QA had just made the effort fix elsewhere; and `.header .status` kept flex layout that existed only for the deleted dot.
+
+**Drift adjudications, four resolved without a decision and one that needed none in the end.** The assets count and category and the `.kit/` writers row in `architecture.md` were stale docs where code wins. The gitignore guarantee was classed a likely mistake and found independently by the security pass from the other direction; it is fixed rather than adjudicated, so "safe by construction" now holds in every branch, and both curator passages describing the old behavior were rewritten. The port-scope deviation was already recorded but criterion 2 read as exhaustive, which would mislead a later re-sync from the archived spec, so it is amended in place pointing at `docs/visual-companion.md` as the complete record. The root README omitted the new skill-level `assets/` convention in the one file `architecture.md` defers to for structure. Two pre-existing defects were fixed in passing: `architecture.md` called `security-model.md` an open backlog item when the file exists and the backlog does not carry it, and `docs/README.md` had never registered `security-model.md`, which its own index rule counts as a defect.
+
+**Docs committed.** The repo has no CLAUDE.md and so no stated docs-commit stance, and the question was put to Daren. Committing anyway, because `docs/README.md` now registers `visual-companion.md` and holding the doc back would leave the index pointing at an untracked file, which is the defect that index rule exists to prevent. Reversible on request.
+
+**Left open deliberately:** `kit-goal`'s weaker ignore check (backlogged with the proven idiom rather than fixed here, to keep this changeset inside its spec); the unwritten `DRIFT: Dn` slug convention; and whether sharing becomes frequent enough to earn a real flatten path.
+Next: none, the effort is complete
 Commit Model: Commit-and-Push

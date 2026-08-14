@@ -36,11 +36,15 @@ Four rules about those paths:
 
 ## The loop
 
-0. **First push in a project only.** Make sure the project's `.gitignore` carries `.kit/`,
-   adding that line if it is missing and saying in one line that you touched the file, since
-   under Review-Only it lands in Daren's staged diff as an unrelated change. If the project
-   has no `.gitignore`, or is not a git repo, create nothing and say so; the files are
-   untracked either way. Then copy `frame.css` in if it is not already there.
+0. **First push in a project only.** Confirm the screens will be ignored, with
+   `git check-ignore -q .kit/visuals/current.html`. That one command covers a global ignore, a
+   nested one, and the narrow case where the project ignores `.kit/goal-state.json` but not the
+   directory, which a substring check for `.kit/` would pass wrongly. If it fails, write
+   `.kit/.gitignore` containing `*`: it ignores itself, needs no git repo, and touches no file
+   Daren already tracks, so nothing appears in his staged diff as an unrelated change. Untracked
+   is not ignored, and a later `git add -A` would otherwise stage client mockups. Then
+   `mkdir -p .kit/visuals` and copy `frame.css` in if it is not already there: on a first push
+   the directory does not exist yet, so the copy fails without it.
 1. Write `current.html`. Then copy that file to the numbered archive name with `cp`; do not
    write the document a second time, which would double the output tokens this design exists
    to save, and would let the two copies drift.
@@ -56,12 +60,22 @@ Two things not to do. Do not use `cat` or a heredoc to write the file, because i
 whole document into the terminal; use the Write tool. And do not describe the screen at
 length in the terminal as well, since the screen is the description.
 
-**No remote resources, ever.** A screen references no web fonts, no CDN stylesheets or scripts,
-and no remote images: system and local fonts only, and colours written into the file. This is
-the rule that makes "nothing leaves the machine" true rather than aspirational. Opening a screen
-that links `fonts.googleapis.com` sends the client's IP, user agent and referrer off the box,
-which is exactly the exposure the local-only design avoids, and it also breaks the flattened
-single-file copy described under sharing.
+**Two hard rules make a screen inert.** They are what turn "nothing leaves the machine" from an
+aspiration into a property, so they are stated as an allowlist and a prohibition rather than as a
+list of things to avoid, which always has a gap.
+
+- **The only URL anywhere in a screen is `href="frame.css"`.** No other `src`, `href`, `url()`,
+  `@import`, `srcset`, `action`, or `poster`, in markup or in a style attribute. That covers web
+  fonts and CDNs, and it also covers the cases a list would miss: an `<iframe>` of the client's
+  live site for a side-by-side comparison (which fetches it from this machine, with this
+  machine's cookies, the moment the file opens), a favicon, a `preconnect` hint, remote media, a
+  `meta refresh`. It is grep-testable, which a judgment call is not.
+- **No script and no form.** No `<script>` element, no inline event-handler attribute
+  (`onclick=` and friends), no `<form action=>`. The frame ships no JavaScript, and the claim
+  that a screen has no channel back is only true while the screen adds none: a `file://` page
+  with inline JS can `fetch`, beacon, submit, or navigate its way off the box, and CORS limits
+  reading the response rather than sending the request. An interactive prototype is a reasonable
+  thing to want and this is not the tool for it; make the states separate screens instead.
 
 ## Writing a screen
 
@@ -124,7 +138,15 @@ The frame's own `.pros h4` and `.cons h4` already carry that limitation.
 
 **Typography and structure.** `h2` for the screen's question, `h3` for a section heading,
 `.subtitle` for the line under it, `.label` for a small uppercase tag, `.section` for a block
-with bottom margin.
+with bottom margin:
+
+```html
+<div class="section">
+  <p class="label">Step 2 of 3</p>
+  <h2>Which palette reads better?</h2>
+  <p class="subtitle">Same layout, two accent families</p>
+</div>
+```
 
 **Lettered options**, for A/B/C alternatives. Nothing is clickable, so the letter is how
 Daren names his answer in the terminal:
@@ -185,7 +207,11 @@ container, so wrap that pair yourself:
   <div class="mock-nav">Logo · Lists · Settings</div>
   <div style="display:flex">
     <div class="mock-sidebar">Tags</div>
-    <div class="mock-content">Saved links</div>
+    <div class="mock-content">
+      <input class="mock-input" placeholder="Search links">
+      <div class="placeholder">Results</div>
+      <button class="mock-button">Save</button>
+    </div>
   </div>
 </div></div>
 ```
@@ -195,19 +221,34 @@ container, so wrap that pair yourself:
 Scale it to the question. A layout question wants a wireframe; a palette or theme question
 wants real colours and real type, which here means real hex values and a real font stack built
 from what the machine already has, never a downloaded font. Use real content where placeholder
-text would hide the problem. Two to four options per screen; past that he is comparing rather
-than deciding.
+text would hide the problem.
+
+One caveat on "real content", because the local-only design does not license it. The two hard
+rules above stop a screen reaching the network; they say nothing about what you put in it. Real
+client records rendered into a mockup are still that client's data sitting in a file on this
+machine, and the moment anyone flattens that screen to share it, the exposure travels with it.
+Realistic beats real: enough shape and length to expose the layout problem, invented values.
 
 Some of this section, and the loop's shape, is reworked from superpowers' own visual companion
 guide (MIT, Jesse Vincent), the same source `assets/frame.css` came from.
 
 ## Sharing a screen with someone else
 
-A pushed screen is not self-contained: it links `frame.css`, so sending the HTML alone
-arrives unstyled. To share one, inline the frame into a copy of the file, which makes it a
-single document that renders anywhere. Do that on request, per screen. An Artifact is one
-destination for the flattened copy, and it is the only path here that puts content
-off-machine, so it needs Daren's say-so and is wrong for client work.
+A pushed screen is not self-contained: it links `frame.css`, so sending the HTML alone arrives
+unstyled. To share one, inline the frame into a copy, which makes a single document that renders
+anywhere. Three constraints, because this copy is the only artifact in the design built to
+travel and it carries whatever the screen carried:
+
+- **Write it to `.kit/visuals/share-NNN-<name>.html`**, numbered like the archive. Never to the
+  project root or anywhere else: outside `.kit/` nothing ignores it, and an implementer
+  subagent running `git add` will stage it.
+- **Flattening and sending are two separate permissions.** "Flatten this so I can send it" is
+  not consent to a destination. Say where it would go and get that answer separately, because an
+  Artifact is hosted off-machine and is the only egress of project content anywhere in this
+  skill.
+- **Treat any repo that is not Daren's own as client material**, and do not propose an
+  off-machine destination for it at all. That is a test rather than a judgment call, which is
+  what "wrong for client work" was missing.
 
 ## Cleaning up
 
@@ -216,9 +257,15 @@ outcome goes into the spec, in a form that does not need the picture: a palette 
 hex values, a layout choice is describable in a sentence, and "option B" means nothing once the
 screens are gone. Write the values, not the reference.
 
-**When brainstorming writes the spec, delete `current.html` and the `NNN-*.html` archive, and
-say in one line how many screens went.** Two constraints on that:
+**When brainstorming writes the spec, delete `current.html`, the `NNN-*.html` archive, and any
+`share-NNN-*.html` flattened copy, and say in one line how many screens went.** Resolve
+`.kit/visuals/` from the repo root rather than the cwd, and delete those three name patterns
+specifically: never `*.html`, which would take anything else that happens to be in there. Three
+constraints on that:
 
+- **Sweep the share copies too, and first.** They are the files that carry inlined content and
+  were built to be sent, so leaving them is the worst residue of the three. They match neither of
+  the other patterns, which is how an earlier version of this rule missed them entirely.
 - **Leave `frame.css` alone.** It is the one file in there that is not scaffolding, it may carry
   a tweak of Daren's, and the copy-only-when-absent rule above exists precisely so that tweak
   survives into later sessions. A sweep that takes it makes that rule unobservable.
@@ -234,7 +281,12 @@ Promotion means the screen's *content* becomes text in the spec, which is the on
 dropped into `docs/` unregistered is a defect by its own index rule. If Daren wants the actual
 file kept, that is his to put somewhere; do not invent a docs zone for it.
 
-A session that ends without writing a spec leaves the screens behind. That is fine and there is
-no hook chasing it: the directory is untracked, costs a few KB, and the next spec-write in that
-project sweeps it, because that sweep is gated on what is in the directory rather than on
-whether that session used the companion. This is a deliberate non-feature, not an oversight.
+A session that ends without writing a spec leaves the screens behind, and the reason to accept
+that is not disk cost. Screens can hold client-shaped content, so the residue is confidentiality
+rather than kilobytes, and it sits unswept until the next spec-write in that project, which may
+never come. It is accepted anyway because the alternative is a hook watching every project for
+stale files, because the two hard rules keep a stale screen inert, and because the next
+spec-write in that project does sweep it, that sweep being gated on what the directory holds
+rather than on whether that session used the companion. So it is a deliberate non-feature rather
+than an oversight. One duty follows: if a session ends with screens still on disk and they hold
+anything you would not want sitting there, say so on the way out instead of leaving it silent.
