@@ -124,11 +124,13 @@ a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording 
 own context and in no file you wrote.
 
 Absolute absence is not the bar, because it is not available: the harness records prompts and
-tool results alike into this session's transcript and a per-subagent sibling under
-`<configBase>/projects/`, owned by the same user the reps run as, so the wording is on
-readable disk from the moment you draft it (verified 2026-08-11). What you control is which
-paths a rep has reason to walk, and a rep working a fixture has every reason to open the
-skill file and none to open a transcript directory. Those three are where that bites in
+tool results alike into this session's transcript and a per-subagent transcript at
+`<configBase>/projects/<project>/<session-id>/subagents/agent-<agentId>.jsonl`, owned by the
+same user the reps run as, so the wording is on readable disk from the moment you draft it
+(verified 2026-08-11; path corrected 2026-08-15, the earlier "sibling under `projects/`" being
+two levels too shallow, which matters because the detection rule below sends you to that file).
+What you control is which paths a rep has reason to walk, and a rep working a fixture has every
+reason to open the skill file and none to open a transcript directory. Those three are where that bites in
 practice rather than an exhaustive list, since any other directory you point a fixture into
 inherits the same property, and past them what is left is detection: read what each rep
 actually opened before you count it. On the gated path below, where RED by
@@ -143,6 +145,24 @@ keeping the better version, so its artifact was partly another rep's (2026-08-14
 took the action under test is still its own act and survives this, but any judgment of what it
 produced does not. Copy the fixture once per rep and point each rep at its own copy. The failure is
 silent unless a rep happens to mention it, so do not rely on noticing.
+
+**The kaizen inbox is that same hazard with no fixture in it.** The global posture rule tells every
+rep to append kit friction to `~/.claude-kaizen/notes.md`, so a rep testing a kit skill files a note
+about the very gap under test and a concurrent rep reads it as prior art, one opening with "the
+kaizen notes for both frictions are already filed from earlier in this pass" (2026-08-15). Clear the
+inbox before an arm and read it after, counting whatever is in it as those reps' output rather than
+as inbox items. That buys attribution and not isolation, which is the weaker half: clearing
+beforehand does nothing about rep 2 reading rep 1's note mid-arm, and mid-arm is when it happened.
+Isolation costs serial dispatch with a clear between reps, and an arm whose reps will write to a
+shared file is the one case that outweighs the parallel default above. Nothing about this announces
+itself, because every rep involved followed a standing rule correctly, and the shared file is
+kit-owned rather than something the fixture pointed at.
+
+**Reps' own outputs travel the same way.** A probe this session opened a gate file an earlier rep
+had written to the shared scratchpad under a near-identical fixture, took its pre-fix wording for a
+prior pass having dropped the rule, and reported that as a finding; the file simply predated the
+wording (2026-08-15). So sweep both directions: clear what a rep could find before an arm, and
+attribute what you find after it.
 
 **The wording is not the only thing that leaks; so does the answer.** A fixture restaging a
 situation this repo has already resolved leaves a second route to the conclusion open: the
