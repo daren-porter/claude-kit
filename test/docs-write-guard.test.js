@@ -23,8 +23,11 @@ function runGuard(payload) {
     });
 }
 
-function writePayload(agentType, filePath) {
-    const p = { tool_name: 'Write', tool_input: { file_path: filePath } };
+// A real PreToolUse payload carries cwd, and the guard reads it to tell this
+// project's docs/ from anyone else's. DOCS_PATH is absolute, so these payloads must
+// name the repo it sits in or the guard correctly reads it as somebody else's tree.
+function writePayload(agentType, filePath, cwd = '/repo') {
+    const p = { tool_name: 'Write', tool_input: { file_path: filePath }, cwd };
     if (agentType !== null) p.agent_type = agentType;
     return p;
 }
@@ -104,4 +107,44 @@ test('governed agents are denied a -Path: cmdlet write into docs/', () => {
 test('unparseable payload fails open', () => {
     const r = spawnSync(process.execPath, [GUARD], { input: 'not json', encoding: 'utf8' });
     assert.strictEqual(r.status, 0);
+});
+
+// The guard protects THIS project's curated docs/, not every directory named docs/
+// on the filesystem. It used to match both, which trapped a subagent building a test
+// fixture under /tmp - the "must never trap legitimate work" case in the hook's own
+// header. These pin the narrowing in both directions, so re-widening fails red.
+
+test('a docs/ path outside the project is not this repo\'s curated tree', () => {
+    const r = runGuard(writePayload('claude-kit:implementer-opus', '/tmp/fixture/docs/readme.md'));
+    assert.strictEqual(r.status, 0);
+});
+
+test('a relative docs/ path is still denied, since it resolves under cwd', () => {
+    const r = runGuard(writePayload('claude-kit:implementer-opus', 'docs/plans/x_spec_v1.md'));
+    assert.strictEqual(r.status, 2);
+});
+
+test('a sibling checkout sharing a name prefix is not inside the project', () => {
+    const r = runGuard(writePayload('claude-kit:implementer-opus', '/repo-other/docs/x.md'));
+    assert.strictEqual(r.status, 0);
+});
+
+test('a shell redirect into an out-of-project docs/ is allowed', () => {
+    const r = runGuard({
+        tool_name: 'Bash',
+        agent_type: 'claude-kit:implementer-opus',
+        cwd: '/repo',
+        tool_input: { command: 'echo hi > /tmp/fixture/docs/notes.md' },
+    });
+    assert.strictEqual(r.status, 0);
+});
+
+test('a shell redirect into the project\'s own docs/ is still denied', () => {
+    const r = runGuard({
+        tool_name: 'Bash',
+        agent_type: 'claude-kit:implementer-opus',
+        cwd: '/repo',
+        tool_input: { command: 'echo hi > /repo/docs/notes.md' },
+    });
+    assert.strictEqual(r.status, 2);
 });

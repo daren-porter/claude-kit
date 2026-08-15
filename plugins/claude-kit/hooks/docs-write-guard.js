@@ -27,6 +27,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 
 function readStdin() {
     try { return fs.readFileSync(0, 'utf8'); } catch { return ''; }
@@ -61,6 +62,23 @@ function targetsDocs(s) {
     return /(^|[\\/])docs[\\/]/i.test(String(s || ''));
 }
 
+// Whether a docs/ target is the curated tree of the repo this session is working
+// in. The invariant is about THIS project's docs/, so an absolute path resolving
+// outside cwd is somebody else's: a fixture under /tmp, a vendored package, a
+// sibling checkout. A relative path always resolves under cwd, so this only ever
+// narrows and never opens a path that used to be blocked. A Windows-style path seen
+// by a POSIX runtime reads as relative here and stays blocked, which is the safe
+// direction. Added 2026-08-15 after the guard blocked a subagent building a test
+// fixture under /tmp, which is the "must never trap legitimate work" case in this
+// file's own header.
+function insideProject(target, cwd) {
+    const t = String(target || '');
+    if (!path.isAbsolute(t)) return true;
+    try {
+        return (path.resolve(t) + path.sep).startsWith(path.resolve(cwd) + path.sep);
+    } catch { return true; }   // cannot resolve: block, the safe direction
+}
+
 // A shell command that writes into a docs/ path. Two heuristics, either a hit:
 //   Bash: a >, >>, tee, or heredoc redirect into docs/ (cat > docs/x <<EOF).
 //   PowerShell: an Out-File / Set-Content / Add-Content / Tee-Object cmdlet, in
@@ -73,11 +91,15 @@ function targetsDocs(s) {
 // residual false hit on a cmdlet name sitting in command position inside a quoted
 // string (a docs path merely named in prose, e.g. a commit message). The
 // command-position anchor keeps an embedded name (Reset-Content) from matching.
-function commandWritesDocs(cmd) {
+function commandWritesDocs(cmd, cwd) {
     const c = String(cmd || '');
-    const redirect = /(?:>>?|tee(?:\s+-a)?\s)\s*["']?(?:[^\s"'|;&><]*[\\/])?docs[\\/]/i;
-    const cmdlet = /(?:^|[\s;|&(])(?:Out-File|Set-Content|Add-Content|Tee-Object)\b\s+(?:-\w+(?::\S+)?(?:\s+(?!-)[^\s"';|&]+)?\s+){0,4}(?:-(?:FilePath|Path|LiteralPath)[:\s]\s*)?["']?(?:[^\s"']*[\\/])?docs[\\/]/i;
-    return redirect.test(c) || cmdlet.test(c);
+    const redirect = /(?:>>?|tee(?:\s+-a)?\s)\s*["']?((?:[^\s"'|;&><]*[\\/])?docs[\\/])/i;
+    const cmdlet = /(?:^|[\s;|&(])(?:Out-File|Set-Content|Add-Content|Tee-Object)\b\s+(?:-\w+(?::\S+)?(?:\s+(?!-)[^\s"';|&]+)?\s+){0,4}(?:-(?:FilePath|Path|LiteralPath)[:\s]\s*)?["']?((?:[^\s"']*[\\/])?docs[\\/])/i;
+    for (const re of [redirect, cmdlet]) {
+        const m = c.match(re);
+        if (m && insideProject(m[1], cwd)) return true;
+    }
+    return false;
 }
 
 function main() {
@@ -91,10 +113,11 @@ function main() {
 
     const input = p.tool_input || p.toolInput || (p.tool && p.tool.input) || {};
     const fp = input.file_path || input.path;
+    const cwd = p.cwd || process.cwd();
 
     let hit = false;
-    if (fp) hit = targetsDocs(fp);
-    if (!hit && input.command) hit = commandWritesDocs(input.command);
+    if (fp) hit = targetsDocs(fp) && insideProject(fp, cwd);
+    if (!hit && input.command) hit = commandWritesDocs(input.command, cwd);
     if (!hit) return;          // not a docs/ write: allow
 
     process.stderr.write(
