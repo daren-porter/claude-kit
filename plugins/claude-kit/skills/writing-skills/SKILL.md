@@ -84,7 +84,18 @@ A skill you wrote and never tested is a guess. The honest test is to watch an
 agent's behavior with and without the wording:
 
 1. **RED:** give a fresh subagent a realistic task that tempts the failure,
-   without the new guidance. Watch it fail; record the rationalization verbatim.
+   without the new guidance. Tempting it takes combined pressure (time + sunk cost +
+   authority); a single pressure is a weak test, and an untempted RED tempts nothing,
+   which bites hardest on the did-not-reproduce branch below, where a clean run from an
+   unpressured rep is the weakest possible ground for calling a rule redundant.
+   Watch it fail; record the rationalization verbatim. When the failure is a silent
+   omission there is no rationalization to quote, so the artifact is the end state on
+   disk plus a verbatim list of what the rep created, read, and deleted; ask for that
+   list in the dispatch, because a deleted file leaves no trace and the list cannot be
+   reconstructed afterward. One rep failing in the guarded state is a reproduction, and you
+   record the ratio rather than needing a majority: RED asks whether the failure can happen,
+   which a single instance settles. GREEN's every-rep bar is stricter for the opposite reason,
+   asking whether the rule reliably holds, which no single instance settles.
    If it does not fail, or you could not build a task that would, there is nothing to fix
    - stop. **Before you read a clean run that way, check the rep was in the state the rule
    guards, and then what produced its compliance.** A fixture staging the case the rule does
@@ -95,11 +106,11 @@ agent's behavior with and without the wording:
    not available", and they read any clean run, not only that section's. The one exception is
    evidence that is real but not yours to re-run, ported or reported, and it costs three
    recorded artifacts rather than a claim: see that same section.
-2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run.
-   The agent should now comply.
+2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run, under
+   the same pressure RED carried, and the bar is every rep: a rule that holds two times
+   in three is not a rule, it is a coin the next session flips.
 3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it
-   holds. For discipline rules, combine pressures (time + sunk cost + authority);
-   single pressures are weak tests.
+   holds, each revision a fresh arm against reps that have not seen a prior version.
 
 Run three reps at least - one sample lies - and read every flagged result yourself, since
 template echoes masquerade as both failures and successes. This is the standard
@@ -119,6 +130,21 @@ found the candidate wording beside its own fixture, read it, and reported the co
 itself (2026-08-11, the operator having deliberately kept the draft out of the repo and put it
 there instead), so "out of the repo" is the wrong test and passing it is no comfort.
 
+**The arm controls which copy of the skill the rep reads, and the repo is not it.** Reps load
+skills through the harness from the installed plugin cache, which lags. Resolve the live one from
+`<configBase>/plugins/installed_plugins.json`, which names its `installPath`, because neither
+guessing the tree nor sorting by mtime finds it: a second cache tree sat under `~/.claude/` on
+2026-08-15 holding a build with whole skills missing, sibling versions tie on mtime, and 13
+versions sat under the live tree alone. The active one was behind the repo on `executing-work` and
+`finishing-work` by content nothing to do with the edit under test. So a rep
+that reaches a skill by name is reading text you are not editing, and a RED that fires against a
+stale baseline licenses wording the live file may already make redundant, which is the redundancy
+finding above arriving inverted. Point each rep at an explicit repo path, or hand it a fixture copy
+and diff that copy against the repo file at dispatch. The same fact is why GREEN carries its wording
+in the prompt rather than relying on the file: persisting to the repo does not change what a rep
+loads, so in-prompt is mandatory rather than stylistic, and what goes untested that way is
+placement, trigger, and whether a real session would read the rule at all.
+
 **Persist when the arm is done, not when the first rep fails.** The three reps make an arm, and
 a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording lives in your
 own context and in no file you wrote.
@@ -133,7 +159,12 @@ What you control is which paths a rep has reason to walk, and a rep working a fi
 reason to open the skill file and none to open a transcript directory. Those three are where that bites in
 practice rather than an exhaustive list, since any other directory you point a fixture into
 inherits the same property, and past them what is left is detection: read what each rep
-actually opened before you count it. On the gated path below, where RED by
+actually opened before you count it. That transcript is the instrument, and it is named
+here because the obligation appears three times in this section with no way to discharge
+it: recover a rep's agentId by joining the dispatch's `tool_use` to its `tool_result` on
+`tool_use_id` in your own transcript, then read the paths its transcript records. Asking
+the rep what it read is self-report, which is the thing this section distrusts everywhere
+else, and a rep that read what it should not have is the one least likely to volunteer it. On the gated path below, where RED by
 construction never fails, the hold releases once that path's first two preconditions have
 been **done and their artifacts recorded**, never on the writing-up alone.
 
@@ -153,8 +184,10 @@ kaizen notes for both frictions are already filed from earlier in this pass" (20
 inbox before an arm and read it after, counting whatever is in it as those reps' output rather than
 as inbox items. That buys attribution and not isolation, which is the weaker half: clearing
 beforehand does nothing about rep 2 reading rep 1's note mid-arm, and mid-arm is when it happened.
-Isolation costs serial dispatch with a clear between reps, and an arm whose reps will write to a
-shared file is the one case that outweighs the parallel default above. Nothing about this announces
+Isolation costs serial dispatch with a clear between reps, and the arm that earns it is RED: of
+five arms run on 2026-08-15, only RED produced inbox writes, because the rep the wording fails is
+the rep with something to file. Scoped any wider than that the exception swallows the parallel
+default, since the posture rule points every rep at that same file. Nothing about this announces
 itself, because every rep involved followed a standing rule correctly, and the shared file is
 kit-owned rather than something the fixture pointed at.
 
@@ -293,6 +326,13 @@ Then persist, and run the third:
    applies the rule correctly; it fails if the subagent misapplies the rule or has to ask
    what it means. Three reps at least for a pass, since one clean run tells you little. A single
    failure is enough to act on.
+
+   **Ask whether the rule was applied, not whether an ambiguity can be named in it.** A capable
+   reader can answer the second about any prose, so a prompt that asks for it gets a list however
+   good the wording is, and that list reads as friction without being any. Three probes phrased
+   that way on 2026-08-15 returned twelve inbox notes against wording all three of them had
+   applied correctly, and the count was then read as a measure of the kit rather than of the
+   prompt. Keep the self-report to what the rep had to interpret in order to act.
 
    **A failed probe is not a regret, it is a stop.** Revert the wording, or fix it and
    re-probe, before the work closes. Unfollowable prose that shipped with a note saying it
