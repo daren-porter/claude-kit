@@ -1,8 +1,20 @@
 # RED for a Rule Change, Not Just a New Guard
 
-Status: Proposed
+Status: In Progress
 Commit Model: Commit-and-Push
+Fable Spend: finishing reviews only
 Created: 2026-08-15
+
+## Goal
+
+`writing-skills` gives an operator a reading for changing a rule the kit already ships,
+which is the shape most kit changes actually take and the one its testing discipline was
+never written for. When this is done, a change that narrows, scopes, corrects, or
+replaces an existing rule routes on an observable question about what it claims, and
+arrives at a stated evidence bill rather than at an improvisation. It matters because
+the gap is not idle: three recent commits answered it three different ways, one of them
+citing a bound that does not exist, so the cheap path the stub warned about is already
+forming by default.
 
 ## Why this exists
 
@@ -42,46 +54,221 @@ draft's contribution is isolated, or **leave production reality standing** and a
 that compliance is over-determined. It chose the latter, flagged the choice as its
 own, and noted the two produce different arms and different conclusions.
 
-This is not hypothetical. The `pr-review` change committed in that same pass
-(`c13a9ca`) was a scoping of an existing rule, and its arm had exactly this shape: no
-rep produced author-facing harm, and what the arm actually caught was a documented
-misreading of the rule being scoped rather than a failure of the behavior. That was
-defensible on its own evidence, but it was not the RED the section describes.
+## What the design pass found (2026-08-15)
 
-## What a design pass has to settle
+The gap is not merely unanswered. It is being answered ad hoc, differently each time,
+in commit messages rather than in the skill.
 
-1. **Which arm establishes the need.** For a rule change the interesting question is
-   not "does the failure occur without guidance" but "does the current rule produce a
-   harm, and does the replacement remove it". That may be two arms, not one.
-2. **Whether the existing rule sites are stripped.** Isolation gives a clean read of
-   the draft's contribution against a baseline that does not exist in production.
-   Leaving them standing tests production reality and over-determines compliance.
-   Naming when each is right is the core of the design.
-3. **How the four answers extend.** "In the state, and the failure appeared" has no
-   entry for a rep that correctly obeyed the rule being replaced. A fifth answer, or a
-   re-cut of the four. The did-not-reproduce branch inverts too, and a later probe in
-   the same session put it crisply: that branch says to ask what produced the compliance
-   and to cut the draft when something already in the kit forces the result, but on a
-   rule change **the thing already forcing the result is the rule being replaced**. Read
-   literally it concludes every replacement is redundant, which is the same vacuity
-   arriving from the other end.
-4. **What a correction owes versus what a narrowing owes.** The counter-case section
-   already handles a rule contradicted by observation and asks only for a recorded
-   instance. Where that section ends and this one begins is currently unmarked, and a
-   change can plausibly claim either.
-5. **Whether this collapses into the counter-case section instead.** The cheapest good
-   outcome is that most rule changes are counter-cases and route there, leaving this
-   as a pointer rather than a new procedure. Test that before building anything.
+**Two commits cite the same section, the same branch of it, and pay opposite evidence
+bills.** `c13a9ca` (scoping the `pr-review` suggestion marker) cited the counter-case
+section's narrower-than-written path and ran thirteen reps across four arms.
+`ee8be8f` (scoping `branch-hygiene`'s landed check) cited the same discipline in the
+same words and ran zero. Both were correct. The counter-case section is silent on
+testing, so it licenses both readings and settles neither.
 
-## What it must not become
+**A cheap path is already accreting by default.** `8aa426d` skipped arms on two
+changes, justifying it as "corrections rather than new judgment rules, which is the
+bound added in `3f9d67e`". That bound does not exist: `3f9d67e` added 48 lines to
+`writing-skills`, none of which draw a correction-versus-new-rule distinction, and the
+word "correction" appears nowhere in the skill. What was actually cited is a precedent
+from `3f9d67e`'s own commit message. This is the third admission path the stub warned
+about, arriving by default rather than by design, because there is no documented
+reading and the operator reaches for the nearest-looking thing.
 
-A third admission path. The kit already has the normal bar and the borrowed-evidence
-gate, and the gate exists because a cheap path gets taken. Anything designed here has
-to be at least as expensive as the normal bar for the same claim, or it becomes the
-route around both.
+**The counter-case section's opening scope is narrower than its own use.** It opens
+scoped to "a kit rule asserting a factual property of an external system" (`:395`),
+yet its closing recording rule carves out "wording that is plainly judgment"
+(`:420-421`), which presupposes judgment wording arrives, and `c13a9ca` routed a
+judgment rule through it. That is narrower-than-written, applied to itself.
+
+**The shape that worked is three arms, not two.** The stub guessed two. `c13a9ca` ran
+RED against the current rule, a **control** arm outside the new scope, and GREEN on the
+replacement, each answering a different question. Its RED produced no author-facing
+harm at all and still fired, on two of four reps documenting the same misreading of the
+rule being scoped. The observable was the rep's **reasoning**, not its output, which is
+the thing step 1 has no language for.
+
+## Approach
+
+**A rule change asks two separate questions, and the kit currently answers only one of
+them.** Keeping them apart is the design.
+
+- **The shape question: fix it or scope it?** The counter-case section already owns
+  this, for both kinds of change, and answers it well (contradicted, so reverse it;
+  narrower than written, so scope it). Both `c13a9ca` and `ee8be8f` reached for it and
+  both used it correctly. Nothing here is broken except its opening scope sentence.
+- **The evidence question: what does the change owe?** Nothing answers this, which is
+  why the same section licensed thirteen reps and zero.
+
+**The evidence question splits by what the change claims, not by how big it feels.**
+That is the one boundary an operator in a hurry cannot argue with, and it is the
+property that keeps the cheap path from being reachable by preference.
+
+- **A claim about the world** (what a command outputs, what a path resolves to, what a
+  renderer emits) is checked against the world. No arm is owed, because the claim is
+  not about an agent. Already the practice in `ee8be8f` and `a64f8a3`; it needs stating,
+  not building.
+- **A claim about behavior** (what an agent will do under pressure) needs agents. This
+  is the three-arm shape, written down from the worked example rather than invented.
+
+A behavior-claim change therefore uses **both**: the counter-case section for its
+shape, and the three arms for its evidence. That is what `c13a9ca` did, and the design
+should make it legible rather than leave it as an improvisation that happened to work.
+
+The design is deliberately mostly **correction of existing text**. `writing-skills` is
+435 lines and its own rule says a new rule must beat one more paragraph elsewhere. The
+size constraint is stated as a check rather than a line count, because a count reads
+precise and is not: **each section's output is a clause or a paragraph folded into
+existing prose. If a section's draft wants its own heading, the design overreached, and
+the response is to cut rather than to proceed.**
+
+### The constraint that shapes how this effort is executed
+
+This plan doc is itself a leak surface, and `writing-skills:227-233` was written about
+this very file: a probe read it as a Proposed stub and reported its framing as primed
+rather than independent. Flipping it to In Progress makes it the draft answer sitting
+in the repo at a path reps have every reason to open.
+
+Two rules follow, and they bind every section:
+
+1. **No candidate wording goes in this document.** It names what each section must
+   decide and how to know the result is right. The wording itself lives in the
+   operator's context until its arm closes, per `writing-skills:121-131` and `:155-157`.
+2. **No fixture points a rep at `docs/plans/`**, and each rep is checked against its
+   transcript for having read this file before its result is counted. A rep that read
+   this spec is discounted, not silently kept.
+
+The sections run in the **main thread**, and not because delegation is forbidden:
+`writing-skills:251-257` explicitly contemplates a delegated arm-carrying run that
+parks artifacts in `.kit/` for the main thread to fold in. The reason is that the work
+here *is* the judgment. The operator dispatches each rep, controls which copy of the
+skill it reads, audits its transcript for what it opened, and reshapes the wording
+against what comes back, which is what REFACTOR means. That is a section whose text
+keeps evolving in contact with the results, which is brainstorming's own test for main.
+
+## Sections of Work
+
+### 1. The boundary, and the counter-case section's evidence bill
+
+Establish the world-claim versus behavior-claim boundary as the test that routes the
+**evidence** question for any change to a rule the kit already ships, and place it
+where an operator meets it. Make the counter-case section state the evidence it wants,
+and correct its opening scope sentence so it covers the cases it is already being used
+for. The section's shape guidance (contradicted versus narrower) is not in scope to
+change; it works.
+
+Acceptance criteria:
+
+- The counter-case section states its evidence bill explicitly: the check against the
+  world is the artifact, the observed instance is recorded beside the claim, and no arm
+  is owed.
+- Its opening scope no longer excludes judgment wording that the section's own closing
+  clause and its live use both admit.
+- Handed the changes as situations, with each commit message's routing citation
+  withheld, a fresh reader routes `a64f8a3` (a transcript path either resolves or it
+  does not) to the no-arm bill and `c13a9ca` to the three-arm bill. That is the clean
+  pair. `ee8be8f` is the hard third case and the better test: its claim is about what
+  `git diff` renders, so it is a world-claim, but its commit argues the fix matters
+  because a false reading leads an operator to open a recovery PR. A reader who routes
+  it on that second sentence gets it wrong, so the boundary has to be stated tightly
+  enough that the claim under repair, not the harm it causes, is what routes.
+- The boundary is stated as an observable question about the change's claim, not as a
+  judgment about the change's size or importance.
+
+Execution mode: main.
+
+Tests: lock that the two-commit pair routes to different bills, since the whole defect
+is that the current text routes them identically. Lock that a behavior-claim change
+cannot reach the no-arm path, since that is the third-admission-path risk and the one
+failure mode that makes this change net-negative if it lands wrong.
+
+### 2. The rule-change reading in the RED section
+
+Give step 1 a reading for a change to a rule that already ships. Two things it lacks:
+which arms establish the need, and what counts as the observable.
+
+Acceptance criteria:
+
+- The three arms are named with the question each answers: RED against the current
+  rule, a control outside the new scope, GREEN on the replacement.
+- The text states that on a rule change the observable may be the rep's reasoning
+  rather than its output, and what artifact that implies.
+- The vacuity trap is closed in both directions: a rep obeying the rule being replaced
+  is not automatically a RED fire, and a change is not left with no admissible RED
+  because of it.
+- A fresh reader planning a baseline test for a scoping change produces the three arms
+  without being told the number.
+- The stub's open sub-question is resolved either way and the resolution is stated:
+  whether the existing rule sites are stripped so the draft's contribution is isolated,
+  or left standing so production reality is tested. If the answer is "it depends", the
+  observable that decides it is named rather than left to judgment.
+
+Execution mode: main.
+
+Tests: lock that a reader plans a control arm, since that is the arm the current text
+omits entirely and the one a narrowing needs most. Lock that a rep's correct obedience
+to the rule being replaced is not counted as a RED fire, since that is the vacuity the
+stub opened on.
+
+### 3. The did-not-reproduce inversion
+
+The gated section's did-not-reproduce branch says to ask what produced the compliance,
+and to cut the draft when something already in the kit forces the result. On a rule
+change the thing already forcing the result is the rule being replaced, so read
+literally it concludes every replacement is redundant.
+
+Acceptance criteria:
+
+- The branch names the rule-change case and does not conclude redundancy from the
+  replaced rule's own effect.
+- The genuine redundancy finding it exists to catch still fires, and is still
+  distinguishable from this case by something observable.
+- A fresh reader handed a did-not-reproduce result on a rule change reaches the right
+  conclusion, and does not read the branch as licensing the cut.
+
+Execution mode: main.
+
+Tests: lock that the redundancy finding survives, since weakening it to fix the
+inversion would trade a documented gap for a real loss; the branch caught a live
+redundancy in `c13a9ca` (the dropped companion rule, seven reps).
+
+## Out of Scope
+
+- **The entailed-repair case.** A third shape exists: a behavior claim whose answer is
+  forced by an existing rule's stated purpose, so an arm would measure nothing the text
+  does not already settle. `8aa426d`'s scratchpad-bar scoping is one, and it is the
+  commit that cited a bound that does not exist. Deliberately left out on Daren's call
+  (2026-08-15): documenting a cheap path off a single instance is the bar this skill
+  refuses everywhere else, and a cheap path is precisely what the stub warned against.
+  It accumulates instances first. Revisit when there are several.
+- A new section in `writing-skills`. The stub's own hazard: anything designed here must
+  be at least as expensive as the normal bar for the same claim, or it becomes the route
+  around both. Three corrections to existing sections, not a fourth section.
+- Retrofitting the finding to already-shipped commits. `8aa426d` skipped arms on a
+  reading that turns out to be unsupported; that is evidence for this design, not a
+  defect to reverse.
+- Any change to the borrowed-evidence gate's three preconditions.
+
+## Open Questions
+
+- Whether the boundary belongs in one place both sections point at, or is stated once
+  in each. Owner: executing session, S1 drafting, on the leanness constraint.
+- Whether S3's fix is a clause in the existing branch or a re-cut of the four answers.
+  Owner: executing session, S3 drafting. A re-cut is the more invasive answer and needs
+  the leanness constraint applied against it.
 
 ## Related
 
+- `plugins/claude-kit/skills/writing-skills/SKILL.md` - the file this effort edits.
+  S1's "place it where an operator meets it" may also want a pointer from `kaizen`'s
+  brief format, whose Discipline line already says to baseline-test behavior-shaping
+  wording. Verify at drafting rather than assuming; a second file is a cost.
 - `docs/backlog.md`, the open-instances item, for how unvalidated wording is tracked.
-- Commit `c13a9ca` (the `pr-review` marker scoping) as the worked example, and
-  `cae8024` for the shared-state leak findings from the same probes.
+  This effort should open no instance there: its evidence is local, not borrowed.
+- Commit `c13a9ca` as the worked example the three-arm shape is drawn from, `ee8be8f`
+  and `a64f8a3` as the world-claim cases, `8aa426d` as the improvisation, and `cae8024`
+  for the shared-state leak findings that constrain how the arms are run.
+
+## Chapters
+
+(none yet)
