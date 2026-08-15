@@ -145,6 +145,13 @@ in the prompt rather than relying on the file: persisting to the repo does not c
 loads, so in-prompt is mandatory rather than stylistic, and what goes untested that way is
 placement, trigger, and whether a real session would read the rule at all.
 
+**The scratchpad bar is arm-scoped, not absolute for the effort.** It exists so a RED rep cannot
+read the draft, so it binds through every RED-side arm and lifts once you are running GREEN, whose
+reps are supposed to have the wording: a GREEN fixture copy in the scratchpad is the mechanism
+working, not a leak. Two consequences. Run the arms serially, so no RED rep is alive while a GREEN
+fixture holding the draft exists; and quarantine the spent GREEN fixtures before any REFACTOR arm,
+which is RED-side again for the revised wording.
+
 **Persist when the arm is done, not when the first rep fails.** The three reps make an arm, and
 a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording lives in your
 own context and in no file you wrote.
@@ -216,6 +223,14 @@ disk, not whether the fixture told it to stay away: a fixture asking for a decis
 repo already made has one to find, and a fixture asking for a behavior has none. Stage an
 isomorph with the specifics changed, or a situation the repo has never resolved, and read
 what the rep actually opened before you count it.
+
+An **open** question the repo documents primes rather than answers, which is harder to notice and
+is a surface the kaizen loop creates for itself: a probe on 2026-08-15 read a `docs/plans/` stub
+committed hours earlier in that same pass and reported its framing as primed rather than
+independent. The finding survived, being checkable against the skill text; the claim to have
+reached it independently did not. So when an arm's territory is a question this repo has parked,
+discount what a rep reports having found on its own, and expect a promoted note to be exactly
+where its territory got documented.
 
 ## When a local RED is not available
 
