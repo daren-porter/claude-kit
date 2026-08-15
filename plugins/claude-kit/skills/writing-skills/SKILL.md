@@ -161,8 +161,12 @@ practice rather than an exhaustive list, since any other directory you point a f
 inherits the same property, and past them what is left is detection: read what each rep
 actually opened before you count it. That transcript is the instrument, and it is named
 here because the obligation appears three times in this section with no way to discharge
-it: recover a rep's agentId by joining the dispatch's `tool_use` to its `tool_result` on
-`tool_use_id` in your own transcript, then read the paths its transcript records. Asking
+it: recover a rep's agentId by grepping its `toolUseId` across the `.meta.json` sidecars sitting
+beside those transcripts, which carry the dispatch `description` and `spawnDepth` too, then read
+the paths its transcript records. Nested reps land in the **root** session's `subagents/` rather
+than their dispatcher's, so that is the one directory to search (both verified 2026-08-15, after a
+first draft sent you joining `tool_use` to `tool_result` in your own transcript, which works and is
+two steps longer). Asking
 the rep what it read is self-report, which is the thing this section distrusts everywhere
 else, and a rep that read what it should not have is the one least likely to volunteer it. On the gated path below, where RED by
 construction never fails, the hold releases once that path's first two preconditions have
