@@ -657,3 +657,39 @@ Review Findings: 6 Critical and 12 Major across two reviewers over two rounds, a
 
 Next: Section 3, the first compression, on `writing-skills` itself
 Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-08-16
+Completed: Section 3, the first compression, on `writing-skills` itself
+Implemented By: implementer-fable (compression and inventory); main session (the probe, which an implementer cannot run, having no Agent tool)
+Metrics: 1 dispatch, DONE_WITH_CONCERNS; 3 probe reps; NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section
+
+**Acceptance criterion 5 fails, and it is the most useful result the effort has produced.** The file went 535 to 514 against a target of under 467. The shortfall is 48 lines and it is structural rather than a matter of effort. Every other criterion passed.
+
+**The finding: the accretion in these sections is claim accretion, not prose accretion.** The measurements behind it:
+
+- Pass 1 cut argumentation only, for 3.4% of section A's characters. Pass 2 cut rationale, framing, restatement and examples much harder: 5.8% on A, 7.3% on B, 6.5% overall. Everything still enumerable as fat totals another 4 to 5%, landing near 490 at best. Clearing 467 needs about **18.5%**.
+- The two sections hold **143 claims across 24,598 characters, about 172 characters per claim**, much of that condition and locator rather than prose. A register test bounded the remainder: rewriting the kaizen-inbox paragraph telegraphically saved 55 characters out of 1,020, about half a line, and read worse.
+- The file's own disposal rule caps a compression by construction. A claim with nothing opposite it is *restored*, never retired, so once the argument is gone the floor is the claim set.
+
+So compression is the wrong instrument for what ails this file, and the remaining path is retirement, which the file routes to the arms as a separate change.
+
+**The bar was mis-specified by me, and S3 did not miss it.** Of the 68 lines this effort added, **58 are the new `## Compression` section itself**, which is out of scope for compression by construction: it is new, tight, and not accreted. Sections A and B grew about 10 lines net between them. So "end under 467 while keeping the new section" asked S3 to take 69 lines out of the two sections the effort had added ten to, roughly seven times what it put in. The criterion measured the wrong quantity, and the honest version of the thesis is about the *sections* rather than the file.
+
+**What the compression did produce**, and it is not nothing:
+
+- 21 lines out, with **every piece of provenance intact**: 14 of 14 date markers with an identical distribution across five dates, and a backtick-locator multiset that diffs byte-identical. All nine headings survive in order, and every out-of-scope section is byte-identical.
+- A **143-row inventory** built against the longer text before drafting, each row carrying the claim, its trigger verbatim or "unconditional", and its attached content, mapped in both directions.
+- **The third column earned its place immediately.** It caught two real drops mid-flight: a first draft kept the setups of two claims and cut both conclusions, which were the only halves a reader could act on; and a clause was cut as a restatement when it actually asserts a different fact. Both restored. Six smaller restorations besides.
+- **Disposal fired once, in direction 1**, and behaved exactly as the rule says: the claim was restored to the shorter text and recorded as a retirement candidate, and the rest stayed a compression. Directions 2 and 3 never fired.
+- **Four retirement candidates recorded and not acted on**, which is design decision 1's prediction coming true: compression is the instrument that generates them.
+
+**A method note worth keeping.** Line counts only compare if wrapping does. The implementer calibrated the original's effective wrap width by unwrapping and re-wrapping each section across a range, then wrapped the compressed text at the conservative end of each bracket, and reported that it did **not** widen the wrap to buy lines, "which would have reached the number without compressing anything." That is the difference between a measurement and a number.
+
+**Probe: 3 of 3.** All three reps reached the two most intricate claims in the compressed section, the rule-change RED ("staging an incident and watching the rep write its fifth confirmation is not a failure, it is compliance with the shipped kit") and the narrowing's third arm in the untouched state. All three also routed correctly *away* from the new compression path, which is the section behaving as a conditional rather than an attractor. The probe fixture was staged outside the repo under a de-identified domain, one copy per rep, and the repo and fixtures were unmodified at close.
+
+**One inherited ambiguity surfaced, and it is not a compression defect.** Rep 2 set the third arm up backwards, then corrected itself by reading further: "it holds the replaced rule in its fixture" reads against the in-prompt mandate that applies to any draft-carrying arm. That clause is original text from `red-for-rule-changes`, untouched by this compression, so the probe passed on its stated bar (the rule was applied and no rep had to ask what it meant) while surfacing a real defect in pre-existing wording. Recorded for the backlog rather than fixed here.
+
+Review Findings: no separate review round. The changeset is a prose rewrite whose acceptance is the inventory and the probe, both of which ran; `finishing-work` covers the whole changeset.
+
+Next: Section 4, the take-stock record and the nudge hook
+Commit Model: Commit-and-Push

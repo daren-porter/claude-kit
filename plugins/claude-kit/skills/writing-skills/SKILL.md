@@ -80,102 +80,94 @@ Two rules govern any rule you write, not just the four forms above:
 
 ## Know it works before you trust it
 
-A skill you wrote and never tested is a guess. The honest test is to watch an
-agent's behavior with and without the wording:
+A skill you wrote and never tested is a guess. The honest test is to watch an agent's behavior
+with and without the wording:
 
-1. **RED:** give a fresh subagent a realistic task that tempts the failure,
-   without the new guidance. Tempting it takes combined pressure (time + sunk cost +
-   authority); a single pressure is a weak test, and an untempted RED tempts nothing,
-   which bites hardest on the did-not-reproduce branch below, where a clean run from an
-   unpressured rep is the weakest possible ground for calling a rule redundant.
-   Watch it fail; record the rationalization verbatim. When the failure is a silent
-   omission there is no rationalization to quote, so the artifact is the end state on
-   disk plus a verbatim list of what the rep created, read, and deleted; ask for that
-   list in the dispatch, because a deleted file leaves no trace and the list cannot be
-   reconstructed afterward. One rep failing in the guarded state is a reproduction, and you
-   record the ratio rather than needing a majority: RED asks whether the failure can happen,
-   which a single instance settles. GREEN's every-rep bar is stricter for the opposite reason,
-   asking whether the rule reliably holds, which no single instance settles.
-   If it does not fail, or you could not build a task that would, there is nothing to fix
-   - stop. **Before you read a clean run that way, check the rep was in the state the rule
+1. **RED:** give a fresh subagent a realistic task that tempts the failure, without the new
+   guidance. Tempting it takes combined pressure (time + sunk cost + authority); a single
+   pressure is a weak test, and an untempted RED tempts nothing, which bites hardest on the
+   did-not-reproduce branch below, where a clean run from an unpressured rep is the weakest
+   ground for calling a rule redundant. Watch it fail; record the rationalization verbatim. A
+   silent omission leaves none to quote, so the artifact is the end state on disk plus a
+   verbatim list of what the rep created, read and deleted; ask for that list in the dispatch,
+   because a deleted file leaves no trace and the list cannot be reconstructed afterward. One
+   rep failing in the guarded state is a reproduction, so record the ratio rather than needing
+   a majority: RED asks whether the failure can happen, which one instance settles, where
+   GREEN's every-rep bar is stricter, asking whether the rule reliably holds, which no instance
+   settles. If it does not fail, or you could not build a task that would, there is nothing to
+   fix - stop. **Before you read a clean run that way, check the rep was in the state the rule
    guards, and then what produced its compliance.** A fixture staging the case the rule does
    not cover comes back clean by construction, so that run says the RED has not been attempted
    yet rather than that there is nothing to fix; and a rep that was in the state can comply
    because something else in the kit already forces the behavior, which is a finding about the
    draft rather than about the rule. Both live in the four answers under "When a local RED is
-   not available", and they read any clean run, not only that section's. Two things route away
-   from here. Evidence that is real but not yours to re-run, ported or reported, costs three
-   recorded artifacts rather than a claim: see that same section. And a rewrite that adds no
-   claim cannot stage a RED at all, which is "Compression: rewriting a section shorter" below
-   rather than any of the four answers; that section says how to tell, and the test is a
-   finished two-directional mapping.
-2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run, under
-   the same pressure RED carried, and the bar is every rep: a rule that holds two times
-   in three is not a rule, it is a coin the next session flips.
-3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it
-   holds, each revision a fresh arm against reps that have not seen a prior version.
+   not available", which read any clean run, not only that section's.
+2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run, under the same
+   pressure RED carried, and the bar is every rep: a rule that holds two times in three is not
+   a rule, it is a coin the next session flips.
+3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it holds, each
+   revision a fresh arm against reps that have not seen a prior version.
 
 **A behavior-claim rule change asks RED a different question, and a narrowing takes a third
 arm.** Changing a rule the kit already ships asks whether the rule as it stands produces the
-harm, because a rep that obeys the current rule is complying with the shipped kit rather than
-failing, and counting that would make the RED fire for any rule change whatever. So stage the
-state where the current rule does the damage, and read the rep's reasoning and not only its
-output: a rep can reach a defensible outcome while documenting a misreading of the rule being
-replaced, and that misreading is the finding. Take it off the rep's transcript rather than
-asking, since asking tells it which line is graded. RED and GREEN then share that one state,
-since GREEN re-runs RED's task, which is why a narrowing owes a third arm in the state the
-change leaves alone, read for the rule still doing there what it always did: one that quietly
-took the untouched case with it looks exactly like one that worked. That arm carries the
-draft and can fail, so it holds the replaced rule in its fixture and dispatches serially
-like RED.
+harm, since a rep obeying the current rule is complying with the shipped kit rather than
+failing, and counting that fires the RED for any rule change whatever. So stage the state where
+the current rule does the damage, and read the rep's reasoning and not only its output: a rep
+can reach a defensible outcome while documenting a misreading of the rule being replaced, and
+that misreading is the finding. Take it off the rep's transcript rather than asking, since
+asking tells it which line is graded. RED and GREEN share that one state, GREEN re-running
+RED's task, which is why a narrowing owes a third arm in the state the change leaves alone,
+read for the rule still doing there what it always did: one that quietly took the untouched
+case with it looks exactly like one that worked. That arm carries the draft and can fail, so it
+holds the replaced rule in its fixture and dispatches serially like RED.
 
 Run three reps at least - one sample lies - and read every flagged result yourself, since
-template echoes masquerade as both failures and successes. This is the standard
-for any change to behavior-shaping content, the kit's own skills included. Three sections
-below route around it, and cost chooses none of them. "When a local RED is not available" is
-for evidence that is real but not yours to re-run, and it substitutes different work rather
-than less. "When you meet a counter-case to a rule" states its own bill and when it is
-available. And "Compression: rewriting a section shorter" takes a rewrite that keeps every
-claim the section already makes, on a bill of an inventory and a probe; it opens on a finished
-two-directional mapping and never on an intention to shorten.
+template echoes masquerade as both failures and successes. This is the standard for any change
+to behavior-shaping content, the kit's own skills included. Three sections route around it, and
+cost chooses none of them. Evidence that is real but not yours to re-run, ported or reported,
+costs three recorded artifacts rather than a claim: "When a local RED is not available"
+substitutes different work rather than less. A rewrite that adds no claim cannot stage a RED at
+all, so it goes to "Compression: rewriting a section shorter" rather than to any of the four
+answers; that section says how to tell, keeps every claim the section already makes on a bill
+of an inventory and a probe, and opens on a finished two-directional mapping and never on an
+intention to shorten. And "When you meet a counter-case to a rule" states its own bill and when
+it is available.
 
 **Run RED before you persist the wording, and keep it out of three places: the repo, the
-scratchpad, and the RED prompt.** Baseline-testing a kit skill edit from inside the kit repo
-is a trap: a subagent with repo access can read the SKILL.md you just saved, so an
+scratchpad, and the RED prompt.** Baseline-testing a kit skill edit from inside the kit repo is
+a trap: a subagent with repo access can read the SKILL.md you just saved, so an
 already-persisted edit leaks into the RED and voids it as a control (a RED rep once cited the
-edited file's line numbers). The RED prompt is barred for the same reason: the prompt that
-carries the wording is GREEN's, and RED's whole job is to fail without it. **The scratchpad
-is the worst of the three**, because fixtures point subagents into it by construction, the
-report and the sample input and the file the rep is sent to read all living there. A rep once
-found the candidate wording beside its own fixture, read it, and reported the contamination
-itself (2026-08-11, the operator having deliberately kept the draft out of the repo and put it
-there instead), so "out of the repo" is the wrong test and passing it is no comfort.
+edited file's line numbers). The RED prompt is barred because the prompt that carries the
+wording is GREEN's, and RED's whole job is to fail without it. **The scratchpad is the worst of
+the three**, because fixtures point subagents into it by construction. A rep once found the
+candidate wording beside its own fixture, read it, and reported the contamination itself
+(2026-08-11, the operator having deliberately kept the draft out of the repo and put it there
+instead), so "out of the repo" is the wrong test and passing it is no comfort.
 
 **The arm controls which copy of the skill the rep reads, and the repo is not it.** Reps load
-skills through the harness from the installed plugin cache, which lags. Resolve the live one from
-`<configBase>/plugins/installed_plugins.json`, which names its `installPath`, because neither
-guessing the tree nor sorting by mtime finds it: a second cache tree sat under `~/.claude/` on
-2026-08-15 holding a build with whole skills missing, sibling versions tie on mtime, and 13
-versions sat under the live tree alone. The active one was behind the repo on `executing-work` and
-`finishing-work` by content nothing to do with the edit under test. So a rep
-that reaches a skill by name is reading text you are not editing, and a RED that fires against a
-stale baseline licenses wording the live file may already make redundant, which is the redundancy
-finding above arriving inverted. Point each rep at an explicit repo path, or hand it a fixture copy
-and diff that copy against the repo file at dispatch. The same fact is why GREEN carries its wording
-in the prompt rather than relying on the file: persisting to the repo does not change what a rep
+skills through the harness from the installed plugin cache, which lags. Resolve the live one
+from `<configBase>/plugins/installed_plugins.json`, which names its `installPath`, because
+neither guessing the tree nor sorting by mtime finds it: a second cache tree sat under
+`~/.claude/` on 2026-08-15 holding a build with whole skills missing, sibling versions tie on
+mtime, 13 versions sat under the live tree alone, and the active one was behind the repo on
+`executing-work` and `finishing-work` by content nothing to do with the edit under test. So a
+rep that reaches a skill by name reads text you are not editing, and a RED firing against a
+stale baseline licenses wording the live file may already make redundant, the redundancy
+finding above arriving inverted. Point each rep at an explicit repo path, or hand it a fixture
+copy and diff that copy against the repo file at dispatch. That is also why GREEN carries its
+wording in the prompt rather than the file: persisting to the repo does not change what a rep
 loads, so in-prompt is mandatory rather than stylistic, and what goes untested that way is
 placement, trigger, and whether a real session would read the rule at all.
 
-**The scratchpad bar is arm-scoped, not absolute for the effort.** It exists so a RED rep cannot
-read the draft, so it binds through every RED-side arm and lifts once you are running GREEN, whose
-reps are supposed to have the wording: a GREEN fixture copy in the scratchpad is the mechanism
-working, not a leak. Two consequences. Run the arms serially, so no RED rep is alive while a GREEN
-fixture holding the draft exists; and quarantine the spent GREEN fixtures before any REFACTOR arm,
-which is RED-side again for the revised wording.
-
-**Persist when the arm is done, not when the first rep fails.** The three reps make an arm, and
-a repo written to after rep 1 contaminates reps 2 and 3. Until then the wording lives in your
-own context and in no file you wrote.
+**The scratchpad bar is arm-scoped, not absolute for the effort.** It exists so a RED rep
+cannot read the draft, so it binds through every RED-side arm and lifts once you are running
+GREEN, whose reps are supposed to have the wording: a GREEN fixture copy in the scratchpad is
+the mechanism working, not a leak. So run the arms serially, with no RED rep alive while a
+GREEN fixture holding the draft exists, and quarantine the spent GREEN fixtures before any
+REFACTOR arm, which is RED-side again for the revised wording. And **persist when the arm is
+done, not when the first rep fails**: the three reps make an arm, and a repo written to after
+rep 1 contaminates reps 2 and 3. Until then the wording lives in your own context and in no
+file you wrote.
 
 Absolute absence is not the bar, because it is not available: the harness records prompts and
 tool results alike into this session's transcript and a per-subagent transcript at
@@ -184,74 +176,71 @@ same user the reps run as, so the wording is on readable disk from the moment yo
 (verified 2026-08-11; path corrected 2026-08-15, the earlier "sibling under `projects/`" being
 two levels too shallow, which matters because the detection rule below sends you to that file).
 What you control is which paths a rep has reason to walk, and a rep working a fixture has every
-reason to open the skill file and none to open a transcript directory. Those three are where that bites in
-practice rather than an exhaustive list, since any other directory you point a fixture into
-inherits the same property, and past them what is left is detection: read what each rep
-actually opened before you count it. That transcript is the instrument, and it is named
-here because the obligation appears three times in this section with no way to discharge
-it: recover a rep's agentId by grepping its `toolUseId` across the `.meta.json` sidecars sitting
-beside those transcripts, which carry the dispatch `description` and `spawnDepth` too, then read
-the paths its transcript records. Nested reps land in the **root** session's `subagents/` rather
-than their dispatcher's, so that is the one directory to search (both verified 2026-08-15, after a
-first draft sent you joining `tool_use` to `tool_result` in your own transcript, which works and is
-two steps longer). Asking
-the rep what it read is self-report, which is the thing this section distrusts everywhere
-else, and a rep that read what it should not have is the one least likely to volunteer it. On the gated path below, where RED by
-construction never fails, the hold releases once that path's first two preconditions have
-been **done and their artifacts recorded**, never on the writing-up alone.
+reason to open the skill file and none to open a transcript directory. Those three are where
+that bites in practice rather than an exhaustive list, since any other directory you point a
+fixture into inherits the same property; past them what is left is detection: read what each
+rep actually opened before you count it. That transcript is the instrument: recover a rep's
+agentId by grepping its `toolUseId` across the `.meta.json` sidecars beside those transcripts,
+which carry the dispatch `description` and `spawnDepth` too, then read the paths its transcript
+records. Nested reps land in the **root** session's `subagents/` rather than their
+dispatcher's, so that is the one directory to search (both verified 2026-08-15, after a first
+draft sent you joining `tool_use` to `tool_result` in your own transcript, which works and is
+two steps longer). Do not ask the rep: that is self-report, and a rep that read what it should
+not have is the one least likely to volunteer it. On the gated path below, where RED by
+construction never fails, the hold releases once that path's first two preconditions have been
+**done and their artifacts recorded**, never on the writing-up alone.
 
 **Reps that run in parallel need one fixture each.** The leak rules are about what a rep can
-read; this one is about what two reps can write. Three reps dispatched at once against a fixture
-holding a single output path overwrote each other, and the tell was a rep reporting that "the file
-was rewritten on disk by an outside process twice while I worked", then auditing what it found and
-keeping the better version, so its artifact was partly another rep's (2026-08-14). Whether a rep
-took the action under test is still its own act and survives this, but any judgment of what it
-produced does not. Copy the fixture once per rep and point each rep at its own copy. The failure is
-silent unless a rep happens to mention it, so do not rely on noticing.
+read; this one is about what two reps can write. Three reps dispatched at once against a
+fixture holding a single output path overwrote each other, and the tell was a rep reporting
+that "the file was rewritten on disk by an outside process twice while I worked", then auditing
+what it found and keeping the better version, so its artifact was partly another rep's
+(2026-08-14). Whether a rep took the action under test survives this; any judgment of what it
+produced does not. Copy the fixture once per rep and point each rep at its own copy; the
+failure is silent unless a rep happens to mention it, so do not rely on noticing.
 
-**The kaizen inbox is that same hazard with no fixture in it.** The global posture rule tells every
-rep to append kit friction to `~/.claude-kaizen/notes.md`, so a rep testing a kit skill files a note
-about the very gap under test and a concurrent rep reads it as prior art, one opening with "the
-kaizen notes for both frictions are already filed from earlier in this pass" (2026-08-15). Clear the
-inbox before an arm and read it after, counting whatever is in it as those reps' output rather than
-as inbox items. That buys attribution and not isolation, which is the weaker half: clearing
-beforehand does nothing about rep 2 reading rep 1's note mid-arm, and mid-arm is when it happened.
-Isolation costs serial dispatch with a clear between reps, and the arm that earns it is RED: of
-five arms run on 2026-08-15, only RED produced inbox writes, because the rep the wording fails is
-the rep with something to file. Scoped any wider than that the exception swallows the parallel
-default, since the posture rule points every rep at that same file. Nothing about this announces
-itself, because every rep involved followed a standing rule correctly, and the shared file is
-kit-owned rather than something the fixture pointed at.
+**The kaizen inbox is that same hazard with no fixture in it.** The global posture rule tells
+every rep to append kit friction to `~/.claude-kaizen/notes.md`, so a rep testing a kit skill
+files a note about the very gap under test and a concurrent rep reads it as prior art, one
+opening with "the kaizen notes for both frictions are already filed from earlier in this pass"
+(2026-08-15). Clear the inbox before an arm and read it after, counting whatever is in it as
+those reps' output rather than as inbox items. That buys attribution and not isolation:
+clearing beforehand does nothing about rep 2 reading rep 1's note mid-arm, and mid-arm is when
+it happened. Isolation costs serial dispatch with a clear between reps, and the arm that earns
+it is RED: of five arms run on 2026-08-15, only RED produced inbox writes, because the rep the
+wording fails is the rep with something to file. Scoped any wider the exception swallows the
+parallel default, since the posture rule points every rep at that same file. Nothing about this
+announces itself, because every rep involved followed a standing rule correctly and the shared
+file is kit-owned rather than something the fixture pointed at.
 
-**Reps' own outputs travel the same way.** A probe this session opened a gate file an earlier rep
-had written to the shared scratchpad under a near-identical fixture, took its pre-fix wording for a
-prior pass having dropped the rule, and reported that as a finding; the file simply predated the
-wording (2026-08-15). So sweep both directions: clear what a rep could find before an arm, and
-attribute what you find after it.
+**Reps' own outputs travel the same way.** A probe this session opened a gate file an earlier
+rep had written to the shared scratchpad under a near-identical fixture, took its pre-fix
+wording for a prior pass having dropped the rule, and reported that as a finding; the file
+simply predated the wording (2026-08-15). So sweep both directions: clear what a rep could find
+before an arm, and attribute what you find after it.
 
 **The wording is not the only thing that leaks; so does the answer.** A fixture restaging a
 situation this repo has already resolved leaves a second route to the conclusion open: the
 commit, the archived plan, the Chapter that recorded the decision. Nor are those routes all
 in-repo, which matters when the fixture imitates real work rather than a decision: other
-sessions' scratchpads persist on the machine, so a rep sent to review a fictional PR found
-a real gate report for the very PR the fixture was modelled on (2026-08-11) and reasoned
-from it. Give the fixture identifiers nothing on this disk already answers. One RED lost all three of
-its reps that way (2026-08-10), each reaching the recorded answer rather than deriving it,
-one through `git show <sha>:docs/plans/...`, one through a `docs/archive/` grep, one by
-reading the commit. Instructing the subagent not to look is not a control, and a fresh agent
-that checks its premises will look and is right to. The test is whether the answer is on
-disk, not whether the fixture told it to stay away: a fixture asking for a decision this
-repo already made has one to find, and a fixture asking for a behavior has none. Stage an
-isomorph with the specifics changed, or a situation the repo has never resolved, and read
-what the rep actually opened before you count it.
+sessions' scratchpads persist on the machine, so a rep sent to review a fictional PR found a
+real gate report for the very PR the fixture was modelled on (2026-08-11) and reasoned from it.
+Give the fixture identifiers nothing on this disk already answers. One RED lost all three of
+its reps that way (2026-08-10), each reaching the recorded answer rather than deriving it, one
+through `git show <sha>:docs/plans/...`, one through a `docs/archive/` grep, one by reading the
+commit. Instructing the subagent not to look is not a control, and a fresh agent that checks
+its premises will look and is right to. The test is whether the answer is on disk, not whether
+the fixture told it to stay away: a fixture asking for a decision this repo already made has
+one to find, a fixture asking for a behavior has none. Stage an isomorph with the specifics
+changed, or a situation the repo has never resolved.
 
-An **open** question the repo documents primes rather than answers, which is harder to notice and
-is a surface the kaizen loop creates for itself: a probe on 2026-08-15 read a `docs/plans/` stub
-committed hours earlier in that same pass and reported its framing as primed rather than
+An **open** question the repo documents primes rather than answers, which is harder to notice
+and is a surface the kaizen loop creates for itself: a probe on 2026-08-15 read a `docs/plans/`
+stub committed hours earlier in that same pass and reported its framing as primed rather than
 independent. The finding survived, being checkable against the skill text; the claim to have
-reached it independently did not. So when an arm's territory is a question this repo has parked,
-discount what a rep reports having found on its own, and expect a promoted note to be exactly
-where its territory got documented.
+reached it independently did not. So when an arm's territory is a question this repo has
+parked, discount what a rep reports having found on its own, and expect a promoted note to be
+exactly where its territory got documented.
 
 ## Compression: rewriting a section shorter
 
@@ -320,90 +309,82 @@ own RED came back clean discards real evidence.
 
 This is a gated path, not a judgment call. Three preconditions. **Each one is discharged by
 an artifact, never by your description of one** - a summary of work nobody can see is the
-walk this gate exists to block, and the RED bar above already sets the standard by
-demanding the rationalization verbatim.
+walk this gate exists to block, and the RED bar above already sets the standard by demanding
+the rationalization verbatim.
 
-**The artifacts live in the effort's Chapter, and the backlog carries the one-line debt
-plus a pointer to it.** Per-effort history belongs in Chapters, which is what
-`curating-docs` says and what `docs/backlog.md` is not shaped for: quoted subagent output
-pasted into a one-line active-items file gets truncated to fit, which is the
-description-instead-of-artifact walk this gate exists to block. It also keeps the record
+**The artifacts live in the effort's Chapter, and the backlog carries the one-line debt plus
+a pointer to it.** Per-effort history belongs in Chapters, which is what `curating-docs` says
+and what `docs/backlog.md` is not shaped for: quoted subagent output pasted into a one-line
+active-items file gets truncated to fit, which is that same walk. It also keeps the record
 writable on the default delegated path, where `docs-write-guard` denies an implementer any
-`docs/` write. A delegated run parks the artifacts in `.kit/` and the main thread folds
-them into the Chapter at section close. The Chapter carries the first two artifacts before
-the wording is persisted and the third after; **the section does not close until it carries
-all three**, and a debt pointer that resolves to a Chapter missing any of them is an open
-gate, not a closed one.
+`docs/` write; a delegated run parks the artifacts in `.kit/` and the main thread folds them
+into the Chapter at section close. The Chapter carries the first two artifacts before the
+wording is persisted and the third after; **the section does not close until it carries all
+three**, and a debt pointer that resolves to a Chapter missing any of them is an open gate,
+not a closed one.
 
-**A change with no plan doc has no Chapter, and there the home is the commit that carries
-the wording.** That is the `kaizen` case, and it is a home rather than an exception: a
-commit message has no line budget to truncate quoted output, it is atomic with the wording
-it evidences, and a sha in the debt line resolves on any machine and in any clone, which a
-path into someone's home directory does not. Two things follow, and they are the Chapter's
-ordering rules in the only form a change without sections can take them. **Before the
+**A change with no plan doc has no Chapter, and there the home is the commit that carries the
+wording.** That is the `kaizen` case, and it is a home rather than an exception: a commit
+message has no line budget to truncate quoted output, it is atomic with the wording it
+evidences, and a sha in the debt line resolves on any machine and in any clone. **Before the
 wording is persisted, "recorded" means captured as verbatim text you could commit right
-then** - a drafted message body, or a `.kit/` file folded in at commit time - and never a
-summary you mean to write up afterward from memory, which is the walk this gate exists to
-block. Neither home witnesses the ordering, the Chapter no more than the commit, which is
-why precondition 1 demands the prompt as well: what shows a rep ran before the edit is the
-prompt carrying the wording, not any timestamp. And **the commit is not made until its
-message carries all three artifacts**, the probe included, which is the
-section-does-not-close rule for a change that has no sections.
+then** - a drafted message body, or a `.kit/` file folded in at commit time - never a summary
+you mean to write up afterward from memory. Neither home witnesses the ordering, which is why
+precondition 1 demands the prompt as well: what shows a rep ran before the edit is the prompt
+carrying the wording, not any timestamp. And **the commit is not made until its message
+carries all three artifacts**, the probe included.
 
-1. **You attempted a local RED.** Artifact: the fresh subagent's actual output, quoted, not
-   a report of it. **Which outcome you are on turns on whether your rep entered the state the
-   rule guards**, never on whether it came back clean: a fixture staging the case the rule does
-   NOT guard produces a clean run by construction, which is not evidence of anything. So ask
-   what state the rule is about, then ask whether the rep was in it, and only then read the
+1. **You attempted a local RED.** Artifact: the fresh subagent's actual output, quoted, not a
+   report of it. **Which outcome you are on turns on whether your rep entered the state the
+   rule guards**, never on whether it came back clean: a fixture staging the case the rule
+   does NOT guard produces a clean run by construction, which is not evidence of anything. So
+   ask what state the rule is about, then whether the rep was in it, and only then read the
    result. Four answers; only the last two are this section's, and they carry different bars:
 
    - **In the state, and the failure appeared.** Your RED fired, so you are on the normal bar
      above with a real local RED and none of this section's costs attach. The easiest answer
      to walk past, because a rep that read as fine overall can still carry the defect in its
-     output, which is why you read the output rather than the rep's summary of itself.
+     output.
    - **Not in the state, and the state is stageable.** You have not attempted the RED yet.
-     Restage it, and do not file the clean run under either branch below: a rep that was never
-     in the guarded state cannot speak to what happens inside it.
-   - **Did not reproduce.** The rep was in that state and behaved correctly anyway. Three reps
-     at least, and the entry carries their output, so a clean run is as checkable as a failing
-     one. **Then ask what produced the compliance before you file it here**, because these four
-     answers classify the rep's state and not the cause of its behavior. When something already
-     in the kit forces the result - a REQUIRED field in the template the rep fills, a hook that
-     rejects the bad output, a step the surrounding skill already orders - the finding is that
-     the draft is redundant and the change is to cut it, which is a better outcome than
-     admitting it and one this branch otherwise buries. Where the change forecloses a
-     reading the current wording still allows, the rule being replaced is not one of those
-     things: a clean run shows that wording can be read the intended way, never that it
-     will be, and the reading you are removing is the one no rep happened to take. Take
-     that to the fall-through below, not to the cut. When nothing does, and the rep simply
-     worked the problem well enough to route around wording that was wrong, that is a real
-     did-not-reproduce and the wording may still be worth fixing on its own evidence: prose
-     that only capable readers survive is a defect whether or not a rep trips on it.
-   - **Could not be constructed.** You could not stage that state at all. Name the element you
-     cannot stage **and the substitute you tried**, with the substitute's output and where it
-     fell short: "I compressed the
-     session to forty turns of synthetic context, and here is what came back." Naming the
-     element alone is never enough, because "their harness", "their platform", and "a long
-     live session" are the entry conditions restated, and a gate discharged by restating its
-     own entry condition is paperwork. Without a substitute that actually ran, this branch
-     **fails the gate**; it is the cheap branch, so it is the strict one. **One case owes no
-     substitute**, because no substitute could reach its state: a rewrite that adds no claim,
-     which "Compression: rewriting a section shorter" above routes and gates on a finished
-     two-directional mapping. Nothing else on this branch is excused by resembling it.
+     Restage it, and do not file the clean run under either branch below: a rep that was
+     never in the guarded state cannot speak to what happens inside it.
+   - **Did not reproduce.** The rep was in that state and behaved correctly anyway. Three
+     reps at least, and the entry carries their output, so a clean run is as checkable as a
+     failing one. **Then ask what produced the compliance before you file it here**, since
+     these four answers classify the rep's state and not the cause of its behavior. When
+     something already in the kit forces the result - a REQUIRED field in the template the
+     rep fills, a hook that rejects the bad output, a step the surrounding skill already
+     orders - the finding is that the draft is redundant and the change is to cut it, a
+     better outcome than admitting it and one this branch otherwise buries. Where the change
+     forecloses a reading the current wording still allows, the rule being replaced is not
+     one of those things: a clean run shows that wording can be read the intended way, never
+     that it will be, and the reading you are removing is the one no rep happened to take.
+     Take that to the fall-through below, not to the cut. When nothing does, and the rep
+     simply worked the problem well enough to route around wording that was wrong, that is a
+     real did-not-reproduce, and the wording may still be worth fixing on its own evidence:
+     prose that only capable readers survive is a defect whether or not a rep trips on it.
+   - **Could not be constructed.** You could not stage that state at all. Name the element
+     you cannot stage **and the substitute you tried**, with its output and where it fell
+     short: a forty-turn synthetic-context compression, say, and what came back. Naming the
+     element alone is never enough, because "their harness" and "a long live session" are the
+     entry conditions restated, and a gate discharged by restating its own entry condition is
+     paperwork. Without a substitute that actually ran, this branch **fails the gate**; it is
+     the cheap branch, so it is the strict one. **One case owes no substitute**, because no
+     substitute could reach its state: a rewrite that adds no claim, which "Compression:
+     rewriting a section shorter" above routes and gates on a finished two-directional
+     mapping. Nothing else here is excused by resembling it.
 
-   The two branches want different amounts of evidence on purpose, and the reason is that they
-   are not measuring the same thing. Did-not-reproduce asserts a behavioral negative, which one
-   clean sample barely supports, so it takes the three reps. A substitute measures no behavior at
-   all: a fixture that cannot reach the guarded state will not reach it on the fifth run either,
-   so reps add nothing, and what it has to establish is that you reached for the element rather
-   than what happened when you did. So do not read the single substitute as the lower bar and
-   file a single clean in-state rep beside it.
+   The two branches want different amounts of evidence on purpose. Did-not-reproduce asserts
+   a behavioral negative, which one clean sample barely supports, so it takes the three reps.
+   A substitute measures no behavior at all, so reps add nothing, and what it has to
+   establish is that you reached for the element rather than what happened when you did. Do
+   not read the single substitute as the lower bar and file a single clean in-state rep
+   beside it.
 
-   Attempt it **first**, and record the prompt alongside the output, since the prompt is the
-   only thing that can show either of the two things a later reader has to check. On a rep
-   carrying the new wording, it shows the wording was supplied in-prompt rather than read off
-   the repo, which is what the leak mechanism above cares about; output alone proves the rep
-   ran, not that it ran before the edit, and the record and the edit land in the same commit
+   Attempt it **first**, and record the prompt alongside the output. On a rep carrying the
+   new wording, the prompt shows the wording was supplied in-prompt rather than read off the
+   repo, which is what the leak mechanism above cares about; output alone proves the rep ran,
+   not that it ran before the edit, and the record and the edit land in the same commit
    either way, so git witnesses nothing. On a substitute, which carries no new wording at
    all, it shows instead **which state the substitute actually staged**, so the branch you
    claimed above is checkable rather than asserted.
@@ -417,59 +398,57 @@ section-does-not-close rule for a change that has no sections.
 
 Then persist, and run the third:
 
-3. **A followability probe on the persisted wording.** Artifact: the probe subagent's
-   output, in the same Chapter. This is the precondition most easily skipped, because it falls
-   due after the work looks finished; with no recorded output, a skipped probe and a passing
-   one are indistinguishable to every later reader, so **an entry without the probe's output
+3. **A followability probe on the persisted wording.** Artifact: the probe subagent's output,
+   in the same Chapter. This is the precondition most easily skipped, because it falls due
+   after the work looks finished; with no recorded output a skipped probe and a passing one
+   are indistinguishable to every later reader, so **an entry without the probe's output
    records a gate that was not passed.**
 
    This is not GREEN as defined above: re-running the RED task proves nothing here, because
    on this path that task either does not exist or already passed without the wording.
    Instead hand a fresh subagent the persisted wording and a realistic task **inside the
    rule's territory**, which is all the task has to be. It does not have to stage the
-   failure, so the could-not-be-constructed branch can always run this. Check that it
-   applies the rule correctly; it fails if the subagent misapplies the rule or has to ask
-   what it means. Three reps at least for a pass, since one clean run tells you little. A single
+   failure, so the could-not-be-constructed branch can always run this. Check that it applies
+   the rule correctly; it fails if the subagent misapplies the rule or has to ask what it
+   means. Three reps at least for a pass, since one clean run tells you little. A single
    failure is enough to act on.
 
-   **Ask whether the rule was applied, not whether an ambiguity can be named in it.** A capable
-   reader can answer the second about any prose, so a prompt that asks for it gets a list however
-   good the wording is, and that list reads as friction without being any. Three probes phrased
-   that way on 2026-08-15 returned twelve inbox notes against wording all three of them had
-   applied correctly, and the count was then read as a measure of the kit rather than of the
-   prompt. Keep the self-report to what the rep had to interpret in order to act.
+   **Ask whether the rule was applied, not whether an ambiguity can be named in it.** A
+   capable reader can answer the second about any prose, so a prompt that asks for it gets a
+   list however good the wording is, and that list reads as friction without being any. Three
+   probes phrased that way on 2026-08-15 returned twelve inbox notes against wording all
+   three of them had applied correctly, and the count was then read as a measure of the kit
+   rather than of the prompt. Keep the self-report to what the rep had to interpret in order
+   to act.
 
    **A failed probe is not a regret, it is a stop.** Revert the wording, or fix it and
    re-probe, before the work closes. Unfollowable prose that shipped with a note saying it
-   should not have is the worst of both.
-
-   The probe proves followability and nothing else: it does not validate the claim and it
-   does not discharge the debt below.
+   should not have is the worst of both. The probe proves followability and nothing else: it
+   does not validate the claim and it does not discharge the debt below.
 
 Bound what you claim:
 
-- **Every claim in the persisted wording maps to a specific sentence in the source record,
-  or it is cut.** That is the checkable form of "narrowing and restating are admitted,
-  extending is not": adaptation to this kit's vocabulary and harness is expected and fine,
-  but a claim with no sentence behind it asserts something the source never observed, so it
-  is held to the normal bar like any other belief. It does not get to ride in on the ported
-  half's evidence just because it was written in the same sentence.
-- **Mark the provenance, not the coverage**, as a clause in the wording itself, and carry
-  the locator into it: this rule's evidence is that source's incident or that session,
-  rather than a local rep. Do not try to label which half of a sentence is covered. What a
-  later session needs is to know the evidence is borrowed and to be able to go and read it,
-  so it can weigh the rule against its own observations instead of treating it as locally
-  proven; a marker naming no source sends it hunting through an archived backlog. This is
-  the one place the "nothing at all for judgment wording" rule below yields.
+- **Every claim in the persisted wording maps to a specific sentence in the source record, or
+  it is cut.** That is the checkable form of "narrowing and restating are admitted, extending
+  is not": adaptation to this kit's vocabulary and harness is expected and fine, but a claim
+  with no sentence behind it asserts something the source never observed, so it is held to
+  the normal bar like any other belief rather than riding in on the ported half's evidence
+  because it was written in the same sentence.
+- **Mark the provenance, not the coverage**, as a clause in the wording itself, and carry the
+  locator into it: this rule's evidence is that source's incident or that session, rather
+  than a local rep. Do not try to label which half of a sentence is covered. What a later
+  session needs is to know the evidence is borrowed and to be able to go and read it; a
+  marker naming no source sends it hunting through an archived backlog. This is the one place
+  the "nothing at all for judgment wording" rule below yields.
 - **Record the debt in `docs/backlog.md`**: one line, naming the wording and pointing at
   whichever of the two homes above holds the artifacts, the Chapter or the commit sha. This
   clause holds the rule, that home holds the evidence, and the backlog holds the open
-  instances. A sha pointer costs one ordering: the line cannot sit in the commit it cites,
-  so it lands in a second commit after it, and amending the first to fold the line in
-  rewrites the sha the line just cited. The debt closes on one of two
-  observable events: a session where the failure the wording guards actually occurs, or a
-  session where the rule was applied and the record shows what it changed. "It seems to be
-  working" closes nothing, and neither does time. Retiring the wording also closes it.
+  instances. A sha pointer costs one ordering: the line cannot sit in the commit it cites, so
+  it lands in a second commit after it, and amending the first to fold the line in rewrites
+  the sha the line just cited. The debt closes on one of two observable events: a session
+  where the failure the wording guards actually occurs, or a session where the rule was
+  applied and the record shows what it changed. "It seems to be working" closes nothing, and
+  neither does time. Retiring the wording also closes it.
 
 Marking wording as unverified is **not** itself an admission path. A claim you simply
 believe, with no port and no report behind it, is not admitted by labelling it honestly; it
