@@ -307,7 +307,11 @@ section-does-not-close rule for a change that has no sections.
      in the kit forces the result - a REQUIRED field in the template the rep fills, a hook that
      rejects the bad output, a step the surrounding skill already orders - the finding is that
      the draft is redundant and the change is to cut it, which is a better outcome than
-     admitting it and one this branch otherwise buries. When nothing does, and the rep simply
+     admitting it and one this branch otherwise buries. Where the change forecloses a
+     reading the current wording still allows, the rule being replaced is not one of those
+     things: a clean run shows that wording can be read the intended way, never that it
+     will be, and the reading you are removing is the one no rep happened to take. Take
+     that to the fall-through below, not to the cut. When nothing does, and the rep simply
      worked the problem well enough to route around wording that was wrong, that is a real
      did-not-reproduce and the wording may still be worth fixing on its own evidence: prose
      that only capable readers survive is a defect whether or not a rep trips on it.

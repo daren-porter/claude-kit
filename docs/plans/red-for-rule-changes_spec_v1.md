@@ -216,6 +216,8 @@ stub opened on.
 
 ### 3. The did-not-reproduce inversion
 
+**Status: Complete (Chapter 3).**
+
 The gated section's did-not-reproduce branch says to ask what produced the compliance,
 and to cut the draft when something already in the kit forces the result. On a rule
 change the thing already forcing the result is the rule being replaced, so read
@@ -320,8 +322,11 @@ out of the session scratchpad so they outlive the session.
   bill into the counter-case section made it smaller again while satisfying acceptance
   criterion 1 more literally than the first attempt did.
 - Net +12 lines (435 to 447): one paragraph plus three sentence-level fixes, no new heading.
-  Within the leanness bound, which matters more than expected given the concurrent
-  `kaizen-stop-start-continue` finding that this file went 97 to 435 lines in eight weeks.
+  Within the leanness bound, which matters more than expected given this file's growth:
+  97 lines at `703cded` (2026-06-17), 435 at `8aa426d` (2026-08-15), measured here rather
+  than taken on trust. **Corrected in Chapter 3:** this originally cited a
+  `kaizen-stop-start-continue` stub seen in `docs/README.md` mid-session, which another
+  session then replaced. The measurement was right; the citation resolved to nothing.
 - S2's RED fired incidentally inside these arms: **0 of 5 reps** asked to plan a baseline
   test for a scoping change produced a control arm. Recorded in `S2-RED-RESULT.md`.
 
@@ -441,3 +446,91 @@ change, the untouched state, read for the rule correctly staying silent. Arm 1's
 the spec's phrasing as colliding with GREEN. The spec's phrase is the loose one.
 
 Next: 3. The did-not-reproduce inversion
+
+### Chapter 3 - 2026-08-15
+Completed: 3. The did-not-reproduce inversion
+Implemented By: main session
+Metrics: 1 review round (paired; adversarial CHANGES_REQUIRED, blind APPROVED_WITH_CONCERNS); 0 NEEDS_CONTEXT; 0 escalations; advisor on; 4 arms over 12 reps, one aborted on a fixture defect
+Commit Model: Commit-and-Push
+
+**The stub stated the inversion too loosely, and locating it was most of the work.** It says
+the branch read literally "concludes every replacement is redundant". Worked through, that is
+not so. On a plain **narrowing** the inversion does not arise: RED stages the state the change
+is about, the rep does the now-unwanted thing under the old rule, and that is the harm, so RED
+fires. For a clean in-state run the rep must have declined to obey the old rule, so the old
+rule cannot be what produced the compliance. The inversion bites on a **disambiguation**, a
+rule that is not wrong but readable two ways: every rep happens to take the intended reading,
+the honest answer to "what produced the compliance" is the rule being replaced, and the branch
+then says to cut. `c13a9ca` had exactly this shape.
+
+**Arms.** Full records at `/tmp/claude-1000/kit-arm-artifacts-red-for-rule-changes/`, ratios
+and quotes carried here because that path does not survive a reboot.
+
+- **Arm 1: aborted on a fixture defect, not counted.** The fixture's `handover.md` carried a
+  catch-all line ("Record what ran, what is still running, and anything the next operator must
+  watch") above the ambiguous line, which neutralises the harm. A rep caught it: "Neither rep
+  needed the flag line to be unambiguous, because the record line had already caught the job
+  the ambiguity could have dropped." That is a correct redundancy call on a real mechanism I
+  had put there, not the wrong-route conclusion under test. Counting it would have been
+  stretching a pre-registered condition to fit a result. Rebuilt with the catch-all removed,
+  so the ambiguous line is the only instruction governing what the handover carries.
+- **RED (arm 2): fired 2 of 3.** Reps were handed a completed 3/3-clean arm and asked what to
+  conclude. Rep 1: "the queued change gets cut, because the arm's reasoning shows the shipped
+  qualifier already produced the compliance [...] which puts it on the did-not-reproduce
+  branch's redundancy sub-branch." Rep 2 reached the same by the same route. Rep 3 escaped, by
+  noticing the reps had enacted the reading the change removes.
+- **GREEN (arm 3): passed 3/3.** Rep 1: "**Not cut.** The clean call is the one thing that
+  would argue for cutting, and on a rule change the skill forecloses that reading explicitly."
+- **Review: adversarial CHANGES_REQUIRED, blind APPROVED_WITH_CONCERNS.**
+- **Arm 4: passed 3/3** on a corrected criterion, testing the revision and acceptance
+  criterion 2 together.
+
+**Decisions / Surprises.**
+- **My arm-4 pass condition was defective, and I corrected it after seeing rep 1.** It
+  required the rep to *reach* a redundancy finding on the catch-all line, which demands a
+  specific answer to a contestable judgment about a fixture I invented; arm 1's rep said the
+  catch-all forces the result, arm 4's rep 1 said it does not, and nothing settles that. What
+  criterion 2 needs is whether the clause suppresses the *question*. Corrected to that, in
+  writing, with the ordering recorded, and rep 1 marked as weaker evidence than reps 2 and 3
+  because its result was in hand when the criterion was rewritten. This is the second
+  defective predicate I have written in this effort; both are recorded rather than quietly
+  rescored.
+- Net +4 lines for S3; the file stands at 465 against 435 at the start of the effort.
+
+**Review findings: addressed.**
+- Adversarial Major (the clause stranded the reader: it ruled out redundancy while the next
+  sentence's entry condition, "When nothing does, and the rep simply worked the problem well
+  enough to route around wording that was wrong", fits a disambiguation on neither conjunct):
+  fixed by naming the destination, "Take that to the fall-through below, not to the cut." The
+  GREEN arm could not have caught this, since its pre-registered pass condition was explicitly
+  destination-agnostic.
+- Adversarial Major (evidenced on one shape, worded unconditionally, and so silently deciding
+  the entailed-repair question this spec puts Out of Scope): fixed by scoping the clause to
+  "where the change forecloses a reading the current wording still allows".
+- Adversarial Major (criterion 2 untested): closed by arm 4 on the fixture the reviewer
+  identified.
+- Blind Major (the carve-out sits in a branch that `:106` exports to any clean run) and Blind
+  Major (unresolvable against list item 3, "a step the surrounding skill already orders"):
+  both substantially reduced by the same scoping fix.
+- Minors: "clean arm" to "clean run"; "however plainly it produced the result" cut; the
+  insertion rewrapped to the surrounding 95 columns.
+- **Chapter 1 corrected.** It cited a `kaizen-stop-start-continue` stub that no longer exists;
+  another session replaced it. The measurement was right and is now stated with shas, verified
+  here rather than taken on trust.
+
+**Review findings: rejected, with reasons.**
+- Blind Major, reconcile the clause with GREEN's every-rep bar. The two govern different
+  objects: GREEN tests whether the new wording holds, the clause is about what the old
+  wording's clean run does not establish. The scoping fix narrows the surface further.
+- Blind Major, carry the carve-out into the `:103-105` copy. That copy already points at the
+  four answers, and the clause is now a narrow exception rather than a general one. A second
+  copy would owe its own arm on a file already under leanness pressure. Recorded as a
+  candidate.
+- Adversarial Minor, consolidate S2's transcript clause with `:191-193`. Real, but it would
+  re-open S2 and owe another arm for a wording improvement with no observed failure behind it.
+
+**Untested, stated plainly.** Arm 1 and arm 4 reps disagree on whether the catch-all line
+genuinely makes that fictional change redundant. Nothing here settles it, which is exactly why
+the corrected criterion tests whether the question gets asked rather than how it is answered.
+
+Next: finishing-work
