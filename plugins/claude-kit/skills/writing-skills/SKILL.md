@@ -112,6 +112,20 @@ agent's behavior with and without the wording:
 3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it
    holds, each revision a fresh arm against reps that have not seen a prior version.
 
+**A behavior-claim rule change asks RED a different question, and a narrowing takes a third
+arm.** Changing a rule the kit already ships asks whether the rule as it stands produces the
+harm, because a rep that obeys the current rule is complying with the shipped kit rather than
+failing, and counting that would make the RED fire for any rule change whatever. So stage the
+state where the current rule does the damage, and read the rep's reasoning and not only its
+output: a rep can reach a defensible outcome while documenting a misreading of the rule being
+replaced, and that misreading is the finding. Take it off the rep's transcript rather than
+asking, since asking tells it which line is graded. RED and GREEN then share that one state,
+since GREEN re-runs RED's task, which is why a narrowing owes a third arm in the state the
+change leaves alone, read for the rule still doing there what it always did: one that quietly
+took the untouched case with it looks exactly like one that worked. That arm carries the
+draft and can fail, so it holds the replaced rule in its fixture and dispatches serially
+like RED.
+
 Run three reps at least - one sample lies - and read every flagged result yourself, since
 template echoes masquerade as both failures and successes. This is the standard
 for any change to behavior-shaping content, the kit's own skills included. Two paths lead

@@ -186,6 +186,8 @@ failure mode that makes this change net-negative if it lands wrong.
 
 ### 2. The rule-change reading in the RED section
 
+**Status: Complete (Chapter 2).**
+
 Give step 1 a reading for a change to a rule that already ships. Two things it lacks:
 which arms establish the need, and what counts as the observable.
 
@@ -364,3 +366,78 @@ cleared out of the inbox so the arms could attribute rep writes. It stays held u
 S3's arms finish, then goes back. The inbox was empty before and after all 12 reps.
 
 Next: 2. The rule-change reading in the RED section
+
+### Chapter 2 - 2026-08-15
+Completed: 2. The rule-change reading in the RED section
+Implemented By: main session
+Metrics: 1 review round (paired, both CHANGES_REQUIRED); 0 NEEDS_CONTEXT; 0 escalations; advisor on; 3 GREEN arms over 7 reps, plus a RED that fired incidentally inside S1's arms
+Commit Model: Commit-and-Push
+
+**Arms.** Records in `/tmp/claude-1000/kit-arm-artifacts-red-for-rule-changes/`.
+
+- **RED: fired 5/5**, staged incidentally by S1's arms. Every rep asked to plan a baseline
+  test for a scoping change produced RED, GREEN and mostly REFACTOR. **Zero produced a
+  control arm.** The task had asked for "the arms, what each arm stages, how many reps", so
+  a third arm would have been squarely responsive.
+- **GREEN arm 1: FAILED on rep 1, arm stopped.** The draft named the third arm's state as
+  "the state the scoped rule should no longer reach", which is GREEN's own state, since
+  GREEN re-runs RED's task. Rep 1 caught the collision and reasoned around it. That is the
+  process working: a rep located a defect in the wording before it shipped.
+- **GREEN arm 2: PASSED 3/3** on the revised wording, fresh reps and fixture, no in-prompt
+  excerpt so findability was measured.
+- **Review: both reviewers CHANGES_REQUIRED**, four findings carrying arm evidence.
+- **GREEN arm 3: PASSED 3/3 on all four criteria**, on a two-situation fixture so the new
+  qualifier was exercised rather than assumed.
+
+**Decisions / Surprises.**
+- My pre-registered criterion for arm 2 was itself internally contradictory: it asked for an
+  arm staging "the state the scoped rule should no longer reach" AND one showing "the
+  narrowing did not over-reach", which are opposite states. Recorded and corrected before
+  arm 2 rather than resolved in favour of whichever reading a result satisfied.
+- Net +14 lines on the file across both S2 revisions, held to one paragraph with no heading
+  by cutting two recap fragments the reviewer identified.
+
+**Review findings: addressed.**
+- Critical (no leak posture for the third arm; parallel dispatch with RED would void the
+  control): fixed. The arm is named as carrying the draft and dispatching serially like RED.
+- Critical (criterion 5 unmet, and the justification falsified by the arm's own outputs):
+  conceded and fixed. See below.
+- Major (the reasoning criterion under-determined; arm 2's reps split 2-1, one naming the
+  others' approach as producing a coached rep): fixed. The text now says to take it off the
+  rep's transcript rather than asking.
+- Major/Minor (the bold lead over-claimed twice, contradicting S1's shipped bill and its own
+  body): fixed with two qualifiers, "behavior-claim" and "narrowing".
+- Minor ("counting that as the fire would fire" subject confusion): fixed.
+- Minor (spent fixture unquarantined before S3; arm-1 prereg unpaired in the durable set):
+  both done.
+
+**Review findings: rejected, with reasons.**
+- Blind Major, require a baseline rep in the untouched state. Rejected: `writing-skills`'
+  did-not-reproduce branch already governs a clean third arm ("ask what produced the
+  compliance"), and mandating a baseline makes this four arms on a file already mostly
+  testing apparatus. Backlog candidate.
+- Blind Major, state that the current rule must be in force for a rule-change RED. Rejected:
+  6 of 6 reps across arms 2 and 3 staged RED against a byte-identical copy of the current
+  rule unprompted, so the wording would be unevidenced.
+- Blind Major, no mapping onto the four answers for a rule-change RED. Deferred to S3, which
+  is exactly that territory.
+
+**Criterion 5 resolved, and recorded here because nothing else survives the session.**
+The stub's strip-versus-leave sub-question: **leave the existing rule standing.** Across
+arms 2 and 3, 6 of 6 reps staged RED against a byte-identical copy of the current rule and
+none proposed stripping it; the shipped text presupposes it ("stage the state where the
+current rule does the damage"). The observable that decides the question is **which text
+each arm's fixture carries**, and the shipped clause now names it for the third arm, which
+was the one place reps actually diverged (arm 2's rep 1 gave the third arm the old rule
+while its prompt carried the new one, a contradicted rep). No further SKILL.md prose is
+owed. The earlier justification offered for this, that S1's arms left the rule standing and
+still fired, was wrong and is withdrawn: S1's reps were planners, never in the
+over-determined state the sub-question is about.
+
+**Deviation from the spec.** Acceptance criterion 1 says "a control **outside the new
+scope**". The shipped text says "the state the change **leaves alone**". These differ, and
+the shipped wording is the correct one: `c13a9ca`'s control staged a re-review with no vote
+change, the untouched state, read for the rule correctly staying silent. Arm 1's rep caught
+the spec's phrasing as colliding with GREEN. The spec's phrase is the loose one.
+
+Next: 3. The did-not-reproduce inversion
