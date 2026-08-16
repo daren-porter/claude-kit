@@ -566,8 +566,16 @@ fixture in this effort with a confound in it.
 
 **Arm 6 (0 of 3, bar not met) found a defect in wording S1 already shipped.** The arm was
 built to test whether a reader routes a world-claim on the claim or on the downstream harm.
-No rep routed on the harm. All three instead applied S1's shipped conjunction and found its
-second half fails:
+No rep routed on the harm, so the trap the arm was built for did not spring. But the reps
+split 2-1 on *why* the no-arm bill was unavailable, and only two of the three reached the
+finding below. **Corrected after rep 1 landed late:** an earlier version of this Chapter said
+all three found the second half failing. Reps 2 and 3 did. Rep 1 found the *first* half
+failing instead, on the grounds that the rule being scoped ("Read only the `+` lines") is a
+directive about what the agent does rather than a claim about a system. Rep 1 is pointing at
+a fourth fixture confound in this effort: that rule mixes a directive with a factual claim,
+so it was never a clean world-claim to stage.
+
+The finding two of three reached:
 
 > No arm is owed where the claim is about something other than an agent **and** the system
 > that would settle it is not reachable from inside an arm
@@ -575,7 +583,9 @@ second half fails:
 Rep 3: "git is reachable from inside an arm, so a fixture can hold a real repo and let real
 `git diff` emit the paired `-`/`+` hunk without asserting the fact under test."
 
-That contradicts this effort's own worked example. `ee8be8f` is cited throughout S1 as the
+**The finding does not rest on the rep count.** It is checkable directly, and I checked it:
+`ee8be8f`'s claim is about what `git diff` renders, git is locally reachable, and that commit
+ran zero arms and settled it by measuring git. That contradicts this effort's own worked example. `ee8be8f` is cited throughout S1 as the
 correct no-arm case, its claim is about what `git diff` renders, and git is locally
 reachable, so under the shipped wording it owes arms. It was in fact settled by measuring
 git directly. Reachability is the wrong proxy for what the conjunct was reaching for, which
