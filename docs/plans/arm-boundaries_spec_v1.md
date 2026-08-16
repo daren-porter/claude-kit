@@ -98,46 +98,67 @@ verdictable. Recorded for the backlog, not fixed here." That is the same shape a
 - a real limit of an instrument, recorded where nobody reading the instrument will find it.
 Decide whether it joins this effort or gets its own; do not let it fall through a third time.
 
-## The direction this should probably take: invert the default
+## The direction, after the evidence check killed the first one
 
-Added 2026-08-16, after the pass that wrote this stub measured the kit. **Recorded as a
-recommendation with its evidence, not as a settled design** - it is the thing to argue with
-first, and a design pass is free to reject it.
+Two entries, in order, because the sequence is the useful part. Both added 2026-08-16.
 
-The two notes read as "the arms have a blind spot, so add a review." The measurement says
-something stronger. **In the one effort where both gates ran and the outcomes were counted,
-the arms caught none of the sixteen Criticals and the paired review caught all sixteen**
-(`archive/kaizen-stop-start-continue_spec_v1.md:821`, `:686`, `:784`). Thirty-plus arm reps
-passed wording that had sixteen Criticals in it, and every Critical was a contradiction with
-the target file.
+### Rejected: invert the default
 
-That is not the arms failing at their own job. Arms test followability under a task, and they
-did that. It is that **followability is the rarer failure in kit prose.** The common one is
-contradiction with the file the wording lands in, and the arms are structurally blind to it
-while the review is built for it. So the kit currently spends its expensive gate on the rare
-failure and leaves the common one to a gate that is optional on the planned path and absent on
-the kaizen path.
+The first draft of this section proposed demoting the arms - paired review becomes the
+mandatory gate, arms become the exception - on the strength of one effort where **the arms
+caught none of the sixteen Criticals and the paired review caught all sixteen**
+(`archive/kaizen-stop-start-continue_spec_v1.md:821`, `:686`, `:784`).
 
-The inversion: **paired review becomes the mandatory gate for any kit-prose change, and the
-arms become the exception reserved for a genuinely new behavior claim** - a rule an agent could
-rationalize around, where what is in question is whether the wording changes conduct at all.
-Fact corrections, cross-references, deduplications and compressions take the review and stop
-there, which is roughly what commit `1526456` already does in practice without saying so.
+**The check that section demanded of itself was run, and the proposal did not survive it.**
+Across the other efforts that ran both gates, the arms do work no review did:
 
-**Why this is worth more than the wording fix the notes asked for.** The current default costs
-a multi-hour arm run for a two-word change, which has three observed effects: small fixes do
-not get made, the ones that do consume whole sessions, and those sessions generate fresh
-friction about the apparatus, which grows the apparatus. `writing-skills` is now 515 lines,
-the largest file in the kit, against `systematic-debugging`'s 46. `writing-skills` and `kaizen`
-together are 698 of the 3,251 lines across all eighteen skills, 21.5%, and 34 of 140 commit
-touches. The loop that is supposed to improve the kit is spending a fifth of it on itself.
+- `archive/visual-companion_spec_v1.md`, commit `d612315`, "ship the frame and the guide, **and
+  cut the rule the RED did not justify**." An arm caused a rule to be removed. That is the only
+  demonstrated instance in this repo of a rule subtracted on evidence, which is the capability
+  `docs/take-stock.md` was built to supply and has not yet delivered once.
+- `archive/red-for-rule-changes_spec_v1.md:388` RED fired 5/5; `:482` a second RED arm fired
+  2/3; `:413` an arm's own output falsified a criterion the effort had asserted.
+- In both, reviewers **also** found Criticals the arms could not (`:308-312`: "GREEN could not
+  test it. Conceded.").
 
-**The bar this proposal has to clear, and it is not a low one.** Retiring or demoting a gate is
-the highest-blast change in this repo, and the argument above rests on a single effort's
-counted outcomes. Before acting, check whether the pattern holds in the other efforts that ran
-both gates (`red-for-rule-changes`, `visual-companion`, `docs-lifecycle-and-guards`), since one
-effort is enough to raise the question and not enough to settle it - which is this file's own
-rule at `writing-skills:461-466`, applied to a claim about the kit rather than about a system.
+So the two gates catch different classes and neither substitutes for the other. The 16/16
+datum stands but is bounded: that effort was prose-about-prose throughout, where contradiction
+is the dominant risk. **Do not demote the arms.** Recorded here rather than deleted, because
+the inversion is an intuitive proposal that will be reached for again, and the reason it fails
+is not obvious from inside the effort that suggests it.
+
+### The finding that replaces it: the cost is the routing, not the arms
+
+The pass that wrote this stub **ran zero arms and still consumed several hours across multiple
+usage blocks** (Daren, 2026-08-16), for two clause additions. The arms were never the expense
+for a small change. What cost was determining which of four routes a change takes: reading 515
+lines, weighing three sections that "route around" the bar, and reconstructing the governing
+precedent by archaeology through commit `1526456`'s message, because no section states it.
+
+**There is no findable answer to "I want to change kit prose - what does this cost me?"** The
+routing lives in `writing-skills:126-134`, in the four answers at `:338-383`, in
+`## Compression`'s entry condition, and in `## When you meet a counter-case`'s bill, each
+written as an exception to the others, with the cheapest lane of all recorded only in a commit
+message. That is also the operator-side complaint: Daren cannot tell what a kit change is worth
+because the answer is not written down as a whole anywhere.
+
+So the direction is **consolidation, not demotion**. Three parts, cheapest first:
+
+1. **State the limit.** An arm cannot detect contradiction with the file the wording lands in.
+   Fact, located, no RED owed.
+2. **Close the review hole.** The paired review is mandatory for planned work and absent from
+   the kaizen apply path, which is where most kit prose is actually edited. See finding 1a.
+3. **One findable ladder.** A single decision procedure naming every class of kit-prose change
+   and its bill, in one place, replacing four cross-referencing exceptions. Mostly a
+   consolidation of text that already exists, which puts it on the compression bill rather
+   than the arms - and the claim inventory is what will prove that, since a ladder that
+   quietly widens or narrows a trigger is a rule change wearing a compression's clothes.
+
+**Sizing, for whoever picks this up.** `writing-skills` is 515 lines, the largest file in the
+kit, against `systematic-debugging`'s 46. `writing-skills` and `kaizen` together are 698 of the
+3,251 lines across all eighteen skills (21.5%), and 34 of 140 commit touches. The loop meant to
+improve the kit spends a fifth of it on itself. That is the argument for part 3 and not for
+cutting anything: none of those lines is unfounded, they are simply unnavigable.
 
 ## What this stub is not
 
