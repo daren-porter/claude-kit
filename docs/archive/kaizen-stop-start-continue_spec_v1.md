@@ -1,6 +1,6 @@
 # Stop, Start, Continue: giving Kaizen an Input That Is Not Friction
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: S3, finishing reviews
 Created: 2026-08-15 (designed 2026-08-16)
@@ -807,4 +807,26 @@ Five further Majors fixed: the compression bill was restated with the claim unit
 Review Findings: 4 Critical, 10 Major, 5 Minor across two reviewers, all addressed. Deliberately not addressed: the second clause of "Capture does not change" was aimed at a working session that never loads this skill, so it was cut rather than kept as decoration.
 
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 6 - 2026-08-16 (close-out)
+Completed: finishing-work
+Implemented By: main session; `qa-verifier` twice, `security-reviewer` and `adversarial-reviewer` at Fable per the header, `docs-curator`
+Metrics: QA FAIL then PASS; security CLEAR; final adversarial APPROVED_WITH_CONCERNS; 11 drift items; advisor on, consulted twice in design and not during execution
+
+**What shipped.** `tools/accretion.js` and its tests; `plugins/claude-kit/hooks/accretion-lib.js`, the shared parser in the payload; `plugins/claude-kit/hooks/take-stock-nudge.js` with 16 tests; `docs/take-stock.md` as the record and marker; `docs/prose-accretion.md` documenting the loop; the compression path in `writing-skills`; the take-stock bucket and second entry in `kaizen`; the committed S3 claim inventory; two new backlog items; and `docs/plans/kit-concurrent-sessions_spec_v1.md` split out as Proposed. 318 tests pass on a gate widened to reach `tools/`.
+
+**The headline proof failed, and that is the finding.** `writing-skills` ends at 514 against a target of under 467. Those two sections hold 143 claims at about 172 characters each; a hard compression bought 6.5% where 18.5% was wanted. **This is claim accretion, not prose accretion**, so compression is the wrong instrument for it and retirement is the lever past it. The bar was also mis-specified by me: 58 of the 68 lines the effort added are the new Compression section, out of scope for compression by construction, so the criterion asked for seven times what the effort put into the sections it could touch. What did land is the kit's **first net-negative markdown commit in 166 file-events** (`1e5db4e`), four recorded retirement candidates, and an instrument whose first act was to correct, twice, the hand measurements that motivated building it.
+
+**Review outcomes.** Per-section: S1 five Majors; S2 six Criticals and twelve Majors over two rounds; S3 no paired review, which Chapter 3 now marks as an unsanctioned deviation; S4 one Critical and eight Majors; S5 four Criticals and ten Majors. Finishing: QA failed then passed, security CLEAR with three Minors, final adversarial APPROVED_WITH_CONCERNS with three Majors. **Sixteen Criticals across the effort, and reviewers found every one of them.** The structural reason is recorded in Chapter 2 and held all the way through: arms run against a de-identified isomorph cannot detect a contradiction with the file the wording lands in, and that is where the Criticals lived.
+
+**Drift adjudications (11).** Six were docs simply wrong and were corrected: the record file taught the pre-pass sha as the marker, `security-model.md` and `architecture.md` both claimed the hooks always `process.exit(0)` when none does, "the eight session-start blocks" was miscountable as a session-start total, the index understated the library's machine contracts, `README.md` omitted the one maintainer tool with a live trigger, and the new test file's own header miscounted its cases. Two were code better than spec and both criteria were amended in place: the hook's five states against a criterion contemplating two, and a test-harness criterion asking for a shared module that does not exist. One was a real gap, closed: a payload file's only test sat outside the documented gate, now widened. One was resolved by measurement (the JS file-event figure, wrong under every reading). One is D3, where two independent reviewers found the same false sentence in two places.
+
+**The recurring defect this effort could not stop committing** is quoting a figure without re-measuring: four instances, caught by four different reviewers, against a standing execution note written to prevent exactly that. Every surviving figure is now sha-stamped or scoped.
+
+**What is owed before the mechanism is real.** `/plugin update claude-kit` on each machine, and these commits pushed: kit hooks load from the installed plugin cache, so until then the nudge exists only in this checkout. Confirmed during close-out, when a marketplace update pulled a tree without the hook because the work was unpushed.
+
+**Does the effort earn its own additions?** It net-added ~110 lines of prose (`writing-skills` +47, `kaizen` +63) and 513 lines of payload JS shipped to every user for a kit-repo-only nudge, to a kit whose measured problem is that it only grows. The final reviewer's verdict, which I accept: narrowly yes, conditional on the loop actually firing. The indictment is exact and worth keeping in view: **`kaizen`'s "The pass" section now ranks fourth on the effort's own instrument.** The mechanism will report on itself, which is the only honest test of it.
+
+Next: none, effort complete
 Commit Model: Commit-and-Push
