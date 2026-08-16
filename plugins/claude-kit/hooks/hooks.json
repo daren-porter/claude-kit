@@ -18,6 +18,15 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/branch-reaper-nudge.js\""
           }
         ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/take-stock-nudge.js\""
+          }
+        ]
       }
     ],
     "PreToolUse": [

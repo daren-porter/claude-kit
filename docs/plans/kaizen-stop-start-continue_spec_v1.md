@@ -367,7 +367,7 @@ entry's sha is the nudge's marker.
 
 **The predicate, settled in the main thread 2026-08-16 rather than delegated.** The nudge
 speaks when **any prose section has been patched since the marker sha**, and reports how
-many sections were touched plus the current top three by rank. Nothing else.
+many sections were touched, and nothing else. **Amended 2026-08-16, during S4.** This originally said the block also carries the current top three by rank, and the hook was built that way. It cost 1.69s at every emitting session start, because naming the top three across the kit requires the full 186-section sweep, which decision 4 puts in the tool and not the hook and which criterion 7's under-one-second budget forbids outright. So the ranking came out of the block and the block points at `tools/accretion.js` instead. Runtime went 1.67s to 0.02s, and the emitting and silent paths became indistinguishable because the same single `git diff` decides both. The adversarial reviewer noted a narrower reading was available, top three among the *patched* sections, at roughly 60ms typically but 2.1s in the worst case measured; that is unbounded in the wrong place for a session-start hook, so it was not taken.
 
 That is the literal statement of the condition this effort exists for, "prose has changed
 since anyone last looked at it whole", and it carries no invented constant, which is the
@@ -393,8 +393,9 @@ measurement and points at the `kaizen` skill, says nothing about what to cut, an
 Acceptance criteria:
 - A non-kit repo and any git failure each produce no output and exit 0.
 - Zero prose sections patched since the marker produces no output and exit 0.
-- One or more patched produces exactly one block carrying the touched-section count and
-  the current top three by rank.
+- One or more patched produces exactly one block carrying the touched-section count, and no
+  ranked rows. The test that pins this asserts the block's exact line count, so a
+  reintroduced ranking fails it in any format.
 - A missing `docs/take-stock.md` produces the first-run block rather than silence.
 - The block's text contains no recommendation about what to change, verified by reading.
 - `test/take-stock-nudge.test.js` pins all five conditions above, extending the existing
@@ -692,4 +693,30 @@ So compression is the wrong instrument for what ails this file, and the remainin
 Review Findings: no separate review round. The changeset is a prose rewrite whose acceptance is the inventory and the probe, both of which ran; `finishing-work` covers the whole changeset.
 
 Next: Section 4, the take-stock record and the nudge hook
+Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-08-16
+Completed: Section 4, the take-stock record and the nudge hook
+Implemented By: implementer-opus, three dispatches (build, a cost revision, a review-fix round); main session for `docs/take-stock.md`, the docs updates and the spec amendment, all of which `docs-write-guard` denies an implementer
+Metrics: 1 review round, 3 reviewers (adversarial, blind, security); NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section
+
+**The design changed mid-section and I failed to record it in the plan doc, which was the review's Critical.** The hook was built to the spec, naming the top three sections by rank in its block, and that cost **1.69s at every emitting session start** because ranking across the kit needs the full 186-section sweep. That contradicts decision 4, which puts diagnosis in the tool and detection in the hook, and it breaks criterion 7's under-one-second budget outright. I removed the ranking and the block now points at `tools/accretion.js`. **Runtime went 1.67s to 0.02s**, with the emitting and silent paths indistinguishable because one `git diff` decides both. I then recorded the deviation in the hook header, `README.md`, `architecture.md` and the tests, and nowhere in the spec, which is the one place the rules make authoritative. Section 4 and its criterion 3 are now amended. The adversarial reviewer supplied the arithmetic rather than a verdict: a narrower reading (top three among the *patched*) would have been ~60ms typically and 2.1s worst case, so it was available and is unbounded in the wrong place for a session-start hook.
+
+**The blind reviewer found the defect that mattered, and it was fatal to the hook's purpose.** A pure deletion produces a zero-length hunk, which the hook attributed to the line *before* the gap. Delete the first section of a file with front matter and that line is front matter, which belongs to no section, so the count came back 0 and the hook stayed silent. **All 33 corpus files have front matter, and cutting prose is exactly what a take-stock pass does**, so the detector was blind to the one change it exists to notice. Verified fixed against a scratch repo: cutting a section now reports 1 where it reported silence. A companion `Math.max(start, 1)` clamp also falsified an invariant the code asserted three lines below it, and is gone.
+
+Six more real defects came out of the same pass: a path containing a space, `"` or `\` silently undercounted (git tab-terminates or C-quotes that header, and `core.quotePath=false` only covers the non-ASCII case the comment anticipated); every failure mode collapsed to silence, making an orphaned marker sha after a shallow clone indistinguishable from "nothing changed"; the first-run sentence asserted two causes where `readMarker` has five; a kit checkout nested inside a larger repo was permanently silent, which needed three changes and not the one flag I briefed; `--no-ext-diff` does not disable textconv, so repo-adjacent config could both execute a command during the diff and empty it; and the stat-then-open idiom was a fresh instance of the superseded form `backlog.md` item 19 tells the sweep not to copy.
+
+**The tests pinned none of those boundaries**, because every fixture path was kebab-case, every fixture change was an insertion, and no fixture began with a heading. The fix round wrote the boundary cases first and **watched seven fail against the old hook**, then ran a 14-mutation battery. Two tests in this section asserted the right sentence for the wrong reason and both were caught by mutation rather than by reasoning, including one where a directory named `take-stock.md` fails at `fstat` rather than `open` so the intended discrimination never ran.
+
+**Accepted and not fixed, recorded as a decision rather than an oversight:** a whole prose file deleted since the marker stays invisible, because the pathspec is HEAD's listing. Counting it means diffing the marker's tree as well, so sections that no longer exist would join a count of current sections and the number would stop meaning one thing. In an effort about subtraction that is the pointed blind spot, and the hook header says so. The narrow case it leaves open is a prose file deleted without a take-stock being recorded; recording one resets the marker anyway.
+
+**Security: CONCERNS, no Critical, nothing exploitable.** The reviewer verified rather than accepted the emission claim, probing the marker regex with U+2028, a lone `\r`, trailing text and a 41-char sha, and confirming a FIFO at `docs/take-stock.md` exits 0 immediately rather than repeating item 19's blocking class. Its highest-ranked finding was documentary and correct: `docs/security-model.md` said "Five surfaces carry kit text to the model" and this makes six, on the artifact later reviews audit against. Fixed, along with the hook lists in `architecture.md` and `README.md`, and with a note that this introduces no sixth sanitizer idiom because it constrains at the parse door instead of scrubbing at emission.
+
+**`docs/take-stock.md` shipped with figures from two revisions, neither of which was the sha it names.** The line counts were the examined text's and the commit counts a third commit's, copied from the spec's stale Why table rather than measured. The adversarial reviewer caught it. Corrected to one reading, stated as such, with both readings given. This is the file whose entire job is to be checkable, so a stale figure there is a broken record rather than a typo, and it is what the plan's own "re-measure before quoting" note exists to prevent.
+
+Evidence: 298 of 298 in `test/*.test.js` (8 new), 15 of 15 in `tools/accretion.test.js`, `tools/accretion.js` output byte-identical to baseline at 186 sections over 33 files, `hooks.json` parses, runtimes 0.02-0.03s emitting / 0.02s silent / 0.01s outside a kit repo / 0.11s on the worst case history offers. The marker is live: with `docs/take-stock.md` recorded at S3's sha, the nudge is silent on this repo, which is the self-silencing property working.
+
+Review Findings: 1 Critical (the unrecorded spec deviation, mine), 8 Major, 12 Minor across three reviewers. All addressed except the deleted-file limit above.
+
+Next: Section 5, the kaizen pass wording
 Commit Model: Commit-and-Push

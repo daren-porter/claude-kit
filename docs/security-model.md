@@ -37,17 +37,26 @@ than accepted ones.
 
 ## Trusted channels: what is instruction and what is data
 
-**Five surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
+**Six surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
 `session-start.js`'s `additionalContext` was the only one, which would have told a later review to
-audit one door out of five:
+audit one door out of six:
 
 | Surface | Written by | Reaches the model as |
 |---|---|---|
 | `additionalContext` | `session-start.js` | trusted session context |
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
+| `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the second the allowlisted branch) |
+
+`take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
+reviewer looking for a sixth sanitizer idiom will not find one. Nothing repo-controlled reaches its
+channel at all: the only repo-derived values are a date and a sha, and both are constrained at the
+**parse** door by an anchored `^(\d{4}-\d{2}-\d{2}) - ([0-9a-fA-F]{40})$` rather than scrubbed at
+emission. An entry that does not match is not sanitized, it is not a marker. Everything else in the
+block is a hardcoded literal plus a non-negative integer. Constrain-at-source is a stronger answer
+than the delete-and-truncate doors above, not a new instance of them.
 
 Values entering `session-start.js`'s channel, and what neutralizes each:
 

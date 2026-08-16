@@ -53,6 +53,7 @@ claude-kit/                          (repo = the marketplace)
         kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
         docs-write-guard.js / stop-docs-hygiene.js Docs-library guards: non-curator subagent writes into docs/ denied; Stop-time scratch-leak flag (unarchived plans are session-start's nudge, never a turn-end block)
         pr-docs-guard.js / merged-pr-push-guard.js / branch-reaper-nudge.js Branch/PR guards: dirty-docs PR block, merged-branch push block, reap/strand nudge
+        take-stock-nudge.js          Kit-repo-only SessionStart nudge: how many prose sections changed since the last docs/take-stock.md entry (ranking lives in tools/accretion.js)
         memory.js / memory-lib.js / memory-index.js The cross-project memory tier: authoring CLI, shared library (the record schema lives in its header), generated index sidecar and the [body revised] marker
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md

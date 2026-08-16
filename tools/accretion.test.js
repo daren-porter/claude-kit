@@ -1,9 +1,11 @@
 'use strict';
 
-// Durable unit test for accretion.js's two pure functions, the section parser and
-// the ranker. Both fail silently (a wrong range is still a valid range, a wrong
-// order is still an order) and everything the report says rests on them, so they
-// earn a durable test (Node's built-in node:test, zero dependencies).
+// Durable unit test for the two pure functions the accretion report rests on: the
+// section parser, which lives in the shipped plugin payload because the take-stock
+// SessionStart hook parses the same prose, and the ranker, which stays in the tool.
+// Both fail silently (a wrong range is still a valid range, a wrong order is still
+// an order) and everything the report says rests on them, so they earn a durable
+// test (Node's built-in node:test, zero dependencies).
 //
 // The parser rule under test:
 //   - a section starts at a "## " heading and runs through the line before the next
@@ -19,7 +21,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { parseSections, rank } = require('./accretion.js');
+const { parseSections } = require('../plugins/claude-kit/hooks/accretion-lib.js');
+const { rank } = require('./accretion.js');
 
 // Build a document from an array of lines so every expected line number can be read
 // straight off the array index (line N is lines[N - 1]).

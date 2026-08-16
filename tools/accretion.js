@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 // accretion.js: maintainer tool. Lives in tools/, OUTSIDE plugins/claude-kit/, so
 // it is never packaged for kit users and adds zero standing footprint (measuring
-// the kit's prose must not itself add standing cost). REPO_ROOT below is
-// path.join(__dirname, '..'), which depends on exactly this nesting: one directory
-// under the repo root. Moving this file means fixing that line.
+// the kit's prose must not itself add standing cost). Two things depend on exactly
+// this nesting, one directory under the repo root: REPO_ROOT below is
+// path.join(__dirname, '..'), and the accretion-lib require reaches the payload by
+// a relative path. Moving this file means fixing both.
 //
 // It reports churn per section over the kit's prose files: every level-2 ("## ")
 // section of plugins/claude-kit/skills/*/SKILL.md, skills/*/references/*.md,
@@ -70,7 +71,12 @@
 //   - Scope is the four globs above. Prose in docs/, the root README.md, hooks/ and
 //     commands is not measured.
 //
-// Node core only, no dependencies. Defensive throughout, and the CLI always exits 0.
+// Node core plus one kit-local module, no third-party dependencies. The section
+// parser is shared with the take-stock SessionStart hook, so it lives in the
+// shipped payload (plugins/claude-kit/hooks/accretion-lib.js) and this tool
+// requires inward to it: a hook cannot require a file that is never packaged, and
+// two copies of the fence rule would drift.
+// Defensive throughout, and the CLI always exits 0.
 // These degrade to a partial report with a note naming the cause, rather than
 // throwing: an unreadable directory, a skill directory with no SKILL.md, an absent
 // assets/CLAUDE.md, a file present in the working tree but absent from HEAD, a line
@@ -85,6 +91,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { parseSections } = require('../plugins/claude-kit/hooks/accretion-lib.js');
 
 // Sources are resolved relative to this script, not the cwd, so the report is the
 // same from any directory.
@@ -102,72 +109,6 @@ const GIT_MAX_BUFFER = 32 * 1024 * 1024;
 
 // How many ranked rows the report prints.
 const TOP_N = 15;
-
-// Parse a markdown document into its level-2 sections. Pure: no I/O, no throwing.
-// Returns [{ title, start, end }] with 1-based inclusive line numbers, in document
-// order; [] for a document with no level-2 headings.
-//
-// A section runs from its "## " heading through the line before the next "## "
-// heading, or to the last line for the final section. Lines before the first
-// heading belong to no section. Fenced code blocks are skipped wholesale, so a
-// "## " line quoted inside a fence is not a heading; this is the one subtle rule
-// here and the reason this function carries a durable unit test.
-function parseSections(text) {
-    const sections = [];
-    if (typeof text !== 'string' || text.length === 0) return sections;
-
-    const lines = text.split(/\r?\n/);
-    // A trailing newline leaves a final empty element that is not a line in git's
-    // numbering; drop it so end line numbers match git's.
-    if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
-
-    // Fence state: the marker character and its run length, per CommonMark, where a
-    // fence may be indented up to three spaces and its closer must use the same
-    // character and be at least as long.
-    let fenceChar = null;
-    let fenceLen = 0;
-    let current = null;
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const fence = /^ {0,3}(`{3,}|~{3,})/.exec(line);
-
-        if (fenceChar === null) {
-            if (fence) {
-                fenceChar = fence[1][0];
-                fenceLen = fence[1].length;
-                continue;
-            }
-        } else {
-            // Inside a fence. Only a bare run of the same character, at least as
-            // long as the opener, closes it; an opener's info string ("```js") on
-            // such a line would make it a nested opener, not a closer.
-            if (fence && fence[1][0] === fenceChar && fence[1].length >= fenceLen
-                && /^ {0,3}[`~]+[ \t]*$/.test(line)) {
-                fenceChar = null;
-                fenceLen = 0;
-            }
-            // An unterminated fence runs to end of file, so every remaining line is
-            // code and no heading can start inside one.
-            continue;
-        }
-
-        if (/^## /.test(line)) {
-            if (current) {
-                // i is the 0-based index of this heading, which is the 1-based
-                // number of the line before it: where the previous section ends.
-                current.end = i;
-                sections.push(current);
-            }
-            current = { title: line.slice(3).trim(), start: i + 1, end: lines.length };
-        }
-    }
-    if (current) {
-        current.end = lines.length;
-        sections.push(current);
-    }
-    return sections;
-}
 
 // Collapse a message to one bounded line. A report note is a single markdown
 // bullet and git's fatals can run to several lines, so an unflattened message
@@ -555,11 +496,11 @@ function main() {
     process.stdout.write(renderReport(collect()));
 }
 
-// Exported for the durable unit test. parseSections is the pure rule every number
-// in the report rests on and rank is the pure ordering those numbers feed into; the
-// rest of the file is I/O around the two.
+// Exported for the durable unit test. rank is the pure ordering every measured row
+// feeds into; the other pure rule the report rests on, parseSections, now lives in
+// plugins/claude-kit/hooks/accretion-lib.js and is tested from there. The rest of
+// this file is I/O around the two.
 module.exports = {
-    parseSections,
     rank
 };
 
