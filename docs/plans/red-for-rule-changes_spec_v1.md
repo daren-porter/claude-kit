@@ -455,7 +455,7 @@ Next: 3. The did-not-reproduce inversion
 ### Chapter 3 - 2026-08-15
 Completed: 3. The did-not-reproduce inversion
 Implemented By: main session
-Metrics: 1 review round (paired; adversarial CHANGES_REQUIRED, blind APPROVED_WITH_CONCERNS); 0 NEEDS_CONTEXT; 0 escalations; advisor on; 4 arms over 12 reps, one aborted on a fixture defect
+Metrics: 1 review round (paired; adversarial CHANGES_REQUIRED, blind APPROVED_WITH_CONCERNS); 0 NEEDS_CONTEXT; 0 escalations; advisor on; 4 arms over 10 reps (arm 1 aborted after its first rep on a fixture defect, so it ran 1 rep and not 3). **Corrected in the close-out:** this first read "12 reps".
 Commit Model: Commit-and-Push
 
 **The stub stated the inversion too loosely, and locating it was most of the work.** It says
@@ -599,5 +599,57 @@ CI tier, all plausibly unreachable from a fixture, so the conjunct never carried
 committed and already passed three arms, the fix is not mechanical, and this effort has now
 missed its own pre-registered bar twice in a row on fixtures I built. Both stopping bounds I
 wrote down have fired.
+
+### Chapter 5 - 2026-08-16 (the conjunct fix, and what it did not fix)
+Completed: the S1 conjunct replaced; finishing pass still open on one Critical
+Metrics: final adversarial review dispatched with the fable override per `Fable Spend: finishing reviews only`, verdict CHANGES_REQUIRED; security review skipped (all-prose changeset); docs curator skipped (no solution doc describes `writing-skills`, so the drift model has nothing to compare); 1 further arm over 3 reps
+Commit Model: Commit-and-Push
+
+**Daren authorized the fix (option 1) after the halt.** The conjunct "and the system that
+would settle it is not reachable from inside an arm" is replaced by "because an arm measures
+what an agent does and that is not the evidence: go and measure the system instead". Shorter
+in words, same line count, and it restores S1 RED rep 3's original principle, that the
+instrument for a factual claim is the system rather than a subagent.
+
+**S1FIX arm: passed 3/3.** Fixture built to the constraint the four failed fixtures broke:
+stage a realistic situation, do not reverse-engineer from the wanted answer. A purely factual
+statement about a log rotator's file naming (locally measurable, which is where the old
+conjunct wrongly denied relief) beside a plain behavior rule. All three routed the world-claim
+to the no-arm bill and the behavior-claim to the arms. Rep 3: "The evidence act is measuring
+the hosts, not running reps."
+
+**Blast radius, checked by the final review rather than asserted:** dropping the conjunct
+strictly widens the no-arm bill, so every prior rep that routed no-arm still does, and the
+behavior-side routings S2 and S3 rest on are untouched. No "reachable" remnant survives
+anywhere in the file.
+
+**The Critical this pass leaves open, stated plainly.** Arm 6's rep 1 routed the `ee8be8f`
+isomorph to the arms on the grounds that "Read only the `+` lines" is a directive about agent
+behavior, so the bill's "claim is about something other than an agent" test fails on the
+rule's surface form. Chapter 4 filed that as a fourth fixture confound. **That was wrong, and
+the final review is right to call it:** a rule that is a directive resting on a factual
+premise is the production shape of `ee8be8f` itself, not a staging error. Worse, the S1FIX
+fixture was then built so that reading was unavailable by construction, which is engineering
+around a disconfirming result rather than answering it. Acceptance criterion 3's hard case
+therefore has one demonstrated failing path and no demonstrated passing one. Raised to Daren
+rather than patched, because the obvious fix (route on the claim under repair rather than the
+rule's surface form) is another wording change owing another arm, and this effort's judgment
+about its own fixtures has now been wrong four times.
+
+**Disclosures the final review required, since a partial artifact set was claimed complete.**
+- There is **no S1 RED pre-registration**. Pre-registration began with S1's GREEN; the RED
+  predates the practice. Its result file records the fire condition after the fact.
+- **`red-s1/rep1`'s answer was never written.** The harness refused the filename, so only the
+  excerpt quoted in `RED-RESULT.md` survives. It is counted in S1's RED 2-1 split on that
+  excerpt alone.
+- **S3's arm 1 ran one rep, not three.** It was aborted the moment the fixture defect showed,
+  so only `rep_red-s3-defective_rep1.md` exists and none was lost.
+- The set is otherwise complete at 59 files.
+
+**Acceptance criterion statuses, so nothing hardens silently into "met".**
+- S3 criterion 2, "the genuine redundancy finding still fires": **evidence short of its bar.**
+  Arm 5 returned 2 of 3 against a pre-registered 3/3, on a fixture whose mechanism dominated.
+  Two reps did reach the finding, so it is reachable; that is not the bar that was set.
+- S1 criterion 3's hard case: **demonstrated failing**, per the Critical above.
 
 

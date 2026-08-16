@@ -444,8 +444,8 @@ naming where its evidence came from, so the next session knows it was never prov
 here.
 
 **What this costs, and when it stands in for an arm.** No arm is owed where the claim is
-about something other than an agent and the system that would settle it is not reachable
-from inside an arm, since a fixture would have to assert the very fact under test. The
+about something other than an agent, because an arm measures what an agent does and that is not
+the evidence: go and measure the system instead. The
 bill is then the scoping plus that recorded instance, and nothing else: the gated path's
 probe and backlog line belong to that path and are easy to import by accident from
 next door. Two bounds. Where the evidence is also someone else's to re-run, the gate
