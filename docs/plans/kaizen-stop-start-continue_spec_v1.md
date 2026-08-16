@@ -359,11 +359,23 @@ effort start. The whole-file line criterion below still measures against effort 
 those are two different baselines on purpose, and the section records both numbers.
 
 Acceptance criteria:
-- The claim unit S2 defines is **stated before the compression starts** and recorded in
-  the Chapter, so the granularity is not chosen by whatever makes the mapping come out
+- The claim unit S2 defines is **stated before the compression starts**, and recorded
+  durably in git, so the granularity is not chosen by whatever makes the mapping come out
   even.
-- A claim inventory in the Chapter mapping **every** claim in the before text to a
-  location in the after text, with no unmapped before-claim. An unmapped claim means the
+- A claim inventory mapping **every** claim in the before text to a location in the after
+  text, with no unmapped before-claim, likewise recorded durably in git.
+
+  **Amended 2026-08-16 after the QA pass.** Both criteria originally said "in the
+  Chapter". The artifacts shipped to `.kit/`, which is gitignored, so neither was durable
+  and QA failed both on their literal terms; the shipped `writing-skills` bill says a
+  compression does not close until the unit, the inventory and the probe output are
+  recorded where the gated path records its own, which makes this a violation of the rule
+  this effort itself wrote. They now live at
+  `docs/archive/kaizen-stop-start-continue_s3-inventory.md`, committed, with Chapter 3
+  pointing at it. 347 rows inline would drown the Chapter, and the rule's purpose is that
+  a later reader can check the artifact rather than a description of it, which a committed
+  sibling serves. That is a reading of the purpose over the letter and is recorded as such
+  rather than presented as compliance. An unmapped claim means the
   section attempted a retirement, and it is recorded as a candidate rather than taken.
 - A followability probe of at least three reps, all three applying the rule correctly.
   A single failure is a stop: revert or fix and re-probe before the section closes.
