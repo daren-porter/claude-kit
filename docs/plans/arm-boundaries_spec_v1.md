@@ -98,6 +98,47 @@ verdictable. Recorded for the backlog, not fixed here." That is the same shape a
 - a real limit of an instrument, recorded where nobody reading the instrument will find it.
 Decide whether it joins this effort or gets its own; do not let it fall through a third time.
 
+## The direction this should probably take: invert the default
+
+Added 2026-08-16, after the pass that wrote this stub measured the kit. **Recorded as a
+recommendation with its evidence, not as a settled design** - it is the thing to argue with
+first, and a design pass is free to reject it.
+
+The two notes read as "the arms have a blind spot, so add a review." The measurement says
+something stronger. **In the one effort where both gates ran and the outcomes were counted,
+the arms caught none of the sixteen Criticals and the paired review caught all sixteen**
+(`archive/kaizen-stop-start-continue_spec_v1.md:821`, `:686`, `:784`). Thirty-plus arm reps
+passed wording that had sixteen Criticals in it, and every Critical was a contradiction with
+the target file.
+
+That is not the arms failing at their own job. Arms test followability under a task, and they
+did that. It is that **followability is the rarer failure in kit prose.** The common one is
+contradiction with the file the wording lands in, and the arms are structurally blind to it
+while the review is built for it. So the kit currently spends its expensive gate on the rare
+failure and leaves the common one to a gate that is optional on the planned path and absent on
+the kaizen path.
+
+The inversion: **paired review becomes the mandatory gate for any kit-prose change, and the
+arms become the exception reserved for a genuinely new behavior claim** - a rule an agent could
+rationalize around, where what is in question is whether the wording changes conduct at all.
+Fact corrections, cross-references, deduplications and compressions take the review and stop
+there, which is roughly what commit `1526456` already does in practice without saying so.
+
+**Why this is worth more than the wording fix the notes asked for.** The current default costs
+a multi-hour arm run for a two-word change, which has three observed effects: small fixes do
+not get made, the ones that do consume whole sessions, and those sessions generate fresh
+friction about the apparatus, which grows the apparatus. `writing-skills` is now 515 lines,
+the largest file in the kit, against `systematic-debugging`'s 46. `writing-skills` and `kaizen`
+together are 698 of the 3,251 lines across all eighteen skills, 21.5%, and 34 of 140 commit
+touches. The loop that is supposed to improve the kit is spending a fifth of it on itself.
+
+**The bar this proposal has to clear, and it is not a low one.** Retiring or demoting a gate is
+the highest-blast change in this repo, and the argument above rests on a single effort's
+counted outcomes. Before acting, check whether the pattern holds in the other efforts that ran
+both gates (`red-for-rule-changes`, `visual-companion`, `docs-lifecycle-and-guards`), since one
+effort is enough to raise the question and not enough to settle it - which is this file's own
+rule at `writing-skills:461-466`, applied to a claim about the kit rather than about a system.
+
 ## What this stub is not
 
 It does not decide the wording, the home, or whether the paired-review mandate should ship at
