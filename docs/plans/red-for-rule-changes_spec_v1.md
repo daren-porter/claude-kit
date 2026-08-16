@@ -150,6 +150,8 @@ keeps evolving in contact with the results, which is brainstorming's own test fo
 
 ### 1. The boundary, and the counter-case section's evidence bill
 
+**Status: Complete (Chapter 1).**
+
 Establish the world-claim versus behavior-claim boundary as the test that routes the
 **evidence** question for any change to a rule the kit already ships, and place it
 where an operator meets it. Make the counter-case section state the evidence it wants,
@@ -251,8 +253,12 @@ redundancy in `c13a9ca` (the dropped companion rule, seven reps).
 
 ## Open Questions
 
-- Whether the boundary belongs in one place both sections point at, or is stated once
-  in each. Owner: executing session, S1 drafting, on the leanness constraint.
+- ~~Whether the boundary belongs in one place both sections point at, or is stated once
+  in each.~~ **Resolved in S1 (Chapter 1), on evidence rather than by construction.** The
+  bill is stated once, in the counter-case section, with a pointer to it from the sweep
+  sentence. The REFACTOR arm dispatched no in-prompt excerpt, so findability was measured:
+  3 of 3 reps followed the pointer across roughly 300 lines and quoted both of the bill's
+  bounds, and none decided from the sweep sentence alone.
 - Whether S3's fix is a clause in the existing branch or a re-cut of the four answers.
   Owner: executing session, S3 drafting. A re-cut is the more invasive answer and needs
   the leanness constraint applied against it.
@@ -271,4 +277,90 @@ redundancy in `c13a9ca` (the dropped companion rule, seven reps).
 
 ## Chapters
 
-(none yet)
+### Chapter 1 - 2026-08-15
+Completed: 1. The boundary, and the counter-case section's evidence bill
+Implemented By: main session (wording is design-entangled and reshapes against arm results)
+Metrics: 2 review rounds (paired, both CHANGES_REQUIRED on round 1); 0 NEEDS_CONTEXT; 0 escalations; advisor on, consulted 3 times and each consultation changed the approach; 4 arms, 12 reps total
+Commit Model: Commit-and-Push
+
+**Arms.** Artifacts at `/tmp/claude-1000/kit-arm-artifacts-red-for-rule-changes/`, copied
+out of the session scratchpad so they outlive the session.
+
+- **RED: fired, 2-1.** Fixture: a fictional kit, two rule changes (a world-claim about a
+  changelog generator, a behavior-claim about incident summaries) under combined pressure.
+  3 reps, serial, one fixture copy each, byte-identical to the repo file. All three agreed
+  the behavior-claim owes arms; they **split 2-1 on the world-claim**, reps 1 and 3 saying
+  no arms, rep 2 saying a full arm. The divergence is the reproduction: identical text,
+  three capable readers, two incompatible bills. It reproduces under control what production
+  already showed, `c13a9ca` (13 reps across 4 arms), `9f5398a` (probe only, no RED) and
+  `ee8be8f` (zero) all citing the same section.
+- The divergent rep located the blocker precisely, and it was **not** where the spec
+  predicted: not the counter-case section but the sweep sentence at `:117-118`. "'Any change
+  to behavior-shaping content' with exactly one named exemption [...] the only question left
+  is whether either qualifies for the one exemption. Neither does."
+- **GREEN: passed 3/3**, then superseded. Review showed it could not test what it was used
+  to justify, since the fixture's world-claim is exactly what the narrow opening already
+  admits, so no rep was ever handed judgment wording routed through that section.
+- **Review round 1: both reviewers CHANGES_REQUIRED, two Criticals each.** The one that
+  mattered: the shipped sentence scoped the counter-case *section* rather than its *bill*,
+  which reads as an exclusive exit and contradicts this spec's own "uses both" design. That
+  imprecision was spotted during drafting and argued away on the grounds that GREEN passed;
+  GREEN could not test it. Conceded. Second Critical, from the blind side: a ported claim
+  about an external system satisfies both path predicates at once with no tie-breaker.
+- **REFACTOR: passed 3/3 on all four criteria.** Fresh fixture, three situations including a
+  behavior-rule counter-case and a genuine borrowed/unreachable collision. **No in-prompt
+  excerpt**, so findability was measured rather than bypassed: all 3 reps followed the
+  pointer to the bill and quoted both bounds.
+
+**Decisions / Surprises.**
+- The fix site moved on evidence. The spec front-loaded the counter-case section; the reps
+  front-loaded the sweep sentence. Following the evidence made S1 *smaller*, and moving the
+  bill into the counter-case section made it smaller again while satisfying acceptance
+  criterion 1 more literally than the first attempt did.
+- Net +12 lines (435 to 447): one paragraph plus three sentence-level fixes, no new heading.
+  Within the leanness bound, which matters more than expected given the concurrent
+  `kaizen-stop-start-continue` finding that this file went 97 to 435 lines in eight weeks.
+- S2's RED fired incidentally inside these arms: **0 of 5 reps** asked to plan a baseline
+  test for a scoping change produced a control arm. Recorded in `S2-RED-RESULT.md`.
+
+**Review findings: addressed.**
+- Critical (section-vs-bill scoping): fixed; bill moved into the counter-case section and
+  scoped to the bill.
+- Critical (routing collision, no tie-breaker): fixed; the gate wins, stated as a bound.
+- Critical (opening scope unmet, justification unsound): conceded and fixed; `:399` now
+  admits a rule about what an agent should do.
+- Major (universal "a rep is not the instrument at all" falsified by the file's own
+  history): fixed; conditioned on the system not being reachable from inside an arm.
+- Major (`:106` still counts one exception): fixed, one phrase.
+- Major (counter-case section stated no bill, no back-pointer): fixed; that is where the
+  bill now lives.
+- Major (GREEN prompt-salience confound): conceded, not re-run. The REFACTOR arm drops the
+  excerpt instead, which converts the criticism into a measurement.
+- Major (no GREEN result artifact): fixed; `GREEN-RESULT.md` written and paired with its
+  pre-registration.
+
+**Review findings: rejected, with reasons.**
+- Blind Major, "require the followability probe on this path too." Rejected. The probe is
+  precondition 3 of the borrowed-evidence gate, and importing it onto the counter-case path
+  is exactly what `9f5398a` did in production. A GREEN rep named this failure mode
+  unprompted, and the shipped bill now warns against it by name. Adding the probe would
+  install the bug.
+- Blind Major, "implied evidence count of one." Out of scope: "record the observed instance"
+  is the counter-case section's pre-existing bar, not this change's. The point is real and
+  goes to the backlog rather than being fixed under S1.
+- Adversarial Major, qualify `kaizen/SKILL.md:90` and `:94`. Not changed. `:90` already
+  routes to writing-skills first, writing-skills is now self-consistent on the routing, and
+  a qualifier there is behavior-shaping wording in a second file that would owe its own arm.
+  Recorded as a candidate if a further misroute is observed.
+
+**Deviation from the spec.** Acceptance criterion 3 names `a64f8a3`/`c13a9ca`/`ee8be8f`
+literally. It was exercised on isomorphs instead, because handing reps the real commits
+would violate the answer-leak rules at `:211-225`. The fixtures preserve the hard case: in
+the REFACTOR arm, situations A and C are the same shape and diverge only on provenance, and
+3 of 3 reps split them correctly.
+
+**Open state carried forward.** `~/.claude-kaizen/notes.held.md` holds one note of mine,
+cleared out of the inbox so the arms could attribute rep writes. It stays held until S2 and
+S3's arms finish, then goes back. The inbox was empty before and after all 12 reps.
+
+Next: 2. The rule-change reading in the RED section

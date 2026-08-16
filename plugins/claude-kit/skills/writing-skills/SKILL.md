@@ -103,7 +103,7 @@ agent's behavior with and without the wording:
    yet rather than that there is nothing to fix; and a rep that was in the state can comply
    because something else in the kit already forces the behavior, which is a finding about the
    draft rather than about the rule. Both live in the four answers under "When a local RED is
-   not available", and they read any clean run, not only that section's. The one exception is
+   not available", and they read any clean run, not only that section's. The one exception on this path is
    evidence that is real but not yours to re-run, ported or reported, and it costs three
    recorded artifacts rather than a claim: see that same section.
 2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run, under
@@ -114,9 +114,10 @@ agent's behavior with and without the wording:
 
 Run three reps at least - one sample lies - and read every flagged result yourself, since
 template echoes masquerade as both failures and successes. This is the standard
-for any change to behavior-shaping content, the kit's own skills included. The one
-path around it is the gated one below, for evidence that is real but not yours to
-re-run, and it substitutes different work rather than less.
+for any change to behavior-shaping content, the kit's own skills included. Two paths lead
+around it, and cost chooses neither. The gated one below is for evidence that is real but
+not yours to re-run, and it substitutes different work rather than less. The other is the
+counter-case section at the end, which states its own bill and when it is available.
 
 **Run RED before you persist the wording, and keep it out of three places: the repo, the
 scratchpad, and the RED prompt.** Baseline-testing a kit skill edit from inside the kit repo
@@ -392,11 +393,12 @@ counter-case is the separate discipline below.
 
 ## When you meet a counter-case to a rule
 
-A kit rule asserting a factual property of an external system - an editor's anchor
-behavior, an API's accepted values, what a renderer emits - was usually written
-from having tried it. One trial is enough to write the rule and not enough to bound
-it, so the wording ends up reading as a property of the system when it is a report
-of one instance.
+A kit rule was usually written from the one case its author had in front of them.
+That shows plainest where the rule asserts a factual property of an external system -
+an editor's anchor behavior, an API's accepted values, what a renderer emits - and it
+is no less true of a rule about what an agent should do. One trial is enough to write
+the rule and not enough to bound it, so the wording ends up reading as a property of
+the system when it is a report of one instance.
 
 That gap surfaces later, when you hit a case the rule does not cover. Decide which
 situation you are in before you either obey the rule or discard it:
@@ -422,6 +424,16 @@ judgment rather than a claim about how something behaves. The exception is the
 borrowed-evidence case above: a rule admitted through that gate carries a clause
 naming where its evidence came from, so the next session knows it was never proven
 here.
+
+**What this costs, and when it stands in for an arm.** No arm is owed where the claim is
+about something other than an agent and the system that would settle it is not reachable
+from inside an arm, since a fixture would have to assert the very fact under test. The
+bill is then the scoping plus that recorded instance, and nothing else: the gated path's
+probe and backlog line belong to that path and are easy to import by accident from
+next door. Two bounds. Where the evidence is also someone else's to re-run, the gate
+above wins, being the stricter of the two. And this scopes the evidence, never the
+shape: contradicted-versus-narrower governs any rule change, including one about what
+an agent does, whose evidence is still the arms.
 
 ## Antipatterns
 
