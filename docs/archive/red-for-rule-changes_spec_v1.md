@@ -1,6 +1,6 @@
 # RED for a Rule Change, Not Just a New Guard
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-08-15
@@ -652,4 +652,56 @@ about its own fixtures has now been wrong four times.
   Two reps did reach the finding, so it is reachable; that is not the bar that was set.
 - S1 criterion 3's hard case: **demonstrated failing**, per the Critical above.
 
+### Chapter 6 - 2026-08-16 (close-out)
+Completed: the effort
+Metrics: 11 arms over 34 reps; 4 paired reviews plus a final fable-override adversarial pass; QA FAIL then resolved; 3 pre-registered predicates defective and corrected; 4 fixtures with design flaws, 3 of them caught by reps rather than by me
+Commit Model: Commit-and-Push
+
+**The tie-break shipped and closed the last Critical.** "Most rules are a directive resting on
+a premise, so route on the claim you are repairing rather than on the sentence's form."
+Validated 3/3 on a fixture Daren saw before it ran, which kept both traps live: both queued
+changes hit the same directive-shaped sentence and differed only in which half was repaired,
+and the world-claim change carried downstream human harm. Neither trap was taken by any rep.
+
+**What shipped, in four passages on one file, 435 to 467 lines.**
+1. The sweep sentence names two paths around the testing bar instead of one, and points at the
+   counter-case section for the second.
+2. That section now states its own bill: no arm where the claim is about something other than
+   an agent, because an arm measures what an agent does; go and measure the system. Plus the
+   tie-break, the gate-wins bound, and the evidence-not-shape bound.
+3. Step 1 gains the rule-change reading: RED asks whether the rule as it stands produces the
+   harm, obedience is not the fire, reasoning is read off the transcript, and a narrowing owes
+   a third arm in the state the change leaves alone.
+4. The did-not-reproduce branch no longer lets the rule being replaced count as the mechanism
+   that makes a draft redundant.
+
+**Acceptance criteria, final status.** All met except one, recorded rather than smoothed:
+- S3 criterion 2's "still fires" half: **evidence short of its bar.** Arm 5 returned 2 of 3
+  against a pre-registered 3/3, on a fixture whose mechanism dominated. Two reps did reach the
+  finding, so it is reachable; that is not the bar that was set. Backlogged.
+
+**What this effort got wrong about itself, which is the more useful record.**
+- Three pre-registered predicates were defective: S2 arm 2's asked for two opposite states,
+  arm 4's demanded a contestable answer rather than testing suppression, and arm 5's assumed a
+  judgment about a fixture that two arms then disagreed on. Each is recorded with its
+  correction and its ordering, and arm 4's correction is explicitly marked as written after
+  its first result was read.
+- Four fixtures had design flaws: a side-by-side contrast that primed discrimination, a
+  catch-all line that neutralised the harm, a mechanism that dominated the ambiguity, and a
+  rule that mixed a directive with a factual claim. Reps caught three of the four.
+- The worst of it was not a fixture. Arm 6's disconfirming rep was filed as a fixture confound
+  when it was pointing at `ee8be8f`'s real shape, and the next fixture was then built so that
+  reading could not arise. The final review caught that; the effort did not. It is why the last
+  fixture went in front of Daren before it ran.
+
+**Reviews.** Every section took a paired adversarial and blind review; the S1 and S2 rounds
+both returned CHANGES_REQUIRED from both reviewers and the findings changed the shipped text
+materially. The final pass ran with the fable override per `Fable Spend: finishing reviews
+only`, returned CHANGES_REQUIRED, and its blast-radius check on the late conjunct fix came back
+clean. Security review skipped: all-prose changeset. Docs curator skipped: no solution document
+describes `writing-skills`, so the drift model had nothing to compare.
+
+**Artifacts.** 63 files at `/tmp/claude-1000/kit-arm-artifacts-red-for-rule-changes/`, with
+three absences disclosed by name in Chapter 5. That path does not survive a reboot; the ratios
+and the load-bearing quotes are carried in these Chapters for that reason.
 

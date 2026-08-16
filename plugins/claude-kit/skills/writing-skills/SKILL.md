@@ -445,8 +445,10 @@ here.
 
 **What this costs, and when it stands in for an arm.** No arm is owed where the claim is
 about something other than an agent, because an arm measures what an agent does and that is not
-the evidence: go and measure the system instead. The
-bill is then the scoping plus that recorded instance, and nothing else: the gated path's
+the evidence: go and measure the system instead. Most rules are a directive resting on a
+premise, so route on the claim you are repairing rather than on the sentence's form:
+correcting the premise is about the system, and changing what the agent does with it is not.
+The bill is then the scoping plus that recorded instance, and nothing else: the gated path's
 probe and backlog line belong to that path and are easy to import by accident from
 next door. Two bounds. Where the evidence is also someone else's to re-run, the gate
 above wins, being the stricter of the two. And this scopes the evidence, never the
