@@ -63,18 +63,27 @@ Churn per section of `writing-skills/SKILL.md`, measured 2026-08-16 with `git lo
 
 | Section | Lines | Commits |
 |---|---|---|
-| Know it works before you trust it | 168 | **15** |
-| When a local RED is not available | 161 | **8** |
-| When you meet a counter-case to a rule | 45 | 5 |
-| When a skill earns its place | 11 | 1 |
-| Anatomy | 13 | 1 |
-| The description states the trigger | 14 | 1 |
-| Match the form to the failure | 25 | 2 |
+| Know it works before you trust it | 169 | **15** |
+| When a local RED is not available | 162 | **8** |
+| When you meet a counter-case to a rule | 46 | 5 |
+| Match the form to the failure | 27 | 2 |
+| The description states the trigger, not the workflow | 15 | 1 |
+| Anatomy | 14 | 1 |
+| When a skill earns its place | 12 | 1 |
 | Antipatterns | 10 | 2 |
 
-Four sections were written once and left alone. Two carry 70% of the file and 23
-commits of sequential patching between them. That is the accretion signature, and one
-command finds it.
+Three sections were written once and never touched again, and five carry two commits or
+fewer. Two carry 70% of the file and 23 commits of sequential patching between them.
+That is the accretion signature, and one command finds it.
+
+**These figures are S1's tool output, and they replace two earlier rounds of hand
+measurement.** The spec was first written from ranges that excluded each heading line,
+inconsistently, and claimed four write-once sections where there are three. Correcting it
+from a throwaway probe script fixed most of that and introduced a fresh error on the last
+section, counting `Antipatterns` as 11 lines because `split('\n')` yields a trailing empty
+element and only a to-end-of-file range is exposed to it. The tool caught that too. So the
+instrument's first act was to correct, twice, the numbers that motivated building it,
+which is the outcome to want; none of it moves the finding.
 
 The cost is **operator wall clock and reader attention**, not tokens. `docs/backlog.md`
 item 22 already settled that cache-read bills at 0.1x, so the token-volume argument
@@ -182,11 +191,41 @@ kit's own state on the table rather than only the friction inbox.
 itself add standing cost. Node core only, no dependencies, defensive throughout, always
 exits 0, writes no artifact, report to stdout.
 
+Corpus: `plugins/claude-kit/skills/*/SKILL.md`, `agents/*.md`, `skills/*/references/*.md`
+and `assets/CLAUDE.md`. The last two were an Open Question this spec assigned to S1 and
+are answered below.
+
 Method: parse `##` headings into line ranges, run `git log -L <range>:<file>` per
-section, report lines and commits for each, and flag sections whose commit count is an
-outlier **against the other sections of the same file**. No absolute threshold is
-invented; the form is the one `standing-context-audit.js` already uses for oversized
-descriptions.
+section, and report lines and commits for each, **ranked by their product** and showing
+both components plus the span.
+
+**It measures HEAD, not the working tree, and that is a correctness fix rather than a
+preference.** `git log -L` silently clamps a range whose end runs past the file's length
+at HEAD and exits 0; only an out-of-range start errors. So parsing sections from the
+working tree while counting commits against HEAD produces a confident undercount, with no
+`n/a` and no note, in exactly the mid-edit state a maintainer is normally in. Taking both
+from one snapshot via `git show HEAD:<path>` closes it, and it is the right meaning
+anyway, since churn is a property of history. The cost is that reported line counts are
+HEAD's and can differ from what an editor shows mid-edit, which the report discloses.
+
+**It ranks; it does not flag.** An earlier draft had it flag outliers on commit count
+against the other sections of the same file, mirroring `standing-context-audit.js`. That
+was measured before dispatch and is wrong on both halves. Commit count alone cannot tell
+accretion from healthy correction: `executing-work`'s "Section loop" has 15 commits in 25
+lines and `writing-skills`' "Know it works" has 15 in 169, and only the second is the
+condition this effort is about. And every thresholded form of the rule flagged 27 to 65
+of the kit's 146 sections, so the only way to reach a readable set was to tune the
+constant until it fit, which is what the pre-registered budget existed to prevent.
+
+The product needs no constant, separates cleanly on the real data (2535, 1296, then 507),
+and behaves correctly at the edge: a large section written in a single commit ranks low,
+which is right, because written-large-once is not accretion. A rank is also a better fit
+for the no-judgment rule below than a flag, since a flag is a verdict and a rank is a
+measurement.
+
+**S4 must settle its own predicate rather than inherit one from here.** A nudge has to
+decide whether to speak at all, which a ranking does not answer, and the invented-constant
+hazard is the same one this section just hit.
 
 **The output is counts and locations only.** It carries no recommendation, no ranking by
 "should be cut", and no verdict on any section. The adjudication is Daren's at the
@@ -194,8 +233,13 @@ section close, and a tool that pre-judges would be handing him its own conclusio
 ratify.
 
 Acceptance criteria:
-- Run over the current repo, it reproduces the eight `writing-skills` figures in the Why
-  section above (168/15, 161/8, 45/5, and the four sections at 1 to 2 commits).
+- Run over the current repo, it reproduces the `writing-skills` figures in the Why
+  section above exactly: 169/15, 162/8, 46/5, 27/2, 15/1, 14/1, 12/1, 10/2. That table
+  now holds the tool's own output rather than the hand measurements it corrected, so the
+  criterion is an equality rather than a tolerance.
+- The ranking places those two sections first and second across the whole kit, and
+  `kit-adoption-pass`' "3. The ladder" (84 lines, 2 commits) ranks below both, which is
+  the falsifiable check that the measure reads accretion rather than size.
 - A file with no `##` headings, a file absent from git history, and a repo with no git
   at all each produce a degraded report rather than a throw, and the exit code is 0.
 - The report text contains no word recommending an action on any section, verified by
@@ -203,11 +247,17 @@ Acceptance criteria:
 - Runtime over the whole kit is under 5 seconds.
 - A pure-function unit test pins the heading-to-range parsing, including a file whose
   last section runs to EOF and a file with a `##` inside a fenced code block.
-- **Pre-registered before the tool runs**, so it cannot be fitted to the output: the kit
-  holds 158 `##` sections across 29 prose files, and the outlier rule must flag **no more
-  than 10 of them**. More than that and the rule carries no information and must be
-  tightened before S4 depends on it. This is a criterion on the rule, not a verdict on
-  the kit.
+- The report shows the top 15 by rank plus the total section count, which is a
+  report-length choice rather than a claim about where accretion stops.
+
+**On the pre-registered flag budget, which this section discharged rather than met.** The
+spec pre-registered "the outlier rule flags no more than 10 of 158 sections" so the rule
+could not be fitted to its own output. Measured before dispatch: the real count is 146
+sections, every thresholded rule flagged 27 to 65, and the only factor that fit the budget
+was one chosen because it fit. The budget therefore did its job by falsifying the rule
+rather than by being satisfied, and the answer was to drop thresholding, not to retune it.
+Recorded here because a later reader will otherwise see a pre-registered number that no
+shipped criterion mentions and read it as quietly dropped.
 
 Execution mode: delegate-capable.
 Tests: pin the section parser, which is pure and where the subtle bugs are. The git
@@ -310,18 +360,37 @@ The trigger that does not depend on anyone remembering, and the record that rese
 with pointers, and what was spared with the reason it is load-bearing. The most recent
 entry's sha is the nudge's marker.
 
+**The predicate, settled in the main thread 2026-08-16 rather than delegated.** The nudge
+speaks when **any prose section has been patched since the marker sha**, and reports how
+many sections were touched plus the current top three by rank. Nothing else.
+
+That is the literal statement of the condition this effort exists for, "prose has changed
+since anyone last looked at it whole", and it carries no invented constant, which is the
+trap S1 walked into and out of. It self-silences by construction, since a take-stock
+writes a fresh marker and the count returns to zero. Two rejected alternatives, recorded
+because both are tempting. Firing when a section **enters** the top band is quieter and
+misses the case that matters most, the already-worst section getting worse, since a
+section cannot enter a band it already tops. And any "fires above N commits" form
+reintroduces exactly the tuned constant S1 had to abandon.
+
+With no `docs/take-stock.md` at all, there is no marker and the nudge fires saying no
+take-stock has ever been recorded. That is the correct first-run behavior, not an edge
+case to suppress.
+
 `plugins/claude-kit/hooks/take-stock-nudge.js`: SessionStart, kit-repo gated, git-based,
-fail-open. Reads the last sha from `docs/take-stock.md`, counts commits per prose file
-since it, and emits one line when a file is an outlier against the others. Registered in
+fail-open. Reads the last sha from `docs/take-stock.md`, counts patched prose sections
+since it, and emits one block per the predicate above. Registered in
 `hooks.json` under `startup|resume`, matching `branch-reaper-nudge` rather than
 `session-start.js`, since a compact resume should not re-nudge. The block reports the
 measurement and points at the `kaizen` skill, says nothing about what to cut, and closes
 "Reminder, not a blocker."
 
 Acceptance criteria:
-- No `docs/take-stock.md`, no outlier, a non-kit repo, and any git failure each produce
-  no output and exit 0.
-- An outlier present produces exactly one block naming the file and its commit count.
+- A non-kit repo and any git failure each produce no output and exit 0.
+- Zero prose sections patched since the marker produces no output and exit 0.
+- One or more patched produces exactly one block carrying the touched-section count and
+  the current top three by rank.
+- A missing `docs/take-stock.md` produces the first-run block rather than silence.
 - The block's text contains no recommendation about what to change, verified by reading.
 - `test/take-stock-nudge.test.js` pins all five conditions above, extending the existing
   temp-cwd harness rather than starting a new one.
@@ -331,6 +400,17 @@ Acceptance criteria:
 Execution mode: delegate-capable.
 Tests: the five conditions above, as durable tests. `docs/backlog.md` item 18 is about
 this hook family shipping unpinned; this one does not.
+
+**The shared parser, and why S4 cannot run beside S1.** The hook and the tool both need
+to split a markdown file into level-2 section ranges. The tool lives outside the packaged
+payload and the hook inside it, so a plugin user receives `hooks/` and never `tools/`,
+which fixes the direction: the shared code lives at
+`plugins/claude-kit/hooks/accretion-lib.js` and `tools/accretion.js` requires **inward**
+to it, mirroring how `session-start.js` requires `memory-lib.js`. S4 therefore moves the
+parser S1 wrote and edits S1's file, so the two sections are not disjoint and S4 runs
+after S1 closes rather than inside its review window. Their git queries genuinely differ
+(all-time commits per section for the tool, patched-since-marker for the hook) and stay
+separate; only the parser is shared.
 
 **Placement, decided rather than left open.** The hook goes in
 `plugins/claude-kit/hooks/`, inside the packaged payload that ships to plugin users, even
@@ -408,8 +488,16 @@ Tests: the arms are the test.
 
 ## Open Questions
 
-- Whether the instrument covers `references/` files and `assets/CLAUDE.md` as well as
-  `skills/*/SKILL.md` and `agents/*.md`. Decide in S1 on what the sweep costs. Owner: S1.
+- ~~Whether the instrument covers `references/` files and `assets/CLAUDE.md`.~~
+  **Answered in S1, 2026-08-16: yes, both are in.** Measured cost is 39 more sections over
+  792 lines for roughly +0.3s, so the deciding factor the question named is negligible.
+  The tempting defence, that a `references/` file is on-demand rather than standing
+  context, is refuted by this spec's own cost model above: the cost is reader attention
+  and operator wall clock, not tokens, and a 251-line accreted style reference costs a
+  reader exactly what a 251-line SKILL.md section costs. `assets/CLAUDE.md` is the
+  stronger case still, being the shipped global rules file that loads in every session in
+  every repo. The first pass resolved this in the negative by omission, because the
+  dispatch brief did not carry the question; the adversarial review caught it.
 - Whether a file with two or three sections can have an outlier at all, or whether the
   outlier rule needs a minimum section count to mean anything. Owner: S1.
 - Whether `docs/take-stock.md` needs a `curating-docs` archive path once it grows.
@@ -451,6 +539,59 @@ Tests: the arms are the test.
   it is also a fourth skill proposed while nothing retires a third. Note the overlap when
   either is executed; neither absorbs the other.
 
+## Standing Brief Amendments
+
+Folded into every later dispatch in this effort.
+
+**A1. This repo now answers the arms' questions, so every fixture stages outside it.**
+Verified 2026-08-16 after the plan landed: `docs/plans/kaizen-stop-start-continue_spec_v1.md`
+and `docs/README.md` both carry "claim inventory", "followability probe", and the whole
+compression design in prose. A rep handed a compression task with repo access can grep
+its way to the conclusion it was supposed to derive, which is the priming hazard
+`writing-skills` documents for an open question this repo has parked. This is not a
+mistake to undo: the plan has to be committed to be durable, and the leak arrives with
+it. So every RED, GREEN, third-arm and probe rep in S2 and S3 gets a fixture **staged
+outside this repo, with identifiers nothing on this disk already answers**, and what each
+rep actually opened is read before its result is counted.
+
+Note that the live kaizen inbox already holds this exact friction, filed 2026-08-15
+against `brainstorming` step 7. This effort hitting it live is confirming evidence for
+that note, not a new one, and it is not this effort's to fix.
+
+**A2. No arm runs while an implementer is live in the tree.** A dispatched implementer's
+untracked and staged files show up in any rep's `git status`, and in this effort those
+files are themselves about measuring accretion. Serialize: implementer, then arms.
+
+**A3. A header comment that states a guarantee gets held to the code, not to the
+intent.** S1's first round drew three separate findings of one class: "every git call
+carries this timeout, so a hung git can never hang the tool" (true of the calls, false of
+the tool, whose file read was unbounded), "two runs over an unchanged tree print
+byte-identical output" (false, the report carries a fresh timestamp), and "lives at repo
+root" (it lives in `tools/`, and the root resolution depends on that nesting). Three
+instances in one section is the workflow generating the defect rather than an implementer
+slip, so every later dispatch carries the rule: **a comment asserting a property must be
+one you have checked against the code as written, and a scope word like "every" or
+"never" is the part to check.** The kit's own security model already says that where code
+and comment disagree, the comment is the bug.
+
 ## Chapters
 
-(none yet)
+### Chapter 1 - 2026-08-16
+Completed: Section 1, The accretion instrument
+Implemented By: implementer-opus, two dispatches (build, then one consolidated review-fix round)
+Metrics: 1 review round, 3 reviewers (adversarial, blind, security); NEEDS_CONTEXT 0; escalations 0; advisor on, consulted twice during design and not during execution
+
+Decisions / Surprises:
+- **The pre-registered flag budget falsified the rule before any code was dispatched.** The spec had the tool flag commit-count outliers per file. Measured first: commit count alone cannot separate accretion from healthy correction (`executing-work :: Section loop` is 15 commits in 25 lines against `writing-skills :: Know it works` at 15 in 169), and every thresholded form flagged 27 to 65 of 146 sections. The only factor that fit the budget of 10 was one chosen because it fit. **The tool now ranks by lines x commits and does not flag at all**, which needs no constant and serves the no-judgment rule better, since a rank is a measurement and a flag is a verdict. The budget did its job by falsifying the rule rather than by being met.
+- **The corpus Open Question was resolved in the negative by omission.** The spec assigned "does this cover `references/` and `assets/CLAUDE.md`" to S1; the dispatch brief did not carry it, so the first build simply excluded them. The adversarial reviewer caught it and measured the answer: 39 more sections over 792 lines for about +0.3s. Both are now in. `assets/CLAUDE.md` is the strongest case in the whole corpus, being the shipped global rules file that loads in every session in every repo. **The defect was in my dispatch, not the implementation.**
+- **`git log -L` silently clamps a range whose end runs past HEAD** and exits 0; only an out-of-range start errors. Ranges were parsed from the working tree while commits were counted against HEAD, so any uncommitted edit produced a confident undercount with no `n/a` and no note, in the mid-edit state a maintainer is normally in. Found by the blind reviewer alone and reproduced in a scratch repo. The tool now takes ranges and history from one snapshot via `git show HEAD:<path>`, which is also the right meaning for a churn tool.
+- **A git config could silently zero the entire report.** `%h` with a `/^[0-9a-f]{7,}$/` counter means `core.abbrev = 4` in a user's `~/.gitconfig` yields every row at 0 commits, ranked by line count alone, with the header still claiming a product. Found independently by the blind and security reviewers. Fixed at the class with `%H` and a null (not zero) on a total miss, so "no answer" and "zero commits" stay distinguishable.
+- **The instrument corrected the measurements that motivated building it, twice.** The spec's original table used heading-exclusive ranges inconsistently and claimed four write-once sections where there are three. Correcting it from a throwaway probe fixed that and introduced a fresh off-by-one on the last section only (`split('\n')` leaves a trailing empty element, which only a to-EOF range is exposed to), reported back as a DONE_WITH_CONCERNS. The Why table now holds tool output. None of it moved the finding.
+- **Degradation evidence is manual, not durable.** The spec deliberately declined a fixture git repo as costing more than it pins, so the four degradation paths were verified by hand runs and nothing in the suite will catch a later regression in them. Recorded so the criterion's evidence is traceable rather than assumed.
+
+Review Findings: 5 Major, all fixed. Adversarial: corpus scope (above), honest-limits naming the easy exclusions and not the contested ones, and acceptance criterion 1 not literally passing against a stale spec table. Blind: the silent clamp and the abbrev zeroing. Security verdict CLEAR with 4 Minors, all trusted-workspace bounded and all fixed (unguarded `readFileSync` that a FIFO wedges, `killSignal` defaulting to SIGTERM so the timeout was advisory, an `*.md` symlink followed out of the repo, raw heading interpolation). Roughly a dozen further Minors fixed: pipe escaping in table cells, a silently dropped skill directory, the creating-commit floor now disclosed, the 15-row cutoff now disclosed as a report-length choice, a line-span column so the report gives locations, git stderr captured into the `n/a` note, the top-level catch writing `err.stack` to stderr, `process.exit(0)` removed, three comment overclaims corrected, a tautological CRLF test replaced with literal expectations, and `rank()` exported and pinned. **Accepted and not fixed:** no aggregate wall-clock budget across the git calls (worst case is theoretical at 146 x 15s; observed runtime is 1.66s on a manually invoked CLI where a hang costs a Ctrl-C), and no heading sanitization beyond the pipe escape (the content is the kit's own prose, already verbatim in model context).
+
+Evidence: 15/15 tests pass, both new tests watched failing first. 185 sections across 33 of 33 files in 1.66s. `Know it works` 169/15 and `When a local RED` 162/8 hold ranks 1 and 2. Under `core.abbrev=4`, git emits 4-char shas while the tool's output is unchanged. Judgment-vocabulary scan of the emitted report returns only the "edits nothing and recommends nothing" disclaimer.
+
+Next: Section 2, the compression bill in `writing-skills`
+Commit Model: Commit-and-Push
