@@ -58,6 +58,12 @@ emission. An entry that does not match is not sanitized, it is not a marker. Eve
 block is a hardcoded literal plus a non-negative integer. Constrain-at-source is a stronger answer
 than the delete-and-truncate doors above, not a new instance of them.
 
+One property is new and worth naming rather than leaving for a later pass to re-derive: that
+block's closing sentence tells the model to run `node tools/accretion.js`, so it is the first
+kit nudge whose emitted text asks the model to **execute a repo-controlled file** rather than
+doing bounded work itself. The channel text stays literal, so the row above holds; the
+referent does not, and it sits on the trusted-workspace premise like every other repo read.
+
 Values entering `session-start.js`'s channel, and what neutralizes each:
 
 | Value | Origin | Treatment |
@@ -116,8 +122,13 @@ in this document where the premise is a regex rather than an environmental assum
 This is the single most important thing to know before rating a finding, and it is easy to get
 backwards.
 
-- `session-start.js` and `branch-reaper-nudge.js` wrap `main()` in a bare catch and always
-  `process.exit(0)`. A hook must never break a session.
+- All three SessionStart hooks (`session-start.js`, `branch-reaper-nudge.js`,
+  `take-stock-nudge.js`) wrap `main()` in a bare catch and then let the process end on its own
+  with status 0. None of them calls `process.exit()`; that idiom was swept out of the payload and
+  a re-added `process.exit(0)` is a change worth questioning rather than the invariant. A hook must
+  never break a session. `take-stock-nudge.js` adds a second bound of the same kind, a 6-second
+  budget for its whole run on top of a 5-second timeout per git call, and a failed measurement is
+  reported as a failure rather than rounded down to a smaller number.
 - The three PreToolUse guards (`docs-write-guard`, `pr-docs-guard`, `merged-pr-push-guard`) exit 2
   to deny, but **only on a positive determination**. Each one also ends in
   `try { main(); } catch { /* fail open */ }` and each has explicit allow-on-doubt branches: an

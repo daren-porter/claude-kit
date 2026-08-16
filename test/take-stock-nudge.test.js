@@ -11,10 +11,12 @@
 //
 // The five conditions of the hook's contract are pinned here: not a kit repo, git
 // unavailable or failing, nothing patched since the marker, one or more sections
-// patched since the marker, and no take-stock ever recorded. Three of the eight
-// cases below expect a block and five expect silence, so a regression in either
+// patched since the marker, and no take-stock ever recorded. Of the sixteen cases
+// below, eleven expect a block and five expect silence, so a regression in either
 // direction - a hook that went mute, or one that spoke at every session start in
-// every repo - fails here.
+// every repo - fails here. (That count was stale for one round: the fix round added
+// the boundary cases without revisiting this header, which is the standing-amendment
+// class the effort raised after three instances of it in S1.)
 //
 // A block carries a count and no ranking. That is a contract and not an omission,
 // so the two block cases assert the absence of ranked rows as well as the presence

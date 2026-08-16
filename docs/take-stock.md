@@ -2,10 +2,19 @@
 
 What the kit's own prose was examined for, what came down, and what was spared with the
 reason. **Newest entry first.** The first `## YYYY-MM-DD - <sha>` heading in file order is
-the marker `hooks/take-stock-nudge.js` measures against, so the sha in that heading is the
-commit at which the prose was last read whole. **The sha must be the full 40 hex characters**;
-an abbreviated one does not parse, and the hook then reports that no take-stock has ever been
-recorded, forever.
+the marker `hooks/take-stock-nudge.js` measures HEAD against. **That sha names the commit
+holding the prose as the pass left it, never the commit the pass read.** The hook measures
+marker to HEAD, so a pre-pass sha makes it count the pass's own edits against the pass,
+forever. That forces an ordering: the prose changes land first, then this entry follows in a
+commit touching no corpus file, which is safe by construction because `docs/` is outside the
+measured corpus.
+
+**The sha must be the full 40 hex characters**, and an abbreviated one fails quietly rather
+than loudly. The reader takes the first entry that parses, so a malformed newest entry falls
+through to an older one and the nudge measures against a stale marker while reporting a
+perfectly ordinary count. Only when no entry parses does it say a marker could not be read
+from this file, and only when the file is absent altogether does it say no take-stock was
+ever recorded.
 
 This file is the only channel by which the kit subtracts from itself. Every other input to
 the kaizen loop is captured friction, and friction can only ever ask for more words. A

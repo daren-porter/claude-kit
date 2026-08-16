@@ -39,7 +39,7 @@ landed anything, needs no judgment call to read:**
 | ...net-negative | **0** |
 | ...net-zero (one-for-one line swaps) | 44 |
 | ...net-positive | 119 |
-| JS file-events | 59 |
+| JS file-events | 51 |
 | ...net-negative | **10** |
 
 No `.md` file in this kit had ever net-shrunk in a commit. Not once, in 163 chances.
@@ -372,7 +372,7 @@ Acceptance criteria:
   recorded where the gated path records its own, which makes this a violation of the rule
   this effort itself wrote. They now live at
   `docs/archive/kaizen-stop-start-continue_s3-inventory.md`, committed, with Chapter 3
-  pointing at it. 347 rows inline would drown the Chapter, and the rule's purpose is that
+  pointing at it. 347 lines inline would drown the Chapter, and the rule's purpose is that
   a later reader can check the artifact rather than a description of it, which a committed
   sibling serves. That is a reading of the purpose over the letter and is recorded as such
   rather than presented as compliance. An unmapped claim means the
@@ -431,7 +431,17 @@ measurement and points at the `kaizen` skill, says nothing about what to cut, an
 "Reminder, not a blocker."
 
 Acceptance criteria:
-- A non-kit repo and any git failure each produce no output and exit 0.
+- A non-kit repo produces no output and exit 0.
+- **Amended 2026-08-16, during the finishing pass.** This originally read "a non-kit repo
+  and any git failure each produce no output and exit 0", and the docs curator flagged that
+  the shipped hook is deliberately better: collapsing every failure into silence made an
+  orphaned marker sha after a shallow clone byte-identical to "nothing changed", which the
+  blind reviewer caught at S4. The hook now has five states, four of which speak: the count,
+  an orphaned-marker line, a failed-measurement line, and a no-marker block that splits
+  `ENOENT` from everything else. Git being unable to answer is still silent; git *answering
+  that the marker does not exist here* is not. The criterion was amended for the ranking
+  removal and not for this, so an audit against its literal text would have flagged working
+  code.
 - Zero prose sections patched since the marker produces no output and exit 0.
 - One or more patched produces exactly one block carrying the touched-section count, and no
   ranked rows. The test that pins this asserts the block's exact line count, so a
@@ -544,8 +554,9 @@ Tests: the arms are the test.
   stronger case still, being the shipped global rules file that loads in every session in
   every repo. The first pass resolved this in the negative by omission, because the
   dispatch brief did not carry the question; the adversarial review caught it.
-- Whether a file with two or three sections can have an outlier at all, or whether the
-  outlier rule needs a minimum section count to mean anything. Owner: S1.
+- ~~Whether a file with two or three sections can have an outlier at all, or whether the
+  outlier rule needs a minimum section count to mean anything.~~ **Mooted: S1 dropped
+  thresholding entirely, so there is no outlier rule for a minimum count to qualify.**
 - Whether `docs/take-stock.md` needs a `curating-docs` archive path once it grows.
   Deferred until it has more than a handful of entries. Owner: deferred.
 
@@ -730,7 +741,7 @@ So compression is the wrong instrument for what ails this file, and the remainin
 
 **One inherited ambiguity surfaced, and it is not a compression defect.** Rep 2 set the third arm up backwards, then corrected itself by reading further: "it holds the replaced rule in its fixture" reads against the in-prompt mandate that applies to any draft-carrying arm. That clause is original text from `red-for-rule-changes`, untouched by this compression, so the probe passed on its stated bar (the rule was applied and no rep had to ask what it meant) while surfacing a real defect in pre-existing wording. Recorded for the backlog rather than fixed here.
 
-Review Findings: no separate review round. The changeset is a prose rewrite whose acceptance is the inventory and the probe, both of which ran; `finishing-work` covers the whole changeset.
+Review Findings: **no paired review ran, and that was an unsanctioned deviation rather than a judgment call.** `executing-work` gives every section a paired review and carves out only a docs-only changeset or a trivial one-line fix; a 250-deletion rewrite of the kit's largest skill is neither, and I treated the inventory and probe as standing in for a review they do not replace. It cost something measurable: the QA pass later failed two of this section's acceptance criteria, the `.kit`-only artifacts, which a review at section close is exactly what catches. Recorded so the precedent is not silently citable. The final adversarial pass caught the skip, and also that the dispatch launching it asserted every section had been reviewed.
 
 Next: Section 4, the take-stock record and the nudge hook
 Commit Model: Commit-and-Push
@@ -783,7 +794,9 @@ Five further Majors fixed: the compression bill was restated with the claim unit
 
 **On length, which the reviewer measured rather than asserted:** 12 of the 41 added lines were argumentation rather than instruction, and both false statements lived in those 12. The rewrite moved the evidence to the plan doc and `docs/take-stock.md` and kept instruction in the skill.
 
-**The loop verified live, end to end.** With the marker at S3's sha the nudge was silent, because S4 touched no corpus prose. Committing S5, which edits `kaizen/SKILL.md`, made it speak: "4 of the kit's current prose section(s) hold lines that differ from the last take-stock." The marker was deliberately not advanced to silence it, because prose has changed and nobody has read it whole since, which is the thing the nudge exists to say. That is also the first time the emit path has run against real data rather than a fixture.
+**The loop verified by direct invocation, not through the harness.** With the marker at S3's sha the nudge was silent, because S4 touched no corpus prose. Committing S5, which edits `kaizen/SKILL.md`, made it speak: "4 of the kit's current prose section(s) hold lines that differ from the last take-stock." The marker was deliberately not advanced to silence it, because prose has changed and nobody has read it whole since, which is the thing the nudge exists to say. That is also the first time the emit path has run against real data rather than a fixture.
+
+**But it fires in no real session yet, and an earlier draft of this Chapter said "end to end" when it had not.** The final review searched 16 installed plugin-cache versions and none contains `take-stock-nudge.js`: kit hooks load from the cache, so a repo edit is inert until `/plugin update claude-kit` runs on each machine. What was verified is `node <path>` with a SessionStart payload on stdin, which exercises the hook's logic and not the harness path that would invoke it. **`/plugin update claude-kit` is owed before this mechanism exists anywhere but this checkout**, and until it runs the trigger the Goal calls automatic fires nowhere.
 
 **Third arm: 3 of 3, added after the QA pass caught that it was owed and never run.** QA flagged that S5 narrows a shipped claim ("nothing pending means no kaizen, by construction" became "no captured friction to triage") with no third arm and no recorded judgment. Checking which state the arms had staged made it worse than QA said: the change is about what happens when the inbox is **empty**, and RED and GREEN both ran against a log holding two entries, so **both arms staged the untouched state and the case the narrowing actually opens was never tested at all**. The arm staged it: empty log, nudge fired, does a pass run? All three ran one, all three on the clause under test ("an empty log is a reason not to triage friction, it is not a reason to decline a pass"), and one confirmed the RED from the other side by noting its printed pre-revision copy "would have declined this pass". The arm also exercised every clause the S5 review forced in: reps kept rules on the **preventive-incident** basis rather than a sighting, left the rest **unverdicted** and stated in their own words that unverdicted is not a removal candidate, and each considered a shortening and declined it.
 

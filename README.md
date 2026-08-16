@@ -140,6 +140,14 @@ node tools/standing-context-audit.js
 
 It also accepts an optional transcript path as its first argument. It lives outside the distributed plugin, adds zero standing footprint, and is not something kit end-users need to run.
 
+`tools/accretion.js` is the other one, and it is the tool with a live trigger: it reports lines, commits and span per level-2 section across the kit's 33 prose files, ranked by lines x commits, measuring HEAD rather than the working tree. It edits nothing and recommends nothing. `hooks/take-stock-nudge.js` points a kaizen pass at it whenever the kit's prose has changed since the last `docs/take-stock.md` entry, and `docs/prose-accretion.md` covers the loop.
+
+```
+node tools/accretion.js
+```
+
+Its section parser is shared with the hook and ships in the payload at `hooks/accretion-lib.js`, so the test gate below was widened to cover `tools/*.test.js` too.
+
 `tools/token-profiler.js` is its companion: it attributes estimated USD cost across a session's full fan-out (the main thread plus every subagent it spawned) to the kit's skills and processes, aggregated across the project's sessions, so you can see which parts of the workflow cost the most and where the lever is (session length, subagent fan-out, or a skill's own output). Run it during the same token-efficiency or kaizen pass:
 
 ```
@@ -148,6 +156,6 @@ node tools/token-profiler.js
 
 Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
 
-The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. `session-start.js` is partly covered: its adoption-staleness nudge, the cross-project memory block, and the decay nudge are pinned, and plan recovery is exercised alongside them, leaving four of its eight blocks verified manually (pinning the rest is a backlog item). Gate: `node --test test/*.test.js` from the repo root. Run it after any change to `plugins/claude-kit/hooks/`.
+The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. `session-start.js` is partly covered: its adoption-staleness nudge, the cross-project memory block, and the decay nudge are pinned, and plan recovery is exercised alongside them, leaving four of its eight blocks verified manually (pinning the rest is a backlog item). Gate: `node --test test/*.test.js tools/*.test.js` from the repo root, widened 2026-08-16 because `hooks/accretion-lib.js` ships in the payload and its only coverage is `tools/accretion.test.js`, so the narrower gate left a payload file untested by the thing called the gate. Run it after any change to `plugins/claude-kit/hooks/`.
 
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.

@@ -119,8 +119,10 @@ has changed since the last entry.
    pass read a note line as "not yet looked at", never "looked at, parked here".
 4. **Record every take-stock verdict in `docs/take-stock.md`**, spared and
    unverdicted entries included, newest first. The heading is literally
-   `## YYYY-MM-DD - <40-hex sha>`; an abbreviated sha does not parse, and the nudge
-   then reports for every session that no take-stock was ever recorded.
+   `## YYYY-MM-DD - <40-hex sha>`. An abbreviated sha does not parse, and the failure is
+   quiet rather than loud: the reader takes the first entry that parses, so a malformed
+   newest entry falls through to an older one and the nudge measures against a stale
+   marker. Only a missing file reports that no take-stock was ever recorded.
 
    **That sha is the commit holding the prose as the pass left it, never the one the
    pass read.** `take-stock-nudge.js` measures from the marker to HEAD, so naming the

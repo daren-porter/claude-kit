@@ -300,6 +300,7 @@ motive and the compression proceeds on length alone.
 - **A trigger that moved** is a rule change in a compression's clothes: if the shorter text
   binds cases the longer did not, or stops binding cases it did, a claim moved whatever the
   line count says. Put the trigger back, or leave this path.
+
 ## When a local RED is not available
 
 Sometimes the evidence for a rule is real but not yours to re-run: wording **ported** from

@@ -14,6 +14,8 @@ Hooks and agents load from the installed plugin cache (`~/.claude/plugins/cache`
 
 ## Hook execution model
 
+Three separate hooks fire on SessionStart, and every block count below belongs to one of them. `session-start.js` emits up to eight blocks inside one JSON object; `branch-reaper-nudge.js` and `take-stock-nudge.js` are their own processes and emit at most one block each. A session start can therefore carry up to ten blocks from three processes, and "the eight blocks" always means `session-start.js`'s, never the session-start total.
+
 `session-start.js` runs on `startup`, `resume`, and `compact`, and is the widest-reach code in the kit: everything it writes lands in trusted context at the top of every session. It emits one JSON object carrying `additionalContext`, built from up to eight blocks joined by blank lines, in this order:
 
 1. In-progress plan recovery, which instructs the session to read the plan docs including Chapters before any work.
@@ -27,11 +29,11 @@ Hooks and agents load from the installed plugin cache (`~/.claude/plugins/cache`
 
 Order is load-bearing in two places. Plan recovery is first because it is the block that must survive everything else. The memory index is last and stands alone rather than joining the nudge stack, because a reference list and a list of asks compete for different attention.
 
-Blocks 2 through 8 are additive by contract: each is computed inside its own `try`, `main()` is wrapped again, and the process ends `process.exit(0)` regardless. A failure anywhere in the additive set can cost that block and nothing else. An early return keeps the hook silent when no block has anything to say.
+Blocks 2 through 8 are additive by contract: each is computed inside its own `try`, `main()` is wrapped again, and the process is then left to end on its own with status 0 (no hook in the payload calls `process.exit`; the guards set `process.exitCode = 2` instead, so a pending stderr write still flushes). A failure anywhere in the additive set can cost that block and nothing else. An early return keeps the hook silent when no block has anything to say.
 
 File doors in that hook are at three different standards, which matters because a bounded read bounds bytes and not time: `openSync` on a FIFO blocks until a writer appears, and a blocked hook holds up every session start. The memory readers use the atomic form (`O_RDONLY | O_NONBLOCK`, then `fstatSync(fd).isFile()`), the adoption reader stats before opening, and four pre-existing readers (the kaizen notes, the unarchived-Complete scan, the plan scan, and the CLAUDE.md sync offer) check nothing. Closing that gap is an open backlog item; `hooks/memory-lib.js`'s `readCapped` is the form to copy.
 
-`take-stock-nudge.js` also runs on SessionStart (`startup|resume` only), gated to the kit repo by one `existsSync` of the plugin manifest before any git call, so everywhere else it is a stat and an exit. It reports one number, how many of the kit's prose sections have been patched since the sha in the first entry of `docs/take-stock.md`, and stays silent when nothing has. It names no section and ranks nothing: the ranking is `tools/accretion.js`, a maintainer tool outside the payload, and the block points at it rather than paying its cost at a session start. Recording a take-stock resets the marker, so the nudge silences itself.
+`take-stock-nudge.js` also runs on SessionStart (`startup|resume` only), gated to the kit repo by one `existsSync` of the plugin manifest before any git call, so everywhere else it is a stat and an exit. It reports one number, how many of the kit's prose sections hold lines that differ between the sha in the first entry of `docs/take-stock.md` and HEAD, and stays silent when none do. It names no section and ranks nothing: the ranking is `tools/accretion.js`, a maintainer tool outside the payload, and the block points at it rather than paying its cost at a session start. Recording a take-stock resets the marker, so the nudge silences itself. Three further states speak rather than fall silent (an unreadable marker, a marker naming a commit this checkout does not hold, and a measurement that failed part way), because silence there would be byte-identical to "nothing changed". `prose-accretion.md` covers the loop.
 
 `branch-reaper-nudge.js` also runs on SessionStart (`startup|resume` only) and is the one hook that touches the network: a bounded `git fetch --prune` with auth prompts disabled, skipped when the repo was fetched within 10 minutes, failing open on any error. That rests on the workspace-is-trusted premise.
 
@@ -59,7 +61,7 @@ Home-rooted state is deliberate for the memory tier and for kaizen: both are cro
 
 Two directions, and they meet only through files on disk.
 
-Reading happens at session start. `session-start.js` scans the cwd's `docs/plans/`, the kit-repo markers, home-rooted state, and the memory store, reduces everything it found to bounded text, and hands one context block to the harness. No hook holds a process open past its event, so there is no daemon, no cache in memory, and no ordering dependency between hooks beyond the harness's own.
+Reading happens at session start. `session-start.js` scans the cwd's `docs/plans/`, the kit-repo markers, home-rooted state, and the memory store, reduces everything it found to bounded text, and hands one context block to the harness. The two nudge hooks read git instead of files, each under its own timeouts: `branch-reaper-nudge.js` fetches and inspects branch state, and `take-stock-nudge.js` reads one sha out of `docs/take-stock.md` and then asks git which corpus sections differ between that sha and HEAD. No hook holds a process open past its event, so there is no daemon, no cache in memory, and no ordering dependency between hooks beyond the harness's own.
 
 Writing happens during a turn, from a session following a skill. Plans and Chapters are written by the model with the Write and Edit tools. The kit goal is armed by `kit-goal.js`. Memory records go through `memory.js` and nothing else, which is what makes the field validation, the generated stamps, and the append-only apply journal hold. The kaizen inbox takes a plain appended line.
 
@@ -84,4 +86,5 @@ No hook depends on a network call succeeding. `branch-reaper-nudge.js`'s bounded
 ## Feature documents
 
 - `cross-project-memory.md` - the kit-owned tier for facts that span projects: store layout, the two session-start blocks, the generated line and its `[body revised]` marker, advisory decay, failure modes, and how to operate it.
+- `prose-accretion.md` - the take-stock loop over the kit's own prose: the four-glob corpus and why it is defined twice, `tools/accretion.js`'s HEAD-snapshot method and its ranking, the shared section parser, the nudge hook's five states and its structural blind spots, the record's machine contract, and what the first compression proved and failed to prove.
 - `visual-companion.md` - `brainstorming`'s browser-viewed screens: the three shipped files, the `.kit/visuals/` footprint and its sweep, the superpowers port with its licence obligation and every change from the source, the failure modes, and why no browser-versus-terminal rule ships. No code runs in this feature, so it appears nowhere in the hook execution model above.
