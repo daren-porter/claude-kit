@@ -74,7 +74,13 @@ has changed since the last entry.
    costs, so a pass gathering only friction tends to grow the kit;
    `docs/take-stock.md` carries the measured history.
 
-   List all three, then ask Daren for his: his half of the retro is the other half.
+   List all three, **naming every pending item rather than counting it**: each note, each
+   parked stub, and each retirement candidate the last take-stock left unadjudicated, with
+   enough of its text to be argued about without opening another file. A class reported as
+   non-empty is a class Daren has to go and read for himself, which is how a candidate
+   stays unadjudicated for one more pass; a pass on 2026-08-16 reported "four retirement
+   candidates, still unadjudicated" twice without ever saying what they were. Then ask
+   Daren for his: his half of the retro is the other half.
 2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
    smallest change that fixes it? Sort into:
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you
