@@ -284,7 +284,7 @@ redundancy in `c13a9ca` (the dropped companion rule, seven reps).
 ### Chapter 1 - 2026-08-15
 Completed: 1. The boundary, and the counter-case section's evidence bill
 Implemented By: main session (wording is design-entangled and reshapes against arm results)
-Metrics: 2 review rounds (paired, both CHANGES_REQUIRED on round 1); 0 NEEDS_CONTEXT; 0 escalations; advisor on, consulted 3 times and each consultation changed the approach; 4 arms, 12 reps total
+Metrics: 1 review round (paired, both CHANGES_REQUIRED); 0 NEEDS_CONTEXT; 0 escalations; advisor on, consulted 3 times and each consultation changed the approach; 3 arms over 9 reps (RED 3, GREEN 3, REFACTOR 3). **Corrected in the close-out:** this first read "2 review rounds" and "4 arms, 12 reps total", neither of which reconciles against the artifacts.
 Commit Model: Commit-and-Push
 
 **Arms.** Artifacts at `/tmp/claude-1000/kit-arm-artifacts-red-for-rule-changes/`, copied
@@ -362,9 +362,14 @@ out of the session scratchpad so they outlive the session.
 
 **Deviation from the spec.** Acceptance criterion 3 names `a64f8a3`/`c13a9ca`/`ee8be8f`
 literally. It was exercised on isomorphs instead, because handing reps the real commits
-would violate the answer-leak rules at `:211-225`. The fixtures preserve the hard case: in
-the REFACTOR arm, situations A and C are the same shape and diverge only on provenance, and
-3 of 3 reps split them correctly.
+would violate the answer-leak rules at `:211-225`. **Corrected in the close-out:** this
+first claimed the fixtures preserved the hard case, citing the REFACTOR arm's A-versus-C
+split. That split exercises the borrowed-evidence tie-breaker, which is a different
+discriminator from the one the criterion names. The named hard case is routing on the claim
+rather than on the downstream harm it causes, and while the RED/GREEN fixture's Change A did
+carry a harm sentence and 3 of 3 reps still routed it to the no-arm bill, no pre-registered
+pass condition isolated that as a tested dimension. The criterion is met by incidental
+evidence, not by an arm built for it.
 
 **Open state carried forward.** `~/.claude-kaizen/notes.held.md` holds one note of mine,
 cleared out of the inbox so the arms could attribute rep writes. It stays held until S2 and
@@ -507,8 +512,9 @@ and quotes carried here because that path does not survive a reboot.
 - Adversarial Major (evidenced on one shape, worded unconditionally, and so silently deciding
   the entailed-repair question this spec puts Out of Scope): fixed by scoping the clause to
   "where the change forecloses a reading the current wording still allows".
-- Adversarial Major (criterion 2 untested): closed by arm 4 on the fixture the reviewer
-  identified.
+- Adversarial Major (criterion 2 untested): **half closed** by arm 4 on the fixture the
+  reviewer identified. The "distinguishable by something observable" half is demonstrated;
+  the "still fires" half is not, and the close-out Chapter records what was run to close it.
 - Blind Major (the carve-out sits in a branch that `:106` exports to any clean run) and Blind
   Major (unresolvable against list item 3, "a step the surrounding skill already orders"):
   both substantially reduced by the same scoping fix.
@@ -534,3 +540,54 @@ genuinely makes that fictional change redundant. Nothing here settles it, which 
 the corrected criterion tests whether the question gets asked rather than how it is answered.
 
 Next: finishing-work
+
+### Chapter 4 - 2026-08-16 (finishing pass, HALTED)
+Completed: nothing; the close is stopped on a finding
+Metrics: QA verdict FAIL; security review skipped (all-prose changeset, per finishing-work's carve-out); final adversarial review and docs curation not yet dispatched; 2 further arms run over 6 reps, both failing their pre-registered bars
+Commit Model: Commit-and-Push
+
+**QA returned FAIL on four counts, three of which are fixed.**
+- Chapter 1's metrics did not reconcile ("2 review rounds", "4 arms, 12 reps total"). S1 ran
+  1 review round and 3 arms over 9 reps. Corrected in place, marked as corrected.
+- Chapter 1's deviation note claimed the REFACTOR arm preserved the "hard case", citing the
+  A-versus-C split. That split exercises the borrowed-evidence tie-breaker, a different
+  discriminator from the one the criterion names. Corrected in place.
+- The durable artifact set was incomplete and `S2-RED-RESULT.md`'s "0 of 5" had an
+  undisclosed denominator (six reps were in state; the sixth's answer file was never written
+  because the harness refused it). Both fixed: 56 artifacts now consolidated, denominator
+  disclosed.
+- The fourth is not fixed and is the reason this pass is halted. See below.
+
+**Arm 5 (2 of 3, bar not met).** Run to close acceptance criterion 2's "still fires" half.
+Two reps reached the redundancy finding naming an unbypassable hook rather than the replaced
+rule, so the finding remains reachable after S3's clause. Rep 2 declined, correctly noting
+the fixture's mechanism dominated so hard that the ambiguity never got exercised. Third
+fixture in this effort with a confound in it.
+
+**Arm 6 (0 of 3, bar not met) found a defect in wording S1 already shipped.** The arm was
+built to test whether a reader routes a world-claim on the claim or on the downstream harm.
+No rep routed on the harm. All three instead applied S1's shipped conjunction and found its
+second half fails:
+
+> No arm is owed where the claim is about something other than an agent **and** the system
+> that would settle it is not reachable from inside an arm
+
+Rep 3: "git is reachable from inside an arm, so a fixture can hold a real repo and let real
+`git diff` emit the paired `-`/`+` hunk without asserting the fact under test."
+
+That contradicts this effort's own worked example. `ee8be8f` is cited throughout S1 as the
+correct no-arm case, its claim is about what `git diff` renders, and git is locally
+reachable, so under the shipped wording it owes arms. It was in fact settled by measuring
+git directly. Reachability is the wrong proxy for what the conjunct was reaching for, which
+is that a rep's behavior is not the instrument for a claim about a system. A reachable system
+is the one you can measure cheaply, which should widen the no-arm bill rather than close it.
+
+No earlier arm could see this: S1's fixtures used a changelog generator, a registry API and a
+CI tier, all plausibly unreachable from a fixture, so the conjunct never carried weight.
+
+**Why this is raised rather than fixed.** It is a design decision on wording that is already
+committed and already passed three arms, the fix is not mechanical, and this effort has now
+missed its own pre-registered bar twice in a row on fixtures I built. Both stopping bounds I
+wrote down have fired.
+
+
