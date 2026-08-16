@@ -13,8 +13,15 @@ maintainer tool reports which sections of the kit's prose grew by accretion; a
 SessionStart nudge surfaces that condition and silences itself once acted on;
 `docs/take-stock.md` records what came down and what was spared with the reason; and
 `writing-skills` and `kaizen` carry the wording that routes a candidate to compression
-or to retirement. The proof the mechanism works is that `writing-skills` ends this
-effort shorter than it started, which no markdown file in this kit has ever done.
+or to retirement.
+
+**The proof was to be that `writing-skills` ends this effort shorter than it started,
+and it is not met: 514 against 467.** See Chapter 3. The bar was also mis-specified,
+since 58 of the 68 lines the effort added are the new compression section, which is out
+of scope for compression by construction. What the effort did produce is the kit's first
+net-negative markdown commit in 165 file-events (`1e5db4e`, S3's compression), four
+recorded retirement candidates, and the finding that this file is claim accretion rather
+than prose accretion, so retirement and not compression is the lever past it.
 
 ## Why this exists
 
@@ -23,7 +30,8 @@ missing or wrong. Every note in `~/.claude-kaizen/notes.md` is friction by defin
 the capture bar says so explicitly. The fix for a friction report is nearly always more
 words.
 
-**The whole-history measurement, taken 2026-08-16, needs no judgment call to read:**
+**The whole-history measurement, taken 2026-08-16 at `90769cc`, before this effort
+landed anything, needs no judgment call to read:**
 
 | | |
 |---|---|
@@ -34,10 +42,17 @@ words.
 | JS file-events | 59 |
 | ...net-negative | **10** |
 
-No `.md` file in this kit has ever net-shrunk in a commit. Not once, in 163 chances.
-Code has, ten times, and one of those ten was itself a kaizen pass (`ae9dc10`,
-2026-08-07, minus 38 lines from `stop-docs-hygiene.js`). **So the pass can subtract. It
-has never been pointed at prose.**
+No `.md` file in this kit had ever net-shrunk in a commit. Not once, in 163 chances.
+Code had, ten times, and one of those ten was itself a kaizen pass (`ae9dc10`,
+2026-08-07, minus 38 lines from `stop-docs-hygiene.js`). **So the pass could subtract. It
+had never been pointed at prose.**
+
+**Re-measured at the effort's close: 165 markdown file-events, one net-negative.** That
+one is `1e5db4e`, S3's compression of `writing-skills` at 229 insertions against 250
+deletions, and it is the first in the kit's history. Both reviewers caught a copy of the
+stale figure that had reached the shipped `kaizen` wording, which is the second instance
+of that class here and the reason the execution notes below carry "re-measure before
+quoting".
 
 An earlier framing of this stub said the kit has no subtraction channel at all. That
 overstates and the correction sharpens where the new mechanism attaches.
@@ -93,7 +108,11 @@ against a large skill is the weak one and should not be reached for.
 
 Nine decisions, agreed with Daren 2026-08-16.
 
-**1. Both halves, compression named first.** Stop covers two different operations.
+**1. Both halves, compression named first.** *(Amended 2026-08-16 after Chapter 3: the
+ordering below is still right for where to look, and its stated reason is now wrong. Measured,
+compression is not where the mass is; the two most accreted sections are claim accretion and a
+hard pass bought 6.5% against 18.5% wanted. Retirement is the lever, and compression's standing
+value is that it generates retirement candidates, which it did, four of them.)* Stop covers two different operations.
 *Retirement* cuts a rule so the kit no longer says it. *Compression* rewrites an
 accreted section shorter with every claim intact. The measurement says compression is
 where the mass is and retirement is the case the kit has never once had, so the wording
@@ -361,9 +380,15 @@ Tests: the probe is the test.
 
 The trigger that does not depend on anyone remembering, and the record that resets it.
 
-`docs/take-stock.md`: dated entries, each naming the sha examined, what was compressed
-with pointers, and what was spared with the reason it is load-bearing. The most recent
-entry's sha is the nudge's marker.
+`docs/take-stock.md`: dated entries under a literal `## YYYY-MM-DD - <40-hex sha>`
+heading, naming what was compressed with pointers and what was spared with the reason it
+is load-bearing. The most recent entry's sha is the nudge's marker. **Amended 2026-08-16,
+during S5**: this originally said each entry names the sha *examined*, which both reviewers
+showed is the one sha that cannot work. The nudge measures marker-to-HEAD, so naming the
+pre-pass sha makes it count the pass's own edits forever, in exactly the case the mechanism
+exists for. The heading names the commit holding the prose as the pass left it, which forces
+an ordering: prose changes land first, then the record entry follows in a commit touching no
+corpus file.
 
 **The predicate, settled in the main thread 2026-08-16 rather than delegated.** The nudge
 speaks when **any prose section has been patched since the marker sha**, and reports how

@@ -1,6 +1,6 @@
 ---
 name: kaizen
-description: "Use when running a kaizen pass on the kit - an explicit kaizen request, accepting an end-of-effort or session-start offer to reflect on captured friction, or applying a pending kaizen brief in the kit repo. Jotting a single friction note does not need this skill; the global posture rule covers capture."
+description: "Use when running a kaizen pass on the kit - an explicit kaizen request, accepting an end-of-effort or session-start offer to reflect on captured friction, taking stock of the kit's own prose when the take-stock nudge reports it has changed, or applying a pending kaizen brief in the kit repo. Jotting a single friction note does not need this skill; the global posture rule covers capture."
 ---
 
 # Kaizen
@@ -20,8 +20,15 @@ same across every project and both config profiles:
 - `~/.claude-kaizen/briefs/` - one file per brief a reflect pass produces.
 
 **Pending items** means `notes.md` has any note lines (clearing a note means
-removing its line) or `briefs/` holds a file. That predicate gates every offer and
-the SessionStart nudge: nothing pending means no kaizen, by construction.
+removing its line) or `briefs/` holds a file. That predicate gates the friction offer
+and `session-start.js`'s kaizen count: nothing pending means no captured friction to
+triage, by construction.
+
+**Take stock is a second entry, and it does not read the inbox at all.** A separate
+SessionStart hook, `take-stock-nudge.js`, reports how many of the kit's prose sections
+changed since the last `docs/take-stock.md` entry, so it fires in exactly the state the
+friction predicate calls empty. An empty inbox is a reason not to triage friction. It
+is not a reason to decline a pass.
 
 ## Capturing (the cheap half)
 
@@ -46,16 +53,27 @@ yourself into is noise; leave it out.
 
 ## The pass (the reflect half)
 
-Run it when Daren asks, when he accepts an end-of-effort or session-start offer, or
-when you sit down to a pending brief.
+Run it when Daren asks, when he accepts an end-of-effort or session-start offer, when
+you sit down to a pending brief, or when the take-stock nudge reports the kit's prose
+has changed since the last entry.
 
 1. **Gather.** Read the inbox notes plus any friction from this session still in
    context, and enumerate the deferred-promote backlog alongside them: the
    `Status: Proposed` stubs already parked in `docs/plans/`. Nothing else
    resurfaces those - the SessionStart nudge fires on inbox items and in-progress
    plans, never on Proposed stubs - so a pass that reads only `notes.md` silently
-   drops the parked work. List both, then ask Daren for his: his half of the retro
-   is the other half.
+   drops the parked work.
+
+   **In the kit repo, also read the kit's own state, the one input that is not a
+   friction report:** `node tools/accretion.js` for the ranking, and
+   `docs/take-stock.md` for what the last pass examined, cut and spared. Outside it a
+   pass covers the inbox and the stubs only, since that tool is deliberately not
+   packaged and that record is this repo's. The reason for the sub-step is that an
+   inbox reports what a rule lacks far more often than what it costs, so a pass
+   gathering only friction tends to grow the kit; `docs/take-stock.md` carries the
+   measured history.
+
+   List all three, then ask Daren for his: his half of the retro is the other half.
 2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
    smallest change that fixes it? Sort into:
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you
@@ -70,12 +88,51 @@ when you sit down to a pending brief.
    - **Route elsewhere:** not actually about the kit. A project learning goes to
      auto memory; a project convention to that project's CLAUDE.md. It leaves the
      inbox either way.
+   - **Take stock:** a section in the top rows of `tools/accretion.js`, or one you
+     find changed since the marker while reading it. (The nudge supplies a count and
+     never a section; only the ranking names one.) Read it whole and ask what it
+     would lose by being shorter, then route what you find.
+
+     **A rewrite whose inventory maps every claim in both directions is a
+     compression**, and it takes `writing-skills`' compression bill; the finished
+     mapping is what classifies it, never an intention to shorten. A rule that no
+     longer earns its lines is a **retirement**: a rule change, owing the arms, and
+     it goes to Daren rather than into a brief because it changes what the kit is
+     held to. A rule you find load-bearing is **spared**, which is not praise, since
+     it names what was observed to happen because of it and "it seems to be working"
+     closes nothing. **A preventive rule succeeds by producing no event**, so its
+     spared evidence is the incident that admitted it rather than a sighting. Where
+     you can find neither, leave it **unverdicted** and say so: an unverdicted rule
+     is not a retirement candidate, it is one nobody has watched yet.
+
+     **The step asks the question; it does not promise a cut**, in either direction.
+     A pass that takes nothing out and records why is a pass that ran, and so is one
+     that cuts less than it hoped: measured on the kit's two most accreted sections
+     (2026-08-16), 143 claims at about 172 characters each, where a hard compression
+     bought 6.5% against the 18.5% wanted.
 3. **Clear every triaged item from `notes.md`.** Triage always empties the line:
    an apply-now item becomes a brief (format below), a promote becomes a spec or a
    Proposed-status stub in `docs/plans/`, a route-elsewhere lands at its
-   destination. `notes.md` holds only untriaged friction; nothing triaged-but-parked
+   destination, and a take-stock item empties its line by becoming an entry in step
+   4. `notes.md` holds only untriaged friction; nothing triaged-but-parked
    lingers there. That invariant is what lets the SessionStart nudge and the next
    pass read a note line as "not yet looked at", never "looked at, parked here".
+4. **Record every take-stock verdict in `docs/take-stock.md`**, spared and
+   unverdicted entries included, newest first. The heading is literally
+   `## YYYY-MM-DD - <40-hex sha>`; an abbreviated sha does not parse, and the nudge
+   then reports for every session that no take-stock was ever recorded.
+
+   **That sha is the commit holding the prose as the pass left it, never the one the
+   pass read.** `take-stock-nudge.js` measures from the marker to HEAD, so naming the
+   sha you read makes the nudge count the pass's own edits against it, forever, in
+   exactly the case the mechanism exists for. It forces an ordering: land the prose
+   changes first, then record the entry in a later commit touching no corpus file.
+   `notes.md` holds untriaged friction; this file holds what a take-stock decided
+   about the kit's own prose.
+
+**Capture does not change, and a pass does not get to change it.** Whether friction
+with a rule wants a cut or a companion is this step's judgment, not the logging one,
+and the one step whose value is that it carries no decision has to keep carrying none.
 
 ## The brief, and applying it
 
@@ -99,13 +156,19 @@ collapse into one session.
 **When the change took writing-skills' borrowed-evidence path, that commit message is
 where its three artifacts live**, because a pass has no plan doc and so no Chapter to hold
 them, and the commit is not made until it carries them. The brief never does: the artifacts
-are produced when the change is applied, and the brief was written before that.
+are produced when the change is applied, and the brief was written before that. **A
+compression's claim unit, inventory and probe output have the same home for the same
+reason**, all three, and that commit is likewise not made until it carries them.
 
 ## Offering a pass
 
 Never offer on an uneventful session. Offer only when the inbox has pending items,
 and only at a natural moment: finishing-work's close-out, or when Daren signals he
 is wrapping up. The offer is one dismissable line ("N kaizen items captured - want
-to run a pass?"). Daren can always start one explicitly. The SessionStart nudge
-(kit repo only) is the same predicate from the other end: it reminds you when you
+to run a pass?"). Daren can always start one explicitly. `session-start.js`'s kaizen
+count (kit repo only) is the same predicate from the other end: it reminds you when you
 open claude-kit and items are waiting.
+
+**The take-stock nudge is not that predicate and is offered on its own terms.** It fires
+on changed prose rather than captured friction, so offer a take-stock at the same natural
+moments even when the inbox is empty, which is the state it is built to speak into.
