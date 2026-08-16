@@ -1,6 +1,6 @@
 ---
 name: writing-skills
-description: "Use when creating a skill for this kit, editing one, or deciding whether a wording change to a behavior-shaping skill will actually change behavior. Triggers: adding a new SKILL.md, reworking a skill's rules, a skill that reads well but agents ignore under pressure, or a kaizen change to the kit's own skills."
+description: "Use when creating a skill for this kit, editing one, or deciding whether a wording change to a behavior-shaping skill will actually change behavior. Triggers: adding a new SKILL.md, reworking a skill's rules, a skill that reads well but agents ignore under pressure, a section that has grown by accretion and wants shortening, or a kaizen change to the kit's own skills."
 ---
 
 # Writing Skills
@@ -103,9 +103,12 @@ agent's behavior with and without the wording:
    yet rather than that there is nothing to fix; and a rep that was in the state can comply
    because something else in the kit already forces the behavior, which is a finding about the
    draft rather than about the rule. Both live in the four answers under "When a local RED is
-   not available", and they read any clean run, not only that section's. The one exception on this path is
-   evidence that is real but not yours to re-run, ported or reported, and it costs three
-   recorded artifacts rather than a claim: see that same section.
+   not available", and they read any clean run, not only that section's. Two things route away
+   from here. Evidence that is real but not yours to re-run, ported or reported, costs three
+   recorded artifacts rather than a claim: see that same section. And a rewrite that adds no
+   claim cannot stage a RED at all, which is "Compression: rewriting a section shorter" below
+   rather than any of the four answers; that section says how to tell, and the test is a
+   finished two-directional mapping.
 2. **GREEN:** add the minimal guidance addressing that specific failure. Re-run, under
    the same pressure RED carried, and the bar is every rep: a rule that holds two times
    in three is not a rule, it is a coin the next session flips.
@@ -128,10 +131,13 @@ like RED.
 
 Run three reps at least - one sample lies - and read every flagged result yourself, since
 template echoes masquerade as both failures and successes. This is the standard
-for any change to behavior-shaping content, the kit's own skills included. Two paths lead
-around it, and cost chooses neither. The gated one below is for evidence that is real but
-not yours to re-run, and it substitutes different work rather than less. The other is the
-counter-case section at the end, which states its own bill and when it is available.
+for any change to behavior-shaping content, the kit's own skills included. Three sections
+below route around it, and cost chooses none of them. "When a local RED is not available" is
+for evidence that is real but not yours to re-run, and it substitutes different work rather
+than less. "When you meet a counter-case to a rule" states its own bill and when it is
+available. And "Compression: rewriting a section shorter" takes a rewrite that keeps every
+claim the section already makes, on a bill of an inventory and a probe; it opens on a finished
+two-directional mapping and never on an intention to shorten.
 
 **Run RED before you persist the wording, and keep it out of three places: the repo, the
 scratchpad, and the RED prompt.** Baseline-testing a kit skill edit from inside the kit repo
@@ -247,6 +253,64 @@ reached it independently did not. So when an arm's territory is a question this 
 discount what a rep reports having found on its own, and expect a promoted note to be exactly
 where its territory got documented.
 
+## Compression: rewriting a section shorter
+
+**The entry condition is a finished mapping, not an intention.** You are on this path once the
+inventory below maps every claim in both directions. "I am only shortening it" is the thing to
+be shown, never the reason for not showing it. The mapping needs a draft to map against, so
+expect to settle which path you are on last rather than first.
+
+For a rewrite that clears that bar the arms are unavailable rather than waived, and the branch
+is **could not be constructed** rather than a clean run. RED would have to stage a state where
+the current wording lacks something the new wording adds, and a compression adds nothing; no
+substitute reaches a state that does not exist, so this is the one case on that branch owing no
+substitute. Three reps given an accreted section and told to shorten it without dropping
+anything each built the inventory unprompted, found the arm unstageable, and halted rather than
+ship (2026-08-16).
+
+What a compression risks instead is that the shorter wording no longer lands, and that is what
+it pays for. **The plan section does not close, or the commit is not made, until the unit, the
+inventory and the probe output are recorded where the gated path records its own.** An
+inventory nobody can read is the compressing session's own judgment about its own work, which
+is the thing this path exists to replace.
+
+**A claim inventory**, mapped in both directions. **One claim is one thing the section asserts
+that a reader could act on differently if it were absent**: a directive, a bar, a permission, a
+named exception, or an assertion about how something behaves. An example and a restatement are
+not claims. **Every row carries three things: the claim, its trigger verbatim, and its attached
+content** - the provenance clause, locator or recorded instance this file mandates elsewhere.
+Attached content is not a claim and is not droppable, and giving it a column is what makes a
+drop visible, since a rewrite that strips the dated incident from a rule it belongs to leaves
+an otherwise complete inventory and one empty cell. An unconditional claim records
+"unconditional" in the trigger column, and inventing a condition to fill it is itself the rule
+change. **When you cannot tell whether something is one claim or two, split it**; where the
+fine split then maps to one survivor, say so and carry on. Fix the unit and write it down
+before you rewrite, because a unit settled afterwards is settled to make the mapping come out
+even. Three reps inventorying one section with no stated unit returned 20, 13 and 24 claims,
+which argues for stating a unit rather than for this one.
+
+**A followability probe on the compressed text**, run per the gated path's definition below,
+persisted first as that definition requires, and carrying its rule that you ask whether the
+rule was applied and never whether an ambiguity can be named in it. **It needs one control that
+path does not: the rep must not reach the pre-compression text.** Persisting leaves the longer
+version in git history and in every installed plugin cache, which is where a rep resolving a
+skill by name reads it, and it makes all the same claims, so that rep applies the old wording
+correctly and passes whatever the new text does. Hand it the compressed section in the prompt,
+give the task identifiers that do not name the skill, and read what it opened before counting
+the pass. Where the compression's own motive is that the current wording does not land, probe
+the before text under the same task as well; a before-probe that comes back clean disproves the
+motive and the compression proceeds on length alone.
+
+**Disposal turns on which direction the gap runs, and only the first stays on this path.**
+
+- **A claim in the longer text with nothing opposite it** is restored to the shorter text and
+  recorded as a retirement candidate. The rest of the rewrite is still a compression. Retiring
+  it is a separate change owing the arms a rule change owes.
+- **A claim in the shorter text with nothing opposite it** is new wording, whatever it was
+  meant to be. Cut it, or take it to the bar above and pay what a new rule owes.
+- **A trigger that moved** is a rule change in a compression's clothes: if the shorter text
+  binds cases the longer did not, or stops binding cases it did, a claim moved whatever the
+  line count says. Put the trigger back, or leave this path.
 ## When a local RED is not available
 
 Sometimes the evidence for a rule is real but not yours to re-run: wording **ported** from
@@ -322,7 +386,10 @@ section-does-not-close rule for a change that has no sections.
      element alone is never enough, because "their harness", "their platform", and "a long
      live session" are the entry conditions restated, and a gate discharged by restating its
      own entry condition is paperwork. Without a substitute that actually ran, this branch
-     **fails the gate**; it is the cheap branch, so it is the strict one.
+     **fails the gate**; it is the cheap branch, so it is the strict one. **One case owes no
+     substitute**, because no substitute could reach its state: a rewrite that adds no claim,
+     which "Compression: rewriting a section shorter" above routes and gates on a finished
+     two-directional mapping. Nothing else on this branch is excused by resembling it.
 
    The two branches want different amounts of evidence on purpose, and the reason is that they
    are not measuring the same thing. Did-not-reproduce asserts a behavioral negative, which one
@@ -449,8 +516,9 @@ the evidence: go and measure the system instead. Most rules are a directive rest
 premise, so route on the claim you are repairing rather than on the sentence's form:
 correcting the premise is about the system, and changing what the agent does with it is not.
 The bill is then the scoping plus that recorded instance, and nothing else: the gated path's
-probe and backlog line belong to that path and are easy to import by accident from
-next door. Two bounds. Where the evidence is also someone else's to re-run, the gate
+backlog line belongs to that path and is easy to import by accident from
+next door. Its probe travels one step further, to "Compression: rewriting a section shorter"
+and nowhere else. Two bounds. Where the evidence is also someone else's to re-run, the gate
 above wins, being the stricter of the two. And this scopes the evidence, never the
 shape: contradicted-versus-narrower governs any rule change, including one about what
 an agent does, whose evidence is still the arms.

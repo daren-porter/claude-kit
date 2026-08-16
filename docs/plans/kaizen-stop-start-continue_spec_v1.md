@@ -112,10 +112,15 @@ actually risks is that the shorter version no longer lands, which is followabili
 
 The **claim inventory** is the load-bearing half and it is free: enumerate the claims
 before and after and map them, checkable by reading. It also does the routing, which is
-what makes it worth more than the probe. **A claim in the before column with nothing
-opposite it is not a compression, it is a retirement**, and it routes to the arms. That
-turns the boundary between the two halves into something observable rather than a
-judgment the compressing session makes about its own work.
+what makes it worth more than the probe. **A gap in the mapping is what routes the change**,
+and the shipped wording splits that by direction, which this decision originally did not: a
+claim in the longer text with nothing opposite it is restored and recorded as a retirement
+candidate while the rest stays a compression; a claim only in the shorter text is new wording
+that is cut or pays what a new rule owes; a trigger that moved is a rule change whatever the
+line count says. Either way the boundary is observable rather than a judgment the compressing
+session makes about its own work. **Amended 2026-08-16 after both reviewers found the
+single-direction remedy was a no-op for an added claim and meant "revert" for a moved
+trigger**, so the permissive reading shipped an unarmed rule change under a compression label.
 
 The cost comparison is the real argument: three probe reps, no fixture staging, no
 serial dispatch, no scratchpad quarantine, no third arm. Roughly a tenth of a full arm
@@ -594,4 +599,61 @@ Review Findings: 5 Major, all fixed. Adversarial: corpus scope (above), honest-l
 Evidence: 15/15 tests pass, both new tests watched failing first. 185 sections across 33 of 33 files in 1.66s. `Know it works` 169/15 and `When a local RED` 162/8 hold ranks 1 and 2. Under `core.abbrev=4`, git emits 4-char shas while the tool's output is unchanged. Judgment-vocabulary scan of the emitted report returns only the "edits nothing and recommends nothing" disclaimer.
 
 Next: Section 2, the compression bill in `writing-skills`
+Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-08-16
+Completed: Section 2, the compression bill in `writing-skills`
+Implemented By: main session (behavior-shaping prose; arms run against fresh `general-purpose` reps)
+Metrics: 12 arm reps over 4 arms (1 discarded fixture, RED 3, GREEN 3, boundary 3); NEEDS_CONTEXT 0; escalations 0; advisor on, consulted once before the arm design and its four corrections all adopted
+
+**The fixture had to be rebuilt once, and the first build is recorded because the defect is instructive.** Version 1 gave the isomorph guide a validation bar reading "hand the changed section to two engineers who have not seen it, watch them work, record hesitations." That is a followability probe. So in that fixture, paying the full bar and running the probe were the same act, which collapses the exact distinction the RED exists to test. The real bar's separating feature is its **control half**: RED requires demonstrating the failure *without* the wording. Version 2 gave the bar a paired-trial shape with that control arm, and the harm appeared immediately. This is the confounded-fixture failure the live inbox note of 2026-08-15 describes, met in my own work; it is that note's territory and not a new one.
+
+**RED: 3 of 3 fired**, on the pre-registered outcome that the shipped bar leaves a compression unable to reach a coherent bill. The finding is sharper than the spec predicted. The harm is not that arms are *expensive* for a compression, it is that a compression **cannot satisfy them at all**, because the control arm has nothing to stage: the current wording makes all the same claims, so there is no failure to demonstrate. Verbatim, from the reps' own returned output:
+
+- Rep A: "**If Pair A hits no failures, the change does not proceed** and Section 4 stays as it is. I stated that plainly rather than predicting the trial would pass."
+- Rep B: "if pair A does not fail, this rewrite does not proceed, and the finding that ships is that length is not what causes the skipping."
+- Rep C: "None of that can be produced from a machine, so the rewrite is written and explicitly not cleared."
+
+Rep A also considered and refused the escape hatch this effort's own draft rests on, recording that it "deliberately avoided the two arguments that would have talked it past the gate: 'it's instruction-preserving so it isn't really a content change' and 'the new version reads better'." That refusal is correct against the shipped bar, which gives no basis for either, and it is why the carve-out has to be written rather than reasoned to.
+
+**The unplanned finding, which changed the wording: an inventory with no stated unit is not an instrument.** All three RED reps built a claim inventory unprompted and each caught a real defect with it. But on identical text they counted **20, 13 and 24** claims. No two were comparable. That settled the spec's open worry that the unit definition might be decoration.
+
+**GREEN: 3 of 3 passed** against the pre-registered bar (inventory at the stated unit rather than an invented one, no blocking on the full arms, the probe specified rather than manufactured). Two reps produced evidence the wording was doing work rather than being recited:
+
+- Green 1 caught itself violating the rule it was following: "I caught myself settling the unit while checking a draft (the exact failure the new section polices), so I re-derived the inventory from the source lines alone, which added an item."
+- Green 2 reverted one of its own improvements because "it was the single row a reviewer could use to argue this isn't a shortening, and that risk isn't worth the wording win." That is the routing rule operating.
+
+**Two rep-derived additions were folded in and then tested, rather than shipped on the strength of having been suggested.** Green 3 built a verbatim trigger column on its own reasoning that "this is what actually discriminates a shortening from a rule change; the instruction count does not", which is sharper than the draft's clause. Green 1 wrote a tie-break the draft lacked ("when in doubt, split") and returned 20 where Green 3, lacking it, merged rows and returned 17. Both went into the wording, and the boundary arm carried the augmented text.
+
+**Boundary third arm: 3 of 3 routed correctly.** Per the advisor's correction, the arm was not "a genuine new-claim change still owes arms", which is close to unfalsifiable, but a change that *looks* like a compression and is not: a contractor rewrite claiming "nothing taken out" with one instruction deleted whole and one trigger widened. All three reps built the inventory, found the losses, and routed the change back to the full bar. All three found more than was planted; two independently observed the trigger had moved in **both** directions. Rep 3 produced the strongest followability evidence in the effort by reporting a violation against itself: it "fixed the instruction unit after reading the rewrite, which the guide warns against, as a known weakness in my own artifact."
+
+**A pre-registration I got wrong, recorded rather than quietly dropped.** I predicted the augmented wording would converge counts to 20 +/- 1; the boundary reps returned 22 and 22. The prediction was badly set, because "when in doubt, split" mechanically raises the count by design, so the number should drift up and the meaningful measure is the spread, not the absolute. The spread is the real result: 20/13/24 unguided, 20/20/17 with the unit, 22/22 with the tie-break.
+
+**Isolation, verified rather than assumed.** All 12 reps ran against fixtures staged outside the repo with de-identified content (a fictional logistics company's runbook guide), per Standing Brief Amendment A1, since the committed plan doc now answers the arms' own questions in prose. The kaizen inbox was parked with a self-describing header naming its restore target and closing condition, held empty across every arm and checked after each, and restored afterward: **0 inbox writes across all 12 reps**. Every fixture was byte-identical to base at close, so no rep edited the guide, which is itself part of the RED finding. The repo was clean at every check. RED-side arms (RED and boundary) ran serially; GREEN ran parallel with one fixture copy per rep; GREEN fixtures were quarantined before the boundary arm. One known fixture flaw was left uncorrected mid-arm to keep the three reps comparable: a duplicated `## How this guide is changed` heading from my assembly, which five reps flagged as an aside and none was confused by.
+
+**The paired review found five Criticals that 13 arm reps had passed, and the reason is structural.** The arms ran against a de-identified isomorph, per Standing Brief Amendment A1, so **no rep ever saw `writing-skills` itself**. They could test whether the wording is followable under a task; they could not test whether it contradicts the file it lands in, and every Critical lived there. That is a real limit of isomorph-based arms, and it is the argument for the paired review rather than a criticism of it. Recorded here because the natural next inference, that 13 passing reps means the wording was sound, is wrong.
+
+The five, and what each would have cost:
+
+1. **The probe passed by construction** (blind). Reps load skills from the installed plugin cache. A compression by definition leaves a longer version making *all the same claims* on disk, so a probe rep reaching the section by name applies the old wording correctly and passes whatever the new text does. The reviewer verified a 467-line pre-compression copy in the cache. This invalidated S3's probe as originally specified.
+2. **Two routes gave opposite verdicts** (blind). The existing text routes a clean RED into the four answers, where a compression lands on "could not be constructed", which fails the gate without a substitute. Read the arms section first and you are blocked; read the new one first and you proceed.
+3. **The wording told the agent to halt** (blind Critical, adversarial Major). "A RED that cannot fire is not a gate, it is a stop" was meant descriptively, but every other bolded "stop" in the file is an imperative to abandon the change. It licensed stopping the very work the section authorizes, and it lifted cleanly out of context.
+4. **The narrowing was never made at the rule it narrows** (adversarial Critical, blind Major, found independently by both). Line 133 still read "Two paths lead around it" over a closed set of two, and the word compression appeared nowhere before line 260. The file predicts this miss in its own text: GREEN supplies wording in-prompt, so the arms structurally cannot detect a placement defect.
+5. **The claim unit was blind to the loss of provenance** (adversarial Critical, and the worst of the five). "An example, a restatement, and a reason given for a claim already listed are not claims of their own" would have licensed stripping every dated incident, locator and provenance clause, producing a complete inventory with zero unmapped claims while converting properly admitted rules into antipatterns by this file's own definition. Not hypothetical: S3's mandatory target is 169 lines that are largely dated incident narrative.
+
+**REFACTOR arm on the revised wording: 3 of 3.** The fifth Critical's counter is a behavior claim, so it was tested rather than reasoned about. A fresh fixture salted the accreted section with five dated incidents and gave the guide a rule making an incident-stripped requirement unevidenced. All three reps preserved all five, and two named the trap in their own words: "A naive shortening strips INC-4471, INC-4602, INC-4718 and the 2024-08 near miss as flavour", and "Most of Section 4's length is incident narrative, which is exactly what a naive 'make it shorter' pass would cut." Rep 1 also operationalized the probe-isolation Critical better than the shipped wording states it, observing that the longer version stays published until the change ships, so the read-through needs a staged copy with the published one made unreachable for the duration. All three entered the path conditionally on the mapping closing, and one caught its own arithmetic error before delivering.
+
+**A discipline lapse, recorded because it held by luck rather than procedure.** The kaizen inbox was restored after the first four arms and I began the REFACTOR arm without re-parking it, against `writing-skills`' own clear-before-an-arm rule. No damage: the count stayed at exactly the two restored notes throughout, so no rep wrote and there was nothing for a later rep to read. Attribution survived only because the baseline was known exactly.
+
+Arm totals for this section: 13 reps over 5 arms (1 discarded fixture, RED 3, GREEN 3, boundary 3, REFACTOR 3). Fixtures byte-identical to base at every close; repo clean at every check; 0 inbox writes across all 13.
+
+**Round 2 confirmed the three Criticals closed and found one more, plus four Majors, mostly where my own fixes were incomplete.** The new Critical, found by both reviewers independently: **the disposal remedy was direction-blind.** Having mandated mapping both ways, "restore it to the shorter text and record it as a retirement candidate" is a no-op for a claim that is only *in* the shorter text, and means "revert" for a moved trigger, so the permissive reading ships an unarmed rule change under a compression label. Disposal is now split three ways by direction, and only the dropped-claim case stays on the path. The Majors: I amended the pointer routing a compression away from the four answers but never the four-answers list itself, so an agent entering there still got the opposite ruling; I named the branch wrong in two places, calling it a clean RED when a clean RED is did-not-reproduce and this is could-not-be-constructed; the probe's position relative to persisting was unstated, which the isolation rationale depends on; and "every claim was admitted on its own evidence and its RED already ran" is **false for this very file**, since gated-path wording never had a RED fire and counter-case wording owes no arm.
+
+The adversarial reviewer also supplied the fix for round 1's weakest patch at zero net lines: the provenance carve-out was a prohibition with no instrument, and attached content is now a **third column in the inventory row**, so stripping a rule's dated incident shows as an empty cell rather than as nothing.
+
+**A limit on the arms, recorded rather than papered over.** RED, GREEN and the boundary arm carried a claim-unit definition that round 1's fixes then changed, so the 20/13/24 and 20/20/17 and 22/22 spreads characterize a unit superseded after those arms closed. The REFACTOR arm did carry the provenance rule and passed 3/3, so the changed half is tested; the tie-break and trigger-column halves are not re-measured. Accepted as a stated limit rather than re-running four arms.
+
+Review Findings: 6 Critical and 12 Major across two reviewers over two rounds, all addressed. Deliberately not addressed: "cost chooses none of them" at line 134 is contestable for this path, since the spec's own rationale for it is cost; the pre-existing "the obligation appears three times in this section" count was already off before this change; and the `kaizen` skill's commit-message artifact home does not yet mention compression, which is handed to S5.
+
+Next: Section 3, the first compression, on `writing-skills` itself
 Commit Model: Commit-and-Push
