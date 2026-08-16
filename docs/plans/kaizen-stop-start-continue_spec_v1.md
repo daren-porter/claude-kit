@@ -47,7 +47,7 @@ Code had, ten times, and one of those ten was itself a kaizen pass (`ae9dc10`,
 2026-08-07, minus 38 lines from `stop-docs-hygiene.js`). **So the pass could subtract. It
 had never been pointed at prose.**
 
-**Re-measured at the effort's close: 165 markdown file-events, one net-negative.** That
+**Re-measured at S4's close (`01e3c1b`): 165 markdown file-events, one net-negative.** That
 one is `1e5db4e`, S3's compression of `writing-skills` at 229 insertions against 250
 deletions, and it is the first in the kit's history. Both reviewers caught a copy of the
 stale figure that had reached the shipped `kaizen` wording, which is the second instance
@@ -257,10 +257,13 @@ section close, and a tool that pre-judges would be handing him its own conclusio
 ratify.
 
 Acceptance criteria:
-- Run over the current repo, it reproduces the `writing-skills` figures in the Why
-  section above exactly: 169/15, 162/8, 46/5, 27/2, 15/1, 14/1, 12/1, 10/2. That table
-  now holds the tool's own output rather than the hand measurements it corrected, so the
-  criterion is an equality rather than a tolerance.
+- Run over the repo **at S1's close (`4b115c0`)**, it reproduces the `writing-skills`
+  figures in the Why section above exactly: 169/15, 162/8, 46/5, 27/2, 15/1, 14/1, 12/1,
+  10/2. That table holds the tool's own output rather than the hand measurements it
+  corrected, so the criterion is an equality rather than a tolerance. **Sha-stamped after
+  the QA pass**, which correctly noted that S3's compression later moved the first two
+  rows to 164/17 and 155/10, making an undated "current repo" reading of this criterion
+  fail against the effort's own legitimate work.
 - The ranking places those two sections first and second across the whole kit, and
   `kit-adoption-pass`' "3. The ladder" (84 lines, 2 commits) ranks below both, which is
   the falsifiable check that the measure reads accretion rather than size.
@@ -703,8 +706,8 @@ So compression is the wrong instrument for what ails this file, and the remainin
 
 **What the compression did produce**, and it is not nothing:
 
-- 21 lines out, with **every piece of provenance intact**: 14 of 14 date markers with an identical distribution across five dates, and a backtick-locator multiset that diffs byte-identical. All nine headings survive in order, and every out-of-scope section is byte-identical.
-- A **143-row inventory** built against the longer text before drafting, each row carrying the claim, its trigger verbatim or "unconditional", and its attached content, mapped in both directions.
+- 21 lines out, with **every piece of provenance intact**: whole-file date markers 14 of 14, of which the 13 inside the two compressed sections are unchanged in an identical distribution across four dates (the fourteenth is in the new Compression section, out of scope), and a backtick-locator multiset that diffs byte-identical. The QA pass counted 13 against a claim of 14 and was right about the sections; the figure was a whole-file count that never said so. All nine headings survive in order, and every out-of-scope section is byte-identical.
+- A **143-row inventory** built against the longer text before drafting, each row carrying the claim, its trigger verbatim or "unconditional", and its attached content, mapped in both directions. **It is at `docs/archive/kaizen-stop-start-continue_s3-inventory.md`**, with the claim unit stated at its head. It shipped in `.kit/`, which is gitignored, so the artifact this section's own bill requires was not durable and two acceptance criteria failed on their literal terms. The QA pass caught it; that file's header records the fix and why it is a reading of the rule's purpose rather than its letter.
 - **The third column earned its place immediately.** It caught two real drops mid-flight: a first draft kept the setups of two claims and cut both conclusions, which were the only halves a reader could act on; and a clause was cut as a restatement when it actually asserts a different fact. Both restored. Six smaller restorations besides.
 - **Disposal fired once, in direction 1**, and behaved exactly as the rule says: the claim was restored to the shorter text and recorded as a retirement candidate, and the rest stayed a compression. Directions 2 and 3 never fired.
 - **Four retirement candidates recorded and not acted on**, which is design decision 1's prediction coming true: compression is the instrument that generates them.
@@ -749,7 +752,7 @@ Commit Model: Commit-and-Push
 ### Chapter 5 - 2026-08-16
 Completed: Section 5, the kaizen pass wording
 Implemented By: main session (behavior-shaping prose; arms against fresh `general-purpose` reps)
-Metrics: 6 arm reps over 2 arms (RED 3, GREEN 3); 1 review round, 2 reviewers; NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section
+Metrics: 9 arm reps over 3 arms (RED 3, GREEN 3, third arm 3, the last added after QA); 1 review round, 2 reviewers; NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section
 
 **RED: 3 of 3, and the cleanest arm of the effort.** Three reps ran an isomorph pass whose gather step reads only friction, with an accreted twelve-rule file sitting in the same directory. All three did careful work: one drafted replacement wording and declined to clear the log with a good reason, one applied a change directly into the accreted file, one added a provenance sentence in that file's own style. **None of them ever considered removing anything.** Two had the file open and were adding to it. That is the harm the spec predicted, and it is not laziness: the pass gave them nowhere to look.
 
@@ -770,7 +773,11 @@ Five further Majors fixed: the compression bill was restated with the claim unit
 
 **The loop verified live, end to end.** With the marker at S3's sha the nudge was silent, because S4 touched no corpus prose. Committing S5, which edits `kaizen/SKILL.md`, made it speak: "4 of the kit's current prose section(s) hold lines that differ from the last take-stock." The marker was deliberately not advanced to silence it, because prose has changed and nobody has read it whole since, which is the thing the nudge exists to say. That is also the first time the emit path has run against real data rather than a fixture.
 
-**Isolation:** inbox parked with a self-describing header before the arms this time rather than after, held at 0 across all 6 reps, restored at close. Fixtures staged outside the repo under a de-identified domain, one copy per rep. RED serial, GREEN parallel. Repo clean at every check.
+**Third arm: 3 of 3, added after the QA pass caught that it was owed and never run.** QA flagged that S5 narrows a shipped claim ("nothing pending means no kaizen, by construction" became "no captured friction to triage") with no third arm and no recorded judgment. Checking which state the arms had staged made it worse than QA said: the change is about what happens when the inbox is **empty**, and RED and GREEN both ran against a log holding two entries, so **both arms staged the untouched state and the case the narrowing actually opens was never tested at all**. The arm staged it: empty log, nudge fired, does a pass run? All three ran one, all three on the clause under test ("an empty log is a reason not to triage friction, it is not a reason to decline a pass"), and one confirmed the RED from the other side by noting its printed pre-revision copy "would have declined this pass". The arm also exercised every clause the S5 review forced in: reps kept rules on the **preventive-incident** basis rather than a sighting, left the rest **unverdicted** and stated in their own words that unverdicted is not a removal candidate, and each considered a shortening and declined it.
+
+**A tension the third arm found that nothing else did.** Rep 3: "the cut on offer is each rule's second sentence, and that sentence is where rules 2 and 12 carry their admitting incident. It is the only evidence anything in the file can be verdicted on today, so a shortening would delete the base the stocktake step runs on." **Compression eats the evidence the spared bar depends on.** The attached-content column protects it inside a compression, but nothing states the systemic version: a corpus compressed hard enough stops being verdictable. Recorded for the backlog, not fixed here.
+
+**Isolation:** inbox parked with a self-describing header before the arms this time rather than after, held at 0 across all 9 reps, restored at close. Fixtures staged outside the repo under a de-identified domain, one copy per rep. RED serial, GREEN parallel. Repo clean at every check.
 
 Review Findings: 4 Critical, 10 Major, 5 Minor across two reviewers, all addressed. Deliberately not addressed: the second clause of "Capture does not change" was aimed at a working session that never loads this skill, so it was cut rather than kept as decoration.
 

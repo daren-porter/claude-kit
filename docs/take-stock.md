@@ -29,9 +29,10 @@ what the plan's own "re-measure before quoting" note exists to prevent, and this
 one place in the kit where a stale figure is not a typo but a broken record.)
 
 **Came down: 21 lines**, from 535 to 514. All of it argumentation, framing, restatement and
-one worked example. No dated incident, locator or provenance clause was touched: 14 of 14
-date markers survive in an identical distribution, and the backtick-locator multiset diffs
-byte-identical.
+one worked example. No dated incident, locator or provenance clause was touched: the 13
+date markers inside these two sections survive in an identical distribution across four
+dates (14 across the whole file, the extra one being in the out-of-scope Compression
+section), and the backtick-locator multiset diffs byte-identical.
 
 **Spared, with the reason.** These are Continue entries and each names what was observed:
 
