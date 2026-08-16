@@ -66,12 +66,13 @@ has changed since the last entry.
 
    **In the kit repo, also read the kit's own state, the one input that is not a
    friction report:** `node tools/accretion.js` for the ranking, and
-   `docs/take-stock.md` for what the last pass examined, cut and spared. Outside it a
-   pass covers the inbox and the stubs only, since that tool is deliberately not
-   packaged and that record is this repo's. The reason for the sub-step is that an
-   inbox reports what a rule lacks far more often than what it costs, so a pass
-   gathering only friction tends to grow the kit; `docs/take-stock.md` carries the
-   measured history.
+   `docs/take-stock.md` for what the last pass examined, cut and spared, and for any
+   retirement candidate it recorded without acting on, which nothing else resurfaces
+   either. Outside it a pass covers the inbox and the stubs only, since that tool is
+   deliberately not packaged and that record is this repo's. The reason for the
+   sub-step is that an inbox reports what a rule lacks far more often than what it
+   costs, so a pass gathering only friction tends to grow the kit;
+   `docs/take-stock.md` carries the measured history.
 
    List all three, then ask Daren for his: his half of the retro is the other half.
 2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
