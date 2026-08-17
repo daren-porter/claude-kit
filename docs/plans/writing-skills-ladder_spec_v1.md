@@ -247,3 +247,59 @@ in the unit and the evidence rather than the presentation. The review caught wha
 every Critical was a contradiction with a file the reviewer read and a fixture could not, which is
 the thesis of `arm-boundaries_spec_v1.md` demonstrated on this effort's own first section.
 `writing-skills/SKILL.md` remains untouched at 515 lines.
+
+### Chapter 1a - S1 round 2: the re-scope failed too, and why that is structural
+
+Round 2: **6 Criticals, 9 Majors, 4 Minors.** Round 1's Criticals 1, 3 and 4 confirmed closed;
+Critical 2 (publish the rows) reduced but not closed, since the inventory buckets 21 claims into
+one unenumerated row and misses at least five cross-section routing claims.
+
+**The re-scope's own load-bearing claim is false against the file.** Chapter 1 asserted
+`:125-134` is a pure routing block that can move wholesale. The paragraph is `:124-134` and it
+opens "Run three reps at least - one sample lies - and read every flagged result yourself" - the
+three-reps bar, substantive and STAY. The asserted block begins mid-sentence.
+
+**And three of the five MOVE rows carry bills the ladder is barred from holding.** R3 carries
+"costs three recorded artifacts rather than a claim"; R4 carries "keeps every claim the section
+already makes on a bill of an inventory and a probe"; R2 carries the normative "cost chooses none
+of them". S2's two acceptance bullets - move each row wholesale, and hold no bill in the ladder -
+are therefore mutually unsatisfiable. Deleting those sentences drops claims the ladder may not
+restate, which `writing-skills:295-297` makes a retirement, not a compression.
+
+**Two further structural findings, either of which sinks the six-row framing on its own.**
+
+1. **The classes are not a partition.** Rows 5 and 6 share one entry trigger, `:468`. AC2 wants
+   six rows each with an entry trigger; either two rows carry the same verbatim trigger, which
+   defeats AC1's "identify which class you are in", or class 6 gets an invented trigger, which
+   the descriptive-only scope and `:300-302` both bar.
+2. **Row 5's bill is wrong, the same way row 6's was.** "Scoping + recorded instance, no arms" is
+   unconditional; `:493-495` conditions no-arms on the claim being about something other than an
+   agent, and `:502-504` says contradicted-versus-narrower "governs any rule change, including one
+   about what an agent does, whose evidence is still the arms." A reader routed by that row
+   underpays. Found in a table S1 claimed to have verified, one round after the identical defect
+   was found in the row below it.
+
+**The diagnosis, which is worth more than the ladder was.** Routing in this file is not separable
+from cost, because the sentences that route state the bill in the same breath - deliberately, and
+it reads well that way. A table separating the two imposes a structure the prose does not have.
+That is why two different scopes both died on the same rock, and it is a better answer to "why is
+this file hard to navigate" than the ladder would have been.
+
+**Stopped here rather than re-scoped a third time.** Twice now a framing has been chosen, and
+twice a reviewer has shown the framing was wrong in the direction of a cheaper bill. A third
+attempt by the same author in the same session is not evidence-gathering, it is bargaining. The
+effort is **blocked pending Daren's decision**, with the four findings below banked either way.
+
+**Banked findings, true regardless of what happens to the ladder.** Each is a correction to a
+statement of fact and owes no arms; none is applied yet.
+
+1. `:493-495`/`:502-504`: the counter-case bill is conditional on the agent/non-agent split, and
+   the kit states it unconditionally in summary elsewhere.
+2. `:485-487`/`:498`: a fact correction owes a recorded-instance clause, not nothing.
+3. `:468` versus `:471-473`: the entry condition does not admit the section's own first branch.
+   Round 2 reads this as a wording infelicity rather than an unreachable rung; recorded at that
+   strength, in this Chapter only, never persisted into the skill as a finding.
+4. Classes 5 and 6 are not distinct classes; they share an entry.
+
+Decisions / Surprises: `writing-skills/SKILL.md` remains untouched at 515 lines. Nothing in Out
+of Scope was touched; both rounds verified this independently.
