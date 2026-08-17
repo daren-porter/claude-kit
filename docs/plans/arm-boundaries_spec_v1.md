@@ -142,10 +142,13 @@ written as an exception to the others, with the cheapest lane of all recorded on
 message. That is also the operator-side complaint: Daren cannot tell what a kit change is worth
 because the answer is not written down as a whole anywhere.
 
-**Part 3 of the three below is now its own spec**, `writing-skills-ladder_spec_v1.md`, scoped
-descriptive-only so it stays on the compression bill. Parts 1 and 2 deliberately stay here and
-this stub stays `Status: Proposed`: both are additions, and a compression that also adds a claim
-is not a compression, so folding them in would blow up that spec's classification and its cost.
+**Part 3 was attempted and abandoned**, at `archive/writing-skills-ladder_spec_v1.md` (2026-08-17).
+Read its Chapter 1a before proposing a ladder again: two scopes and four rounds of Critical
+findings established that routing in `writing-skills` is not separable from cost, because the
+sentences that route state the bill in the same breath, so a table imposes a structure the prose
+does not have. If it is revived, it should be a plain index that moves nothing and pays the arms -
+its value is behavioral (does a reader route correctly?), which is what an arm measures and a
+claim inventory does not. Parts 1 and 2 below were never in that effort's scope and stay here.
 
 So the direction is **consolidation, not demotion**. Three parts, cheapest first:
 

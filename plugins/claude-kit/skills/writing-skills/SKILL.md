@@ -465,8 +465,9 @@ is no less true of a rule about what an agent should do. One trial is enough to 
 the rule and not enough to bound it, so the wording ends up reading as a property of
 the system when it is a report of one instance.
 
-That gap surfaces later, when you hit a case the rule does not cover. Decide which
-situation you are in before you either obey the rule or discard it:
+That gap surfaces later, when you hit a case the rule as written does not fit:
+one it covers and gets wrong, or one it never tested. Decide which situation you
+are in before you either obey the rule or discard it:
 
 - **Contradicted.** You observed the very thing the rule asserts, and it came out
   differently. The rule is wrong; fix it.

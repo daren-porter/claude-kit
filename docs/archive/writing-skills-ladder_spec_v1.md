@@ -1,6 +1,6 @@
 # One Findable Ladder for What a Kit-Prose Change Costs
 
-Status: In Progress
+Status: Abandoned
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-08-16
@@ -290,16 +290,59 @@ twice a reviewer has shown the framing was wrong in the direction of a cheaper b
 attempt by the same author in the same session is not evidence-gathering, it is bargaining. The
 effort is **blocked pending Daren's decision**, with the four findings below banked either way.
 
-**Banked findings, true regardless of what happens to the ladder.** Each is a correction to a
-statement of fact and owes no arms; none is applied yet.
+**Banked findings, re-verified against the file before any were applied - and three of the four
+were mine, not the kit's.** The verification is the point: all four were first found *in this
+spec's own six-row table*, and carrying them across as kit defects would have edited the kit's
+largest file to fix this document's bookkeeping.
 
-1. `:493-495`/`:502-504`: the counter-case bill is conditional on the agent/non-agent split, and
-   the kit states it unconditionally in summary elsewhere.
-2. `:485-487`/`:498`: a fact correction owes a recorded-instance clause, not nothing.
-3. `:468` versus `:471-473`: the entry condition does not admit the section's own first branch.
-   Round 2 reads this as a wording infelicity rather than an unreachable rung; recorded at that
-   strength, in this Chapter only, never persisted into the skill as a finding.
-4. Classes 5 and 6 are not distinct classes; they share an entry.
+1. **Not a kit defect.** `:493-498` states the agent/non-agent condition explicitly and `:502-504`
+   closes it with the bound. The only other mention of this bill in the kit is `:133-134`, which
+   is a pointer ("states its own bill"), not a summary of it. **This spec's row 5 was wrong; the
+   kit is right.**
+2. **Not a kit defect.** `:485-487` states the recorded-instance clause plainly: "record the
+   observed instance beside the generalized claim. A clause does it." **This spec's row 6 said
+   "Nothing"; the kit is right.**
+3. **A real kit defect, and the only one applied.** `:468` introduced the section as "a case the
+   rule does not cover", while the branch immediately below it is **Contradicted** - "You observed
+   the very thing the rule asserts, and it came out differently" - which is a case the rule *does*
+   cover. The section's own discipline decides its own defect: this is Contradicted, not Narrower,
+   so "The rule is wrong; fix it." Fixed to "a case the rule as written does not fit: one it
+   covers and gets wrong, or one it never tested", which names the two branches that follow it. A
+   correction to a false scope statement, not a widening: the Contradicted branch was always
+   reachable and always in the section: only the introduction misdescribed it. No arms, per
+   `1526456`.
+4. **Not a kit defect.** "Six classes" was this spec's model. The kit never claims a partition,
+   so classes 5 and 6 sharing an entry is a defect in the model, which dies with it.
+
+**That ratio is the effort's most useful output.** Three of four "kit findings" were artifacts of
+the map this effort drew, discovered only because applying them meant re-reading the territory.
+A pass that had trusted its own inventory would have made three unnecessary edits to the kit's
+most accreted file, each defensible, each traceable to a document that no longer exists.
 
 Decisions / Surprises: `writing-skills/SKILL.md` remains untouched at 515 lines. Nothing in Out
 of Scope was touched; both rounds verified this independently.
+
+### Chapter 2 - Close-out: abandoned, with one fix shipped
+
+Status: **Abandoned** 2026-08-17. The ladder is not buildable descriptively, for the reason
+Chapter 1a records: routing in `writing-skills` is not separable from cost, because the sentences
+that route state the bill in the same breath. Two scopes died on that rock, four rounds of
+Critical findings between them.
+
+**Shipped:** one edit, to `writing-skills:468`, per banked finding 3.
+
+**Not shipped:** the ladder, and three findings that turned out to be defects in this document
+rather than in the kit.
+
+**What a later effort should take from this.** The navigation problem is real and unsolved: a
+reader still cannot answer "what does this change cost me" without reading four sections. But the
+instrument was wrong twice over. The compression path was wrong because nothing here compresses -
+the prose is not redundant, it is entangled. And if the ladder is ever built, it should be a plain
+index that moves nothing and pays the arms, because its whole value is behavioral (does a reader
+route correctly?), which is the one thing an arm measures well and a claim inventory does not.
+That is the inverse of this effort's premise.
+
+**Cost, recorded because it is the kind of thing nobody writes down.** Two review rounds, ten
+Criticals, a full re-scope, and the durable output is a three-line wording fix plus the finding
+that the file resists tabulation. Whether that was worth it is Daren's call; the record is here so
+the call can be made on evidence next time.
