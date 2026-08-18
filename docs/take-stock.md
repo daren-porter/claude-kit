@@ -22,13 +22,19 @@ the kaizen loop is captured friction, and friction can only ever ask for more wo
 spared entry is not praise: it names a rule and what was observed to happen because of it,
 which is the closure event `docs/backlog.md` has always asked for and nothing collected.
 
-## 2026-08-18 - 2408979190b9c4e712eb58b14d334942539868eb
+## 2026-08-18 - 60addb93948b8fe54b2a03b2551f4b893dfb0202
 
 Examined no section. This pass read the **four retirement candidates** the 2026-08-16
 compression parked, from the source artifact rather than from the summaries that had been
 re-parked twice: `archive/kaizen-stop-start-continue_s3-inventory.md:304-315`. All four are
-**declined**, and the verdict itself is new, added to `kaizen/SKILL.md` in the commit this
-entry's heading names.
+**declined**, and the verdict itself is new, added to `kaizen/SKILL.md` at `2408979`.
+
+**This entry's heading sha moved once, which is the ordering rule working rather than failing.**
+The pass first recorded `2408979`, then found a second prose defect and fixed it at `60addb9`.
+The heading names `60addb9` because the rule is that the sha holds the prose **as the pass left
+it**, and a pass is not over when its first prose commit lands. Leaving the earlier sha would
+have made the nudge count this pass's own second edit against it forever, in exactly the case
+the mechanism exists for.
 
 **Why they cycled, which is mechanical rather than anyone's neglect.** `writing-skills`'
 disposal rule fires whenever a compression finds a claim with no counterpart in the shorter
@@ -94,6 +100,18 @@ file whose ratio is that three of four such findings are artifacts of the reader
 instances in two days is no longer a coincidence and is the strongest argument in this file for
 `plans/arm-boundaries_spec_v1.md`**, whose subject is that the kaizen apply path has no review
 step.
+
+**A second prose defect, found by re-examining an earlier decision in this same pass.** Adding
+the `declined` verdict left `writing-skills:296` naming one exit for a candidate when there are
+now two. Earlier in this pass that sentence was deliberately left alone, on the grounds that
+"retiring it is a separate change owing the arms" stays true and never claimed retirement was
+the only outcome, and that adding a cross-reference would be growth for tidiness. That was
+correct when made and wrong once the second exit existed. **The decision was not wrong; the
+fact underneath it changed, and nothing in this pass would have re-examined it on its own.**
+Naming one disposition of two is a false statement of scope, the same class as the `:468`
+introduction the ladder shipped its single fix for, and it is where the reading that stalled
+these four candidates gets manufactured: a list whose only stated exit is retirement reads as a
+backlog of pending retirements. Fixed at `60addb9`, no arms, on `1526456`'s basis.
 
 **Unarmed, and named as a gap rather than a judgment call.** The evidence for the problem is
 real and recorded in git across three entries, but nothing tests whether the new wording fixes
