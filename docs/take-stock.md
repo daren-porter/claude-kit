@@ -1,8 +1,9 @@
 # Take stock
 
-What the kit's own prose was examined for, what came down, and what was spared with the
-reason. **Newest entry first.** The first `## YYYY-MM-DD - <sha>` heading in file order is
-the marker `hooks/take-stock-nudge.js` measures HEAD against. **That sha names the commit
+What the kit's own prose was examined for, what came down, and what was spared, declined or
+left unverdicted, each with the reason. **Newest entry first.** The first
+`## YYYY-MM-DD - <sha>` heading in file order is the marker `hooks/take-stock-nudge.js`
+measures HEAD against. **That sha names the commit
 holding the prose as the pass left it, never the commit the pass read.** The hook measures
 marker to HEAD, so a pre-pass sha makes it count the pass's own edits against the pass,
 forever. That forces an ordering: the prose changes land first, then this entry follows in a
@@ -20,6 +21,85 @@ This file is the only channel by which the kit subtracts from itself. Every othe
 the kaizen loop is captured friction, and friction can only ever ask for more words. A
 spared entry is not praise: it names a rule and what was observed to happen because of it,
 which is the closure event `docs/backlog.md` has always asked for and nothing collected.
+
+## 2026-08-18 - 2408979190b9c4e712eb58b14d334942539868eb
+
+Examined no section. This pass read the **four retirement candidates** the 2026-08-16
+compression parked, from the source artifact rather than from the summaries that had been
+re-parked twice: `archive/kaizen-stop-start-continue_s3-inventory.md:304-315`. All four are
+**declined**, and the verdict itself is new, added to `kaizen/SKILL.md` in the commit this
+entry's heading names.
+
+**Why they cycled, which is mechanical rather than anyone's neglect.** `writing-skills`'
+disposal rule fires whenever a compression finds a claim with no counterpart in the shorter
+text, so the list records what a rewrite **declined to drop**, never a judgment that the claim
+should go. Read as a backlog of pending retirements it was un-actionable by construction:
+retiring owes the arms, which cost far more than the roughly forty words the four are worth
+between them; spared demands an observed event or an admitting incident; and unverdicted is
+defined in this file as one nobody has watched, which these had been, three times. Nothing
+could be recorded, so each pass re-parked them and said so.
+
+**Declined, each naming what keeping it buys.** That is the bar the new verdict carries, and
+"not worth the arms" is explicitly not it.
+
+1. **B55** (`writing-skills:446-447`), "This clause holds the rule, that home holds the
+   evidence, and the backlog holds the open instances". Keeping it buys the only statement of
+   the three-home split **as a split**. The three homes are introduced separately and far
+   apart, the Chapter at `:316`, the commit message at `:327` and the backlog line at `:444`,
+   and no other sentence sets them against each other. Declined on judgment rather than
+   evidence, and it is the weakest of the four: no incident is nameable for it.
+2. **The doubled routing** into the gated path and into `## Compression`. Keeping it buys a
+   working access path for a reader who arrives at the section directly instead of through the
+   routing block, which is how agents read these files. Both restatements were verified
+   accurate against their sources this pass, not assumed: the routing block's "three recorded
+   artifacts" against `:311-312`'s "Three preconditions. Each one is discharged by an
+   artifact".
+3. **A59** (`:189-191`), the persist-hold release on the gated path, against B8 and B11.
+   Keeping it buys the **named-exception framing that B never supplies**, which the inventory
+   itself recorded at its own `:312-313` as the reason A59 survives. That reason was written
+   down when the candidate was created and then never used to close it, which is the clearest
+   single illustration of the missing verdict.
+4. **A63/A69**, "the failure is silent unless a rep happens to mention it" against "nothing
+   about this announces itself". Keeping both buys **two different detection strategies**, and
+   this is a disagreement with the inventory rather than an application of it. The inventory
+   called them "Same claim, two hazards, two reasons". They are not the same claim: A63
+   describes an unreliable tell, and a rep did in fact produce it ("the file was rewritten on
+   disk by an outside process twice while I worked"), where A69 describes no tell and says why
+   none can exist, "every rep involved followed a standing rule correctly". Reading rep output
+   can catch A63's hazard and can never catch A69's, which is why A69's rule prescribes
+   clearing the inbox and counting after instead.
+
+**The vocabulary gap was narrower than four items suggest, and that is worth recording against
+the new verdict rather than for it.** A63 and A69 each carry a dated incident in their own text
+(2026-08-14, 2026-08-15), so candidate 4 could have closed as **spared** under the existing bar
+with no new verdict at all. Only candidates 1, 2 and 3 were genuinely homeless. A pass reaching
+for `declined` should check `spared` first.
+
+**Two claims this pass made and then lost on verification, recorded because of the pattern.**
+
+- **The candidate-1 target was inferred and wrong.** Working from the summary alone, this pass
+  identified B55 as `writing-skills:102-104`, the RED/GREEN division of labour, and had begun
+  building a position on it. The inventory names B55 as an entirely different sentence about
+  where evidence lives. A sentence-boundary check killed the reading independently: `:101-104`
+  is one sentence whose contrast clause is the justification for "record the ratio rather than
+  needing a majority", not a free-standing restatement beside an independent one.
+- **A claimed instrument gap dissolved.** This pass was going to argue that a claim inventory
+  cannot express one claim entailed by two survivors. `:274-275` permits non-bijective mapping
+  outright: "When you cannot tell whether something is one claim or two, split it; where the
+  fine split then maps to one survivor, say so and carry on."
+
+Both were attractive structural findings that did not survive reading the primary text, in a
+pass whose own 2026-08-17 entry had recorded the identical failure that morning, and in the
+file whose ratio is that three of four such findings are artifacts of the reader's map. **Three
+instances in two days is no longer a coincidence and is the strongest argument in this file for
+`plans/arm-boundaries_spec_v1.md`**, whose subject is that the kaizen apply path has no review
+step.
+
+**Unarmed, and named as a gap rather than a judgment call.** The evidence for the problem is
+real and recorded in git across three entries, but nothing tests whether the new wording fixes
+it without opening the escape hatch the clause itself warns about. `writing-skills:454-456` is
+explicit that labelling wording unverified is not an admission path, so this is a debt and not
+a disclosure. It goes to Daren with `arm-boundaries`.
 
 ## 2026-08-17 - 63cd1609e9208561d511f21ea2b23ff93d130937
 

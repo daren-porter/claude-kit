@@ -36,12 +36,18 @@ been enough.
    all behavior-shaping motivation, which `writing-skills` routes to the arms as retirements
    rather than compressions.
 
-**The consistent by-product.** All four passes produced coherence defects, omissions and
-retirement candidates instead: a false scope statement at `writing-skills:468` (the ladder's
-only shipped output), an enumeration stopping one short of its own newest disposition (twice),
-a `Fable Spend` omission, and a pointer-plus-restatement pattern now at three instances across
-two files. Those are what the passes were actually good at, and none of them is what the step
-asks for.
+**The consistent by-product, and one caution added 2026-08-18.** All four passes produced
+coherence defects, omissions and retirement candidates instead: a false scope statement at
+`writing-skills:468` (the ladder's only shipped output), an enumeration stopping one short of
+its own newest disposition (twice), a `Fable Spend` omission, and a pointer-plus-restatement
+pattern now at three instances across two files. Those are what the passes were actually good
+at, and none of them is what the step asks for.
+
+**The caution: three of those by-products did not survive verification.** On 2026-08-17 a
+claimed cross-file contradiction reduced to a one-file omission, and on 2026-08-18 both an
+inferred candidate target and a claimed instrument gap died on reading the primary text. A
+design pass must not read "the passes produce defects instead" as "the passes produce *good*
+defects". The unreviewed rate is the open variable, and `arm-boundaries` owns it.
 
 ## The decision this needs
 
@@ -57,11 +63,15 @@ Three things a design pass has to settle:
   every other input is captured friction and "friction can only ever ask for more words". A
   question aimed at defects rather than length has to keep that property or knowingly give it
   up and say what replaces it.
-- **Whether the retirement backlog is the real bottleneck.** Four candidates have now been
-  parked and re-parked across three passes without adjudication. If the passes already produce
-  more retirement candidates than get decided, changing the question produces more of what is
-  already backing up rather than fixing the flow. This may be a queue problem wearing an
-  instrument problem's coat.
+- **Whether the retirement backlog is the real bottleneck. Resolved 2026-08-18, and the answer
+  narrows this stub rather than killing it.** The four candidates were not a queue problem. They
+  were un-actionable by construction, because a pass that examined them could record no outcome:
+  `writing-skills`' disposal rule logs a candidate mechanically, so the list recorded what a
+  rewrite declined to drop rather than what anyone judged should go, and kaizen's verdict
+  vocabulary had no disposition for a candidate examined and kept. All four are now **declined**
+  with reasons, and a `declined` verdict exists (`2408979`). So the flow was never backing up on
+  volume, and "changing the question produces more of what is already backing up" no longer
+  holds. What survives is the narrower question below, on its own evidence.
 - **Whether compression stays available for a section that genuinely wants it.** The four
   measurements are all of `writing-skills`, `kaizen`, `brainstorming` and `executing-work`.
   186 sections are measured and 15 are ranked; nothing establishes that the tail behaves like
@@ -70,9 +80,16 @@ Three things a design pass has to settle:
 
 ## Out of scope until this is decided
 
-Adjudicating the four parked retirement candidates. They are the input this stub reasons
-about, and deciding them inside this effort would confuse the queue question with the
-instrument question. They stay in `take-stock.md`.
+**Amended 2026-08-18.** This section previously reserved the four parked retirement candidates
+for a later effort. They were adjudicated instead, outside this stub and before it starts, and
+all four are declined with reasons in `take-stock.md`. That was the right order: the reason
+they had not been decided turned out to be the missing verdict rather than anything this stub
+is about, so holding them hostage to a design pass would have kept a fixable defect open for
+the sake of a tidy boundary.
+
+What stays out of scope is **re-opening them**. A design pass that changes take-stock's
+question does not thereby reverse four recorded verdicts; if the new question would have
+decided one differently, that is a fresh examination of that claim, recorded as its own entry.
 
 ## Open Questions
 
