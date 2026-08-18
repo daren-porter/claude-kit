@@ -293,8 +293,11 @@ motive and the compression proceeds on length alone.
 **Disposal turns on which direction the gap runs, and only the first stays on this path.**
 
 - **A claim in the longer text with nothing opposite it** is restored to the shorter text and
-  recorded as a retirement candidate. The rest of the rewrite is still a compression. Retiring
-  it is a separate change owing the arms a rule change owes.
+  recorded as a retirement candidate. The rest of the rewrite is still a compression. **The
+  label records what this rewrite would not drop, never a judgment that the claim should go**,
+  and the candidate's disposition is `kaizen`'s take-stock verdicts rather than this rule's:
+  retiring it is a separate change owing the arms a rule change owes, and one that is examined
+  and kept is declined there, naming what keeping it buys.
 - **A claim in the shorter text with nothing opposite it** is new wording, whatever it was
   meant to be. Cut it, or take it to the bar above and pay what a new rule owes.
 - **A trigger that moved** is a rule change in a compression's clothes: if the shorter text
