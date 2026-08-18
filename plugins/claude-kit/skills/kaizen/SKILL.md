@@ -112,6 +112,19 @@ has changed since the last entry.
      you can find neither, leave it **unverdicted** and say so: an unverdicted rule
      is not a retirement candidate, it is one nobody has watched yet.
 
+     **A retirement candidate you examine and do not retire is declined**, which
+     closes it. `writing-skills`' disposal rule logs a candidate every time a
+     compression finds a claim with no counterpart, so that list records what a
+     rewrite declined to drop rather than what anyone judged should go. Four sat
+     unadjudicated across three passes because a pass reading them could record
+     nothing: retiring owes the arms, spared demands an observed event or an
+     admitting incident, and unverdicted is by definition one nobody has watched.
+     **A decline names what keeping the claim buys**, in the currency spared pays
+     in. "Not worth the arms" closes nothing, for the reason "it seems to be
+     working" does not: it prices the change rather than the claim. Declining is
+     the only verdict here that subtracts from the kit's ability to subtract, so
+     it is the one to be suspicious of in your own pass.
+
      **The step asks the question; it does not promise a cut**, in either direction.
      A pass that takes nothing out and records why is a pass that ran, and so is one
      that cuts less than it hoped: measured on the kit's two most accreted sections
@@ -124,7 +137,7 @@ has changed since the last entry.
    4. `notes.md` holds only untriaged friction; nothing triaged-but-parked
    lingers there. That invariant is what lets the SessionStart nudge and the next
    pass read a note line as "not yet looked at", never "looked at, parked here".
-4. **Record every take-stock verdict in `docs/take-stock.md`**, spared and
+4. **Record every take-stock verdict in `docs/take-stock.md`**, spared, declined and
    unverdicted entries included, newest first. The heading is literally
    `## YYYY-MM-DD - <40-hex sha>`. An abbreviated sha does not parse, and the failure is
    quiet rather than loud: the reader takes the first entry that parses, so a malformed
