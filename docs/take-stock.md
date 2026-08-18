@@ -21,6 +21,156 @@ the kaizen loop is captured friction, and friction can only ever ask for more wo
 spared entry is not praise: it names a rule and what was observed to happen because of it,
 which is the closure event `docs/backlog.md` has always asked for and nothing collected.
 
+## 2026-08-17 - 63cd1609e9208561d511f21ea2b23ff93d130937
+
+Examined two sections rather than one: `brainstorming/SKILL.md` "Process" and
+`executing-work/SKILL.md` "Section loop", which `tools/accretion.js` ranks fourth and fifth.
+**Figures are of the text as examined**, at `63cd160`, which is also the state the pass left
+behind because it changed no prose: Process at 41 lines and 9,159 characters over 14 commits,
+spanning 10-50; Section loop at 25 lines and 9,737 characters over 15 commits, spanning 69-93.
+
+**Why these two, recorded so the next pass does not re-derive it.** Rows 1 and 2 were examined
+2026-08-16 and row 3 the same day. The nudge's count of 2 resolves to row 3 (via `c4dbe58`) and
+row 6, `writing-skills` "When you meet a counter-case to a rule" (via `63cd160`, one day old),
+so both changed sections are either just-examined or freshly self-authored, and examining either
+would repeat verbatim the distance problem the entry below flagged against itself. Rows 4 and 5
+have never been examined and together run shorter than one `writing-skills` section. The
+discriminator that chose them was **never examined and not freshly self-authored**, not rank
+alone. (An earlier draft called them "the densest churn-per-line rows in the top 15". Computed
+rather than asserted, row 5 is the densest at 15 commits over 25 lines, but rows 9 and 8 sit
+between it and row 4, which is fourth. The claim was dropped rather than repaired because the
+discriminator above carries the selection without it.)
+
+**Distance is partial and stated rather than worked around.** One paragraph of Process,
+`:34`, is the previous pass's own work from 2026-08-16. The other 40 lines date 2026-06-10
+through 2026-08-14, and Section loop is clean at three days. So 1 line of the 66 examined was
+read with no distance and the other 65 with real distance, which is a better position than the
+entry below had and worse than a month would give.
+
+**Came down: nothing. Went up: nothing.** No prose changed, which is why this entry's heading
+sha is the commit the pass read as well as the one it left.
+
+**The corpus finding, which is the reason and is now bigger than this pass.** Both sections
+are claim-dense rather than word-dense, and that is the fourth independent measurement saying
+so. The entry below measured `writing-skills` at 143 claims across 24,598 characters and got
+6.5% from a hard compression against 18.5% wanted. `archive/writing-skills-ladder_spec_v1.md`
+found the same file's prose "entangled rather than redundant" and died twice on it. And here,
+`executing-work:77` alone is 3,681 characters, 38% of its section, in one unbroken paragraph
+that enumerates conservatively to more than thirty distinct instructions, at least eight of
+which name a specific reason or incident. `brainstorming` step 7 is 4,131 characters, 45% of
+its section, doing six unrelated jobs under one heading.
+
+**No chars-per-claim figure is quoted here on purpose.** The entry below's 172 came from a
+claim unit that pass defined; this pass did not define a matching one, and a finer unit
+produces a smaller number that would read as a comparison while being an artifact of the
+counting. Recording the raw character counts and declining the ratio is the honest version.
+
+**Nothing was cut, and three candidates were found rather than manufactured.** Enumerating
+`executing-work:77` turned up roughly seventy words of motivation and restatement out of six
+hundred: the blind-dispatch rationale ("A blind reviewer that has been told the intent is just
+a second adversarial pass"), the meta-clause explaining why the docs-only carve-out is written
+down at all, and the inline-default restatement treated below. That is about 4% of one section
+and 2% of the two, every piece of it behavior-shaping motivation, which `writing-skills` routes
+to the arms as a retirement rather than a compression. So they go to Daren, not into a brief,
+and the pass records a zero cut per "the step asks the question; it does not promise a cut".
+
+**Retirement candidate 2 is now a three-instance pattern in two files, which reframes it.** It
+was recorded below as doubled routing inside `writing-skills`. Two further instances, both
+verified by re-opening the spans rather than trusted from this pass's notes:
+
+- `executing-work:90` - "the same disjointness test the delegation rules below apply to tasks
+  ... : lock shared contracts first, and never overlap two sections that touch the same file",
+  which points at `:102` and then restates what `:102` says.
+- `executing-work:77` - "A reviewer's findings still come back inline by default, per the
+  artifacts rule below", which points at `:108` and then restates what `:108` says.
+
+Both point forward to the same section of the same file and both restate the rule they point
+at. With the original that is three instances of pointer-plus-restatement, so the question is
+no longer whether `writing-skills` has a defect but whether this is a house pattern the kit
+should keep. The counter-case is real and should be adjudicated with it: a reader at `:77`
+dispatching a reviewer does not want to jump to `:108`, and the one-clause restatement is a
+convenience the pointer alone does not give. **That is Daren's call and it is now three times
+as well evidenced as when it was parked.**
+
+**One omission found, narrower than the version this pass first wrote down.** `brainstorming`
+never teaches that an in-session Fable spend is recordable in the `Fable Spend:` header, or
+how. `executing-work:46` and `:112` both gate continue-versus-hand-off on "a header recording
+an authorized in-session spend", and every form `brainstorming:38` and the `:79` template teach
+records a delegated or review surface instead. A Fable-led brainstorm that should execute in
+place therefore produces a header reading as hand-off by default.
+
+**The first version of that finding was wrong and is recorded because of how it was wrong.**
+It claimed `brainstorming:38` closes the enumeration at two forms against a third form
+`executing-work` requires, making it a contradiction between two files. Re-reading the sentence
+whole kills that: the colon and "never a bare `none`" make its job the ban on unqualified
+`none`, `:79` says "e.g.", and the paragraph supplies a third example itself. What survives is
+an omission in one file whose consequence is conservative, defaulting to the cost-safe
+direction. This is the ratio `archive/writing-skills-ladder_spec_v1.md` banked - three of its
+four "kit defects" were artifacts of the map that effort drew - reproducing inside a pass that
+had read the warning that morning.
+
+**An honest limit on `tools/accretion.js`, of the kind that file already collects.** Moving
+`brainstorming` step 7's last two paragraphs - the `curating-docs` registration and the
+`.kit/visuals/` sweep, neither of which is about a design conversation - out from under
+"Process" would take 2 lines and 1,065 characters with them, 5% of the section's lines and 12%
+of its characters, and change nothing whatsoever about the kit. A section's rank is partly an
+artifact of where a heading sits. Recorded rather than acted on, because acting on it is gaming
+the instrument. (An earlier draft of this paragraph said "about a fifth", which was estimated
+rather than measured. The figures above are `sed -n '40p;42p' | wc -lc` at `63cd160`.)
+
+**Spared, with the reason. Each names what was observed here, today.**
+
+- **The paired-review dispatch contract (`executing-work:77`).** The longest paragraph examined
+  and the one a compression would target first. Every clause survived because each names its
+  own trigger or incident: the blind reviewer's input contract, the sha-not-branch-name rule,
+  the `docs/` omission, the docs-only carve-out. It is the section's whole cost and none of it
+  is fat.
+- **`executing-work:90-92`, the "in order" pair.** `:92`'s argument about which misreading is
+  easier to make reads as pure motivation, which is what the entry below cut 21 lines of. Spared
+  on a located admitting incident rather than on its own text: `ae9dc10` (2026-08-07) brought
+  both paragraphs in at once to clear a captured inbox note reading "'in order' binds a section's
+  own steps, not the whole plan into single file", so a session had already made the serial
+  misreading the paragraph warns about. `git log -L90,92` returns that one commit and nothing
+  since, so the motivation has never been separated from the rule it shipped with, and cutting it
+  from a rule agents demonstrably resist is a retirement that owes the arms.
+  (An earlier draft spared this on "the admitting incident in its own text: holding sections
+  serial 'looks like discipline'". That is the rule naming its own hazard, which is the sighting
+  this file's bar rejects, and the entry below demoted a clause to unverdicted for exactly it.)
+- **`brainstorming:18`'s "write the list out, even when it is empty" and its anti-deferral
+  clause.** Preventive, and spared on the strongest evidence in this entry, which is an arm
+  rather than a sighting. `abec5ed` admitted it on a real failure - "the council never fired
+  for Daren: its offer was a soft step-5 clause that the agent skipped under momentum" - and
+  baseline-tested the fix: 0/2 live offers on the original wording, still 0/2 when fork
+  enumeration alone was added, 2/2 once the anti-deferral counter went in, with a negative case
+  that correctly declined. The middle rep is the point: enumeration without the counter changed
+  nothing, so both halves are load-bearing and neither can be cut on the other's evidence.
+
+**Unverdicted, and named rather than counted as spared.**
+
+- **`brainstorming:22`, the visual-companion offer timing.** No brainstorm in this pass's view
+  reached the point where a question would land better shown. Nobody has watched it.
+- **`brainstorming:31`, the Proposed-stub branch of step 7.** Six stubs are parked and none has
+  been fleshed, so the branch that distinguishes completing a stub from overwriting a version
+  has never been taken.
+- **`executing-work:73`'s docs-write-guard clause and `:79`'s recurrence rule.** Both are
+  preventive and neither has a locatable admitting incident in this pass's reading. Per the
+  spared bar that is not enough to credit them, and per the same bar neither is a retirement
+  candidate: they are rules nobody has watched.
+
+**The promote this pass produces, and it is about this step rather than the kit's prose.** Four
+measurements now say the corpus is claim-dense, and take-stock's compression question keeps
+coming back empty while the same passes keep producing coherence defects and retirement
+candidates that go unadjudicated. If that holds, the instrument is aimed at a problem this
+corpus does not have. Parked as `plans/take-stock-instrument_spec_v1.md` and registered in
+`docs/README.md`, rather than recorded here only: a finding about this step being reachable
+solely by the next run of this step is the same unadjudicated-forever shape the finding is
+about.
+
+**Not reviewed, same gap as the entry below.** `plans/arm-boundaries_spec_v1.md` records that
+the kaizen apply path has no review step. The only check this entry got was re-reading it
+against the files it cites, which caught the Fable Spend finding being wrong in the direction
+of a more dramatic claim.
+
 ## 2026-08-16 - e69eb9edc1658e915cac33fd5b3bca3db707e838
 
 Examined `kaizen/SKILL.md`, "The pass (the reflect half)", which `tools/accretion.js` ranks
