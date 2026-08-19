@@ -108,6 +108,15 @@ with and without the wording:
 3. **REFACTOR:** if it finds a new loophole, add the counter and re-run until it holds, each
    revision a fresh arm against reps that have not seen a prior version.
 
+**A rep that disagrees with your premise is a result, not a fixture defect.** One effort filed a
+disconfirming rep as a confounded fixture, then built the next fixture so the reading that rep had
+reached was unavailable by construction. Its own record calls that "engineering around a
+disconfirming result rather than answering it", and its close-out records that the final review
+caught it where the effort did not, and that the last fixture went in front of Daren before it ran
+(2026-08-16). A leaked or out-of-state rep earns a restaged fixture; a conclusion you did not want
+earns none. Which of the two you have comes off the rep's transcript, the same place the misreading
+below comes from, and never off your own account of your staging.
+
 **A behavior-claim rule change asks RED a different question, and a narrowing takes a third
 arm.** Changing a rule the kit already ships asks whether the rule as it stands produces the
 harm, since a rep obeying the current rule is complying with the shipped kit rather than

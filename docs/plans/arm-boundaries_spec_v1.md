@@ -280,18 +280,18 @@ a claim about what the arms cannot test. S4's own admission therefore runs throu
 is why this effort runs as a planned `executing-work` spec rather than as a kaizen pass: **the
 effort about the missing review must not ship through the path that is missing it.**
 
-**S1 opens no new section, and it lands at the control that causes the blindness.** The claim
-goes beside the isomorph mandate at `writing-skills:232-235`, because that is where a reader
-chooses the control whose cost this is, and a cost stated anywhere else is a cost nobody meets
-at the moment of paying it. An earlier reading of this pass put it at `:158-160` instead and
-was wrong on both the mechanism and the placement; the record is in the evidence section above,
-because it is the fifth attractive structural reading in two days to die on re-reading the
-primary text, and that rate is itself part of this effort's case.
+**S1 opens no new section. As built it lands at the end of the leak and isomorph block**, not
+beside the isomorph mandate as this paragraph first said: an insertion at the mandate broke the
+referent of the paragraph following it, and a second insertion at GREEN's bar created a competing
+enumeration. Section 1 and Chapter 1 carry the reasoning. An earlier reading put it at `:158-160`,
+which is wrong because that list is scoped to in-prompt delivery and its recorded effect is a
+placement defect rather than a conflict with existing text.
 
-**S2 goes to `references/`, so the saturated section does not grow.** Five failure shapes with
-five located instances is reference material, consulted when building a fixture rather than
-read every time. `SKILL.md` gains one pointer line. Three take-stock passes have now tried to
-keep that section from growing; this is the first change that could have grown it and does not.
+**S2 goes to `references/`, so the saturated section barely grows.** A catalogue of failure
+shapes with located instances is reference material, consulted when building a fixture rather
+than read every time. Three take-stock passes have tried to keep that section from growing; this
+is the first change that could have grown it substantially and does not. **As built it is six
+shapes, not five, and `SKILL.md` gains four lines rather than one** - see Section 2.
 
 **S4 scopes by path, not by judgment.** A kaizen pass that has changed any file in
 `tools/accretion.js`'s globs dispatches one paired review over the whole prose diff before
@@ -391,24 +391,124 @@ Execution mode: main.
 Tests: none. Fact statements with located provenance; the risk is miscitation, which S3 covers
 and which three rounds have now demonstrated live.
 
-### 2. The fixture-failure taxonomy
-New `plugins/claude-kit/skills/writing-skills/references/fixture-failures.md`, carrying the five
-shapes the record holds, each with its instance quoted and located:
-1. **The fixture collapses the control** so paying the bar and running the probe are one act
-   (`kaizen-stop-start-continue:661`).
-2. **A side-by-side contrast that primes discrimination** (`red-for-rule-changes:693`).
-3. **A catch-all line that neutralises the harm** (same).
-4. **A mechanism that dominates**, so the ambiguity is never exercised (`red-for-rule-changes:563`).
-5. **A disconfirming result reclassified as a staging error, then engineered around**
-   (`red-for-rule-changes:628-631`, `:697-700`). Recorded as the worst shape, because the effort
-   did not catch it and its own review did.
-Fold in by pointer, never by moving, the two fragments already in `SKILL.md` (`:86-88`,
-`:99-100`). `SKILL.md` gains exactly one line pointing at the reference.
-Acceptance criteria: five shapes, each with a file:line and a quotation; the `SKILL.md` pointer
-present; `SKILL.md` net growth is one line; no existing fixture rule is moved or reworded.
+### 2. One fixture-design failure, stated where the temptation is
+**Rescoped by Daren 2026-08-19, from a six-shape reference file to a single paragraph.** The
+round-1 outcome recorded below is why: the catalogue's locator design failed on two independent
+grounds, two of six shapes were wrong about their own instances, and the six "tell" heuristics
+were the author's inventions presented inside a file whose value proposition was located
+evidence. Shape 5 was the one entry whose evidence is airtight and whose lesson is the largest,
+so it ships alone.
+
+**No reference file, and no locators.** One paragraph does not justify a `references/` file, and
+the three that exist carry zero `file:line` locators between them. The instance is described
+inline with a dated clause, which is what `writing-skills`' "A clause does it; no citation
+apparatus" rule prescribes and what the file's other
+recorded incidents do. That also survives the payload boundary: `docs/` does not ship with the
+plugin, so a locator into `docs/archive/` dangles for every reader outside this repo.
+
+**Placed after REFACTOR rather than near the fixture rules.** REFACTOR is the legitimate "revise
+and re-run"; the failure is revising the *fixture* so a disconfirming result cannot recur. Putting
+the warning beside the legitimate motion puts it where the temptation is, and the file currently
+says nothing anywhere about what to do with a rep that disagrees.
+
+**No invented heuristic.** The paragraph's closing sentence is the source's own verdict (a rep
+"pointing at `ee8be8f`'s real shape", not "a staging error"), not a tell the author generalized.
+That was the round-1 defect with the furthest reach, since `writing-skills` holds fabrication
+worse than either obeying or discarding a mandate.
+
+**Every claim re-verified against the source at implementation time**, per Chapter 1's finding
+that a summary of a document's own results has twice been refuted by its own detail: the filing of
+a disconfirming rep as a confound (`:692`), the fixture rebuilt so the reading was unavailable by
+construction (`:631-632`, `:693-694`), the quoted phrase (`:632-633`, verbatim), the review
+catching what the effort did not (`:694`), and the remedy adopted (`:694-695`). No count is quoted
+in the shipped text; the source's "wrong four times" figure was deliberately dropped rather than
+imported unwalked.
+Acceptance criteria, all verifiable: the insertion is additive with zero deleted lines; every
+claim in it appears at the cited source lines; no `file:line` locator appears in the shipped
+prose; the incident carries a dated clause matching its Chapter; the paragraph ends in something
+a reader can act on; no heuristic is asserted that the source does not state; `references/` is
+absent and the earlier pointer is fully reverted.
 Execution mode: main.
-Tests: none. Descriptive taxonomy; adding a directive to it would change the bill and is barred
-by Out of Scope.
+Tests: none. A statement of fact with located provenance.
+
+**Round 2 outcome: no Criticals from the adversarial review, which endorsed the placement and
+said it would not cut the paragraph; 2 Criticals from the blind. v2 addresses both sets.** All six
+factual claims verified independently by walking Chapters 5 and 6 rather than reading a summary,
+and round 1's worst defect, the invented heuristic, did not recur: the closing contrast is the
+source's own.
+
+- **The discriminator was circular and is now observable.** v1 conditioned on "when a rep's
+  disagreement points at the rule's real shape rather than at your staging", which asks an author
+  to grade its own motive. The failing effort had already made that call, so the rule was
+  self-exculpating in the one case it must bite. v2 routes to the file's existing method, reading
+  which case you have off the rep's transcript rather than off your own account of your staging.
+  That is not a new rule, so no arms are owed.
+- **v1 condemned an act the file mandates**, which was the blind Critical: restaging after a
+  leaked or out-of-state rep is required, and v1's trailing conditional tried to carve that out,
+  which the file's own "exemption clauses do not scope" bars. v2 states the permission positively
+  and first, then the prohibition, so no exemption clause is needed. The
+  "REFACTOR revises the wording and re-runs" sentence is gone entirely; it also read as making
+  wording-revision and fixture-revision disjoint.
+- **The quotation was attributed to the wrong chapter.** "engineering around a disconfirming
+  result rather than answering it" is Chapter 5; the review-caught-it and fixture-before-Daren
+  clauses are Chapter 6. With no locator shipping by design, "Its close-out" was the reader's only
+  pointer and it pointed at the wrong chapter. v2 splits the attribution.
+- **Recorded, not caused by this section:** five `writing-skills:NNN` citations in
+  `docs/take-stock.md` were already stale at `680635b`. This effort widens the drift by nine lines
+  but did not create it. It is direct evidence for S3, and a candidate cleanup for S5.
+
+**Round 1 review outcome, recorded before any rework: CHANGES_REQUIRED from both reviewers, 2
+Criticals, 9 Majors, 8 Minors. The design is wrong, not just the wording.** Kept in full because
+the next attempt has to start from it.
+
+- **The locator apparatus fails on two independent grounds, and the Decision above is void.**
+  First, the precedent claim ("the kit's one existing reference file carries neither form") is a
+  miscount: there are **three** (`brainstorming/references/visual-companion.md`,
+  `csharp-style/references/csharp-style.md`, `sql-style/references/sql-style.md`) and all three
+  carry **zero** `file:line` locators against this file's eight. The precedent is not silent, it
+  is three-for-three against. Second, `docs/README.md:3` says nothing in `docs/` ships in the
+  plugin payload, and this file does ship, so for any reader outside this repo all eight archive
+  locators dangle. Immutability answers rot; it does not answer absence.
+- **The locator inside the paragraph justifying locators rotted inside its own commit.**
+  `SKILL.md:497-502` was right at `680635b` and the same change's 4-line insertion at `:193`
+  shifted it to `:502-505`. The general rule this proves: **cite live prose by name or quoted
+  phrase, archive by locator** - and per the point above, prefer inlining the evidence either way.
+- **Two of six shapes are wrong about their own instances.** Shape 6 says the
+  `visual-companion` rep's decline "reads as a RED firing"; that arm's pre-registered failure was
+  *pushing* a screen for a conceptual question (`visual-companion_spec_v1.md:235-237`), so a
+  decline is a non-fire, which is the half the file says `SKILL.md` already covers. Shape 3's tell
+  ("every rep gives the same reason") is falsified by its own instance: arm 5 ran 2 of 3, two reps
+  reaching the finding and one declining, so a reader applying the tell would have passed that
+  fixture.
+- **The six "The tell:" lines are my own generalizations, not record.** The file presents itself
+  as located evidence and delivers invented heuristics beside it, one of them false and one
+  (shape 4's) with no instance at all. `writing-skills` is explicit that "preserving a mandate
+  by fabrication is worse than either obeying or discarding it, because the invention outlives the
+  session that made it."
+- **Shape 4 should be cut, and the reason it was kept is gone.** Its provenance was misattributed:
+  `:689` sits under Chapter 6's "What this effort got wrong about itself", not the Chapter 5
+  "Disclosures the final review required" list at `:639-647`, whose four bullets do not mention a
+  side-by-side contrast. The kept-because-a-review-compelled-it justification was built on that
+  mislabel.
+- **Locator corrections, all re-verified:** `:697-700` to `:692-695`; `:628-631` to `:629-633`;
+  "the same Chapter" splits into `:636-637` (Ch5) and `:694-695` (Ch6); `:563` to `:563-565`.
+- **The counts section summarised while claiming to walk.** "Three, not the four its own
+  disclosure claims" is 4 minus 1 taken off the summary sentence, and the walk turns up an
+  unreconciled running count at `:565` the file never cites.
+- **Shape 2 lacks the boundary that makes it actionable**, and it is the only finding here with
+  behavioral consequence: an abort applies when the neutralising line is fixture-local, while a
+  real kit mechanism routes to the did-not-reproduce branch, where the disposition is to cut the
+  draft instead.
+- **The pointer is misplaced and mischaracterizes its section.** It says "read before building a
+  fixture" while sitting ~90 lines after the fixture-construction instructions; it claims the
+  rules to the end of the section are isolation, which is false for S1's own paragraph at the end
+  of it; `SKILL.md:28-31` wants a reference gated by naming territories rather than mandating a
+  read; and it hardcodes "six shapes" into the file this effort is shaped not to grow.
+
+**What survives untouched:** shapes 1, 2 and 5's quotations are verbatim at their locators, the
+`SKILL.md` diff moved and reworded nothing, and shape 5 is the one entry whose evidence is
+airtight and whose lesson (a disconfirming result reclassified as a staging error, then engineered
+around, caught by review and not by the effort) is the largest in the file.
 
 ### 3. The self-verification discipline (the one section the arms can test)
 Add to `kaizen`'s apply path: before committing prose, re-open every `file:line` citation, every
@@ -502,8 +602,13 @@ whereas S1 addresses the one another effort produced.
   inversion is not reached for a second time.
 - **Any compression of `writing-skills`.** Four measurements say the file is claim-dense; S1
   and S2 are additions, and S2 is deliberately shaped so the saturated section does not grow.
-- **Adding a directive to the S2 taxonomy.** Descriptive costs no arms; "check your fixture
-  against these" is a rule and would change S2's bill mid-effort.
+- **Inventing a heuristic for S2.** Amended 2026-08-19: this bullet was written for the
+  six-shape taxonomy and read as barring any actionable clause, which contradicted S2's own
+  acceptance criterion requiring something a reader can act on. Round 2's adversarial review
+  flagged the contradiction as the two-parts-disagree pattern Chapter 1 says regenerates defects.
+  **What is barred is a heuristic the record does not state** ("check your fixture against
+  these", or a tell the author generalized). Routing a reader to an observable the file already
+  uses is not that, costs no arms, and is what S2 as shipped does.
 - **Widening S3 beyond `kaizen`.** Whether `executing-work` Chapters want the same discipline
   is a real question and is parked in Open Questions, not answered here.
 
@@ -595,3 +700,56 @@ distinction. 4 spec defects found by reviewers and fixed in the spec itself: two
 a miscited redundancy-branch range, and S5's instance list naming `:158-160`, which is not an
 instance.
 Next: 2. The fixture-failure taxonomy
+
+### Chapter 2 - 2026-08-19
+Completed: 2. One fixture-design failure, stated where the temptation is
+Implemented By: main session
+Metrics: 2 review rounds, both paired, both CHANGES_REQUIRED; 4 reviewer dispatches; 0
+NEEDS_CONTEXT; 0 escalations; advisor on, 0 consultations this section.
+Commit Model: Commit-and-Push
+
+**Rescoped mid-section by Daren, from a six-shape reference file to one paragraph**, after round 1
+returned 2 Criticals, 9 Majors and 8 Minors against a design that was wrong rather than merely
+worded badly. Closed by Daren's decision after round 2 rather than by a passing review.
+
+**Decisions / Surprises.**
+
+- **The catalogue's whole apparatus failed on grounds I had argued the opposite way in the spec.**
+  I justified `file:line` locators by claiming the kit's one reference file set no precedent. There
+  are three, and all three carry zero locators against my eight. Worse, `docs/` does not ship in
+  the plugin payload while the reference file does, so every archive locator would dangle for any
+  reader outside this repo. Immutability answers rot and not absence.
+- **The locator inside the paragraph arguing locators do not rot was rotted by its own commit.**
+  A 4-line pointer inserted 300 lines above shifted it. The rule that follows: cite live prose by
+  quoted clause, archive by locator, and prefer inlining the evidence over either.
+- **I fabricated six heuristics and presented them as located evidence.** The "The tell:" lines
+  were mine, not the record's. One was false against its own instance (shape 3's "every rep gives
+  the same reason", where the arm ran 2 of 3 with one rep dissenting), and one belonged to a shape
+  with no instance at all. `writing-skills` holds fabrication worse than either obeying or
+  discarding a mandate, and this was inside a file about evidentiary discipline.
+- **My "discovery" of a sixth shape was a misreading.** I read the `visual-companion` rep's
+  decline as a confounded RED firing; that arm's pre-registered failure was *pushing* a screen for
+  a conceptual question, so a decline is a non-fire, the half I claimed was already covered.
+- **The surviving paragraph's first discriminator was circular, and that is the transferable
+  finding.** It asked an author whether a rep's disagreement pointed at the rule's shape "rather
+  than at your staging" - a motive test, self-exculpating in the one case it must bite, since the
+  failing effort had already made that call. The fix was not a better test but routing to an
+  observable the file already had: read it off the rep's transcript.
+- **v1 condemned an act the file mandates in three places.** Restaging after a leaked or
+  out-of-state rep is required; my trailing conditional tried to carve it out, which "exemption
+  clauses do not scope" bars. Stating the permission first and positively removed the need for an
+  exemption entirely.
+- **I recommended dropping this section after reading one of two reviews, and was wrong.** The
+  adversarial review found no Criticals, verified all six claims by walking both chapters, endorsed
+  the placement on its own reasoning, and said it would not cut the paragraph. A recommendation
+  built on half a paired review is worth about half of one.
+- **Recorded, not caused here:** five `writing-skills:NNN` citations in `docs/take-stock.md` were
+  already stale at `680635b`. Evidence for S3, cleanup candidate for S5.
+
+Review Findings: round 1, 2 Criticals + 9 Majors + 8 Minors, resolved by rescoping rather than
+patching. Round 2, 2 blind Criticals (condemning a mandated act; a dichotomy the record disproves)
+and 2 adversarial Majors (wrong-chapter attribution; the circular discriminator), all addressed in
+v2; minors on tense, the `:126` echo, and two stale spec locators also addressed. 2 spec defects
+found by reviewers and fixed: an Out of Scope bullet contradicting this section's own acceptance
+criterion, and two of the spec's own locators rotted by the same insertion.
+Next: 3. The self-verification discipline (the one section the arms can test)
