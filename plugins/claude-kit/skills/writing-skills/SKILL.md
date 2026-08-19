@@ -242,6 +242,15 @@ reached it independently did not. So when an arm's territory is a question this 
 parked, discount what a rep reports having found on its own, and expect a promoted note to be
 exactly where its territory got documented.
 
+**An arm cannot test whether new wording conflicts with what the skill file already says**,
+because the fixture stands in for that file and nothing in the arm puts the real one in front of
+a rep as the thing being changed. That is not a staging preference: the rules above require an
+isomorph wherever this repo already answers the fixture's question, and a committed plan doc
+makes that the common case for a change to kit prose. One planned section's arms surfaced
+nothing, and the review that followed found five Criticals, three of them in this gap
+(2026-08-16). So do not read an arm that surfaced nothing as evidence the wording does not
+conflict with what the file already says.
+
 ## Compression: rewriting a section shorter
 
 **The entry condition is a finished mapping, not an intention.** You are on this path once the

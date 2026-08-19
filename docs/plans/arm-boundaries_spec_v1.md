@@ -11,10 +11,11 @@ When this is done, `writing-skills` states the one thing its own testing apparat
 establish, a reader building a fixture can check it against the five failure shapes the record
 actually holds, a kaizen pass verifies its own citations before it commits, and kit prose
 edited outside `executing-work` gets the same paired review kit prose edited inside it has had
-since 2026-07-24. The reason is measured rather than asserted: one effort shipped sixteen
-Criticals that thirteen passing arm reps could not see, and every one lived in contradiction
-with the file the wording landed in, which is precisely what an isolated arm is built not to
-read.
+since 2026-07-24. The reason is measured rather than asserted: in one section of one effort a
+paired review found five Criticals that thirteen passing arm reps had missed, and the recorded
+reason is that no rep ever saw the file the wording lands in. **Figures corrected 2026-08-18
+under review; see the count discrepancy below, which is why this Goal no longer quotes the
+effort's headline of sixteen.**
 
 ## Why this exists
 
@@ -48,6 +49,17 @@ skill**, which is why it reads as friction twice.
   reason is recorded in Chapter 2 and held all the way through: arms run against a
   de-identified isomorph cannot detect a contradiction with the file the wording lands in,
   and that is where the Criticals lived."
+
+  **That headline does not reconcile with its own line, and S1's review caught this spec
+  importing it.** The same sentence enumerates per-section outcomes (S1 five Majors, S2 six
+  Criticals, S3 no paired review, S4 one Critical, S5 four Criticals), which totals **eleven**
+  Criticals rather than sixteen, and the finishing entries it lists add Majors rather than
+  Criticals. `:754` also falsifies "that is where the Criticals lived" for at least one of
+  them: S4's single Critical was an unrecorded mid-section design change on a hook, not a
+  contradiction with the file. **Nothing here asserts eleven is the true number**; the point is
+  that the headline cannot be carried forward on the strength of the line that states it, so
+  this effort cites `:686` instead, whose five-Criticals-against-thirteen-reps figure is
+  internally consistent and carries its own stated cause.
 - Chapter 2, same file `:686`: "The paired review found five Criticals that 13 arm reps had
   passed... **no rep ever saw `writing-skills` itself**. They could test whether the wording
   is followable under a task; they could not test whether it contradicts the file it lands
@@ -143,7 +155,7 @@ because it is already in the kit repo, which is the common case. That is a sharp
 smaller change than either note proposed: not a new mandate in `writing-skills`, but the
 existing mandate reaching the one path that edits kit prose outside `executing-work`. The
 trivial-section carve-out also wants a reading here, since a one-clause wording change is
-exactly what it appears to license and exactly what the sixteen Criticals were made of.
+exactly what it appears to license and exactly what that class of Critical is made of.
 
 **2. The obvious home is the worst available.** Both notes point at
 `writing-skills/SKILL.md`'s "Know it works before you trust it", which `tools/accretion.js`
@@ -184,7 +196,7 @@ Two entries, in order, because the sequence is the useful part. Both added 2026-
 
 The first draft of this section proposed demoting the arms - paired review becomes the
 mandatory gate, arms become the exception - on the strength of one effort where **the arms
-caught none of the sixteen Criticals and the paired review caught all sixteen**
+caught none of them and the reviewers caught all of them**
 (`archive/kaizen-stop-start-continue_spec_v1.md:821`, `:686`, `:784`).
 
 **The check that section demanded of itself was run, and the proposal did not survive it.**
@@ -290,27 +302,94 @@ errors on 2026-08-18 were a fact correction and two `docs/` entries, none of whi
 
 ## Sections of Work
 
-### 1. The limit, stated at the control that causes it
-Add the limit beside the isomorph mandate at `writing-skills:232-235`, and add one sentence
-where GREEN's every-rep bar is stated (`:105-107`) on what a passing GREEN therefore does not
-establish.
-**The claim is conditional and the condition is the whole point** (open question 3, answered).
-It is an arm staged as a **de-identified isomorph** that cannot detect contradiction with the
-target file, because no rep reads that file. The isomorph is mandated by the answer-on-disk
-test, not by the target file, so this is **the cost of a control chosen for another purpose**
-and not a property of arms. Do not write the blanket "arms cannot catch in-file contradiction":
-`:156-157` already permits pointing a rep at an explicit repo path, so the blanket is false as
-written and would contradict a line two paragraphs up.
-Whether a GREEN arm could be pointed at the real file to test contradiction, paying reachability
-for it, is named as a consequence and **not answered here**; answering it is a rule change.
-Acceptance criteria, all verifiable: the limit sits within the isomorph passage and names the
-isomorph as its cause; it does not assert the unconditional form; the GREEN-bar sentence names
-what a pass does not establish; provenance cites `archive/kaizen-stop-start-continue_spec_v1.md:821`
-and `:686`; a claim inventory over both touched spans shows no trigger moved; `:156-160` is
-re-read at implementation time and the new text checked against it for contradiction, since
-that is the exact failure class this section is about.
+### 1. The limit, scoped the way its source scopes it
+**Rewritten twice. Round 1 and round 2 both returned CHANGES_REQUIRED from both reviewers, and
+round 2's adversarial found the cause was this section, not the wording.** The section
+authorized two incompatible claims at once, and an implementer obeying every instruction
+produced a paragraph asserting a universal while citing a fixture property as its reason. That
+is recorded here because the section regenerates the same defect until it is settled.
+
+**Settled, and corrected again in round 4 because this paragraph was still the root cause.**
+The claim is isomorph-scoped: an arm cannot test whether new wording conflicts with what the
+skill file already says, because the fixture stands in for that file. The earlier "a property of
+the question an arm asks, not of any fixture" framing stays **withdrawn**, since no sentence in
+the record supports it (`:686` says isomorph, `:693` says in-prompt delivery, and those are
+different effects).
+
+**The standing-brief reading is withdrawn too, and it was this spec's error rather than the
+implementer's.** Round 3 instructed keeping `:686`'s "per Standing Brief Amendment A1" qualifier
+on the reasoning that it made the isomorph that effort's own staging choice. **A1 says the
+opposite.** Read at `archive/kaizen-stop-start-continue_spec_v1.md:603-609`, it is
+`writing-skills:228-235` applied to a triggering condition: "This repo now answers the arms'
+questions, so every fixture stages outside it ... **This is not a mistake to undo:** the plan has
+to be committed to be durable, and the leak arrives with it." Shipping it as a choice handed a
+reader "not my staging, not my problem" and defused the paragraph's own consequent, which is
+`:75`'s banned nuance clause in correctness form. It also contradicted this spec's own evidence
+section, which had it right from the start. **Two rounds regenerated the same defect because two
+parts of this spec disagreed; they now agree.**
+
+**Recorded without relitigating: the grounds for rejecting the `:158-160` home were partly
+wrong.** `:693` does attribute a placement miss to in-prompt delivery, so the archive supports
+that mechanism as well. The placement decision stands on the other grounds above; the overstated
+reason does not.
+
+**No rep count ships.** "Thirteen passing arm reps" is falsified by its own chapter: `:700`
+gives "13 reps over 5 arms (1 discarded fixture, RED 3, GREEN 3, boundary 3, REFACTOR 3)", so
+three were RED reps where failing is the point and one was discarded, leaving at most nine that
+carried the wording; `:684` says "all 12 reps" for the same section. Cite the Criticals the arms
+passed and no rep total.
+
+**One insertion, at the end of the leak and isomorph block**, before `## Compression`. Not after
+the RED/GREEN/REFACTOR triple: any sentence generalizing over "the arms" there is false for RED,
+which runs without the wording, and undercounts the narrowing's fourth arm. Both reviewers found
+that independently, and it was the enumeration-stops-one-short defect committed inside the
+effort that named it.
+
+**Bars the section must not cross**, each one a finding from a failed round:
+- Do not state the limit as a property of arms. It is a property of isomorph staging.
+- Do not generalize over "the arms" or "all three arms". RED carries no wording and a narrowing
+  adds a fourth arm.
+- Do not say what a review catches as a general claim, and do not answer whether a GREEN arm
+  pointed at the real file could test conflict. Answering either is a rule change and this
+  section is specced at no arms. **Reporting the recorded incident is not that**, and the bar
+  read otherwise collides with the instruction to cite the Criticals; report what happened, never
+  what review generally does.
+- Do not use "followability" or "obeyable". The first names the gated probe; the second hands
+  the probe's weaker claim to GREEN, whose bar is that the wording prevents the failure.
+- Do not use "fit", "sits right in the file", or any phrase reaching past conflict-with-existing-
+  text. They are undefined, they annex placement (whose cause is in-prompt delivery, not the
+  isomorph), and they are broad enough to cover the redundancy branch at `:98-104` and `:363-377`,
+  where an arm's own result does bear on whether new wording belongs.
+- Do not use "a clean arm" or "a clean run". "Clean run" is loaded in this file and routes into
+  the four answers. Say what was observed instead.
+**The incident is recorded as a dated clause, not a file:line locator.** `:497-502` says "A
+clause does it; no citation apparatus", with the borrowed-evidence gate as the only exception,
+and that gate covers another kit's wording or a report from Daren. This kit's own archived
+Chapter is neither, so the no-apparatus rule governs and the eight other incidents in the file
+all use a bare parenthesized date. Round 1 flagged the locator for lacking a `docs/` prefix,
+which was true and pointed at the wrong fix: the locator should not have been there at all.
+**The paragraph must also carry a consequent.** Three reviewers across two rounds found it
+stating a limit with nothing to do about it, and the file's own opening calls prose that does
+not change what an agent does under pressure decoration. The consequent that crosses no bar is
+an inference rule about reading a result, never a claim about what review catches.
+Acceptance criteria, all verifiable: the insertion is additive with zero deleted lines; the
+claim is isomorph-scoped and carries the standing-brief qualifier; no rep total appears; the
+incident is a dated clause in the file's own form and the date matches its Chapter; the
+paragraph ends in something a reader can act on; none of the five bars is crossed; the source's
+own verb ("passed", not "missed") is kept; `:166-169` and the "harder to notice" paragraph are
+re-read at implementation time and the new text checked against both.
+**A criterion that failed twice, kept as a warning:** round 2 required "every figure maps to a
+single sentence in `:686`". It was satisfied literally and still admitted a false rep count,
+because the sentences refining that figure sit fourteen lines below the one cited. Round 4 then
+caught the same failure again on a different number: `:686` says "every Critical lived there",
+and the chapter's own enumeration refutes it for two of the five, since `:690` is a probe passing
+against a stale cache copy and `:693` is a placement defect the source attributes to in-prompt
+delivery. **Three of five instantiate this limit.** No count ships without walking the
+enumeration behind it. Mapping to a sentence is not mapping to the record, and a source's own
+summary of itself is a sentence like any other.
 Execution mode: main.
-Tests: none. Fact statements with located provenance; the risk is miscitation, which S3 covers.
+Tests: none. Fact statements with located provenance; the risk is miscitation, which S3 covers
+and which three rounds have now demonstrated live.
 
 ### 2. The fixture-failure taxonomy
 New `plugins/claude-kit/skills/writing-skills/references/fixture-failures.md`, carrying the five
@@ -359,7 +438,7 @@ take-stock entry as its intent story; give the blind half the diff and nothing e
 **Clarify the trivial carve-out for prose in the same section**: `executing-work:77` licenses
 skipping the pair for "a one-line fix with no logic change", and for prose the analogue of a
 logic change is a rule change, so a one-clause edit that adds or alters a rule is not trivial.
-Left unread, that carve-out licenses exactly the changes the sixteen Criticals were made of.
+Left unread, that carve-out licenses exactly the class of change those Criticals were made of.
 **This section cannot be armed and must not pretend otherwise.** Its admission evidence is this
 effort's own paired review of this section, quoted in the Chapter.
 Acceptance criteria: the dispatch clause names the path predicate rather than a judgment; the
@@ -377,9 +456,11 @@ Then open a Proposed stub for the defect class this effort found a fourth instan
 **kit enumerations stop one short, and the missing item is the newest or the largest.** Located
 instances: `kaizen-stop-start-continue:793` (three dispositions of four),
 `kaizen/SKILL.md` step 4 before `2408979` (spared and unverdicted, missing declined),
-`writing-skills:296` before `60addb9` (one exit of two), and `writing-skills:158-160` (three
-untested things of four, fixed by S1). `executing-work:79`'s recurrence rule says two instances
-means the workflow generates the bug; four means it needs a name and an owner.
+`writing-skills:296` before `60addb9` (one exit of two), and and `writing-skills:296` before `60addb9`.
+**`writing-skills:158-160` was examined and is not an instance**: its list is scoped by "that
+way" to in-prompt delivery and is complete for what it enumerates, so S1 does not touch it and
+S5 must not cite it. `executing-work:79`'s recurrence rule says two instances means the workflow
+generates the bug; three means it needs a name and an owner.
 **This section's entire changeset is under `docs/`, so it takes the adversarial review alone**
 per `executing-work:77`, which states that a docs-only section leaves a blind reviewer nothing
 to read. Recorded here rather than derived at run time, which is what that clause asks for.
@@ -450,4 +531,67 @@ isolation). What remains:
 
 ## Chapters
 
-(Appended by executing-work as sections complete. Leave empty at creation.)
+### Chapter 1 - 2026-08-19
+Completed: 1. The limit, scoped the way its source scopes it
+Implemented By: main session (prose in the kit's largest file; the wording is the deliverable)
+Metrics: 3 valid review rounds, all paired, all CHANGES_REQUIRED; 1 round invalidated by an
+author staging error and discarded; 8 reviewer dispatches of which 1 was killed mid-run; 0
+NEEDS_CONTEXT; 0 escalations; advisor on, 4 consultations, all answered substantively.
+Commit Model: Commit-and-Push
+
+**Closed by Daren's decision after round 4 rather than by a passing review.** Every finding from
+every round is addressed and the section is 9 lines, additive, zero deletions. No round returned
+APPROVED. The finishing-work pass reviews this changeset again, so accepting defers the
+confirming check rather than skipping it; that was the explicit basis for the call.
+
+**Decisions / Surprises.**
+
+- **The spec was the root cause twice, and each time fixing it changed the text substantially.**
+  Round 2 found the spec authorized both a universal and a fixture-scoped claim; round 4 found it
+  still mandated a "standing brief qualifier" reading that its own evidence section contradicted.
+  A paragraph regenerates the same defect for as long as two parts of its spec disagree, and no
+  amount of rewording reaches it. That is the most transferable thing this section produced.
+- **A1 says the opposite of what round 3 inferred from it.** `archive/kaizen-stop-start-continue_spec_v1.md:603-609`
+  reads "This repo now answers the arms' questions, so every fixture stages outside it ... This is
+  not a mistake to undo." It is `writing-skills:228-235` applied to a triggering condition, so
+  shipping the isomorph as "that effort's staging choice" inverted its stated reason and handed a
+  reader `:75`'s banned nuance clause in correctness form.
+- **Two counts imported from the source were false, and the second was caught while I was
+  rebutting the reviewer who found it.** "Thirteen passing arm reps" is refuted by `:700`
+  (1 discarded + RED 3 + GREEN 3 + boundary 3 + REFACTOR 3). "Five Criticals in this gap" is
+  refuted by the same chapter's enumeration: `:690` is a probe passing against a stale plugin
+  cache and `:693` is a placement defect the source attributes to in-prompt delivery, so three of
+  five. Both times the false figure came from the source's own **summary of itself**, and both
+  times an acceptance criterion demanding a figure "map to a single sentence" was satisfied
+  literally and still let it through.
+- **The `:158-160` home was rejected for the wrong reason and the rejection still stands.** That
+  list is scoped by "that way" to in-prompt delivery, whose recorded effect is a *placement*
+  defect (`:693`). This section's claim is *conflict with existing text*, whose recorded cause is
+  the isomorph (`:686`). Different effect, different mechanism. Round 2's side note that `:693`
+  undercut the rejection conflated the two.
+- **An author staging error cost a whole round.** `git checkout -- <file>` restores from the
+  index, not HEAD, and v2 had been staged by an earlier `git add -A`, so the "revert" kept it and
+  v4 landed on top. `git diff` compares worktree to index and showed only the new hunk, hiding
+  the duplicate. Two reviewers then reported a file asserting opposite causes for one incident.
+  Verify a revert with `git diff <base-sha>`, never with a bare `git diff`.
+- **Three reviewers asked for a consequent and I refused twice on a bad reading of my own bar.**
+  The bar forbids saying what review catches; it does not forbid an inference rule about reading
+  a result. The paragraph now ends in one.
+- **`:497-502` governs the citation form and round 1 pointed at the wrong fix.** "A clause does
+  it; no citation apparatus", with borrowed evidence the only exception, and this kit's own
+  archived Chapter is not borrowed evidence. Round 1 flagged the locator for lacking a `docs/`
+  prefix, which was true and beside the point: the locator should not have been there.
+
+Review Findings: 2 Criticals addressed (the reserved question answered in-text and the behavioral
+claim smuggled onto an instrument claim's evidence; the nullifying nuance clause). 9 Majors
+addressed (welded counts twice, over-attribution among mechanisms, "obeyable" and "fit" both
+handing other instruments' claims to an arm, an unresolvable locator, a self-contradicting pair
+of sentences, an uncovered second branch, a missing consequent, an ungated gate). 2 Majors
+rebutted with verification and recorded: that `:686` supports only one fragment (it is a single
+621-character line carrying all of it), and that a paired review closes the gap on the planned
+path (true, and naming it in `writing-skills` would cross this section's bar; it is S4's).
+Minors: all addressed except the two-enumerations note, rebutted above on the placement/conflict
+distinction. 4 spec defects found by reviewers and fixed in the spec itself: two contradictions,
+a miscited redundancy-branch range, and S5's instance list naming `:158-160`, which is not an
+instance.
+Next: 2. The fixture-failure taxonomy
