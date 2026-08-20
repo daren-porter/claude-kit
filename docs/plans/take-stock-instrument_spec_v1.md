@@ -4,6 +4,15 @@ Status: Proposed
 Commit Model: Commit-and-Push
 Created: 2026-08-17
 
+## Related
+
+- `plans/arm-boundaries_spec_v1.md` - its S5 moved the compression-eats-the-spared-bar finding here
+  from `archive/kaizen-stop-start-continue_spec_v1.md:803`, and its S1 supplied the fourth of the
+  four measurements below.
+- `docs/backlog.md` - carried that finding as an active item from 2026-08-16; now annotated as owned
+  here, with its two closure conditions.
+- `plans/enumerations-stop-short_spec_v1.md` - a sibling defect-class stub from the same effort.
+
 ## Why this exists
 
 `kaizen`'s take-stock step tells a pass to read a section whole and **ask what it would lose
@@ -56,7 +65,14 @@ something in the shape of "what in this section is wrong, doubled, or unwatched"
 describes what the four passes produced. That is not automatically right and should be
 designed rather than adopted.
 
-Three things a design pass has to settle:
+Four things a design pass has to settle. **The third bullet below was moved here by
+`arm-boundaries` S5 on 2026-08-20**, on the decision that effort recorded 2026-08-18. **Correction:
+it had been routed once already.** `docs/backlog.md` has carried it since 2026-08-16 as an active
+item, which the source line itself says ("Recorded for the backlog, not fixed here"), so this is a
+change of owner and not a first routing. The backlog entry is annotated as owned here, and its two
+closure conditions come with it: a rule making provenance clauses ineligible for compression
+outright, or a recorded decision that the inventory's attached-content column is protection
+enough:
 
 - **What replaces compression, without becoming a licence to grow the kit.** `take-stock.md`
   opens by claiming it is "the only channel by which the kit subtracts from itself", because
@@ -72,6 +88,19 @@ Three things a design pass has to settle:
   with reasons, and a `declined` verdict exists (`2408979`). So the flow was never backing up on
   volume, and "changing the question produces more of what is already backing up" no longer
   holds. What survives is the narrower question below, on its own evidence.
+- **Whether a corpus can be compressed past the point of being verdictable at all.** Routed
+  from `arm-boundaries`, quoting `archive/kaizen-stop-start-continue_spec_v1.md:803`:
+  "**Compression eats the evidence the spared bar depends on.** The attached-content column
+  protects it inside a compression, but nothing states the systemic version: a corpus
+  compressed hard enough stops being verdictable." Its evidence is an arm rep's own words,
+  recorded at the same line: "the cut on offer is each rule's second sentence, and that
+  sentence is where rules 2 and 12 carry their admitting incident. It is the only evidence
+  anything in the file can be verdicted on today, so a shortening would delete the base the
+  stocktake step runs on." **This bears directly on the first bullet above and sharpens it
+  into a contradiction**: `take-stock.md` calls itself the kit's only subtraction channel, and
+  the spared bar it subtracts by is fed by exactly the attached content a compression is under
+  the most pressure to thin. An instrument that succeeds hard enough disables the verdict that
+  licenses it.
 - **Whether compression stays available for a section that genuinely wants it.** The four
   measurements are all of `writing-skills`, `kaizen`, `brainstorming` and `executing-work`.
   186 sections are measured and 15 are ranked; nothing establishes that the tail behaves like

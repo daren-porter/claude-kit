@@ -5,6 +5,17 @@ Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-08-16 (stub); specced 2026-08-18
 
+## Related
+
+- `plans/take-stock-instrument_spec_v1.md` - S5 moved the compression-eats-the-spared-bar finding
+  into it, and S1's zero-cut result is one of the four measurements that stub reasons from.
+- `plans/enumerations-stop-short_spec_v1.md` - opened by S5; this effort's S4 produced its fifth
+  instance, and S1 supplied one of its examined-and-rejected candidates.
+- `archive/writing-skills-ladder_spec_v1.md` - abandoned; its banked findings scoped this effort's
+  Out of Scope and supplied the three-of-four ratio S1 and S2 both reproduced.
+- `archive/kaizen-stop-start-continue_spec_v1.md` and `archive/red-for-rule-changes_spec_v1.md` -
+  the two efforts whose recorded arms and reviews are this effort's entire evidence base.
+
 ## Goal
 
 When this is done, `writing-skills` states the one thing its own testing apparatus cannot
@@ -735,7 +746,7 @@ Then open a Proposed stub for the defect class this effort found a fourth instan
 **kit enumerations stop one short, and the missing item is the newest or the largest.** Located
 instances: `kaizen-stop-start-continue:793` (three dispositions of four),
 `kaizen/SKILL.md` step 4 before `2408979` (spared and unverdicted, missing declined),
-`writing-skills:296` before `60addb9` (one exit of two), and and `writing-skills:296` before `60addb9`.
+`writing-skills:296` before `60addb9` (one exit of two), `writing-skills:296` before `60addb9`, and `kaizen`'s apply-path sequence in S4.
 **`writing-skills:158-160` was examined and is not an instance**: its list is scoped by "that
 way" to in-prompt delivery and is complete for what it enumerates, so S1 does not touch it and
 S5 must not cite it. `executing-work:79`'s recurrence rule says two instances means the workflow
@@ -1068,3 +1079,58 @@ in the record - all addressed. Recorded and not acted on: the predicate excludes
 and `settings/`, so a pass changing executable kit code still commits unreviewed. That is a real
 gap, out of scope for a prose mandate reviewed by two prose reviewers, and it wants its own effort.
 Next: 5. Route the third finding, and name the recurring defect
+
+### Chapter 5 - 2026-08-20
+Completed: 5. Route the third finding, and name the recurring defect
+Implemented By: main session
+Metrics: 1 review round, adversarial alone (docs-only changeset leaves a blind reviewer nothing to
+read); 1 dispatch; 2 Criticals, 11 Majors, 6 Minors; 0 NEEDS_CONTEXT; 0 escalations.
+Commit Model: Commit-and-Push
+
+**The stub's inventory was wrong, and the way it was wrong is this effort's signature failure.** It
+claimed four instances, taken from the tally in this plan rather than walked. The review found a
+fifth already recorded in `docs/take-stock.md:294` and named in `2408979`'s own commit message. That
+omitted instance is the only one of the five to **ship** and be hit live, while one I did count was a
+near-miss caught inside its own commit. Importing a count instead of walking it is the failure
+Chapters 1, 2 and 4 record five times over, committed in the one document whose entire substance is
+an inventory. Rewritten wholesale at five instances.
+
+**The routing asserted a falsehood about a live sibling.** "Never routed anywhere" was false:
+`docs/backlog.md` has carried the finding since 2026-08-16, which the source line says outright
+("Recorded for the backlog, not fixed here"). So S5 changed its owner rather than routing it first,
+and had created a second live home with no pointer either way while dropping the two closure
+conditions the backlog entry carries. Both are now annotated and the conditions travel with it.
+
+**Decisions / Surprises.**
+
+- **The rejected list grew from one candidate to three, and that is the stub's real load-bearing
+  half.** `writing-skills:489` was named by `60addb9`'s own message as "the same defect class" and
+  is not one on this stub's test, since the Contradicted branch was always in the section. The
+  "above" pointer error from S4's round 3 is a direction error with no missing member. Counting
+  either would license edits to correctly-scoped lists, which is worse than the defect being fixed.
+- **The stub's conclusion inverted on the fifth instance.** At four, the honest read was that review
+  catches this class and S4's mandate might be the whole fix. Instance 5 shows review catching it
+  three times in one section while the author's repairs missed it twice: **review detects this
+  reliably and does not prevent it.** Closing the stub as a duplicate of S4 would have been wrong.
+- **Citation rot, again, from this effort's own insertion.** The bound cited `writing-skills:158-160`
+  and `:232-235`; S2's nine-line insertion had moved them to `:168` and `:243`. Corrected against
+  HEAD. That is the discipline S3 exists to enforce, missed inside the effort that specced it.
+- **Provenance was wrong on three counts in one sentence** (S5 credited for an instance S4 produced,
+  and instance 3 credited to a section of this effort rather than the 2026-08-18 kaizen pass), and
+  the stub contradicted its own count in four places. Both are counting failures of the same family.
+- **`## Related` blocks were missing in every direction** and are now present in all three plans,
+  per `curating-docs`' reason that a one-way link is findable only from the end that already knows.
+- **This plan's own located-instance list was corrupt** ("and and `writing-skills:296`"), left by an
+  earlier edit of mine and fixed here per `executing-work` step 5.
+- **No re-review, deliberately.** The rewrite is substantial, but `finishing-work` runs a
+  full-changeset adversarial pass next and S5 is docs-only, so it would draw the same single reader.
+  Paying twice for one reader is the choice being declined; the rewrite is unreviewed and this
+  Chapter says so.
+
+Review Findings: 2 Criticals (the short inventory; the false "never routed") and 11 Majors (stale
+bound citations, instance-4 round attribution against Chapter 4, the pointer error wrongly folded
+into the class, `:489` absent from both lists, "the fourth" pointing at the third bullet, wrong
+provenance, four internal count contradictions, index/file mismatch, an unmet file:line criterion,
+a back-dated routing, missing `## Related`) - all addressed. Minors: all addressed except the
+paraphrase-inside-quotation-marks, which was resolved by dropping the quotation entirely.
+Next: finishing-work
