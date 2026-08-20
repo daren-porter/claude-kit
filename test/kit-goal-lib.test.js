@@ -270,8 +270,8 @@ test('composeCondition embeds the plan path and exactly clauses (a) and (b)', ()
     // out of goal-state.json.
     assert.ok(!cond.includes('(c)'), 'no third clause');
     assert.ok(!/relay/i.test(cond), 'no relay clause');
-    // Clause (b) names the one person who can release a block here.
-    assert.ok(cond.includes('Daren'));
+    // Clause (b) names who can release a block here.
+    assert.ok(cond.includes('only the user can make'));
 });
 
 test('armGoal re-arms idempotently over an existing goal state', () => {

@@ -71,7 +71,7 @@ session doing the auditing, using the kit's own evidence discipline.
 
 ## The bar anything built here must clear
 
-Agreed with Daren 2026-08-15. The frequency is low (his words: "I don't often have
+Agreed with the user 2026-08-15. The frequency is low (their words: "I don't often have
 simultaneous agents working on the kit"), so the test is **does the mechanism also help
 the solo case?**
 
@@ -85,7 +85,7 @@ or in-flight file carrying a header naming what it is and what closes it serves 
 compaction-resumed session, a human opening the directory later, and a concurrent agent,
 with the same one line.
 
-Note the baseline it must beat: today the failures were caught by Daren relaying state
+Note the baseline it must beat: today the failures were caught by the user relaying state
 between sessions, which worked twice, and `docs/backlog.md` item 20 is this kit's
 precedent for recording an observed hazard and deliberately not acting while the cost of
 acting exceeds the observed failure. **Recording these three and doing nothing is a

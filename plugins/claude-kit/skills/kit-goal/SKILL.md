@@ -1,6 +1,6 @@
 ---
 name: kit-goal
-description: "Use when Daren types /kit-goal <plan path> to arm a completion leash on a plan run, /kit-goal clear (or stop, off, reset, none, cancel) to release it, or /kit-goal with no argument to see what is armed."
+description: "Use when the user types /kit-goal <plan path> to arm a completion leash on a plan run, /kit-goal clear (or stop, off, reset, none, cancel) to release it, or /kit-goal with no argument to see what is armed."
 ---
 
 # Kit Goal
@@ -16,7 +16,7 @@ session's transcript, so it survives whatever happens to the session: after a
 crash, a `/resume`, or a fresh window in the same repo, the goal is still armed,
 `/kit-goal` reports it, and the session-start hook surfaces it. This is the
 one-line arming for a plan run under executing-work; native `/goal` remains for
-goals that are not plan-based. Arming is Daren's explicit act, never something a
+goals that are not plan-based. Arming is the user's explicit act, never something a
 session does for itself.
 
 ## Arm
@@ -36,7 +36,7 @@ Report the one-line result.
 The leash binds only to a session whose transcript carries the typed `/kit-goal`
 invocation itself. An arm requested in prose ("arm the kit goal for the plan")
 still writes the state, but no session ever binds and nothing enforces: a
-silently inert leash. When the request arrived that way, say so and have Daren
+silently inert leash. When the request arrived that way, say so and have the user
 type `/kit-goal <plan path>` from the session that should hold it. The session
 that should hold it is the one executing the plan: a design session that only
 wrote the spec and is handing execution off does not arm (the leash would block

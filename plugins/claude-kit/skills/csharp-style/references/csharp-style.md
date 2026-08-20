@@ -1,10 +1,10 @@
 # C# Style Reference
 
-Detailed patterns behind the csharp-style skill. Derived from Daren's code: `okmind` (personal repo) and his hand-written classes in EleosCore (`ConcurrentCache`, `GeotabHelper`, `ActionRequestBackgroundService`), plus conversation adjudications recorded in the kit's spec.
+Detailed patterns behind the csharp-style skill. Derived from the user's code: `okmind` (personal repo) and their hand-written classes in EleosCore (`ConcurrentCache`, `GeotabHelper`, `ActionRequestBackgroundService`), plus conversation adjudications recorded in the kit's spec.
 
 ## 1. Scope and precedence
 
-Precedence runs: explicit repo rules (CLAUDE.md, committed style docs) -> `.editorconfig` (governs formatting and analyzer-style preferences when present; let it and a formatter settle the mechanics) -> this document (Daren's default house style, in his own repos and shared repos alike) -> a sibling file only as a last resort, for a convention none of the above cover, and for raw whitespace when there is no `.editorconfig`. A legacy neighbor is not authority: do not mirror its style over this document just because it is nearby (the old "match Scott-style siblings even where this disagrees" default is retired). A repo that genuinely wants a different style states so in CLAUDE.md or `.editorconfig`. Regardless of precedence, keep changes surgical - do not "fix" unrelated code toward this style while doing other work.
+Precedence runs: explicit repo rules (CLAUDE.md, committed style docs) -> `.editorconfig` (governs formatting and analyzer-style preferences when present; let it and a formatter settle the mechanics) -> this document (the user's default house style, in their own repos and shared repos alike) -> a sibling file only as a last resort, for a convention none of the above cover, and for raw whitespace when there is no `.editorconfig`. A legacy neighbor is not authority: do not mirror its style over this document just because it is nearby (the old "match Scott-style siblings even where this disagrees" default is retired). A repo that genuinely wants a different style states so in CLAUDE.md or `.editorconfig`. Regardless of precedence, keep changes surgical - do not "fix" unrelated code toward this style while doing other work.
 
 ## 2. File layout
 
@@ -162,7 +162,7 @@ For reusable classes (the `ConcurrentCache` tier):
 
 ## 11. Tests
 
-**Test for value, not coverage.** Write the tests that exercise edge cases, business rules, and behavior worth locking against regression - not tests that exist to move a coverage number. Integration tests are welcome where the infrastructure to run them already exists and they cost about what a unit test costs to write; they must never expand the scope of the work (new harnesses, containers, fixtures) unless Daren explicitly asks. When a change has no test worth writing, say so rather than padding.
+**Test for value, not coverage.** Write the tests that exercise edge cases, business rules, and behavior worth locking against regression - not tests that exist to move a coverage number. Integration tests are welcome where the infrastructure to run them already exists and they cost about what a unit test costs to write; they must never expand the scope of the work (new harnesses, containers, fixtures) unless the user explicitly asks. When a change has no test worth writing, say so rather than padding.
 
 xUnit. Test names: `Method_DoesSomething_WhenSomeCondition` (the condition clause optional when there is only the happy path). Arrange/Act/Assert comments by default:
 

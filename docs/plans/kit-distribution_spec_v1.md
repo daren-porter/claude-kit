@@ -6,9 +6,9 @@ Created: 2026-08-11
 
 ## Why this exists
 
-Daren's goal, stated 2026-08-11: turn this kit into something others at his org download and
+The user's goal, stated 2026-08-11: turn this kit into something others at their org download and
 then effectively **fork into their own personal kits**, with their own styles and philosophies,
-and keep building on theirs the way he has built on his. A "core" kit keeps being updated;
+and keep building on theirs the way the user has built on this one. A "core" kit keeps being updated;
 forkers merge core's changes in and reshape them to preference; there is some path for them to
 propose things back to core; and a first-run flow walks them through installation, the CLAUDE.md
 setup, and optionally learning their coding and writing style from samples they provide.
@@ -19,14 +19,15 @@ with it.
 
 ## The finding that reframes this
 
-**The fork relationship already exists, implemented once.** `kit-adoption-pass/SKILL.md:8` opens
-"claude-kit is a personalized fork of Scott Applefeld's kit," and that skill is already the
+**The fork relationship already exists, implemented once.** `kit-adoption-pass/SKILL.md:8` opened
+"claude-kit is a personalized fork of Scott Applefeld's kit" (quoted as it stood before the
+`kit-denaming` sweep de-named that skill; it now says "the upstream kit"), and that skill is already the
 merge-upstream-into-my-personalized-fork pass, with a watermark sha, a standing ledger of what
-was taken, reshaped, or refused, and a staleness nudge. Daren's kit relates to Scott's exactly
+was taken, reshaped, or refused, and a staleness nudge. The user's kit relates to the upstream's exactly
 as a future forker's kit would relate to core.
 
 So this is not a new architecture. It is generalizing a relationship the kit runs today, and the
-design work is mostly subtraction: find what is specific to *Scott's kit in particular* rather
+design work is mostly subtraction: find what is specific to *the upstream kit in particular* rather
 than to *an upstream*. Two things already point the right way:
 
 - **Per-fork state is already outside the shipped payload.** `kit-adoptions.md` lives in `docs/`,
@@ -38,7 +39,8 @@ than to *an upstream*. Two things already point the right way:
   user's own rule. That is the whole fork-merge problem in miniature, already solved and tested.
 
 What is genuinely hard-coded is the upstream's identity (the skill's description, its prose, the
-clone path, the watermark) and its stance at `:16`, "Inbound only. Nothing goes back to Scott" -
+clone path, the watermark) and its stance at `:16`, "Inbound only. Nothing goes back to Scott"
+(again the pre-sweep wording; that line now names the upstream generically) -
 which is exactly the half this proposal adds.
 
 ## The four capabilities, and what each actually needs
@@ -55,7 +57,7 @@ which is exactly the half this proposal adds.
    honest answer to "not required": a fork with no samples gets a neutral style skill, not a
    broken one.
 3. **Merge core's updates.** `kit-adoption-pass` with a parameterized upstream. Decide whether one
-   skill serves both relationships (Daren's kit reads Scott's *and* a forker reads core) or
+   skill serves both relationships (the user's kit reads the upstream *and* a forker reads core) or
    whether they diverge, and note that a fork of a fork is then possible and probably fine.
 4. **Propose changes back.** The hardest, and it is governance rather than code. See below.
 
@@ -120,8 +122,8 @@ answer.
 
 ## Out of scope
 
-Licensing, contribution legal terms, and repo or marketplace renaming. Whether Scott's kit is
-credited publicly, which is his consent question and not a packaging one. Any actual publishing
+Licensing, contribution legal terms, and repo or marketplace renaming. Whether the upstream kit is
+credited publicly, which is their consent question and not a packaging one. Any actual publishing
 decision or date.
 
 ## Chapters

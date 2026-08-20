@@ -1,15 +1,15 @@
 ---
 name: sql-style
-description: "Daren Porter's T-SQL house style. Use whenever writing or modifying ANY SQL: stored procedures, tables, functions, indexes, install/deployment scripts, or ad-hoc queries. Signature traits: shell-then-ALTER deployment, idempotent re-runnable scripts, TRY/CATCH with guarded usp_AuditError, UPPERCASE keywords, trailing commas (never leading). Trigger on any SQL work even when style isn't named."
+description: "The user's T-SQL house style. Use whenever writing or modifying ANY SQL: stored procedures, tables, functions, indexes, install/deployment scripts, or ad-hoc queries. Signature traits: shell-then-ALTER deployment, idempotent re-runnable scripts, TRY/CATCH with guarded usp_AuditError, UPPERCASE keywords, trailing commas (never leading). Trigger on any SQL work even when style isn't named."
 ---
 
 # T-SQL Style
 
-Daren's T-SQL style: Scott Applefeld's house style as the functional baseline, with the ceremony layer simplified. This file alone covers routine procedure work; the exemplar below is the deployment idiom. Consult [references/sql-style.md](references/sql-style.md) when creating new objects from scratch (table, index, function, job, and TVP-type templates), naming new objects, or handling deployment cases beyond the proc skeleton shown here.
+The user's T-SQL style: Scott Applefeld's house style as the functional baseline, with the ceremony layer simplified. This file alone covers routine procedure work; the exemplar below is the deployment idiom. Consult [references/sql-style.md](references/sql-style.md) when creating new objects from scratch (table, index, function, job, and TVP-type templates), naming new objects, or handling deployment cases beyond the proc skeleton shown here.
 
 ## Precedence
 
-In shared repos the repo's own style wins: first its stated style (CLAUDE.md, style docs), then sibling files. EleosCore and similar team codebases use the full Scott style (leading commas, tab alignment, leading semicolons, banner ceremony); match siblings exactly there, including everything this skill simplifies away. This skill governs Daren-authored SQL in his own projects.
+In shared repos the repo's own style wins: first its stated style (CLAUDE.md, style docs), then sibling files. EleosCore and similar team codebases use the full Scott style (leading commas, tab alignment, leading semicolons, banner ceremony); match siblings exactly there, including everything this skill simplifies away. This skill governs the user's SQL in their own projects.
 
 ## Core philosophy
 
@@ -38,10 +38,10 @@ AS
 BEGIN
     /**********************************************************************
         SCRIPT:  APP.usp_GetOrderStops.sql
-        AUTHOR:  Daren Porter / ASR Solutions
+        AUTHOR:  ASR Solutions
         DATE:    2026-06-10
         VERSION: 1.0
-        NOTES:   v1.0 - 2026-06-10 - DAREN PORTER - ASR SOLUTIONS
+        NOTES:   v1.0 - 2026-06-10 - ASR SOLUTIONS
                  Initial version.
     **********************************************************************/
 

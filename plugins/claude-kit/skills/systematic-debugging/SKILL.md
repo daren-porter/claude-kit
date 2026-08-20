@@ -30,7 +30,7 @@ Fixes proposed before the root cause is proven are guesses. A guess that happens
 
 ## When to stop and report
 
-Stop investigating and bring Daren the findings instead of guessing when:
+Stop investigating and bring the user the findings instead of guessing when:
 
 - Three consecutive hypotheses have been falsified; the mental model of the system is wrong somewhere, and fresh information beats a fourth guess.
 - The cause is isolated to something outside the workspace (vendor bug, infrastructure, data corruption) where a code change would only mask it.

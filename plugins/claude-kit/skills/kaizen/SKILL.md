@@ -53,7 +53,7 @@ yourself into is noise; leave it out.
 
 ## The pass (the reflect half)
 
-Run it when Daren asks, when he accepts an end-of-effort or session-start offer, when
+Run it when the user asks, when they accept an end-of-effort or session-start offer, when
 you sit down to a pending brief, or when the take-stock nudge reports the kit's prose
 has changed since the last entry.
 
@@ -77,11 +77,11 @@ has changed since the last entry.
    List all three, **naming every pending item rather than counting it**: each note, each
    parked stub, and each retirement candidate the last take-stock left unadjudicated, with
    enough of its text to be argued about without opening another file. A class reported as
-   non-empty is a class Daren has to go and read for himself, which is how a candidate
+   non-empty is a class the user has to go and read for themselves, which is how a candidate
    stays unadjudicated for one more pass; a pass on 2026-08-16 reported "four retirement
    candidates, still unadjudicated" twice without ever saying what they were. Then ask
-   Daren for his: his half of the retro is the other half.
-2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
+   the user for theirs: their half of the retro is the other half.
+2. **Reflect and triage.** For each item, with the user: is it real, and what is the
    smallest change that fixes it? Sort into:
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you
      are already in the kit repo). Either way, corpus prose takes the paired review
@@ -105,7 +105,7 @@ has changed since the last entry.
      compression**, and it takes `writing-skills`' compression bill; the finished
      mapping is what classifies it, never an intention to shorten. A rule that no
      longer earns its lines is a **retirement**: a rule change, owing the arms, and
-     it goes to Daren rather than into a brief because it changes what the kit is
+     it goes to the user rather than into a brief because it changes what the kit is
      held to. A rule you find load-bearing is **spared**, which is not praise, since
      it names what was observed to happen because of it and "it seems to be working"
      closes nothing. **A preventive rule succeeds by producing no event**, so its
@@ -201,9 +201,9 @@ reason**, all three, and that commit is likewise not made until it carries them.
 ## Offering a pass
 
 Never offer on an uneventful session. Offer only when the inbox has pending items,
-and only at a natural moment: finishing-work's close-out, or when Daren signals he
-is wrapping up. The offer is one dismissable line ("N kaizen items captured - want
-to run a pass?"). Daren can always start one explicitly. `session-start.js`'s kaizen
+and only at a natural moment: finishing-work's close-out, or when the user signals they
+are wrapping up. The offer is one dismissable line ("N kaizen items captured - want
+to run a pass?"). The user can always start one explicitly. `session-start.js`'s kaizen
 count (kit repo only) is the same predicate from the other end: it reminds you when you
 open claude-kit and items are waiting.
 

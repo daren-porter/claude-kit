@@ -173,7 +173,7 @@ One path, and it is the only place any kit skill moves project content off the m
 `brainstorming` can flatten a screen into a single self-contained file to share, and an Artifact
 is one destination for that file. It is gated three ways in `references/visual-companion.md`:
 flattening and sending are separate permissions, the destination is named as off-machine when
-consent is asked, and any repo that is not Daren's own is treated as client material for which no
+consent is asked, and any repo that is not the user's own is treated as client material for which no
 off-machine destination is proposed. Gating by instruction rather than by mechanism, so it is a
 discipline, not a control.
 

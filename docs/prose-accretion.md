@@ -2,7 +2,7 @@
 
 The kit measures churn in its own prose and has exactly one channel for taking prose back out. Before this loop shipped, no `.md` file under `plugins/claude-kit/` had ever net-shrunk in a commit. The plan's whole-history measurement at `90769cc` counted 163 markdown file-events with none net-negative, against 10 net-negative JS file-events, one of which was itself a kaizen pass. The kit could subtract; it had only ever been pointed at code. The two subtraction rules `writing-skills` already carried both fire at admission time, on drafts that were never shipped, so the gap was specifically post-ship.
 
-Four pieces implement the loop, plus wording in two skills. A maintainer tool ranks sections by churn, a shared parser defines what a section is, a SessionStart hook says when the prose has moved since anyone last read it whole, and `docs/take-stock.md` records what came down and what was spared. Detection is cheap and lives in the hook; diagnosis is expensive and lives in the tool. Nothing here decides anything: the tool ranks and never flags, the hook reports a count and never names a section, and the verdict on any section is Daren's at the pass.
+Four pieces implement the loop, plus wording in two skills. A maintainer tool ranks sections by churn, a shared parser defines what a section is, a SessionStart hook says when the prose has moved since anyone last read it whole, and `docs/take-stock.md` records what came down and what was spared. Detection is cheap and lives in the hook; diagnosis is expensive and lives in the tool. Nothing here decides anything: the tool ranks and never flags, the hook reports a count and never names a section, and the verdict on any section is the user's at the pass.
 
 ## Files
 

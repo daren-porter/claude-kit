@@ -4,7 +4,7 @@
     "name": "Daren Porter",
     "email": "daren@asr-solutions.com"
   },
-  "description": "Daren Porter's personal plugin marketplace.",
+  "description": "A personal plugin marketplace.",
   "plugins": [
     {
       "name": "claude-kit",

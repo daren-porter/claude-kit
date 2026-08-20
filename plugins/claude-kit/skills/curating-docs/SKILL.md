@@ -1,6 +1,6 @@
 ---
 name: curating-docs
-description: "Use when a plan reaches Complete or is abandoned, when brainstorming writes a new spec, when docs/ needs organizing, or when Daren asks for a docs tidy-up or retrofit. Symptoms: Complete plans still sitting in docs/plans/, a backlog that only grows, plans that never reference each other, a docs/ tree with no index."
+description: "Use when a plan reaches Complete or is abandoned, when brainstorming writes a new spec, when docs/ needs organizing, or when the user asks for a docs tidy-up or retrofit. Symptoms: Complete plans still sitting in docs/plans/, a backlog that only grows, plans that never reference each other, a docs/ tree with no index."
 ---
 
 # Curating Docs
@@ -55,22 +55,22 @@ When brainstorming writes a spec, before executing-work starts on it:
 When asked to tidy or retrofit a `docs/` that predates this taxonomy:
 
 1. **Survey, read-only.** List every doc, read each plan's `Status` header (read it; do not infer status from the filename, the version number, or the mtime), and classify each as active plan, completed or abandoned plan, about-the-solution doc, or stray. Note which cross-references are missing while you read.
-2. **Propose, then stop.** State which files move where, what the index and backlog will contain, and which `## Related` blocks are missing. Present it and wait. A batch of moves across a library Daren has been reading for months earns a confirmation, and a status you misread is cheap to correct here and annoying to correct after the moves.
+2. **Propose, then stop.** State which files move where, what the index and backlog will contain, and which `## Related` blocks are missing. Present it and wait. A batch of moves across a library the user has been reading for months earns a confirmation, and a status you misread is cheap to correct here and annoying to correct after the moves.
 3. **Execute on approval.** Create the zones, `git mv` the completed and abandoned plans, seed the index and backlog, add the missing `## Related` blocks, and report what moved as a short list. Content stays as written: a retrofit is moves, cross-references, and an index, not a rewrite.
 
-A status that contradicts the doc's own Chapters is a question for Daren, not a judgment call to make silently.
+A status that contradicts the doc's own Chapters is a question for the user, not a judgment call to make silently.
 
 ## How much to say about it
 
 Curation is almost entirely mechanical, and the mechanical part is not news. Git history already records what moved, so **the depth of the report scales with whether curation was the turn's work or an aside**, and the aside is the common case:
 
-- **Curation was the ask** (a retrofit Daren approved, a tidy-up he requested): the report is the deliverable. The short list above is right.
+- **Curation was the ask** (a retrofit the user approved, a tidy-up they requested): the report is the deliverable. The short list above is right.
 - **Curation rode along with a close-out**: one line. "Archived `foo_spec_v1.md`, pruned two backlog items, refreshed the index."
 - **Curation rode along with a question about something else**: nothing at all. Do it and stop. A paragraph about which files went where, appended to an answer about a connector error, buries the answer the session existed to give.
 
-Three things genuinely need Daren, and they are the only things worth taking his attention for: a retrofit across a library he has been reading for months, a `Status` header that contradicts its own doc's Chapters, and a `docs-curator` Drift Report where as-built diverged from the spec. Everything else in this skill (the moves, the index, the backlog prune, the `## Related` blocks) has no decision in it and needs no permission, so asking for one just moves the noise from a report into a question.
+Three things genuinely need the user, and they are the only things worth taking their attention for: a retrofit across a library the user has been reading for months, a `Status` header that contradicts its own doc's Chapters, and a `docs-curator` Drift Report where as-built diverged from the spec. Everything else in this skill (the moves, the index, the backlog prune, the `## Related` blocks) has no decision in it and needs no permission, so asking for one just moves the noise from a report into a question.
 
-**When you do need him, nudge, do not survey.** One sentence naming that a decision is waiting, and the offer: "`docs/` has no index or backlog: want me to retrofit it?" The classification of each file, the moves table, and the missing cross-references are what he reads after he says yes. Listing the tree's problems inline while he is looking for the answer to an unrelated question is the same failure as narrating the moves, one step earlier and easier to excuse because none of it is technically a report.
+**When you do need the user, nudge, do not survey.** One sentence naming that a decision is waiting, and the offer: "`docs/` has no index or backlog: want me to retrofit it?" The classification of each file, the moves table, and the missing cross-references are what the user reads after they say yes. Listing the tree's problems inline while they are looking for the answer to an unrelated question is the same failure as narrating the moves, one step earlier and easier to excuse because none of it is technically a report.
 
 ## Skeletons
 

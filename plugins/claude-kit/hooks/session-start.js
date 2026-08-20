@@ -24,7 +24,7 @@ function readStdin() {
 
 // Count pending kaizen items (raw notes + briefs) in the home-level inbox.
 // Only nudges inside the kit repo itself: friction is captured from anywhere,
-// but the reminder to act belongs where Daren can act. Injects only a count,
+// but the reminder to act belongs where the user can act. Injects only a count,
 // never inbox text. Any failure returns 0 (silent).
 function countPendingKaizen(cwd) {
     const kitMarker = path.join(cwd, 'plugins', 'claude-kit', '.claude-plugin', 'plugin.json');
@@ -55,12 +55,12 @@ function countPendingKaizen(cwd) {
     return count;
 }
 
-// Past this many days since the last recorded Scott-kit adoption pass, the nudge
+// Past this many days since the last recorded upstream-kit adoption pass, the nudge
 // fires. It sits just inside the observed pass cadence (2026-06-17 to 2026-07-24
 // was five weeks), so it lands before the drift it exists to catch, not after.
 const ADOPTION_STALE_AFTER_DAYS = 30;
 
-// Whole days elapsed since the last recorded Scott-kit adoption pass, or null for
+// Whole days elapsed since the last recorded upstream-kit adoption pass, or null for
 // no nudge. Kit-repo gated like countPendingKaizen: the pass is this repo's own
 // work, so the reminder belongs nowhere else. Reads only the anchored `Last pass:`
 // header of docs/kit-adoptions.md, which that file states as a machine contract,
@@ -532,7 +532,7 @@ function main() {
     }
 
     if (adoptionStaleDays !== null) {
-        blocks.push(`This is the claude-kit repo and the last adoption pass over Scott's kit was ${adoptionStaleDays} days ago. At a natural stopping point, consider running one (see the kit-adoption-pass skill). Reminder, not a blocker.`);
+        blocks.push(`This is the claude-kit repo and the last adoption pass over the upstream kit was ${adoptionStaleDays} days ago. At a natural stopping point, consider running one (see the kit-adoption-pass skill). Reminder, not a blocker.`);
     }
 
     if (decay) {

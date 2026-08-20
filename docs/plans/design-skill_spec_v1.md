@@ -6,7 +6,7 @@ Created: 2026-08-15
 
 ## Why this exists
 
-Daren asked (2026-08-15) for the kit to have its own version of a frontend design
+The user asked (2026-08-15) for the kit to have its own version of a frontend design
 skill: analyze the popular ones, take what is good wholesale, trim what is not, and
 fit the rest to this kit's philosophies. Two scope answers came back in the same
 exchange and both widen it. It serves **all** design work, work and client-facing as
@@ -49,7 +49,7 @@ Frame the work as the smallest thing that carries the value, never as port-then-
 **1. This is the kit's third style skill, and the precedent it sets is narrower than
 it looks.** `csharp-style` (10.7 KB) and `sql-style` (6.9 KB) contain no RED, no GREEN
 and no baseline anything, and neither appears in `backlog.md`'s open-instances list.
-The obvious reading is that a taste corpus is exempt: it is Daren's preference, not an
+The obvious reading is that a taste corpus is exempt: it is the user's preference, not an
 empirical claim about agent behavior, so no arm can settle it.
 
 That reading does not survive reading the skills. `csharp-style`'s "Signature wrapping
@@ -85,7 +85,7 @@ cheap, provable first section, that is it. The caveat is that a detector needs
 something to run on, and a stack-agnostic detector over CSS is a much narrower
 instrument than one over JSX.
 
-**3. Stack-agnostic is a hard cut, and it cuts most of the mass.** Daren's "not settled
+**3. Stack-agnostic is a hard cut, and it cuts most of the mass.** the user's "not settled
 yet" means Impeccable's live mode and framework adapters are out (they bind to a dev
 server and a named framework), and Hallmark's content, while portable prose, is
 marketing-site-shaped: 21 macrostructures and a theme catalogue are a landing-page
@@ -113,7 +113,7 @@ ladder rather than inventing a posture.
   32.6 KB. Name the budget before drafting, or the corpus grows to fill the source.
 - **Taste corpus, deterministic detector, or both?** See finding 2. These have
   different costs, different gates, and different failure modes.
-- **How wide is "design"?** Daren's answer widened it past frontend. Whether it reaches
+- **How wide is "design"?** the user's answer widened it past frontend. Whether it reaches
   non-web surfaces is undecided and should be decided, not discovered.
 - **Does taste ever earn a block?** Hallmark blocks on gate failure. The kit's three
   guards deny, but they guard docs and branches, never taste, and `backlog.md` already
@@ -136,7 +136,7 @@ ladder rather than inventing a posture.
 Answer the first open question with a comparison rather than an assumption. Build one
 real page against `artifact-design` and its siblings, then name what actually went
 wrong that a kit skill would have caught. If nothing goes wrong, the honest outcome is
-a thin skill that points at what already loads and adds only Daren's own taste plus
+a thin skill that points at what already loads and adds only the user's own taste plus
 the precedence ladder, sized like `sql-style`. That is a good result, not a
 disappointing one, and it is the outcome the size arithmetic already favors.
 
@@ -154,7 +154,7 @@ is under 200 KB and covers both the taste layer and the enforcement layer.
   `red-for-rule-changes`.
 - `plugins/claude-kit/skills/kit-adoption-pass/SKILL.md` - the kit's existing
   inbound-adoption discipline (classify off docs and diffs, adjudicate one survivor,
-  gate the ported wording). Built for Scott's kit; the ladder transfers to these two.
+  gate the ported wording). Built for the upstream kit; the ladder transfers to these two.
 - `docs/visual-companion.md` - the worked precedent for porting third-party MIT
   material into this kit, including the permission notice this repo needs.
 - `docs/backlog.md` - the guard-deny framing item, live if enforcement gets a block.

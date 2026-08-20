@@ -47,7 +47,7 @@ const HOOK = path.join(__dirname, '..', 'plugins', 'claude-kit', 'hooks', 'sessi
 const ASSET = path.join(__dirname, '..', 'plugins', 'claude-kit', 'assets', 'CLAUDE.md');
 
 // The block under test, and the day count it must carry.
-const NUDGE = /the last adoption pass over Scott's kit was (\d+) days ago/;
+const NUDGE = /the last adoption pass over the upstream kit was (\d+) days ago/;
 // The block that must survive the adoption check no matter what it reads.
 const PLAN_RECOVERY = /- docs\/plans\/proj_thing_spec_v1\.md \(Commit Model: Commit-and-Push\)/;
 
