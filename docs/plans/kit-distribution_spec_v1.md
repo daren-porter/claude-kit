@@ -72,7 +72,18 @@ which is exactly the half this proposal adds.
   scales and is easy to fake; the second does not scale and is the only one that actually
   verifies. That tradeoff decides whether contribution is realistic at all, and it should be
   settled before any contribution mechanism is built.
-- **Does core carry a name at all?** See the de-naming stub, whose central question this changes.
+- **Does core carry a name at all?** `kit-denaming_spec_v1.md` is no longer a stub and no longer
+  waiting on this one. Its 2026-08-20 design pass settled the in-place sweep and handed two things
+  back here, with a constraint attached. The two: genericizing the upstream-specific and
+  org-specific content so a truly generic core carries no identity at all, and deciding how a fork
+  names its own user. The constraint is that **install-time substitution is not available**,
+  verified rather than assumed: the plugin cache is keyed by commit sha and `/plugin update` pulls
+  a fresh tree into a new directory, so anything a setup script rewrote is discarded on every
+  update; `SKILL.md` has no interpolation; and skills cannot read environment variables, only
+  hooks can. A token scheme rewritten at install is therefore dead on arrival, and whatever
+  mechanism this plan designs has to survive an update that replaces the entire payload. The
+  cheap answer already in the kit is a role noun in the prose plus an identity line in the user's
+  own `~/.claude/CLAUDE.md`, which `reconcile-claude-md` already merges.
 
 ## The part most likely to be underestimated: the trust boundary moves
 
