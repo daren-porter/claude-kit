@@ -6,9 +6,10 @@ Created: 2026-08-17
 
 ## Related
 
-- `plans/arm-boundaries_spec_v1.md` - its S5 moved the compression-eats-the-spared-bar finding here
-  from `archive/kaizen-stop-start-continue_spec_v1.md:803`, and its S1 supplied the fourth of the
-  four measurements below.
+- `archive/arm-boundaries_spec_v1.md` - its S5 moved the compression-eats-the-spared-bar finding here
+  from `archive/kaizen-stop-start-continue_spec_v1.md:803`. **It supplied none of the four
+  measurements below**; the fourth is the take-stock pass of 2026-08-17, which is a sibling of that
+  effort rather than part of it.
 - `docs/backlog.md` - carried that finding as an active item from 2026-08-16; now annotated as owned
   here, with its two closure conditions.
 - `plans/enumerations-stop-short_spec_v1.md` - a sibling defect-class stub from the same effort.

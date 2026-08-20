@@ -98,7 +98,7 @@ Both were attractive structural findings that did not survive reading the primar
 pass whose own 2026-08-17 entry had recorded the identical failure that morning, and in the
 file whose ratio is that three of four such findings are artifacts of the reader's map. **Three
 instances in two days is no longer a coincidence and is the strongest argument in this file for
-`plans/arm-boundaries_spec_v1.md`**, whose subject is that the kaizen apply path has no review
+`archive/arm-boundaries_spec_v1.md`**, whose subject is that the kaizen apply path has no review
 step.
 
 **A second prose defect, found by re-examining an earlier decision in this same pass.** Adding
@@ -264,7 +264,7 @@ corpus does not have. Parked as `plans/take-stock-instrument_spec_v1.md` and reg
 solely by the next run of this step is the same unadjudicated-forever shape the finding is
 about.
 
-**Not reviewed, same gap as the entry below.** `plans/arm-boundaries_spec_v1.md` records that
+**Not reviewed, same gap as the entry below.** `archive/arm-boundaries_spec_v1.md` records that
 the kaizen apply path has no review step. The only check this entry got was re-reading it
 against the files it cites, which caught the Fable Spend finding being wrong in the direction
 of a more dramatic claim.
@@ -347,7 +347,7 @@ Recorded so the next pass can disagree with a record instead of re-deriving the 
 
 **Neither prose change in this pass was reviewed, and that is the gap it just documented.** The
 kaizen apply path has no review step, and this session was not authorized to dispatch review
-agents. `plans/arm-boundaries_spec_v1.md` records exactly that hole. A later reader should not
+agents. `archive/arm-boundaries_spec_v1.md` records exactly that hole. A later reader should not
 read these two edits as review-backed; the only check they got was the author re-reading them
 against their own files, which caught one - a claim about a 2026-08-15 probe that had the
 finding backwards against `writing-skills:238-241`.

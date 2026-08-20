@@ -6,13 +6,20 @@ Created: 2026-08-20
 
 ## Related
 
-- Opened by `plans/arm-boundaries_spec_v1.md` S5. Its S4 produced instance 5.
+- Opened by `archive/arm-boundaries_spec_v1.md` S5. Its S4 produced instance 5.
 - Instances 3 and 4 came from the kaizen pass of 2026-08-18 (`2408979`, `60addb9`).
+- `plans/take-stock-instrument_spec_v1.md` - a sibling defect-class stub from the same effort, which
+  links here; this is the return link that was missing when Chapter 5 claimed all three plans were
+  cross-referenced in every direction.
 
 ## Why this exists
 
-Five times now, an enumeration in the kit's own prose has been found listing every member of a set
-except one, and the missing member has been the newest one every time. Two were caught by review,
+**At least five times** now, an enumeration in the kit's own prose has been found listing every
+member of a set except one, and the missing member has been the newest one every time. **Five is a
+floor rather than a total**, and the reason is itself evidence: a sixth surfaced during the close-out
+of the very effort that opened this stub, when QA found a six-item list of bars in
+`arm-boundaries_spec_v1.md` described as five, after four QA rounds had read past it. Any count here
+should be read as "what has been walked so far". Two were caught by review,
 two by an author who had just recorded a prior instance, and one shipped and was hit live.
 `executing-work:79` says two instances means the workflow generates the bug and the fix belongs at
 the generator.
@@ -31,7 +38,10 @@ separate times, committed here in the one document whose entire substance is an 
 2. **`kaizen`'s gather sub-step, fixed at `e69eb9e`. This one shipped.** It told a pass to read
    `docs/take-stock.md` "for what the last pass examined, cut and spared", three of the four things
    that file carries; the fourth is a retirement candidate recorded and not acted on, the only class
-   in it that is pending work. `docs/take-stock.md:294` records it being hit live: the pass ran that
+   in it that is pending work. `docs/take-stock.md`'s 2026-08-16 entry records it being hit live,
+   in the passage beginning "The defect found was an omission, not accretion, and it is a
+   recurrence" (**cited by phrase: that file grows from the top, so a line number there rots on the
+   next entry**): the pass ran that
    sub-step, read the file, and did not surface the parked candidates until prompted. **The only
    instance so far to reach a released state**, which makes it the strongest evidence here and the
    one the first draft of this stub omitted.
@@ -45,7 +55,10 @@ separate times, committed here in the one document whose entire substance is an 
    did not look outside its own file.
 5. **`kaizen`'s apply-path ordered sequence, `arm-boundaries` S4.** The sequence listed no review
    step while S4 was adding one that belongs between the change and the commit. S4's round 1 found
-   it (`arm-boundaries_spec_v1.md:676`). Per Chapter 4, the class then recurred twice more in the
+   it, recorded in that plan as "the apply path's own ordered sentence still lists no review
+   step". **Cited by phrase and not by line**: two successive attempts to give this a line number
+   were both wrong, the second because the same uncommitted diff had shifted the file under the
+   fix. A live plan doc takes a quoted phrase; only the archive takes locators. Per Chapter 4, the class then recurred twice more in the
    same section at other sites: round 2 found the mandate unreachable from the take-stock path, and
    round 3 found the apply-now bullet, which finding 1a calls the common case, still without a
    pointer. **Three rounds, three sites, one class** - which is what makes this the instance showing

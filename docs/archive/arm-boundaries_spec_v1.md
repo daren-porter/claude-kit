@@ -1,6 +1,6 @@
 # What the Arms Can Establish, and What a Fixture Owes
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-08-16 (stub); specced 2026-08-18
@@ -8,7 +8,11 @@ Created: 2026-08-16 (stub); specced 2026-08-18
 ## Related
 
 - `plans/take-stock-instrument_spec_v1.md` - S5 moved the compression-eats-the-spared-bar finding
-  into it, and S1's zero-cut result is one of the four measurements that stub reasons from.
+  into it. **No section of this effort supplied any of that stub's four measurements**; its fourth
+  came from the take-stock pass of 2026-08-17, a sibling pass in the same session and dated two days
+  before S1. An earlier draft of this block claimed S1's "zero-cut result" was that measurement,
+  which was temporally impossible and categorically wrong (S1 is an addition, never a compression),
+  and it was asserted from both sides. QA caught it.
 - `plans/enumerations-stop-short_spec_v1.md` - opened by S5; this effort's S4 produced its fifth
   instance, and S1 supplied one of its examined-and-rejected candidates.
 - `archive/writing-skills-ladder_spec_v1.md` - abandoned; its banked findings scoped this effort's
@@ -19,14 +23,27 @@ Created: 2026-08-16 (stub); specced 2026-08-18
 ## Goal
 
 When this is done, `writing-skills` states the one thing its own testing apparatus cannot
-establish, a reader building a fixture can check it against the five failure shapes the record
-actually holds, a kaizen pass verifies its own citations before it commits, and kit prose
-edited outside `executing-work` gets the same paired review kit prose edited inside it has had
-since 2026-07-24. The reason is measured rather than asserted: in one section of one effort a
+establish, a reader building a fixture is warned off the one failure shape whose evidence was
+airtight, and **corpus** prose edited outside `executing-work` takes a paired review before it is
+committed - corpus being the four globs `tools/accretion.js` measures, so `hooks/`, `tools/`,
+`settings/` and all of `docs/` sit outside it. **Two clauses here were corrected at QA round 5:**
+this Goal promised five failure shapes until S2 was rescoped to ship one, and it said "kit prose",
+which is broader than the corpus scope that shipped. Prose edited inside `executing-work` has had
+that review since 2026-07-24; prose edited outside it had not.
+**S3's half of this Goal did not ship**: "a kaizen pass verifies its own citations before it
+commits" was the original wording, its arm returned 0/3, and the did-not-reproduce branch means no
+rule was owed. Corrected here after QA found the promise standing. The reason is measured rather than asserted: in one section of one effort a
 paired review found five Criticals that thirteen passing arm reps had missed, and the recorded
 reason is that no rep ever saw the file the wording lands in. **Figures corrected 2026-08-18
 under review; see the count discrepancy below, which is why this Goal no longer quotes the
 effort's headline of sixteen.**
+
+**On the `writing-skills:NNN` citations below.** Everything in the evidence and design sections
+was written before S1 and S2 inserted eighteen lines into that file, so those locators point at
+what the design pass read rather than at HEAD. They are kept as-read deliberately, since the
+reasoning is about what the file said at the time. **Any claim about where the shipped work landed
+is a different thing and is checked against HEAD**; QA found two that were not, and both are
+corrected above and in `docs/README.md`.
 
 ## Why this exists
 
@@ -104,13 +121,15 @@ skill**, which is why it reads as friction twice.
   reads the target file because the fixture is a de-identified analogue, and it is that to keep
   the answer unreachable, not to isolate anything from the target file. **Contradiction-
   blindness is therefore a cost of a control chosen for a different purpose, not a property of
-  arms as such**, which is exactly the tradeoff open question 3 predicted and is why S1 lands
-  at `:234-235` rather than at `:160`.
+  arms as such**, which is exactly the tradeoff open question 3 predicted.
+  **Superseded on placement:** this paragraph concluded S1 should land beside the isomorph mandate.
+  Round 2 reversed that, and as shipped S1 sits at the end of the leak and isomorph block, before
+  `## Compression`. Chapter 1 and Approach carry the reasoning.
 
 ### The count, reconciled 2026-08-18 (the stub owed this and it changes the finding)
 
 **The count is three, not four, and the source contradicts itself.** "Four" traces to
-`archive/red-for-rule-changes_spec_v1.md:692-695`, which discloses "Four fixtures had design
+`archive/red-for-rule-changes_spec_v1.md:689-691`, which discloses "Four fixtures had design
 flaws ... Reps caught three of the four." The same document retracts one at `:628-631`:
 "Chapter 4 filed that as a fourth fixture confound. **That was wrong, and the final review is
 right to call it:** a rule that is a directive resting on a factual premise is the production
@@ -118,7 +137,7 @@ shape of `ee8be8f` itself, not a staging error." The "four" in the inbox note mo
 from `:636`, "this effort's judgment about its own fixtures has now been wrong four times",
 which is a different claim.
 
-**What the retraction exposes is worse than the miscount**, `:697-700`:
+**What the retraction exposes is worse than the miscount**, `:692-695`:
 
 > The worst of it was not a fixture. Arm 6's disconfirming rep was filed as a fixture confound
 > when it was pointing at `ee8be8f`'s real shape, and the next fixture was then built so that
@@ -181,7 +200,8 @@ already uses for `brainstorming` and `kit-adoption-pass`; or folding the mandate
 
 **Answered 2026-08-18, and neither of the three options won.** S1 needs no new home: the file
 already enumerates what GREEN leaves untested at `:158-160` and stops one item short, so the
-limit extends an existing list. S2 takes the `references/` option, which keeps the saturated
+limit extends an existing list. **Superseded: S2 took the `references/` option and it was
+abandoned; as shipped it is one paragraph inline, no reference file.** That option kept the saturated
 section at one line of growth. The `executing-work` option is rejected because the mandate's
 gap is on the `kaizen` path, and `executing-work` already has the rule.
 
@@ -274,7 +294,8 @@ loop meant to improve the kit spends a fifth of it on itself. The stub's figures
 
 **One measurement bears directly on S2's home: `writing-skills` has no `references/` directory
 at all.** Every other line it owns is in the one 519-line file, which is why `references/` is
-where the taxonomy goes and why S2's growth to `SKILL.md` is capped at a single pointer line.
+where a taxonomy would have gone, and why S2's growth to `SKILL.md` was to have been capped at a
+single pointer line. **Superseded: no taxonomy and no reference file shipped.** That reasoning line.
 That sizing was the argument for part 3, which is abandoned; it is not an argument for cutting
 anything, since none of those lines is unfounded, they are simply unnavigable.
 
@@ -298,11 +319,12 @@ enumeration. Section 1 and Chapter 1 carry the reasoning. An earlier reading put
 which is wrong because that list is scoped to in-prompt delivery and its recorded effect is a
 placement defect rather than a conflict with existing text.
 
-**S2 goes to `references/`, so the saturated section barely grows.** A catalogue of failure
-shapes with located instances is reference material, consulted when building a fixture rather
-than read every time. Three take-stock passes have tried to keep that section from growing; this
-is the first change that could have grown it substantially and does not. **As built it is six
-shapes, not five, and `SKILL.md` gains four lines rather than one** - see Section 2.
+**S2 goes to `references/`, so the saturated section barely grows. Superseded: it does not.** This
+paragraph reasoned that a catalogue of failure shapes belongs in reference material, consulted when
+building a fixture rather than read every time, and an interim revision recorded it "as built" at six
+shapes with a four-line pointer. **Neither shipped.** S2 was rescoped to a single inline paragraph of
+nine lines with no reference file, because the catalogue's locator design failed twice over and six
+of its heuristics were the author's inventions. Section 2 and Chapter 2 carry it.
 
 **S4 scopes by path, not by judgment.** A kaizen pass that has changed any file in
 `tools/accretion.js`'s globs dispatches one paired review over the whole prose diff before
@@ -388,10 +410,14 @@ stating a limit with nothing to do about it, and the file's own opening calls pr
 not change what an agent does under pressure decoration. The consequent that crosses no bar is
 an inference rule about reading a result, never a claim about what review catches.
 Acceptance criteria, all verifiable: the insertion is additive with zero deleted lines; the
-claim is isomorph-scoped and carries the standing-brief qualifier; no rep total appears; the
+claim is isomorph-scoped (**the standing-brief qualifier was withdrawn mid-section, see Chapter 1;
+demanding it here is stale**); no rep total appears; the
 incident is a dated clause in the file's own form and the date matches its Chapter; the
-paragraph ends in something a reader can act on; none of the five bars is crossed; the source's
-own verb ("passed", not "missed") is kept; `:166-169` and the "harder to notice" paragraph are
+paragraph ends in something a reader can act on; none of the bars above is crossed (**there are
+six; this criterion said five through four QA rounds, which is a further instance of the class S5
+routed to its own stub, in the plan doc that routed it**); the source's
+shipped text uses neither "passed" nor "missed", which serves what this
+criterion guarded (it barred "missed" as a review-generalization) without keeping the source's verb; `:166-169` and the "harder to notice" paragraph are
 re-read at implementation time and the new text checked against both.
 **A criterion that failed twice, kept as a warning:** round 2 required "every figure maps to a
 single sentence in `:686`". It was satisfied literally and still admitted a false rep count,
@@ -505,7 +531,10 @@ the next attempt has to start from it.
   "Disclosures the final review required" list at `:639-647`, whose four bullets do not mention a
   side-by-side contrast. The kept-because-a-review-compelled-it justification was built on that
   mislabel.
-- **Locator corrections, all re-verified:** `:697-700` to `:692-695`; `:628-631` to `:629-633`;
+- **Locator corrections, all re-verified:** `:697-700` to `:692-695`, **which QA later found
+  recorded here and never applied at the citation itself**, while the corrected number had been
+  attached to a different claim (the four-fixtures disclosure, which is `:689-691`). Both fixed
+  2026-08-20. A recorded correction is not an applied one; `:628-631` to `:629-633`;
   "the same Chapter" splits into `:636-637` (Ch5) and `:694-695` (Ch6); `:563` to `:563-565`.
 - **The counts section summarised while claiming to walk.** "Three, not the four its own
   disclosure claims" is 4 minus 1 taken off the summary sentence, and the walk turns up an
@@ -595,7 +624,9 @@ established is that it does not reproduce on a fresh rep, which is a fact about 
 
 ### 4. The review the kaizen path never had
 **Cut to the mandate by Daren after round 2**, from an 18-line paragraph carrying roughly twelve
-rules to a 7-line one. As built: the mandate stated once in `kaizen`'s main pass flow, referenced
+rules to a 13-line one carrying four. (**Recorded as "7-line" until QA walked it**; the cut
+paragraph was seven lines before round 3 restored the adversarial substitute, and the figure was
+never re-measured. Same class as every other unwalked count in this effort.) As built: the mandate stated once in `kaizen`'s main pass flow, referenced
 from step 4's take-stock ordering sentence, from step 2's apply-now bullet, and from Phase 2's
 ordered sequence, so all **three** prose-editing paths reach it. Dispatch mechanics are pointed at
 rather than restated. **The `executing-work` edit was dropped entirely after round 3**: its premise
@@ -610,11 +641,12 @@ example is cut outright: round 2 showed it misstates its own incident, since the
 by the first commit and cured by the second, and that the case is not an instance of the batching
 rule it was attached to, because the second edit did not exist at dispatch time.
 
-**Deviation, and it is the placement only.** The spec put the carve-out reading in `kaizen`. It is
-in `executing-work` instead, where the carve-out is defined, with `kaizen` pointing at it. A
-planned prose Section of Work hits the identical question, and stating the reading only in `kaizen`
-would leave `executing-work`'s own readers without it while restating a rule far from where it
-lives. The mandate and its scope are unchanged, so this is not a design-intent change.
+**Deviation, twice, and the second reversed the first.** The reading moved from `kaizen` to
+`executing-work`, on the reasoning that a planned prose section hits the identical question.
+**Round 3 reversed that and the edit was dropped entirely**, its premise being false: `finishing-work`
+step 3 dispatches the adversarial reviewer alone, so the trivial carve-out has never had a blind
+backstop for any section. As shipped the reading lives only in `kaizen`, where the spec first put it,
+and `executing-work/SKILL.md` is byte-identical to `8c0e4ea` across the whole effort.
 
 **Scoped by path, and the path is named rather than pointed at.** The clause names the four globs
 as well as `tools/accretion.js`, because a path test a reader cannot evaluate is not a path test,
@@ -628,7 +660,7 @@ was committing throughout. **No per-round Critical count is stated.** Round 1 fl
 against Chapter 1; hedging it to "at least one" left it false the same way, since Chapter 1 records
 3 valid rounds and 2 Criticals. Dropped rather than re-hedged.
 
-**Claims verified before the cut, most of which no longer ship.** The 7-line clause carries the
+**Claims verified before the cut, most of which no longer ship.** The shipped clause carries the
 globs and no dates or counts at all, so this list is a record of what was checked, not of what is
 in the text: the accretion globs (from
 the tool's own output), the 2026-07-24 date for the paired review landing (`b9f7ae1`), the
@@ -637,9 +669,9 @@ error; S2 rounds 1 and 2), and every-round-returned-Criticals (verified at round
 2 adversarial returned none, which is why the claim is stated per round rather than per reviewer).
 **No count appears that was not walked**, per Chapter 1.
 Acceptance criteria, all verifiable: the clause states a path predicate and not a judgment; one
-dispatch per pass rather than per clause; the blind half's input contract is preserved by
-reference rather than restated; the carve-out reading is in `executing-work` and reachable from
-`kaizen`; every figure in the shipped prose maps to something walked; the Chapter quotes this
+dispatch is bound per corpus commit rather than per clause, per the correction recorded in
+Approach; the blind half's input contract is preserved by reference rather than restated; the
+carve-out reading is stated once, in `kaizen`, and `executing-work` is untouched; every figure in the shipped prose maps to something walked; the Chapter quotes this
 section's own review findings as its admission evidence.
 Execution mode: main.
 Tests: deferred, not impossible. The followability probe ran 3/3 on the pre-cut wording; a RED on
@@ -742,20 +774,26 @@ Route `kaizen-stop-start-continue:803` ("compression eats the evidence the spare
 on") into `plans/take-stock-instrument_spec_v1.md`, which is now its natural home: that stub is
 about whether take-stock's instrument is aimed right, and this is an instrument limit. Finding 3
 warned it must not fall through a third time.
-Then open a Proposed stub for the defect class this effort found a fourth instance of:
-**kit enumerations stop one short, and the missing item is the newest or the largest.** Located
-instances: `kaizen-stop-start-continue:793` (three dispositions of four),
-`kaizen/SKILL.md` step 4 before `2408979` (spared and unverdicted, missing declined),
-`writing-skills:296` before `60addb9` (one exit of two), `writing-skills:296` before `60addb9`, and `kaizen`'s apply-path sequence in S4.
-**`writing-skills:158-160` was examined and is not an instance**: its list is scoped by "that
-way" to in-prompt delivery and is complete for what it enumerates, so S1 does not touch it and
-S5 must not cite it. `executing-work:79`'s recurrence rule says two instances means the workflow
+Then open a Proposed stub for the defect class this effort found a fifth instance of:
+**kit enumerations stop one short, and the missing item is the newest.** Located instances, walked
+rather than tallied after the review found the list itself one short:
+`archive/kaizen-stop-start-continue_spec_v1.md:793` (three dispositions of four); `kaizen`'s gather
+sub-step before `e69eb9e`, recorded at `docs/take-stock.md`'s 2026-08-16 entry (by phrase, per S5's criterion: that file grows from the top), **the only one to ship and be hit
+live**; `kaizen/SKILL.md:127` at `2408979^` (spared and unverdicted, missing declined);
+`writing-skills:296` at `60addb9^` (one exit of two); and `kaizen`'s apply-path sequence in S4.
+**Three candidates were examined and rejected**, which is the guard: `writing-skills:168`, whose
+list is scoped by "that way" to in-prompt delivery and is complete; `writing-skills:489`, where the
+missing member was not the newest; and S4's round-3 "above" pointer, a direction error with no
+missing member at all. `executing-work:79`'s recurrence rule says two instances means the workflow
 generates the bug; three means it needs a name and an owner.
 **This section's entire changeset is under `docs/`, so it takes the adversarial review alone**
 per `executing-work:77`, which states that a docs-only section leaves a blind reviewer nothing
 to read. Recorded here rather than derived at run time, which is what that clause asks for.
 Acceptance criteria: the routing lands in the target stub with its quotation; the new stub is
-registered in `docs/README.md` per `curating-docs`; all four instances carry a file:line; the
+registered in `docs/README.md` per `curating-docs`; each instance is cited in a form its target
+supports - one archive locator, two commit-pinned paths, one live plan doc by name, and
+`docs/take-stock.md` by phrase because that file grows from the top and a bare line number in it
+rots on the next entry; the
 Chapter says the section was docs-only.
 Execution mode: main.
 Tests: none. Routing and records.
@@ -811,10 +849,10 @@ isolation). What remains:
 1. **Does S3's discipline belong in `executing-work` too?** Chapters make citation-bearing
    claims and get no such check. Deferred deliberately: S3 should be armed once, in its
    smallest scope, before anyone widens it.
-2. **One dispatch per pass, or per prose commit?** A pass that lands two prose commits in
-   sequence (as 2026-08-18 did, at `2408979` then `60addb9`) would review only once under the
-   current wording, and the second commit was a real defect found after the first. Settle this
-   in S4 against that specific case.
+2. **ANSWERED: per corpus commit.** The shipped clause binds "before it is committed", which
+   covers the `2408979`/`60addb9` case that opened this question, since the second edit did not
+   exist at the first dispatch and a per-pass reading would have shipped it unreviewed. Approach
+   and the S4 criteria are corrected to match the shipped text rather than the reverse.
 3. **ANSWERED. The pair stands, and the premise for doubting it was wrong.** `blind-reviewer.md`
    addresses prose diffs directly and handles the no-commands case, both checkable on disk and
    neither checked when this question was written. Round 3 then found the harder half: the
@@ -1038,7 +1076,12 @@ been probed. A later reader should not read this Chapter as an arms bar paid.
 
 **Decisions / Surprises.**
 
-- **Cut to the mandate after round 2, from eighteen lines carrying about twelve rules to seven.**
+- **Cut to the mandate after round 2, from eighteen lines carrying about twelve rules to thirteen
+  carrying four.** The Chapter and commit message for S4 both said "seven", which was the count
+  before round 3 restored the adversarial substitute clause, and neither was re-measured. QA caught
+  it. That is an unwalked figure in the section whose own criterion demands every figure be walked,
+  and the commit message at `a9e7d7c` carries it uncorrected since a message cannot be amended
+  after pushing.
   Across two rounds every finding of substance landed on the mechanics and none on the mandate. The
   cut removed the example, the dispatch mechanics, the scope sentence and the coverage line, each
   because a reviewer had shown it wrong.
@@ -1089,7 +1132,7 @@ Commit Model: Commit-and-Push
 
 **The stub's inventory was wrong, and the way it was wrong is this effort's signature failure.** It
 claimed four instances, taken from the tally in this plan rather than walked. The review found a
-fifth already recorded in `docs/take-stock.md:294` and named in `2408979`'s own commit message. That
+fifth already recorded in `docs/take-stock.md`'s 2026-08-16 entry (by phrase, per S5's criterion: that file grows from the top) and named in `2408979`'s own commit message. That
 omitted instance is the only one of the five to **ship** and be hit live, while one I did count was a
 near-miss caught inside its own commit. Importing a count instead of walking it is the failure
 Chapters 1, 2 and 4 record five times over, committed in the one document whose entire substance is
@@ -1120,6 +1163,11 @@ conditions the backlog entry carries. Both are now annotated and the conditions 
   the stub contradicted its own count in four places. Both are counting failures of the same family.
 - **`## Related` blocks were missing in every direction** and are now present in all three plans,
   per `curating-docs`' reason that a one-way link is findable only from the end that already knows.
+  **Amended after QA:** the first version of those blocks left one link one-way after all, and
+  asserted from both sides that S1 supplied a measurement of the take-stock-instrument stub, which
+  is temporally impossible and categorically wrong. Both fixed. Declining to re-review the
+  Related-block rewrite, recorded below as a deliberate choice, is what let two fresh factual errors
+  into the close-out; QA caught them and the choice was wrong.
 - **This plan's own located-instance list was corrupt** ("and and `writing-skills:296`"), left by an
   earlier edit of mine and fixed here per `executing-work` step 5.
 - **No re-review, deliberately.** The rewrite is substantial, but `finishing-work` runs a
@@ -1134,3 +1182,63 @@ provenance, four internal count contradictions, index/file mismatch, an unmet fi
 a back-dated routing, missing `## Related`) - all addressed. Minors: all addressed except the
 paraphrase-inside-quotation-marks, which was resolved by dropping the quotation entirely.
 Next: finishing-work
+
+### Chapter 6 - 2026-08-20, close-out
+Status: **Complete.**
+Metrics, walked: **34 subagent dispatches** (S1 8, S2 4, S3 3 arm reps, S4 6 reviewers + 6 probe
+reps, S5 1, finishing 5 QA + 1 adversarial). **14 paired review rounds and 1 adversarial-only.**
+5 QA runs. 1 arm (0/3) and 1 probe (3/3 on superseded wording). 4 advisor consultations, all
+answered. 0 NEEDS_CONTEXT, 0 escalations.
+Commit Model: Commit-and-Push
+
+**What shipped.** `writing-skills/SKILL.md` 519 to 537 lines (+18, S1 and S2, both pure
+insertions). `kaizen/SKILL.md` 196 to 212 (+19/-3). `executing-work/SKILL.md` byte-identical to
+`8c0e4ea`. Two `docs/plans/` stubs opened, one finding rerouted with its closure conditions, one
+backlog item added, the index refreshed. **34 lines of shipped prose against 34 dispatches.**
+
+**Review outcomes.** Every one of the 15 rounds returned findings; none ever returned APPROVED.
+Final adversarial: **APPROVED_WITH_CONCERNS**, stating that the shipped corpus is "fit to ship
+as-is" and that every remaining defect sat in `docs/`. Its four Majors were fixed before this
+Chapter: a Goal sentence my own QA fix had severed, a deferred arms debt living only in a doc about
+to be archived, three sibling paragraphs still asserting S2's abandoned design, and a locator in
+`docs/README.md` that S2's own insertion had rotted.
+
+**Drift adjudications: none, because the curator was skipped** under finishing-work's clause for an
+effort whose deliverable is itself the prose - spec, as-built and docs are one artifact here. The
+security review was skipped under the all-prose clause. Both skips were put to the final reviewer
+rather than self-certified, and both were judged justified; it also named the cost, that two
+`docs/README.md` defects were curator-class misses.
+
+**The honest accounting.**
+
+- **One thing here was clearly worth doing.** `kaizen`'s apply path had no review step at all, so
+  the path that edits most kit prose was ungated. It is gated now, reachable from all three
+  prose-editing routes. That was worth doing at a fraction of this cost.
+- **Two of five sections underdelivered, on the record.** S2 shipped one sixth of its scope after
+  its design failed twice over. S3 shipped no rule at all, its arm having returned 0/3.
+- **The effort made worse the ratio the session opened by worrying about.** The take-stock finding
+  that started this session was that the kit spends about a fifth of itself on itself. Across the
+  whole session `writing-skills` plus `kaizen` went from 18.4% of the measured corpus to roughly
+  19.5%.
+- **The plan doc is 1,184 lines against 34 shipped, and its size became the defect generator.**
+  Twenty-one QA findings and four final-review Majors landed in it and never once in the shipped
+  files. Each repair round introduced one or two fresh contradictions of the same class, which is an
+  asymptote rather than a convergence. **QA was stopped at five runs by decision**, with the payload
+  verified clean twice and the residual recorded, rather than iterating on a record no reader will
+  examine as closely as five QA passes just did.
+- **The most transferable output is not shipped prose.** A paragraph regenerates the same defect for
+  as long as two parts of its spec disagree, and rewording never reaches it. That cost four review
+  rounds in S1, two in S4, and appeared four more times in this document, including twice created by
+  fixing one occurrence and not its twin. Nothing in the kit names it. It is in the kaizen inbox.
+- **The second most transferable is a gap in how this kit reviews itself.** Fourteen paired rounds
+  read the prose carefully and caught real defects in it. Not one checked whether the record's claims
+  about the work matched the work. QA found nine such on its first run. Also in the inbox.
+- **My own error count, since the record should carry it.** Roughly twenty-five, caught by reviewers,
+  by QA, by the advisor, or by re-measuring: five imported counts refuted by their own sources, four
+  rotted or wrong locators (two created by fixes for locator rot), three unverified structural claims
+  that dissolved on reading, a staging error that voided a review round, an answer key left in a
+  probe fixture's own directory, a false "no test suite" repeated across eight dispatches, and a
+  premise about the finishing-work backstop I had personally verified two rounds earlier and then
+  contradicted.
+- **Was it worth it.** On the shipped output, no. On the record and the two findings above, arguably
+  yes, and that is the most favourable honest reading available.
