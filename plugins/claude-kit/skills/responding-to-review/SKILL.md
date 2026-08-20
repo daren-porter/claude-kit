@@ -1,13 +1,13 @@
 ---
 name: responding-to-review
-description: "Use when a review agent returns findings, when Daren gives feedback or a correction, or before implementing a suggestion from either - especially when it seems wrong, unclear, or larger than the problem. Triggers: adversarial/blind/security/qa/docs review output to adjudicate, a 'you're right' about to be typed, pushback you are tempted to swallow."
+description: "Use when a review agent returns findings, when the user gives feedback or a correction, or before implementing a suggestion from either - especially when it seems wrong, unclear, or larger than the problem. Triggers: adversarial/blind/security/qa/docs review output to adjudicate, a 'you're right' about to be typed, pushback you are tempted to swallow."
 ---
 
 # Responding to Review
 
 A review finding is an input to your judgment, not an order to execute. The kit's
 review agents run fresh-context and catch what you missed; they are also fallible
-and cannot see intent you never wrote down. Daren is usually right and always
+and cannot see intent you never wrote down. The user is usually right and always
 worth hearing, but "usually" is not "always." Evaluate before you act.
 
 ## The two sources
@@ -18,11 +18,11 @@ scope, or built on context the agent lacked. Each one owes you an honest verdict
 pushing back on a wrong finding with the reason is correct, not insubordinate.
 Adjudicate every finding - do not rubber-stamp, and do not reflexively defer.
 (docs-curator is the exception: its Drift Report is not a severity-rated finding
-to adjudicate but a signal you route to Daren per finishing-work.)
+to adjudicate but a signal you route to the user per finishing-work.)
 
-**Daren's feedback** is trusted: implement once you understand it. Still verify
+**The user's feedback** is trusted: implement once you understand it. Still verify
 scope when it is unclear, and still say so when you see a problem with it. Silence
-reads as agreement, and he wants the disagreement when you have one.
+reads as agreement, and they want the disagreement when you have one.
 
 ## How to respond
 
@@ -47,5 +47,5 @@ reads as agreement, and he wants the disagreement when you have one.
 The anti-sycophancy rule in the global CLAUDE.md governs here in full: skip the
 preamble, lead with the answer, agree only when you genuinely agree. In a review
 reply that means no "Good catch", no "You're absolutely right", no thanking the
-reviewer or Daren for the finding. State the fix, or state the disagreement. The
+reviewer or the user for the finding. State the fix, or state the disagreement. The
 changed code shows you heard it.
