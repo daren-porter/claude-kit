@@ -296,7 +296,11 @@ shapes, not five, and `SKILL.md` gains four lines rather than one** - see Sectio
 **S4 scopes by path, not by judgment.** A kaizen pass that has changed any file in
 `tools/accretion.js`'s globs dispatches one paired review over the whole prose diff before
 committing. Path membership is observable, needs no predicate an author can argue with, and
-costs one dispatch per pass rather than one per clause. The tempting alternative, scoping to
+costs one dispatch per pass rather than one per clause. **Superseded 2026-08-19: the shipped
+clause is per-commit** ("before it is committed ... no corpus commit lands until its Criticals are
+resolved"), which is the better answer because it covers the `2408979`/`60addb9` case round 1
+raised, where the second prose edit did not exist at the first dispatch. Open Question 2 and the
+acceptance criterion below are corrected to match the shipped text rather than the reverse. The tempting alternative, scoping to
 "changes that owe arms", is rejected on this session's own evidence: the changes that produced
 errors on 2026-08-18 were a fact correction and two `docs/` entries, none of which owes arms.
 
@@ -579,22 +583,148 @@ stock entries and commit messages, several caught by reviewers rather than by me
 established is that it does not reproduce on a fresh rep, which is a fact about the arm.
 
 ### 4. The review the kaizen path never had
-Add to `kaizen`'s apply path: a pass that has changed any file matched by `tools/accretion.js`'s
-globs dispatches the paired review (`adversarial-reviewer` and `blind-reviewer`) over the whole
-prose diff before committing, one dispatch per pass. Give the adversarial half the brief or the
-take-stock entry as its intent story; give the blind half the diff and nothing else, per
-`executing-work:77`'s existing contract.
-**Clarify the trivial carve-out for prose in the same section**: `executing-work:77` licenses
-skipping the pair for "a one-line fix with no logic change", and for prose the analogue of a
-logic change is a rule change, so a one-clause edit that adds or alters a rule is not trivial.
-Left unread, that carve-out licenses exactly the class of change those Criticals were made of.
-**This section cannot be armed and must not pretend otherwise.** Its admission evidence is this
-effort's own paired review of this section, quoted in the Chapter.
-Acceptance criteria: the dispatch clause names the path predicate rather than a judgment; the
-carve-out reading is stated; the Chapter quotes the reviewers' findings on this section as the
-admission evidence; `kaizen`'s apply path reads correctly end to end after the insertion.
+**Cut to the mandate by Daren after round 2**, from an 18-line paragraph carrying roughly twelve
+rules to a 7-line one. As built: the mandate stated once in `kaizen`'s main pass flow, referenced
+from step 4's take-stock ordering sentence, from step 2's apply-now bullet, and from Phase 2's
+ordered sequence, so all **three** prose-editing paths reach it. Dispatch mechanics are pointed at
+rather than restated. **The `executing-work` edit was dropped entirely after round 3**: its premise
+was false, since finishing-work step 3 dispatches the adversarial reviewer alone and the trivial
+carve-out has never had a blind backstop for any section. The exclusion is now stated once, in
+`kaizen`, where the kaizen reader is.
+
+**Why cut rather than patched.** Across two rounds every finding of substance landed on the
+mechanics and none on the mandate, which no reviewer challenged. Round 2 measured the paragraph at
+roughly twelve rules in one wall and named that as where compliance degrades. The 2026-08-18
+example is cut outright: round 2 showed it misstates its own incident, since the defect was created
+by the first commit and cured by the second, and that the case is not an instance of the batching
+rule it was attached to, because the second edit did not exist at dispatch time.
+
+**Deviation, and it is the placement only.** The spec put the carve-out reading in `kaizen`. It is
+in `executing-work` instead, where the carve-out is defined, with `kaizen` pointing at it. A
+planned prose Section of Work hits the identical question, and stating the reading only in `kaizen`
+would leave `executing-work`'s own readers without it while restating a rule far from where it
+lives. The mandate and its scope are unchanged, so this is not a design-intent change.
+
+**Scoped by path, and the path is named rather than pointed at.** The clause names the four globs
+as well as `tools/accretion.js`, because a path test a reader cannot evaluate is not a path test,
+and S2's round 1 established that a reference to something outside the shipped payload dangles.
+
+**This section cannot be armed and its evidence is its own review.** An arm cannot test a claim
+about what arms miss. The admission evidence is therefore this effort's paired review of this
+section, quoted in Chapter 4, plus the effort's own measured record: no round of any prose section in this
+effort came back APPROVED, against one arm that ran and came back clean on the failure the effort
+was committing throughout. **No per-round Critical count is stated.** Round 1 flagged one as false
+against Chapter 1; hedging it to "at least one" left it false the same way, since Chapter 1 records
+3 valid rounds and 2 Criticals. Dropped rather than re-hedged.
+
+**Claims verified before the cut, most of which no longer ship.** The 7-line clause carries the
+globs and no dates or counts at all, so this list is a record of what was checked, not of what is
+in the text: the accretion globs (from
+the tool's own output), the 2026-07-24 date for the paired review landing (`b9f7ae1`), the
+five-rounds count (S1 rounds 1, 2 and 4, round 3 having been invalidated by an author staging
+error; S2 rounds 1 and 2), and every-round-returned-Criticals (verified at round level; S2's round
+2 adversarial returned none, which is why the claim is stated per round rather than per reviewer).
+**No count appears that was not walked**, per Chapter 1.
+Acceptance criteria, all verifiable: the clause states a path predicate and not a judgment; one
+dispatch per pass rather than per clause; the blind half's input contract is preserved by
+reference rather than restated; the carve-out reading is in `executing-work` and reachable from
+`kaizen`; every figure in the shipped prose maps to something walked; the Chapter quotes this
+section's own review findings as its admission evidence.
 Execution mode: main.
-Tests: none possible; see above.
+Tests: deferred, not impossible. The followability probe ran 3/3 on the pre-cut wording; a RED on
+the mandate is stageable in S3's shape and was not run. The earlier "none possible" was false and
+is withdrawn, which round 1 raised and round 2 found still standing in this very field while the
+section body withdrew it eighty lines below. That is the two-parts-disagree pattern Chapter 1 names
+as root cause, third instance in this effort.
+
+**Round 1 outcome: 4 Criticals from the adversarial review and 2 from the blind, recorded before
+any rework because one of them changes this section's bill.**
+
+- **The arms bar is owed and this spec said it was impossible.** "Tests: none possible" is false.
+  `writing-skills` says of the followability probe that "it does not have to stage the failure, so
+  the could-not-be-constructed branch **can always run this**", three reps minimum. And a RED for
+  the *mandate* is stageable in S3's own shape: a de-identified kaizen-pass fixture that changes a
+  corpus file under the current wording, read for whether the rep dispatches a review before
+  committing. **What cannot be armed is the justification, not the mandate** - precisely the split
+  Finding 1 drew and this section then abandoned. `2408979` named the same gap honestly as
+  "unarmed, and that is a gap rather than a judgment call"; claiming impossibility is worse than
+  claiming a debt.
+- **"Every round returned Criticals" is false against Chapter 1, which is its own source.** Chapter
+  1 records 3 valid rounds and states 2 Criticals, so at least one round returned none on that
+  record, and "returned Criticals" asserts plural per round besides. The spec hedged correctly
+  ("at least one Critical") and the shipped prose was stronger than its own spec. Third instance
+  in this effort of a count taken from a summary the detail refutes, and this time the summary was
+  mine.
+- **The `executing-work` insertion re-grants the license it was written to close.** Splitting the
+  sentence moved the antecedent of "it", so the tail now reassures a reader that finishing-work
+  catches the dangerous class. Two independent problems: `finishing-work` step 3 is adversarial
+  alone, so no paired pass exists downstream; and a kaizen pass never runs `finishing-work` at all,
+  while this section's own pointer sends kaizen readers there.
+- **Open Question 2 was assigned to this section and is unsettled, with its named case reproduced.**
+  The spec said to settle one-dispatch-per-pass against `2408979` then `60addb9`, a single pass with
+  two prose commits where the second carried a real defect found after the first. The shipped
+  "before it commits" leaves commit two unreviewed, which is that case verbatim.
+- **The clean arm is evidence about a different rule, and shipping it recreates the loophole this
+  spec refused.** Section 3 recorded that the finding "would add a loophole to a file built to
+  close them" and sanctioned transferring the evidence here; the transferred form is the same
+  loophole in a different file, read by the same agents. The logical point needs no arm result.
+- **Also: the globs are mis-rooted** (`plugins/claude-kit/` prefix missing, so the predicate
+  matches nothing from the repo root), **the adversarial half's input contract is not satisfied** (a
+  brief and a take-stock entry carry no Goal, Approach, section or Out of Scope, so that reviewer
+  falls into its missing-spec branch and disclaims the lens kaizen is paying for), **the mandate
+  has no findings-disposition**, **the in-prose round count is self-rotting**, and **the apply
+  path's own ordered sentence still lists no review step**, which is the second instance in this
+  file of the defect S5 names.
+
+**Open Question 3 is answered and its premise was wrong.** The pair stands. The spec claimed the
+blind contract "assumes build and test commands prose changes do not have"; `blind-reviewer.md`
+addresses prose diffs directly and handles the no-commands case explicitly. The premise was
+checkable on disk and was not checked.
+
+**How Chapter 4 must read.** The review found in-file contradictions, a false count, a mis-rooted
+predicate and a broken input contract, none of which an arm sees. It did **not** measure whether an
+agent reading the clause dispatches the review. Chapter 4 must not read as though the arms bar was
+discharged; on this record it was deferred.
+
+**Followability probe: 3 of 3 on cycle 2, after cycle 1 was voided by an author staging error.**
+Registration for both cycles written before any rep ran, cycle 2's deliberately outside the reps'
+working directory.
+
+**Cycle 1 was contaminated by me, in the exact shape `writing-skills` documents most thoroughly.**
+The pre-registration, carrying the four graded points and the correct answer to each, was written
+into the very directory the reps were told to work in, while its own text claimed "nothing about
+the probe's grading exists on any disk a rep can read". Rep 3 ran `ls`, read it, reported it rather
+than using it, and recommended its own exclusion. Reps 1 and 2 used zero tools so could not have
+seen it, but both had seen a superseded draft of the wording and so could not be reused. **The
+answer was on the disk I pointed the rep at**, which is the failure the isomorph rule exists to
+prevent and which this effort had already quoted three times.
+
+**Cycle 1 still produced the defect that mattered.** Its three reps split on a question the clause
+never answered: reps 1 and 2 scoped the review to corpus files, rep 3 to the whole changeset. Both
+readings were defensible because the clause said what triggered a review and never what it
+covered. No rep had to ask what the wording meant; they simply answered differently, which is a
+followability defect the four pre-registered points did not test for. Two further refinements came
+from a passing rep rather than a reviewer: that non-corpus changes must not be laundered into the
+reviewed set by sharing a commit, and that prose answering no finding is a new state.
+
+**Cycle 2 tested five points, the fifth being the fix.** All three reps identified the corpus set
+correctly under the prefix, held both edits behind one dispatch, elected the no-brief branch and
+wrote the intent down before dispatch, held the commit behind the Criticals, and scoped the review
+to corpus prose with the coverage line in the message. Rep 2 declined to let a "barely prose"
+judgment shrink the path test. Rep 3 weighed the middle substitute and elected the third with a
+stated reason. Rep 1 swept sibling corpus files before freezing. **A third rep-originated
+refinement is recorded and not applied**: a completion check before freezing, since dispatching on
+a state you then add to is the same failure in a different costume.
+
+**What the probe does and does not establish, stated so a later reader cannot misread it.**
+**It measures the PRE-CUT clause, not the shipped one.** Three of its five graded points (one
+dispatch for several edits, the no-brief branch, the coverage line) test wording the cut removed,
+so only two survive: the corpus path test under the prefix, and the commit bound. The persisted
+clause has never been probed. Round 2 found this same two-parts-disagree pattern in the `Tests:`
+field while the body was right; fixing the field and not the body flipped it, which is the fourth
+instance in this effort and the second created by repairing one occurrence and not its twin. It is **not** a RED on the mandate, and a RED is
+stageable in S3's shape. **The arms debt on the mandate is deferred, not discharged.** This
+section's earlier claim of "Tests: none possible" was false and is withdrawn.
 
 ### 5. Route the third finding, and name the recurring defect
 Route `kaizen-stop-start-continue:803` ("compression eats the evidence the spared bar depends
@@ -674,7 +804,12 @@ isolation). What remains:
    sequence (as 2026-08-18 did, at `2408979` then `60addb9`) would review only once under the
    current wording, and the second commit was a real defect found after the first. Settle this
    in S4 against that specific case.
-3. **Does the paired review earn its second half here? This is a live fork, not a question to
+3. **ANSWERED. The pair stands, and the premise for doubting it was wrong.** `blind-reviewer.md`
+   addresses prose diffs directly and handles the no-commands case, both checkable on disk and
+   neither checked when this question was written. Round 3 then found the harder half: the
+   *adversarial* side is what a pass cannot supply inputs for, and the shipped clause now names
+   the substitute. Original text kept below.
+   **Does the paired review earn its second half here? This was recorded as a live fork, not a question to
    discover late.** The blind reviewer's contract (`executing-work:77`) assumes build and test
    commands prose changes do not have. The argument for keeping it is that reading the file cold
    is precisely the capability the arms lack, which is this effort's whole subject. **The
@@ -864,3 +999,72 @@ defect beyond the brief's scope. Inbox writes: 0 across all three.
 Review Findings: none. Nothing was shipped to review, since the arm closed the section before any
 wording was persisted.
 Next: 4. The review the kaizen path never had
+
+### Chapter 4 - 2026-08-20
+Completed: 4. The review the kaizen path never had
+Implemented By: main session
+Metrics: 3 review rounds, all paired, all CHANGES_REQUIRED (6 Criticals, then 5, then 3); 6
+reviewer dispatches; 1 followability probe over 2 cycles, cycle 1 voided by an author staging
+error, cycle 2 3/3; 0 NEEDS_CONTEXT; 0 escalations; advisor on, 0 consultations this section.
+Commit Model: Commit-and-Push
+
+**This section's admission evidence is its own reviews, and they are the point rather than an
+overhead.** It cannot be armed on its central claim, since an arm cannot test what arms miss. What
+three rounds found, none of which an arm sees: a sentence whose antecedent moved when an insertion
+split it, so the tail re-granted the licence the insertion closed; a per-round Critical count false
+against this plan's own Chapter, twice, the second time after hedging; a path predicate mis-rooted
+so it matched nothing from the repo root; a gate unreachable from the take-stock path that produced
+the incident it cited; an example that misstated its own incident and did not instantiate the rule
+it justified; and a premise about the finishing-work backstop that is false because that pass
+dispatches the adversarial reviewer alone. **Closed by decision after round 3, not by a passing
+review.**
+
+**The arms debt is deferred, not discharged, and the earlier claim of impossibility was false.**
+"Tests: none possible" was wrong: the followability probe can always run, and a RED on the mandate
+is stageable in S3's shape. The probe ran and passed 3/3 - **on the pre-cut wording**. Three of its
+five graded points test text the cut removed, so only two survive and the shipped clause has never
+been probed. A later reader should not read this Chapter as an arms bar paid.
+
+**Decisions / Surprises.**
+
+- **Cut to the mandate after round 2, from eighteen lines carrying about twelve rules to seven.**
+  Across two rounds every finding of substance landed on the mechanics and none on the mandate. The
+  cut removed the example, the dispatch mechanics, the scope sentence and the coverage line, each
+  because a reviewer had shown it wrong.
+- **The cut removed a fix along with the wall, and that is the transferable lesson.** Round 1 closed
+  the problem that the adversarial half needs a `docs/plans/` spec a pass cannot supply; the cut
+  deleted the mechanics *including* that fix, and round 3 found the Major reopened. Subtraction is
+  safer than addition only if you diff what you remove against what earlier rounds closed. It is
+  restored as one clause naming the three substitutes, and now states the failure mode explicitly:
+  without one, the pair collapses to two blind reads.
+- **I re-committed an error I had personally verified two rounds earlier.** I checked, and reported,
+  that finishing-work step 3 dispatches the adversarial reviewer alone. I then wrote an
+  `executing-work` sentence whose load-bearing premise was that the backstop covers the pair. That
+  is the accumulated-belief failure S3's arm could not reproduce, on a fact I had already read off
+  the file myself.
+- **The `executing-work` edit was dropped entirely rather than repaired.** Its premise was false and
+  the trivial carve-out has never had a blind backstop for any section. Stating the exclusion once,
+  in `kaizen`, where the kaizen reader is, closed a Critical and two Majors about divergent cross-
+  file scopes at once.
+- **Reachability took three pointers, not two.** The mandate is stated once and referenced from the
+  take-stock ordering sentence, the apply-now bullet, and Phase 2's sequence. Round 2 found it
+  unreachable from take-stock; round 3 found the apply-now path, which finding 1a calls the common
+  case, still had none. A directional error compounded it: the step 4 pointer said "above" for a
+  mandate five lines below.
+- **Also false, and repeated in roughly eight dispatches:** that this repo has no test suite. It has
+  twelve test files under `test/`. Harmless here, since a JS suite cannot exercise markdown, and
+  caught only when a reviewer checked. I never ran `ls test/`.
+- **The two-parts-disagree pattern appeared twice more, once created by fixing one occurrence and
+  not its twin.** Round 2 found the `Tests:` field asserting an impossibility the body withdrew;
+  repairing the field flipped it, and round 3 found the body claiming a probe measured the
+  persisted clause. Third and fourth instances in this effort, in the plan that names the pattern
+  as root cause.
+
+Review Findings: 14 Criticals across three rounds, all addressed or withdrawn. Majors: the
+adversarial input contract, the mis-rooted globs, the pre-judged findings scope, the missing
+findings disposition, the self-rotting count, the unreachable apply-now path, three conflicting
+spec positions on per-commit versus per-pass, and two Open Questions answered in the body and open
+in the record - all addressed. Recorded and not acted on: the predicate excludes `hooks/`, `tools/`
+and `settings/`, so a pass changing executable kit code still commits unreviewed. That is a real
+gap, out of scope for a prose mandate reviewed by two prose reviewers, and it wants its own effort.
+Next: 5. Route the third finding, and name the recurring defect

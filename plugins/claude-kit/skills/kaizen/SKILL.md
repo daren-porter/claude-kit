@@ -84,7 +84,8 @@ has changed since the last entry.
 2. **Reflect and triage.** For each item, with Daren: is it real, and what is the
    smallest change that fixes it? Sort into:
    - **Apply now:** small and clear. Becomes a brief (or is fixed directly if you
-     are already in the kit repo).
+     are already in the kit repo). Either way, corpus prose takes the paired review
+     below before it is committed.
    - **Promote:** large enough to deserve its own design. Brainstorm it into a
      `docs/plans/` spec instead of a brief. If the design is not happening in this
      pass, still capture it now as a **Proposed**-status stub spec (the friction,
@@ -148,9 +149,24 @@ has changed since the last entry.
    pass read.** `take-stock-nudge.js` measures from the marker to HEAD, so naming the
    sha you read makes the nudge count the pass's own edits against it, forever, in
    exactly the case the mechanism exists for. It forces an ordering: land the prose
-   changes first, then record the entry in a later commit touching no corpus file.
+   changes first, taking the paired review below before that commit, then record the entry in a
+   later commit touching no corpus file.
    `notes.md` holds untriaged friction; this file holds what a take-stock decided
    about the kit's own prose.
+
+**Corpus prose takes the paired review before it is committed, and no
+corpus commit lands until its Criticals are resolved.** Corpus is a path
+test rather than a judgment: the four globs `tools/accretion.js` measures,
+`skills/*/SKILL.md`, `skills/*/references/*.md`, `agents/*.md` and
+`assets/CLAUDE.md`, all of them under `plugins/claude-kit/`.
+`executing-work`'s review step owns what each reviewer is handed, and its
+trivial carve-out does not reach this path. **The adversarial half expects
+a `docs/plans/` spec a pass does not have**, so give it the brief, the
+drafted take-stock entry, or an intent note written before dispatch, and
+say to read that in place of a Goal and Approach; without one it reviews
+quality only and the pair collapses to two blind reads. A pass has no
+Chapter, so the findings and the justification for any Major left unfixed
+go in the commit message, and the commit is not made until it carries them.
 
 **Capture does not change, and a pass does not get to change it.** Whether friction
 with a rule wants a cut or a companion is this step's judgment, not the logging one,
@@ -171,7 +187,7 @@ Discipline: follow writing-skills; baseline-test any behavior-shaping wording.
 
 **Applying (Phase 2)** happens in a fresh session in the kit repo: read the brief,
 make the change per writing-skills (baseline-test behavior-shaping wording before
-trusting it), commit it (the kit repo is Commit-and-Push; a promoted spec follows
+trusting it), take the paired review above for any corpus prose, commit it (the kit repo is Commit-and-Push; a promoted spec follows
 its own recorded commit model), then archive the brief out of `briefs/`. When the pass already runs inside the kit repo, Phase 1 and Phase 2
 collapse into one session.
 
