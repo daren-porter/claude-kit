@@ -34,14 +34,27 @@ upper bound on tokens to review, not a count of edits owed.
 
 | Surface | `Daren` | upstream-author pattern | `he/his/him` | files |
 |---|---|---|---|---|
-| `plugins/` (ships and loads) | 165 | 22 | 72 | 28 |
-| `docs/` living root `*.md` | 29 | 21 | 38 | 8 |
-| `docs/plans/` (active) | 22 | 16 | 6 | 4 |
+| `plugins/` (ships and loads) | 165 | 22 | 80 | 29 |
+| `docs/` living root `*.md` | 29 | 21 | 47 | 9 |
+| `docs/plans/` (active) | 17 | 19 | 17 | 4 |
 | `README.md` | 7 | 6 | 0 | 1 |
 | `test/` | 2 | 1 | 0 | 3 |
-| package metadata (2 `.json`) | 5 | 0 | 0 | 2 |
-| **in scope** | **230** | **66** | **116** | **46** |
+| `.claude-plugin/marketplace.json` | 3 | 0 | 0 | 1 |
+| **in scope** | **223** | **69** | **144** | **47** |
 | `docs/archive/` (out of scope) | 248 | 93 | 74 | 21 |
+
+**Amended by section 1, 2026-08-20, and corrected again after review.** The pronoun count was
+**116 and is 144 at `df880e6`**, but the gap has two causes and section 1's first attempt to
+explain it named only one. Measured at `df880e6`: the lowercase-only pattern yields **126** and
+`\b([Hh]e|[Hh]is|[Hh]im|[Hh]imself)\b` yields **144**. So the case-sensitive pattern error
+accounts for **18**, and the remaining **10** is drift from this spec's own new prose, which is
+the same cause the `Daren` row moved for. A sweeper told to expect 28 capitalised pronouns will
+find 18 and hunt ten that never existed. The sweep must still use the `[Hh]` form. The `Daren`
+total fell from 230 to 223 through the same drift, and the upstream total rose from 66 to 69
+because the pattern now counts `SApplefeld` separately, double-scoring the repo slug on one line.
+All of these keep moving while the effort runs, because this spec is itself in scope;
+`.kit/denaming-rules.md` carries the per-file breakdown and the instruction to re-measure rather
+than trust a pinned number.
 
 ### Three modes, and only one of them is a rewording
 
@@ -57,14 +70,14 @@ this repo appears in one of three modes, and the mode decides the treatment:
    `~/repos/claude-kit-scott` at `kit-adoptions.md:45`, and `daren-porter/claude-kit` in the
    README's install instructions. These stay byte for byte or the thing they point at breaks.
 
-   **The lower-case form is its own surface, and all of it is this mode.** Twelve occurrences of
-   `daren` that the table below does not count, because the table counts the capitalised name:
+   **The lower-case form is its own surface, and all of it is this mode.** Thirteen occurrences of
+   `daren` that the table above does not count, because that table counts the capitalised name:
    the marketplace id (`README.md` five times, `.claude-plugin/marketplace.json:2`, and
-   `docs/architecture.md:7`), the author email in both `.json` files, the repo slug, and a real
+   `docs/architecture.md:7`), the author email in both `.json` files, the repo slug, a real
    memory-store path at `skills/cross-project-memory/SKILL.md:48` that the skill tells the reader
-   to open. Not one is prose, so the sweep changes none of them. `docs/architecture.md` is
-   therefore in scope and ends the effort unmodified, which section 1 records so a reviewer does
-   not read it as a miss.
+   to open, and two inside this spec's own quoted paths. Not one is prose, so the sweep changes
+   none of them. `docs/architecture.md` is therefore in scope and ends the effort unmodified,
+   which section 1 records so a reviewer does not read it as a miss.
 3. **Attribution.** Credit for work that is not this kit's. The user's ruling, 2026-08-20: names
    are not deleted from things that do not belong to this kit. Stays verbatim.
 
@@ -175,7 +188,7 @@ four things:
    rather than a missed edit.
 3. **The complete attribution list**, every occurrence, with what is being credited. Exhaustive
    for the same reason, pointed the other way.
-4. **A per-file expected disposition** for all 46 in-scope files: swept, identifier-only,
+4. **A per-file expected disposition** for all 47 in-scope match-bearing files: swept, identifier-only,
    attribution-only, or untouched. This is what makes the sweep reviewable, because it lets a
    reviewer tell a file that was deliberately left alone from one that was missed.
 
@@ -188,14 +201,18 @@ Acceptance criteria:
 - The identifier and attribution lists are exhaustive: every match of every pattern is either on
   one of them or falls under the prose rules, with no occurrence unaccounted for. Verified by a
   fresh grep at review time.
-- All 46 in-scope files carry an expected disposition. `docs/architecture.md` is
+- All 47 in-scope match-bearing files carry an expected disposition. `docs/architecture.md` is
   identifier-only and `plugins/claude-kit/assets/CLAUDE.md` is untouched, both already established
   in the Approach.
-- The `AUTHOR:  Daren Porter / ASR Solutions` template at `skills/sql-style/SKILL.md:41` and
-  `skills/sql-style/references/sql-style.md:180` resolves to the literal line
-  `AUTHOR:  ASR Solutions`, written out in the rules as the exact replacement text. It is
-  generated output rather than prose about a person, so a rewording such as
-  `AUTHOR:  the user / ASR Solutions` is wrong and the rules must say so.
+- **Both** lines of the generated deployment-script template resolve to literal replacements
+  written out in the rules, not to rewordings. `AUTHOR:  Daren Porter / ASR Solutions` at
+  `skills/sql-style/SKILL.md:41` and `skills/sql-style/references/sql-style.md:180` becomes
+  `AUTHOR:  ASR Solutions`; `NOTES:   v1.0 - 2026-06-10 - DAREN PORTER - ASR SOLUTIONS` at
+  `:44` and `:183` becomes `NOTES:   v1.0 - 2026-06-10 - ASR SOLUTIONS`. The NOTES line is
+  ALL-CAPS and sits three lines below the AUTHOR line; section 1's first attempt matched names
+  case-sensitively and could not see it at all, which is this effort's own instance of the
+  defect the original stub warned about. The name patterns are therefore matched
+  case-insensitively and `Porter` stays in the pattern set.
 - `test/session-start-adoption.test.js:50`'s regex is recorded against the
   `hooks/session-start.js:535` string it asserts on, so section 4 changes them together.
 
@@ -285,8 +302,8 @@ Acceptance criteria:
   description that reads better and fires worse is a regression, and nothing in the test suite
   would catch it.
 - Verb agreement is corrected wherever a pronoun changed number.
-- A fresh grep over `plugins/claude-kit/skills/` returns only occurrences on section 1's
-  identifier and attribution lists.
+- A fresh grep over `plugins/claude-kit/skills/` returns only occurrences on section 1's three
+  lists: identifiers, attribution, and verbatim quotations.
 
 Execution mode: delegate-capable.
 
@@ -345,8 +362,9 @@ Acceptance criteria:
   says who decided what and when keeps its evidentiary content with the name replaced, never
   deleted. `docs/backlog.md` and `docs/take-stock.md` depend on those clauses.
 - `docs/archive/` is untouched, verified by `git status`.
-- A fresh grep over the whole in-scope tree returns only occurrences on section 1's identifier
-  and attribution lists, and every file matches its assigned disposition.
+- A fresh grep over the whole in-scope tree returns only occurrences on section 1's three lists
+  (identifiers, attribution, verbatim quotations), and every file matches its assigned
+  disposition.
 
 Execution mode: delegate-capable.
 
@@ -373,6 +391,14 @@ Tests: none. The final grep reconciliation is the check.
   user. Both belong to `kit-distribution_spec_v1.md`, which this spec cross-references. Recorded
   here so a later session finds "not now" rather than re-opening it as an unanswered question.
 - **Licensing and contribution guidelines.** Real questions a wider release raises, and not this.
+- **Re-baselining the take-stock marker.** Found during section 1 and recorded so a later session
+  does not misread it. `docs/take-stock.md:25` pins `## 2026-08-18 - 60addb93...` as the marker
+  the `take-stock-nudge` hook diffs the kit's prose sections against. This effort rewrites the
+  referent in nearly every prose section, so the next nudge will report near-total churn that is
+  substitution and not accretion, against an instrument whose whole question is what the prose has
+  grown. Re-baselining is a `kaizen` take-stock act, not a de-naming one, so it stays out; but the
+  close-out says plainly that the churn this effort produces carries no accretion signal, and
+  `plans/take-stock-instrument_spec_v1.md` is the plan that owns what to do about it.
 
 ## Open Questions
 
@@ -381,6 +407,34 @@ Tests: none. The final grep reconciliation is the check.
   be made to discriminate at all, the section records that the claim is untestable at this scale
   rather than reporting a pass it did not earn. Owner: the section 2 run.
 
+## Standing Brief Amendments
+
+Folded into every dispatch from here on, per `executing-work`'s recurrence rule. All five come
+from section 1's adversarial review, which returned three Critical findings against the first
+draft of the rules contract.
+
+1. **Match the name patterns case-insensitively, and keep `porter` in the set.** The ALL-CAPS
+   form `DAREN PORTER` exists, in generated deployment-script output, and a case-sensitive grep
+   cannot see it. Dropping `porter` is harmless alone and case-sensitivity is harmless alone;
+   together they hid two occurrences from every reconciliation grep.
+2. **The carve-out is quotation-and-identifier, never "is it fenced".** `README.md`'s directory
+   tree is one fence spanning `:9-:66` and contains five prose descriptions that must be swept.
+   Fencing is formatting; being copied text or a pointer is what makes a name untouchable.
+3. **There are three exhaustive lists, not two.** Identifiers, attribution, and verbatim
+   quotations. A grep that admits only the first two makes the reconciliation criterion
+   unsatisfiable, because quoted pre-sweep text legitimately survives.
+4. **Provenance clauses keep their evidentiary content: the name is replaced, never deleted.**
+   `docs/backlog.md` and `docs/take-stock.md` verdict against those clauses.
+5. **Trigger phrasing in a frontmatter `description` survives the substitution.** Only the
+   referent moves. A description that reads better and fires worse is a regression no test catches.
+
 ## Chapters
 
-(none yet)
+### Chapter 1 - 2026-08-20
+Completed: 1. Substitution rules and file dispositions
+Implemented By: main session
+Metrics: 1 review round (adversarial only; the section's tracked changeset is docs-only, so per `executing-work` there was no blind half to pair with); 0 NEEDS_CONTEXT; 0 escalations; advisor available and consulted twice during the design pass, not during this section
+Decisions / Surprises: The contract lives at `.kit/denaming-rules.md`, which is gitignored, so this section's committed diff is the spec amendments alone; the rules file is promoted to `docs/archive/kit-denaming_s1-rules.md` at close-out, per the `kaizen-stop-start-continue_s3-inventory.md` precedent. It was written as a rules-and-dispositions contract rather than the 296-row occurrence table the spec first implied, because a row per occurrence is a document nobody reads whose totals get checked by re-running grep anyway. **The section reproduced the exact defect its own spec warns about.** Revision 1 matched names case-sensitively and dropped `porter` from the pattern set, which made `DAREN PORTER` invisible: two occurrences, in the generated deployment-script template, three lines below the `AUTHOR:` line the same pass had correctly caught. The stub's "what a mechanical sweep provably misses" section named generated output specifically, this spec repeated the warning, and section 1 walked into it anyway, which is the strongest argument in the effort for the guard now standing as Standing Brief Amendment 1. Two further design errors were structural rather than clerical: the carve-out keyed on **code fences**, but `README.md`'s directory tree is a single fence spanning `:9-:66` containing five prose descriptions that must be swept, so a fence-keyed rule told one sweeper to skip exactly what the disposition table told another to change; and a **third** surviving class existed (verbatim quotations of pre-sweep or foreign text) with no list, which made S1's exhaustiveness criterion and S3/S5's reconciliation criterion mutually unsatisfiable. The carve-out is now keyed on quotation-and-identifier, which is what the em-dash precedent at `74adfa9` actually turned on: what made that body untouchable was that it was **copied**, not that it was fenced. Also recorded, found while measuring: this effort rewrites the referent in nearly every prose section, so the next `take-stock` nudge will report near-total churn against the `60addb93` marker at `docs/take-stock.md:25` that is substitution and carries no accretion signal. Re-baselining is a `kaizen` act and stays out of scope; the consequence is written into Out of Scope so a later session does not misread it.
+Review Findings: 3 Critical, 8 Major, 3 Minor. Every one independently verified against the tree before acting, and every one fixed; none rejected. Criticals: the unlisted ALL-CAPS `DAREN PORTER` in generated output, the pattern deviations that hid it, and the self-contradictory carve-out. Majors: a wrong causal diagnosis in the pronoun correction (the 116-to-144 total is right, but 18 is the pattern error and 10 is this spec's own drift, where revision 1 claimed all 28 were the pattern), the missing quotations list, a README `:3` disposition that contradicted the identifier list, a false claim that `sapplefeld` only ever appears inside an identifier (`docs/backlog.md:12` is bare prose), an unprincipled attribution asymmetry keeping `design-council/SKILL.md:113` while sweeping the identical act at `docs/README.md:47`, no replacement text for the one `description` whose selection trigger is the name being removed, 11 of 48 disposition rows carrying no owning section against three sections that close on exactly that, and S5's provenance rule missing from the contract. Minors: a stale row for the spec file this section itself edits, two unlisted lower-case identifiers, and `scott-writing-style` at `docs/kit-adoptions.md:97`, a real upstream skill name that "de-name everything else" would have renamed. The rules file was rewritten as revision 2 rather than patched in thirteen places: a contract with internal contradictions is worse than a wrong one, because two readers act on it differently. Five guards were promoted to `Standing Brief Amendments` so sections 3 through 5 inherit them at dispatch.
+Next: Section 2 (pilot and validate on `cold` and `responding-to-review`)
+Commit Model: Branch-and-PR
