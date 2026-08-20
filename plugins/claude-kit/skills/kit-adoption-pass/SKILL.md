@@ -94,9 +94,8 @@ renamed directory among four still leaves the other three printing, and step 2's
 over the moved path then returns nothing at all, silently. Any path missing means the
 layout moved: stop and re-derive rather than concluding the window is quiet.
 
-An empty *index diff* is a different matter and is entirely normal: the upstream author
-may simply not have touched their three index files this window. That is not a failure,
-and it is much of
+An empty *index diff* is a different matter and is entirely normal: the upstream author may
+simply not have touched their three index files this window. That is not a failure, and it is much of
 why step 2 exists.
 
 Their docs index is written per effort, so a new capability arrives there with its intent
