@@ -136,10 +136,10 @@ Tests, and note that they sit in two places:
 
 ```
 node --test test/take-stock-nudge.test.js     # 16 cases, inside the repo gate
-node --test tools/accretion.test.js           # 15 cases, NOT in the gate
+node --test tools/accretion.test.js           # 15 cases, in the gate since 2026-08-16
 ```
 
-`node --test test/*.test.js` is the documented gate and it does not reach `tools/`, so the only test of `accretion-lib.js`, a file that ships in the payload, has to be run by name.
+The documented gate is `node --test test/*.test.js tools/*.test.js` from the repo root (`README.md:159`), widened 2026-08-16 to reach `tools/` for exactly this reason: `accretion-lib.js` ships in the payload and `tools/accretion.test.js` is its only coverage, so the narrower form left a payload file untested by the thing called the gate. That narrower `test/*.test.js` form still appears in `README.md:63`'s directory listing and is not the gate.
 
 ## Modifying it safely
 
@@ -155,4 +155,4 @@ The mechanism ran end to end and its headline proof failed. The compression of `
 
 What did land: the kit's first net-negative markdown commit in 165 file-events (`1e5db4e`, 229 insertions against 250 deletions), a 143-row claim inventory at `docs/archive/kaizen-stop-start-continue_s3-inventory.md` with every piece of provenance intact, four retirement candidates recorded and deliberately not acted on, and a loop verified live: with the marker at S3's sha the nudge was silent, and committing S5's edit to `kaizen/SKILL.md` made it speak. The live marker is still `1e5db4e`, so a session opened in this repo today gets the count block rather than silence. That is the mechanism working: prose has moved and nobody has read it whole since. The marker was deliberately not advanced to quiet it.
 
-Design decisions, the arms, the reviews and the numbers behind all of this are in `docs/plans/kaizen-stop-start-continue_spec_v1.md` and its five Chapters.
+Design decisions, the arms, the reviews and the numbers behind all of this are in `docs/archive/kaizen-stop-start-continue_spec_v1.md` and its five Chapters.

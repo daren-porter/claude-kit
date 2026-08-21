@@ -176,7 +176,7 @@ flattening and sending are separate permissions, the destination is named as off
 consent is asked, and any repo that is not the user's own is treated as client material for which no
 off-machine destination is proposed. Gating by instruction rather than by mechanism, so it is a
 discipline, not a control.
-<!-- DRIFT: D3 pending adjudication -->
+<!-- DRIFT: D3 (kit-denaming) pending adjudication -->
 
 ## What the kit does not defend against
 
