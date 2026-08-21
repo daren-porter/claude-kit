@@ -273,6 +273,14 @@ Leak hazard specific to this section: this spec is a `docs/plans/` file naming t
 the claim under test, and `writing-skills`' answer-leak rules count that as a route to the
 conclusion. The in-prompt-only delivery above is what closes it.
 
+**QA verdict, 2026-08-20: this section's acceptance criteria are NOT MET, and that is recorded
+rather than excused.** The arm never contrasted the variants, so "both arms are run at the same rep
+count" and "the Chapter records both arms' outputs, the comparison, and the gate decision" were
+never satisfied. What the record contains instead is a different and later thing, honestly
+disclosed: the user's explicit decision to proceed to Section 3 without a working gate. QA declined
+to fold that into a pass and it is not folded into one here. The effort ships with one section's
+criteria unmet, by decision.
+
 **This section is a gate.** If the post-sweep arm is worse than the pre-sweep arm, the vocabulary
 is revised and this section re-runs before section 3 starts. Record the revision and the reason in
 the Chapter.
