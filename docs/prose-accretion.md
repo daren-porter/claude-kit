@@ -79,6 +79,8 @@ The three failure blocks are as-built behavior the spec's acceptance criteria di
 
 The count is a two-point comparison between the marker and HEAD, not a walk of history. A section changed and then changed back is not counted, which is why the emitted sentence says sections "hold lines that differ from the last take-stock" rather than "have been patched since".
 
+A substitution sweep is the case where the count is largest and means least. `kit-denaming` (2026-08-20) edited 24 of the corpus's 33 files to change who the prose refers to rather than what it says, so the next nudge measured against the `60addb93` marker at `docs/take-stock.md:25` reports near-total churn that carries no accretion signal. That effort left re-baselining the marker out of scope, on the grounds that re-baselining is a take-stock act and not a de-naming one, so the number is expected rather than a finding and reading it as growth is the misreading this paragraph exists to prevent. `plans/take-stock-instrument_spec_v1.md` owns the larger question of whether the instrument is asking the right thing at all.
+
 What the hook structurally cannot count, disclosed here because the union of these is disclosed nowhere else and the hook's whole claim is one number:
 
 - content above a file's first `## ` heading, so changing front matter, a title or a preamble counts nothing;

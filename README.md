@@ -1,6 +1,6 @@
 # claude-kit
 
-The user's personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish) with per-section model down-selection, fresh-context review agents, discipline skills (systematic debugging, skill authoring, review response, kaizen self-improvement, a multi-lens design council, and cold judgment calls), C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
+A personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish) with per-section model down-selection, fresh-context review agents, discipline skills (systematic debugging, skill authoring, review response, kaizen self-improvement, a multi-lens design council, and cold judgment calls), C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
 Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
