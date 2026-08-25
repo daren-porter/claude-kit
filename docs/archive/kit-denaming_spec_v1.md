@@ -1,9 +1,18 @@
 # Kit De-naming for Public Release
 
-Status: In Progress
+Status: Complete
 Commit Model: Branch-and-PR
 Fable Spend: finishing reviews only
 Created: 2026-08-07
+
+## Related
+
+- `plans/kit-distribution_spec_v1.md` - owns the base-kit genericization and the name-token
+  mechanism this effort deferred rather than declined (see Out of Scope). It already reads this
+  file as no longer a stub.
+- `plans/take-stock-instrument_spec_v1.md` - owns what to do about the take-stock churn this
+  effort produced. Re-baselining the `60addb93` marker was ruled out of scope here because it is a
+  `kaizen` act; the measured consequence is in the close-out Chapter.
 
 ## Goal
 
@@ -494,3 +503,13 @@ Review Findings: No separate round. Section 5's docs work was in the tree during
 Next: finishing-work
 Commit Model: Branch-and-PR
 
+### Chapter 6 - 2026-08-25 (close-out)
+Completed: finishing-work steps 1 through 6. The effort is closed.
+Implemented By: main session. **No fresh-context subagent ran in this close-out session**, which carries a standing no-subagents instruction; the four finishing reviews had already been dispatched and returned on 2026-08-20, and this session's own edits are the one-word D3 fix plus these records. The derivation used is the one the kaizen inbox note of 2026-08-25 records: run the checks in-thread and say plainly that no fresh-context reviewer ran.
+Metrics: 4 finishing reviews, all dispatched 2026-08-20 (QA, security, adversarial, docs curation); 11 drift items; 0 escalations. The security report records its `fable` override explicitly, per `Fable Spend: finishing reviews only`; **the adversarial report records no model**, so whether that pass got its strongest-model read is not in the record and this Chapter does not assert it.
+Review Findings: **Security CLEAR**, no findings at any severity. **Adversarial APPROVED_WITH_CONCERNS**, 2 Major and 5 Minor, and all seven are closed; each was re-verified against the tree at close on 2026-08-25 rather than taken from the report, since the fixes landed across four commits after it was written. The two Majors: `docs/README.md:17` no longer implies the gate held and now names the VOID arm and the recorded decision to proceed, and both archive promotions are committed rather than untracked. The five Minors: Chapter 2's Major count reconciles at 6 against its own breakdown, the promoted contract carries the absolute-possessive erratum at `archive/kit-denaming_s1-rules.md:89-91`, `curating-docs:71` reads "the user's attention", `README.md:3` matches the manifests at "A personal Claude Code marketplace.", and the Open Questions block carries its resolution. **Two files changed after the range that review read** (`74adfa9..8f88684`): `README.md` and `plugins/claude-kit/skills/curating-docs/SKILL.md`, each applying one of its own Minors, neither re-reviewed. Everything after that is docs-only.
+QA Outcome: **FAIL as issued, and it is carried forward rather than resolved.** Two of its three findings closed after the report was written: the two absolute-possessive `his`/`theirs` grammar defects at `docs/kit-adoptions.md:139,148` in `8f88684`, and the three missing control-cell transcripts, archived in `35025fe`. The third stands and cannot be fixed without rebuilding the arm: Section 2's criterion asks the Chapter to record the arm's comparison and gate decision, and a VOID arm supplies neither. What exists in its place is the user's explicit 2026-08-20 decision to proceed without a rebuilt arm, recorded in Chapter 2's Gate Decision. **This close is that decision being carried forward, not a criterion waved through**, and `qa-verifier` was not re-run this session, so the FAIL verdict stands in the record as issued. Consequence for any later reader: sections 3 through 5 shipped on an unvalidated vocabulary, `docs/backlog.md:47` holds the untested flattening claim, and `docs/backlog.md:45` holds the confound that voided the instrument.
+Drift Adjudications: 11 items. **D3 was adjudicated by the user at close (2026-08-25):** `docs/security-model.md:176` becomes "the operator's own", extending the one-site `the operator` exception from `agents/security-reviewer.md:29` to the document that agent reads first, so the file that exists for precision about roles stops naming one role two ways. The pending-adjudication marker at `:179` is removed. The curator classed it a likely mistake rather than a decision and it was left unadjudicated deliberately; that is why it stopped this close. D1, D2 and D4 through D11 were handled in `35025fe` and `c380b08`, D2 and D10 being the two the curator caught late.
+Decisions / Surprises: **The take-stock consequence, measured, discharging the Out of Scope obligation.** `take-stock-nudge.js` reports **70 of the kit's current prose sections** as holding lines that differ from the `60addb93` marker at `docs/take-stock.md:25` (measured 2026-08-25). That number is substitution and carries no accretion signal, which is exactly what Section 1 predicted and wrote into Out of Scope. Re-baselining stays out of scope because it is a `kaizen` act, and **no take-stock entry was written**: an entry recording no reading is the malformed-record class `docs/take-stock.md`'s own preamble rules out, and `plans/take-stock-instrument_spec_v1.md` owns the question. A later kaizen pass reading 70 as "70 sections grew" would be reading substitution as growth. **And this branch briefly carried a change that was not substitution.** A kaizen pass on 2026-08-25 fixed `pr-review`'s mixed-verdict suggestion marker, and that commit (`4820f7d`) landed here because its edit rewrites the same `pr-review/SKILL.md:109` sentence this effort de-named, so it could not go to `main` without conflicting. It is parked on branch `kaizen-marker-fix` and reset off this branch, and it lands on `main` after the merge, where the patch applies to the denamed text cleanly. Recorded rather than quietly kept, because Chapter 4 records the orchestrator's worst mistake in this effort as putting non-substitution content into a substitution-only changeset, caught by a reviewer instead of disclosed. The same discipline, applied by the orchestrator to itself, is the one lesson this effort kept relearning.
+Next: none. Archived to `docs/archive/kit-denaming_spec_v1.md`.
+Commit Model: Branch-and-PR

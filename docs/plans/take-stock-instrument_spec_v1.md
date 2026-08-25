@@ -12,6 +12,11 @@ Created: 2026-08-17
   effort rather than part of it.
 - `docs/backlog.md` - carried that finding as an active item from 2026-08-16; now annotated as owned
   here, with its two closure conditions.
+- `archive/kit-denaming_spec_v1.md` - closed 2026-08-25, and it hands this plan a second, sharper
+  instance of the same instrument problem. Its substitution sweep left the nudge reporting **70
+  changed prose sections** against the `60addb93` marker, none of it accretion. The marker cannot
+  distinguish a rename from growth, so the count a later pass reads is noise; that effort ruled
+  re-baselining out of scope as a `kaizen` act and pointed here.
 - `plans/enumerations-stop-short_spec_v1.md` - a sibling defect-class stub from the same effort.
 
 ## Why this exists
