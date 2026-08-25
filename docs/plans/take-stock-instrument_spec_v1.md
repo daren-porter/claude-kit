@@ -64,6 +64,24 @@ inferred candidate target and a claimed instrument gap died on reading the prima
 design pass must not read "the passes produce defects instead" as "the passes produce *good*
 defects". The unreviewed rate is the open variable, and `arm-boundaries` owns it.
 
+**The operator's own reading, 2026-08-25, and the clearance-rate evidence behind it.** Asked why
+he had grown reluctant to open a kaizen pass, Daren named two things and treated them as related:
+more friction gets captured than used to, and passes now take a long time with a lot of
+back-and-forth through reviewers. The commit log on `kaizen/SKILL.md` supports the second half
+directly. Two passes in July closed with `clears 7 inbox items` and `clears 4 inbox items`; every
+pass since 2026-08-16 has instead added exactly one rule to the kaizen skill itself, and the pass
+section is now #3 in the accretion ranking at 121 lines across 11 commits. So the procedure grew
+faster than its output, which is this plan's thesis arriving from the operator rather than from a
+measurement. Two candidate mechanisms, and they are separable: the structural one is the
+friction-only input this file already argues; the newer one is that `a9e7d7c` (2026-08-20) taxed
+the apply path with a mandatory paired review whose own arming debt is `backlog.md:31`, and
+`kaizen/SKILL.md` explicitly denies it a proportionality escape, so a one-clause omission fix pays
+the same ceremony as a rule rewrite. The 2026-08-25 pass worked around that by batching four
+one-clause fixes into one commit for one review, which is a mitigation rather than an answer: it
+shows the tax is per commit and that nothing in the kit says to batch. Daren was offered the
+mandate question as a retirement decision on the same day and deferred it, so `backlog.md:31`
+stands unchanged.
+
 ## The decision this needs
 
 **Whether take-stock's question should change**, and if so to what. The obvious candidate is
