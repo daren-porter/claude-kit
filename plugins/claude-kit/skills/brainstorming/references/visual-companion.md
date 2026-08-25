@@ -2,11 +2,11 @@
 
 A brainstorming question gets answered faster by looking when the thing in question is
 visual: a layout, a colour palette, a theme, a page mockup. This is how to put one in front
-of Daren.
+of the user.
 
-It is a static HTML file he opens in his own browser. There is no server, no port, no
+It is a static HTML file they open in their own browser. There is no server, no port, no
 process to manage, and no way for the page to send anything back. Nothing leaves the
-machine, which is what makes it safe for client work. He replies in the terminal, as he
+machine, which is what makes it safe for client work. They reply in the terminal, as they
 would to any other question.
 
 ## Where things go
@@ -17,7 +17,7 @@ and never committed.
 | Path | What it is |
 |---|---|
 | `.kit/visuals/frame.css` | The theme and layout classes. Copied in once per project. |
-| `.kit/visuals/current.html` | The screen Daren has open. Overwritten on every push. |
+| `.kit/visuals/current.html` | The screen the user has open. Overwritten on every push. |
 | `.kit/visuals/NNN-<name>.html` | An archive copy per push: `001-palette.html`, `002-palette-warmer.html`. |
 
 Four rules about those paths:
@@ -26,9 +26,9 @@ Four rules about those paths:
   is the path printed to you when this skill loaded. Resolve it from there, never as a path
   relative to the project you are working in: the copy happens from an arbitrary cwd, and
   `assets/frame.css` on its own resolves against that cwd and is not found.
-- **Copy it only when it is absent.** A later session must not overwrite it, because Daren may
+- **Copy it only when it is absent.** A later session must not overwrite it, because the user may
   have tweaked it and that tweak is the point of keeping it on disk.
-- **Always overwrite the same `current.html`.** He keeps one browser tab open and refreshes
+- **Always overwrite the same `current.html`.** The user keeps one browser tab open and refreshes
   it. This is the opposite of superpowers' never-reuse-filenames rule, which exists only
   because their server serves newest-by-mtime; a human refreshing a tab wants a stable path.
 - **Number the archive copy from what is already there:** the highest existing `NNN` plus one,
@@ -41,19 +41,19 @@ Four rules about those paths:
    nested one, and the narrow case where the project ignores `.kit/goal-state.json` but not the
    directory, which a substring check for `.kit/` would pass wrongly. If it fails, write
    `.kit/.gitignore` containing `*`: it ignores itself, needs no git repo, and touches no file
-   Daren already tracks, so nothing appears in his staged diff as an unrelated change. Untracked
+   the user already tracks, so nothing appears in their staged diff as an unrelated change. Untracked
    is not ignored, and a later `git add -A` would otherwise stage client mockups. Then
    `mkdir -p .kit/visuals` and copy `frame.css` in if it is not already there: on a first push
    the directory does not exist yet, so the copy fails without it.
 1. Write `current.html`. Then copy that file to the numbered archive name with `cp`; do not
    write the document a second time, which would double the output tokens this design exists
    to save, and would let the two copies drift.
-2. Tell Daren in one line what is on screen, and where. First push: give him the absolute path
+2. Tell the user in one line what is on screen, and where. First push: give them the absolute path
    or a `file://` URL, since a project-relative path is not something a browser opens. Later
-   pushes: tell him to refresh.
-3. Ask your question in the terminal and end your turn. The terminal is the only channel he
+   pushes: tell them to refresh.
+3. Ask your question in the terminal and end your turn. The terminal is the only channel they
    can answer on.
-4. His answer is usually a change rather than a choice, so expect to push a revision. Iterate
+4. Their answer is usually a change rather than a choice, so expect to push a revision. Iterate
    on the current question before moving to the next one.
 
 Two things not to do. Do not use `cat` or a heredoc to write the file, because it dumps the
@@ -149,7 +149,7 @@ with bottom margin:
 ```
 
 **Lettered options**, for A/B/C alternatives. Nothing is clickable, so the letter is how
-Daren names his answer in the terminal:
+the user names their answer in the terminal:
 
 ```html
 <div class="options">
@@ -246,7 +246,7 @@ travel and it carries whatever the screen carried:
   not consent to a destination. Say where it would go and get that answer separately, because an
   Artifact is hosted off-machine and is the only egress of project content anywhere in this
   skill.
-- **Treat any repo that is not Daren's own as client material**, and do not propose an
+- **Treat any repo that is not the user's own as client material**, and do not propose an
   off-machine destination for it at all. That is a test rather than a judgment call, which is
   what "wrong for client work" was missing.
 
@@ -267,19 +267,19 @@ constraints on that:
   were built to be sent, so leaving them is the worst residue of the three. They match neither of
   the other patterns, which is how an earlier version of this rule missed them entirely.
 - **Leave `frame.css` alone.** It is the one file in there that is not scaffolding, it may carry
-  a tweak of Daren's, and the copy-only-when-absent rule above exists precisely so that tweak
+  a tweak of the user's, and the copy-only-when-absent rule above exists precisely so that tweak
   survives into later sessions. A sweep that takes it makes that rule unobservable.
 - **Anything worth keeping is promoted before the sweep, not rescued after.** The files are
   untracked and were never committed, so there is no git object to recover and no undo. When a
   screen looks like it is worth more than the decision it produced, say so at that moment and
-  let Daren decide. Do not save it up for a confirmation prompt at sweep time: Daren asked for
+  let the user decide. Do not save it up for a confirmation prompt at sweep time: the user asked for
   the cleanup to be automatic, so the sweep does not stop to ask, which is exactly why the
   asking has to happen earlier.
 
 Promotion means the screen's *content* becomes text in the spec, which is the only form
 `curating-docs` has a home for: its zone table has no entry for an HTML mockup, and a file
-dropped into `docs/` unregistered is a defect by its own index rule. If Daren wants the actual
-file kept, that is his to put somewhere; do not invent a docs zone for it.
+dropped into `docs/` unregistered is a defect by its own index rule. If the user wants the actual
+file kept, that is theirs to put somewhere; do not invent a docs zone for it.
 
 A session that ends without writing a spec leaves the screens behind, and the reason to accept
 that is not disk cost. Screens can hold client-shaped content, so the residue is confidentiality

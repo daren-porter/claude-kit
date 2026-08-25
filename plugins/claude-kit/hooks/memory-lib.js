@@ -563,7 +563,7 @@ function readAppliedJournal() {
 // that shows a different set than the one it was counted from.
 //
 // Nothing here retires, deletes, or rewrites anything: the ranking is a prompt
-// for a human decision (Daren, 2026-08-08), which is why these can be seeds
+// for a human decision (the user, 2026-08-08), which is why these can be seeds
 // rather than tuned values.
 //
 //   idleDays  = days since the most recent applied day, or since `created`

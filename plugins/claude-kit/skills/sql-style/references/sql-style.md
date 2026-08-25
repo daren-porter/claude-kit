@@ -1,6 +1,6 @@
 # T-SQL Style Reference
 
-Detailed patterns behind the sql-style skill. Baseline: Scott Applefeld's house style (canonical examples throughout EleosCore's ASR.Eleos.Database* projects), with Daren's adjudicated simplifications applied (recorded in the kit's spec). Where this document and a shared repo disagree, the repo wins; see Precedence in the skill.
+Detailed patterns behind the sql-style skill. Baseline: Scott Applefeld's house style (canonical examples throughout EleosCore's ASR.Eleos.Database* projects), with the user's adjudicated simplifications applied (recorded in the kit's spec). Where this document and a shared repo disagree, the repo wins; see Precedence in the skill.
 
 ## 1. File and project organization
 
@@ -104,7 +104,7 @@ In order:
 
 ## 4. Formatting
 
-- **Trailing commas everywhere** (parameter lists, column lists, VALUES, SET clauses). Never leading commas in Daren-authored SQL; shared Scott-style repos use leading commas, and siblings win there.
+- **Trailing commas everywhere** (parameter lists, column lists, VALUES, SET clauses). Never leading commas in the user's own SQL; shared Scott-style repos use leading commas, and siblings win there.
 - **No alignment columns.** Name, type, default separated by single spaces. No tab art, no heading rows inside parameter lists.
 - **UPPERCASE keywords.** `SELECT`, `FROM`, `LEFT JOIN`, `CASE WHEN`.
 - **Bracketed columns:** `[ColumnName]`, even where optional.
@@ -177,10 +177,10 @@ AS
 BEGIN
     /**********************************************************************
         SCRIPT:  APP.usp_DoSomething.sql
-        AUTHOR:  Daren Porter / ASR Solutions
+        AUTHOR:  ASR Solutions
         DATE:    2026-06-10
         VERSION: 1.0
-        NOTES:   v1.0 - 2026-06-10 - DAREN PORTER - ASR SOLUTIONS
+        NOTES:   v1.0 - 2026-06-10 - ASR SOLUTIONS
                  Initial version.
     **********************************************************************/
 

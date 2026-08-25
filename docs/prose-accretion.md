@@ -2,7 +2,7 @@
 
 The kit measures churn in its own prose and has exactly one channel for taking prose back out. Before this loop shipped, no `.md` file under `plugins/claude-kit/` had ever net-shrunk in a commit. The plan's whole-history measurement at `90769cc` counted 163 markdown file-events with none net-negative, against 10 net-negative JS file-events, one of which was itself a kaizen pass. The kit could subtract; it had only ever been pointed at code. The two subtraction rules `writing-skills` already carried both fire at admission time, on drafts that were never shipped, so the gap was specifically post-ship.
 
-Four pieces implement the loop, plus wording in two skills. A maintainer tool ranks sections by churn, a shared parser defines what a section is, a SessionStart hook says when the prose has moved since anyone last read it whole, and `docs/take-stock.md` records what came down and what was spared. Detection is cheap and lives in the hook; diagnosis is expensive and lives in the tool. Nothing here decides anything: the tool ranks and never flags, the hook reports a count and never names a section, and the verdict on any section is Daren's at the pass.
+Four pieces implement the loop, plus wording in two skills. A maintainer tool ranks sections by churn, a shared parser defines what a section is, a SessionStart hook says when the prose has moved since anyone last read it whole, and `docs/take-stock.md` records what came down and what was spared. Detection is cheap and lives in the hook; diagnosis is expensive and lives in the tool. Nothing here decides anything: the tool ranks and never flags, the hook reports a count and never names a section, and the verdict on any section is the user's at the pass.
 
 ## Files
 
@@ -79,6 +79,8 @@ The three failure blocks are as-built behavior the spec's acceptance criteria di
 
 The count is a two-point comparison between the marker and HEAD, not a walk of history. A section changed and then changed back is not counted, which is why the emitted sentence says sections "hold lines that differ from the last take-stock" rather than "have been patched since".
 
+A substitution sweep is the case where the count is largest and means least. `kit-denaming` (2026-08-20) edited 24 of the corpus's 33 files to change who the prose refers to rather than what it says, so the next nudge measured against the `60addb93` marker at `docs/take-stock.md:25` reports near-total churn that carries no accretion signal. That effort left re-baselining the marker out of scope, on the grounds that re-baselining is a take-stock act and not a de-naming one, so the number is expected rather than a finding and reading it as growth is the misreading this paragraph exists to prevent. `plans/take-stock-instrument_spec_v1.md` owns the larger question of whether the instrument is asking the right thing at all.
+
 What the hook structurally cannot count, disclosed here because the union of these is disclosed nowhere else and the hook's whole claim is one number:
 
 - content above a file's first `## ` heading, so changing front matter, a title or a preamble counts nothing;
@@ -134,10 +136,10 @@ Tests, and note that they sit in two places:
 
 ```
 node --test test/take-stock-nudge.test.js     # 16 cases, inside the repo gate
-node --test tools/accretion.test.js           # 15 cases, NOT in the gate
+node --test tools/accretion.test.js           # 15 cases, in the gate since 2026-08-16
 ```
 
-`node --test test/*.test.js` is the documented gate and it does not reach `tools/`, so the only test of `accretion-lib.js`, a file that ships in the payload, has to be run by name.
+The documented gate is `node --test test/*.test.js tools/*.test.js` from the repo root (`README.md:159`), widened 2026-08-16 to reach `tools/` for exactly this reason: `accretion-lib.js` ships in the payload and `tools/accretion.test.js` is its only coverage, so the narrower form left a payload file untested by the thing called the gate. That narrower `test/*.test.js` form still appears in `README.md:63`'s directory listing and is not the gate.
 
 ## Modifying it safely
 
@@ -153,4 +155,4 @@ The mechanism ran end to end and its headline proof failed. The compression of `
 
 What did land: the kit's first net-negative markdown commit in 165 file-events (`1e5db4e`, 229 insertions against 250 deletions), a 143-row claim inventory at `docs/archive/kaizen-stop-start-continue_s3-inventory.md` with every piece of provenance intact, four retirement candidates recorded and deliberately not acted on, and a loop verified live: with the marker at S3's sha the nudge was silent, and committing S5's edit to `kaizen/SKILL.md` made it speak. The live marker is still `1e5db4e`, so a session opened in this repo today gets the count block rather than silence. That is the mechanism working: prose has moved and nobody has read it whole since. The marker was deliberately not advanced to quiet it.
 
-Design decisions, the arms, the reviews and the numbers behind all of this are in `docs/plans/kaizen-stop-start-continue_spec_v1.md` and its five Chapters.
+Design decisions, the arms, the reviews and the numbers behind all of this are in `docs/archive/kaizen-stop-start-continue_spec_v1.md` and its five Chapters.

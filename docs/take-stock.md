@@ -117,7 +117,7 @@ backlog of pending retirements. Fixed at `60addb9`, no arms, on `1526456`'s basi
 real and recorded in git across three entries, but nothing tests whether the new wording fixes
 it without opening the escape hatch the clause itself warns about. `writing-skills:454-456` is
 explicit that labelling wording unverified is not an admission path, so this is a debt and not
-a disclosure. It goes to Daren with `arm-boundaries`.
+a disclosure. It goes to the user with `arm-boundaries`.
 
 ## 2026-08-17 - 63cd1609e9208561d511f21ea2b23ff93d130937
 
@@ -169,7 +169,7 @@ hundred: the blind-dispatch rationale ("A blind reviewer that has been told the 
 a second adversarial pass"), the meta-clause explaining why the docs-only carve-out is written
 down at all, and the inline-default restatement treated below. That is about 4% of one section
 and 2% of the two, every piece of it behavior-shaping motivation, which `writing-skills` routes
-to the arms as a retirement rather than a compression. So they go to Daren, not into a brief,
+to the arms as a retirement rather than a compression. So they go to the user, not into a brief,
 and the pass records a zero cut per "the step asks the question; it does not promise a cut".
 
 **Retirement candidate 2 is now a three-instance pattern in two files, which reframes it.** It
@@ -187,7 +187,7 @@ at. With the original that is three instances of pointer-plus-restatement, so th
 no longer whether `writing-skills` has a defect but whether this is a house pattern the kit
 should keep. The counter-case is real and should be adjudicated with it: a reader at `:77`
 dispatching a reviewer does not want to jump to `:108`, and the one-clause restatement is a
-convenience the pointer alone does not give. **That is Daren's call and it is now three times
+convenience the pointer alone does not give. **That is the user's call and it is now three times
 as well evidenced as when it was parked.**
 
 **One omission found, narrower than the version this pass first wrote down.** `brainstorming`
@@ -237,7 +237,7 @@ rather than measured. The figures above are `sed -n '40p;42p' | wc -lc` at `63cd
 - **`brainstorming:18`'s "write the list out, even when it is empty" and its anti-deferral
   clause.** Preventive, and spared on the strongest evidence in this entry, which is an arm
   rather than a sighting. `abec5ed` admitted it on a real failure - "the council never fired
-  for Daren: its offer was a soft step-5 clause that the agent skipped under momentum" - and
+  for the user: its offer was a soft step-5 clause that the agent skipped under momentum" - and
   baseline-tested the fix: 0/2 live offers on the original wording, still 0/2 when fork
   enumeration alone was added, 2/2 once the anti-deferral counter went in, with a negative case
   that correctly declined. The middle rep is the point: enumeration without the counter changed
@@ -331,7 +331,7 @@ an enumeration stopping one short of the disposition the same effort introduced.
   enough, so it stays here rather than being credited.
 
 **The four retirement candidates from the entry below: re-parked, still unadjudicated.** They
-were surfaced to Daren this pass and he had nothing to add, which is not an adjudication of
+were surfaced to the user this pass and they had nothing to add, which is not an adjudication of
 them. They stay recorded and unacted-on. What changed is that they are now reachable by
 instruction rather than by luck: the gather sub-step names the class as of the prose commit in
 this entry's heading, so the next pass reads them out of this file rather than missing them the

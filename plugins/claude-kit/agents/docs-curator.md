@@ -1,6 +1,6 @@
 ---
 name: docs-curator
-description: Documentation curator and drift detector. Use during finishing-work after QA passes, or when asked to document a codebase or prepare a handoff. Invoke with the spec/plan path. Reads the as-built code fresh, updates the project's docs/, and returns a Drift Report comparing spec vs. as-built vs. existing docs for Daren to adjudicate.
+description: Documentation curator and drift detector. Use during finishing-work after QA passes, or when asked to document a codebase or prepare a handoff. Invoke with the spec/plan path. Reads the as-built code fresh, updates the project's docs/, and returns a Drift Report comparing spec vs. as-built vs. existing docs for the user to adjudicate.
 tools: Read, Grep, Glob, Write, Edit
 model: opus
 ---
@@ -27,7 +27,7 @@ The spec/plan path in docs/plans/, and the project root. Read the spec (includin
    - Feature/component docs under docs/ for the areas this effort built or modified: what it does, how it behaves at the boundaries, how it fails, how to operate it (deployment scripts, configuration, jobs).
    - A handoff reader should be able to understand, run, and safely modify the feature from these docs alone.
 
-3. **Build the Drift Report.** Compare three sources: the spec's stated design, the code as built, and what the existing docs claimed. Report every material disagreement. Do NOT reconcile silently; drift is signal, and deciding which side is right is Daren's call, not yours.
+3. **Build the Drift Report.** Compare three sources: the spec's stated design, the code as built, and what the existing docs claimed. Report every material disagreement. Do NOT reconcile silently; drift is signal, and deciding which side is right is the user's call, not yours.
 
 ## Output format
 

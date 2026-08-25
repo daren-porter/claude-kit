@@ -1,11 +1,11 @@
 ---
 name: csharp-style
-description: "Daren Porter's C# house style. Use whenever writing or modifying ANY C# code, including tests. Signature traits: modern idiomatic .NET (primary constructors, file-scoped namespaces), self-documenting code with why-only comments, BCL-quality XML docs on reusable surfaces only, returns on their own line, no regions. Trigger on any C# work even when style isn't named."
+description: "The user's C# house style. Use whenever writing or modifying ANY C# code, including tests. Signature traits: modern idiomatic .NET (primary constructors, file-scoped namespaces), self-documenting code with why-only comments, BCL-quality XML docs on reusable surfaces only, returns on their own line, no regions. Trigger on any C# work even when style isn't named."
 ---
 
 # C# Style
 
-Daren's personal C# style. Internalize the philosophy; this file alone covers routine code. Consult [references/csharp-style.md](references/csharp-style.md) before working in its territories: XML documentation on public/reusable surfaces, test scaffolding (the full template lives there), library/BCL-shape conventions (Try* pairs, options classes, injectable clock), or creating a new file (layout, using-directive order, and one-type-per-file rules live there).
+The user's personal C# style. Internalize the philosophy; this file alone covers routine code. Consult [references/csharp-style.md](references/csharp-style.md) before working in its territories: XML documentation on public/reusable surfaces, test scaffolding (the full template lives there), library/BCL-shape conventions (Try* pairs, options classes, injectable clock), or creating a new file (layout, using-directive order, and one-type-per-file rules live there).
 
 ## Precedence
 
@@ -13,7 +13,7 @@ Project-declared rules win, then this skill, then (last resort) the neighbors:
 
 1. **Explicit style rules in the repo** - CLAUDE.md and any committed style docs.
 2. **`.editorconfig`** - when present it governs formatting and analyzer-style preferences. Do not hand-impose or "match the neighbor" against it; let the config and a formatter settle the mechanics (wrapping, spacing, `var`, expression bodies, naming). A rich `.editorconfig` (like EleosCore's `develop` config) makes most of the formatting rules below moot on that branch.
-3. **This skill** - Daren's house style. It is the default for anything 1 and 2 do not cover, in his own repos AND in shared repos. Use it rather than mirroring whatever a legacy sibling file happens to do.
+3. **This skill** - the user's house style. It is the default for anything 1 and 2 do not cover, in their own repos AND in shared repos. Use it rather than mirroring whatever a legacy sibling file happens to do.
 4. **A sibling file** - last resort only, for a genuine convention none of the above address, and for raw whitespace when there is no `.editorconfig` (match the file's prevailing indentation).
 
 The old "match the team's established style even where it conflicts with this skill" default is retired: a legacy neighbor is not authority. A repo that wants a different style states so in CLAUDE.md or `.editorconfig`. (This is C#-specific; `sql-style` keeps sibling-matching, since there is no SQL `.editorconfig` and the established team SQL style is the real target.) Still: surgical changes only - do not reformat unrelated code toward this style while doing other work.

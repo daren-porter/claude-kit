@@ -189,7 +189,7 @@ test('goal armed, last assistant turn leads with BLOCKED: empty stdout (allow); 
     // turn, not the first match.
     const { repo, transcript } = armedRepo([
         'Investigating the failure.',
-        'BLOCKED: this needs a decision only Daren can make.'
+        'BLOCKED: this needs a decision only the user can make.'
     ]);
     try {
         const res = runHook({ cwd: repo, transcript_path: transcript });

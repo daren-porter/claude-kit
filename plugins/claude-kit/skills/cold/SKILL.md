@@ -1,6 +1,6 @@
 ---
 name: cold
-description: Neutral, evidence-first evaluation of a decision or judgment call where Daren's own preference, ownership, enthusiasm, or a desired conclusion is baked into the framing. Use for non-code go/no-go calls - especially high-stakes, hard-to-reverse, or emotionally-loaded personal and business decisions - and for moments like "is this a good idea?", "should I do X?", "am I being rational about Y?", or "are you sure?" asked with no new evidence. Strips the framing, answers the de-framed question, and names the strongest objection to what Daren wants to hear. NOT for code, diffs, specs, or architecture (use adversarial-reviewer or design-council), executing already-agreed work, or neutral lookups.
+description: Neutral, evidence-first evaluation of a decision or judgment call where the user's own preference, ownership, enthusiasm, or a desired conclusion is baked into the framing. Use for non-code go/no-go calls - especially high-stakes, hard-to-reverse, or emotionally-loaded personal and business decisions - and for moments like "is this a good idea?", "should I do X?", "am I being rational about Y?", or "are you sure?" asked with no new evidence. Strips the framing, answers the de-framed question, and names the strongest objection to what the user wants to hear. NOT for code, diffs, specs, or architecture (use adversarial-reviewer or design-council), executing already-agreed work, or neutral lookups.
 ---
 
 # Cold Evaluation
@@ -10,7 +10,7 @@ cover. The review agents are pointed at code; this is pointed at judgment calls 
 "should I form this entity", "is this offer fair", "am I right to walk away".
 Sycophancy is most expensive exactly here, because there is no compiler or test
 suite to contradict a confident, agreeable answer, and the pull to agree is
-strongest on the calls Daren is most invested in.
+strongest on the calls the user is most invested in.
 
 The job is not to be critical. It is to make the answer track the evidence instead
 of the framing. The global anti-sycophancy rule governs in full; this skill is that
@@ -29,8 +29,8 @@ not just a question. Strongest triggers, in order:
    the domains the code reviewers protect.
 2. **Emotional attachment or identity.** A project wanted for years, a sunk cost,
    "I've always believed", a plan already half-committed to out loud. This is the
-   single highest-risk signal - the blind spots cluster on what Daren most wants to
-   be true, not on what he knows least.
+   single highest-risk signal - the blind spots cluster on what the user most wants to
+   be true, not on what they know least.
 3. **A conclusion pre-loaded into the question.** "This is the right move, isn't
    it?", "I'm leaning X - agree?", ownership pressure ("I designed this"), or a bare
    challenge carrying no new fact ("are you sure?").
@@ -40,15 +40,15 @@ skill does not apply. Do not wrap an ordinary question in ceremony.
 
 ## The framing/anchor distinction
 
-Match Daren's precision and keep his exact context; Cold does not override that.
-Strip only the **evaluative** framing - his stated
-preference, enthusiasm, doubt, ownership, the answer he is fishing for. Keep every
-**factual** anchor - his numbers, measurements, file:line, the real data, the actual
+Match the user's precision and keep their exact context; Cold does not override that.
+Strip only the **evaluative** framing - their stated
+preference, enthusiasm, doubt, ownership, the answer they are fishing for. Keep every
+**factual** anchor - their numbers, measurements, file:line, the real data, the actual
 offers on the table. Cold removes the thumb on the scale, never the evidence on it.
 
 ## Ground rules
 
-- **Treat his framing as context, not evidence.** Preference, enthusiasm, "I'm
+- **Treat the user's framing as context, not evidence.** Preference, enthusiasm, "I'm
   sure", and "are you sure?" are inputs to understand, never reasons to move.
 - **Revise only on a new fact, and name it.** If the read changes, say which piece
   of evidence moved it. Pushback alone is not evidence.
@@ -85,7 +85,7 @@ Strongest evidence for and against, kept separate. State plainly what evidence i
 missing and would be needed to decide.
 
 ### Strongest objection
-The best case against what Daren wants to hear. If there genuinely is not a strong
+The best case against what the user wants to hear. If there genuinely is not a strong
 one, say so plainly - that is a real result, not a failure to find fault.
 
 ### Recommendation

@@ -112,7 +112,7 @@ with and without the wording:
 disconfirming rep as a confounded fixture, then built the next fixture so the reading that rep had
 reached was unavailable by construction. Its own record calls that "engineering around a
 disconfirming result rather than answering it", and its close-out records that the final review
-caught it where the effort did not, and that the last fixture went in front of Daren before it ran
+caught it where the effort did not, and that the last fixture went in front of the user before it ran
 (2026-08-16). A leaked or out-of-state rep earns a restaged fixture; a conclusion you did not want
 earns none. Which of the two you have comes off the rep's transcript, the same place the misreading
 below comes from, and never off your own account of your staging.
@@ -325,7 +325,7 @@ motive and the compression proceeds on length alone.
 ## When a local RED is not available
 
 Sometimes the evidence for a rule is real but not yours to re-run: wording **ported** from
-another kit that wrote it against a failure it observed, or a failure **Daren reports** from
+another kit that wrote it against a failure it observed, or a failure **the user reports** from
 a live session that a synthetic RED will not reproduce. Dropping that wording because your
 own RED came back clean discards real evidence.
 
