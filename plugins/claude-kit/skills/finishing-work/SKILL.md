@@ -13,7 +13,7 @@ On a session running below Fable, dispatch the security review (step 2) and the 
 
 ## Steps
 
-1. **QA verification.** Dispatch the `qa-verifier` agent with the spec path: full build, full test suite, and every acceptance criterion checked with evidence. Any FAIL: fix and re-run before proceeding. Do not rationalize a failing criterion as "close enough".
+1. **QA verification.** Dispatch the `qa-verifier` agent with the spec path, and with a named report path to poll any time the turn must stay alive, the same readiness convention `executing-work`'s dispatches use: full build, full test suite, and every acceptance criterion checked with evidence. Any FAIL: fix and re-run before proceeding. Do not rationalize a failing criterion as "close enough".
 
 2. **Security review.** When the changeset touches production code of any kind, dispatch the `security-reviewer` agent over the whole changeset (not just the last section). C#/.NET and T-SQL are its depth, not its boundary: hooks, setup and CLI scripts, JS/Node, and configuration are review targets too, so a changeset of the kit's own hooks earns the pass. Critical findings block completion. Major findings: fix or present to the user with the tradeoff. Skip the dispatch only when the changeset has no production-code surface at all (plan docs, skills, agent prose, README and other documentation); there the adversarial pass (step 3) is the whole security read, and it flags anything security-relevant on sight.
 
