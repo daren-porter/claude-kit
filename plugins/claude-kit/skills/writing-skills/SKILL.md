@@ -25,16 +25,34 @@ failure, and confirm it works before trusting it.
 ## Anatomy
 
 - One SKILL.md, in the kit's voice: direct, opinionated, anti-dogma, no em dashes.
-  Add a reference file only when the body genuinely outgrows the size of the kit's
-  other skills, and then gate it the way csharp-style and sql-style do: the
-  SKILL.md covers routine work, and it names the territories that need the
-  reference.
+  A reference file is admissible on two grounds and no others. **Overflow:** the
+  body genuinely outgrows the size of the kit's other skills, and is then gated
+  the way csharp-style and sql-style gate theirs, with the SKILL.md covering
+  routine work and naming the territories that need the reference. **A standard
+  reached by path:** a bar that other work is pointed at directly, the way
+  references/ai-tells.md is. The second kind still belongs to a host skill, since
+  a standard with no skill behind it has nobody maintaining it.
 - **Frontmatter: always quote the description.** An unquoted `": "` silently
   breaks the YAML and drops all skill metadata (learned the hard way on
   csharp-style). `name` and `description` are the two that matter.
 - Body: the principle, the rules that carry judgment, the antipatterns. Tables and
   lists for what gets scanned; prose for the why. A flowchart only for a decision
   where the agent might genuinely go wrong, never for linear steps.
+
+## The machine-prose tells
+
+[references/ai-tells.md](references/ai-tells.md) catalogs the patterns that make a
+document read as machine-written, each with a rewrite and, where the pattern has a
+legitimate use, the case that licenses it. Not every entry has one. It is the
+second kind of reference file Anatomy admits, a standard reached by path, so a
+session can use it without loading this skill; csharp-style and sql-style gate
+theirs as overflow, which is the other kind.
+
+It is read in both directions. Drafting kit prose, read it before you call a draft
+finished: the tells survive every other rule here, since a skill can name its
+failure, pick the form that fixes it, and hold every claim to the bar below and
+still read as generated. Reviewing a document, hunt them by name and quote the
+passage, saying whether the finding is the single line or the frequency.
 
 ## The description states the trigger, not the workflow
 

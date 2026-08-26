@@ -77,9 +77,46 @@ alongside `readonly-agent-guard`. That guard stays a separate pending candidate 
 merits, and the sentence is dropped rather than ported, per the coupling rule in
 `docs/kit-adoptions.md`.
 
+**Every prose section here answers to `writing-skills`, and the spec as first written failed
+to say so.** Recorded as an amendment at S1 open rather than discovered per section. Which
+bar a section owes is decided per section by whether a local RED can be staged, and that is
+not knowable in advance:
+
+- **A local RED that fires puts the section on the normal bar**, RED then GREEN then
+  REFACTOR, where GREEN's bar is every rep rather than a majority. None of the ported-wording
+  gate's costs attach.
+- **Only where no local RED is available** does that skill's "When a local RED is not
+  available" section govern, with its three artifacts (attempted RED with prompt and verbatim
+  output, a locator into the upstream record, a followability probe over three reps) and its
+  three bounding clauses.
+
+**S1 landed on the normal bar.** Its RED fired at the second attempt: the first rep was told
+to calibrate against `docs/architecture.md` and so was not in the guarded state, which is a
+restage rather than a did-not-reproduce; the second, writing the same subject cold, produced
+the catalog's tells plainly, ending all three of its sections on a one-line contrast moral.
+Artifacts in the Chapter.
+
+The cost is the reason this is stated up front rather than met per section. S6 is outside
+both bars: it updates existing enumerations to name two new agents and asserts nothing new
+about behavior.
+
+## Standing Brief Amendments
+
+Binding on every later section's dispatches, added mid-run as review rounds surface them.
+
+- **(S1 review, 2026-08-26) The tells catalog is scoped to prose the author wrote, and never
+  to material reproduced verbatim.** Any agent charter that invokes the catalog carries that
+  exemption explicitly. Both S1 reviewers reached this independently, and the kit already
+  ships the rule with a near-miss behind it: `pr-review/SKILL.md:53` bars editing a fenced
+  `suggestion` body because it is written into the author's file byte for byte, and
+  `archive/kit-denaming_s1-rules.md:139` traces it to commit `74adfa9`, where stripping a
+  character from a copied body would have written altered code into a teammate's file. A
+  reviewer told to hunt tells without this scoping flags an em dash inside a block quote and
+  the fix corrupts the quotation.
+
 ## Sections of Work
 
-### 1. The machine-prose tells catalog
+### 1. The machine-prose tells catalog (Complete)
 
 `plugins/claude-kit/skills/writing-skills/references/ai-tells.md`, adapted from upstream's
 167-line catalog under `scott-writing-style`.
@@ -209,4 +246,80 @@ Execution mode: delegate-capable.
 
 ## Chapters
 
-(Appended by executing-work as sections complete.)
+### Chapter 1 - 2026-08-26
+Completed: 1. The machine-prose tells catalog
+Implemented By: implementer-opus (two rounds; no escalation)
+Metrics: 1 review round (paired, both CHANGES_REQUIRED); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Commit Model: Commit-and-Push
+
+**The bar this section landed on, and the evidence for it.** The normal RED/GREEN bar, not the
+ported-wording gate. `.kit/` is gitignored, so the artifacts are folded here rather than pointed at.
+
+RED, attempt 1: not in the guarded state, so restaged rather than filed. The rep was told to
+calibrate against `docs/architecture.md`, which supplies by imitation much of what the catalog
+supplies by rule; a fixture staging the case the rule does not guard comes back clean by
+construction.
+
+RED, attempt 2: fired. Same subject written cold, no file reading, no calibration. All three of
+its sections closed on a one-line contrast moral, which is the catalog's own named tell:
+"It is a guard against accidents, not a lock: you can still edit `docs/` yourself." /
+"This is not a machine-wide rule about the word \"docs\"." /
+"It is not a defense against a path that deliberately leaves the project."
+Plus dense not-X-but-Y framing and signposting ("The substantive question is", "The consequence
+worth carrying around is", "One limit follows from that scoping").
+
+GREEN: three reps, same task and same pressure, catalog supplied by path. Bar is every rep and
+every rep cleared it. None closes a section on a portable maxim; contrast-framing density drops
+sharply; sentence and paragraph length vary. Not tell-free, which the catalog's own framing does
+not ask for, since the finding is frequency and uniformity.
+
+Decisions / Surprises:
+- **The spec understated the effort and was amended twice at S1 open.** First to record that
+  `writing-skills` governs every prose section here, which the spec as written omitted entirely;
+  then to correct that amendment, since which bar a section owes is decided per section by
+  whether a local RED can be staged, and S1's fired.
+- The upstream "Already prohibited in SKILL.md" section had to dissolve: it cross-references a
+  skill this kit refused, and this kit's only equivalent authority is one em-dash bullet. Its
+  five items were promoted to full entries or folded into existing ones; nothing was dropped.
+- `tools/accretion.js` measures at HEAD, so it cannot see a staged-but-uncommitted file and says
+  so. The heading fix was verified by running the shared parser (`hooks/accretion-lib.js`) over
+  the working tree instead.
+
+Review Findings:
+- **2 Critical, both the same defect, reached independently by both reviewers.** The catalog
+  scoped nothing to authored prose, so it licensed a reviewer to flag an em dash inside a
+  quotation or a fenced `suggestion` body. The kit already ships the opposite rule with a
+  near-miss behind it (`pr-review/SKILL.md:53`, traced by `archive/kit-denaming_s1-rules.md:139`
+  to commit `74adfa9`, where stripping a character from a copied body would have written altered
+  code into a teammate's file). Fixed in the framing paragraph and locally in the em-dash entry.
+  Independent convergence outranks either finding's severity, per `responding-to-review`.
+- 9 Major addressed: the em-dash authority pointed at the user's live global CLAUDE.md rather
+  than the shipped `assets/CLAUDE.md` that carries the identical bullet; the new SKILL.md section
+  contradicted the Anatomy bullet fifteen lines above it; the bolded-lead-in entry's Rewrite
+  rewrote a different Tell; one level-2 heading collapsed 181 lines into a single indivisible row
+  for the kit's only subtraction channel (now 17 headings, largest row 18 lines); the catalog
+  omitted two tells that `pr-reviewer.md:55` and `pr-review/SKILL.md:53` both enumerate; SKILL.md
+  overclaimed that every entry carries an exception; one entry both banned and licensed "that
+  said"; the uniform-length exemplar's stated word counts were false (26-31 claimed, 23/23/17
+  actual, now 23/23/22 with the label matching); and the bolded-lead-in exception did not license
+  the kit's own pervasive convention.
+- 4 Minor addressed: the self-answer exception had drifted looser than its source; the
+  bullets-restate entry contradicted its own example; the provenance locator resolved to nothing;
+  and the catalog is now cited from a path that exists.
+- 2 Major routed to Section 6 rather than fixed here: the skill's frontmatter description is
+  scoped to skill authoring, so the reviewing half of the new pointer is unreachable through the
+  load path the skill itself defines; and `README.md`'s STRUCTURE tree gains no entry for the new
+  reference.
+- 1 Minor accepted, not fixed: `writing-skills/SKILL.md` uses bolded lead-ins on ~33 lines, some
+  carrying arguments. The exception was sharpened to license the convention on an observable
+  predicate rather than the tell being weakened. Recorded so the decision is deliberate.
+- The implementer made one un-briefed change and disclosed it: line 3's "negative standard rather
+  than a voice" was false about the file's own contents and was itself the "X rather than Y"
+  construction the same commit removes elsewhere.
+
+Evidence: both files pure ASCII (no dash variant of any kind), 17 level-2 headings, `node --test
+test/*.test.js tools/*.test.js` at 324 pass / 0 fail, unchanged from the pre-edit baseline. No
+durable test: nothing in the harness reads markdown for register or completeness, and all three
+of the implementer and both reviewers reached that independently.
+
+Next: 2. The `blind-reader` agent
