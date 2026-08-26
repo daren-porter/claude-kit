@@ -148,3 +148,101 @@ test('a shell redirect into the project\'s own docs/ is still denied', () => {
     });
     assert.strictEqual(r.status, 2);
 });
+
+// Containment is judged against the project's git root, not against the payload
+// cwd. A subagent routinely runs with cwd at a subdirectory (a plugin dir, a
+// package under a monorepo), and judging against cwd alone let an absolute path
+// to the project's own docs/ resolve "outside the project" and pass. These use a
+// real throwaway git repo, because the rule turns on finding a .git.
+
+const os = require('os');
+const fs = require('fs');
+const { execSync } = require('child_process');
+
+function mkRepo() {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dwg-repo-'));
+    // A real .git is what repoRoot walks up to find. `git init` rather than a
+    // hand-made directory, so the fixture matches what a session actually runs in.
+    execSync('git init -q', { cwd: dir, stdio: 'ignore' });
+    fs.mkdirSync(path.join(dir, 'docs'), { recursive: true });
+    fs.mkdirSync(path.join(dir, 'plugins', 'deep'), { recursive: true });
+    return fs.realpathSync(dir);
+}
+
+function rmrf(dir) {
+    try { fs.rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 }); } catch { /* best effort */ }
+}
+
+test('an absolute write to the project docs/ is denied from a subdirectory cwd', () => {
+    const repo = mkRepo();
+    try {
+        const target = path.join(repo, 'docs', 'x.md');
+        // Positive control first: the same payload from the repo root must deny,
+        // so a red on the subdirectory case is about cwd and nothing else.
+        assert.strictEqual(
+            runGuard(writePayload('claude-kit:implementer-opus', target, repo)).status, 2,
+            'control: repo-root cwd should deny'
+        );
+        assert.strictEqual(
+            runGuard(writePayload('claude-kit:implementer-opus', target, path.join(repo, 'plugins'))).status, 2,
+            'subdirectory cwd should deny'
+        );
+        assert.strictEqual(
+            runGuard(writePayload('claude-kit:implementer-opus', target, path.join(repo, 'plugins', 'deep'))).status, 2,
+            'nested subdirectory cwd should deny'
+        );
+    } finally { rmrf(repo); }
+});
+
+test('a git worktree root is its own project root', () => {
+    const repo = mkRepo();
+    try {
+        // A worktree carries a .git FILE rather than a directory, and it is the
+        // project tree for a session running in it, so the walk stops there.
+        const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'dwg-wt-'));
+        fs.writeFileSync(path.join(wt, '.git'), 'gitdir: ' + path.join(repo, '.git', 'worktrees', 'w') + '\n');
+        fs.mkdirSync(path.join(wt, 'docs'), { recursive: true });
+        fs.mkdirSync(path.join(wt, 'sub'), { recursive: true });
+        try {
+            const real = fs.realpathSync(wt);
+            assert.strictEqual(
+                runGuard(writePayload('claude-kit:implementer-opus', path.join(real, 'docs', 'x.md'), path.join(real, 'sub'))).status, 2
+            );
+        } finally { rmrf(wt); }
+    } finally { rmrf(repo); }
+});
+
+test('another checkout\'s docs/ stays allowed from a subdirectory cwd', () => {
+    const repo = mkRepo();
+    const other = mkRepo();
+    try {
+        // The narrowing this guard gained in 2026-08 must survive the fix: a
+        // sibling checkout is still somebody else's tree.
+        assert.strictEqual(
+            runGuard(writePayload('claude-kit:implementer-opus', path.join(other, 'docs', 'x.md'), path.join(repo, 'plugins'))).status, 0
+        );
+    } finally { rmrf(repo); rmrf(other); }
+});
+
+test('every writer in a command is judged, not just the first', () => {
+    const repo = mkRepo();
+    const other = mkRepo();
+    try {
+        const inProject = path.join(repo, 'docs', 'b.md');
+        const outside = path.join(other, 'docs', 'a.md');
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        // Controls: each writer alone behaves as expected.
+        assert.strictEqual(runGuard(cmd('echo y > ' + inProject)).status, 2, 'control: in-project writer alone denies');
+        assert.strictEqual(runGuard(cmd('echo x > ' + outside)).status, 0, 'control: out-of-project writer alone allows');
+        // The defect: an out-of-project writer first made the in-project one invisible.
+        assert.strictEqual(
+            runGuard(cmd('echo x > ' + outside + ' && echo y > ' + inProject)).status, 2,
+            'an in-project writer after an out-of-project one must still deny'
+        );
+    } finally { rmrf(repo); rmrf(other); }
+});

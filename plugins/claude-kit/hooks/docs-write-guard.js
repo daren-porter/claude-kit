@@ -62,20 +62,42 @@ function targetsDocs(s) {
     return /(^|[\\/])docs[\\/]/i.test(String(s || ''));
 }
 
+// The project root at or above `dir`: the nearest ancestor holding a .git entry,
+// or `dir` itself when there is none. A worktree carries a .git FILE rather than a
+// directory and existsSync covers both, so a session running in a worktree is
+// judged against that worktree. The walk is bounded because a symlink loop or an
+// exotic mount must not hang a hook that gates every tool call.
+function repoRoot(dir) {
+    let cur = dir;
+    for (let i = 0; i < 64; i++) {
+        try { if (fs.existsSync(path.join(cur, '.git'))) return cur; } catch { return dir; }
+        const parent = path.dirname(cur);
+        if (parent === cur) break;
+        cur = parent;
+    }
+    return dir;
+}
+
 // Whether a docs/ target is the curated tree of the repo this session is working
 // in. The invariant is about THIS project's docs/, so an absolute path resolving
-// outside cwd is somebody else's: a fixture under /tmp, a vendored package, a
-// sibling checkout. A relative path always resolves under cwd, so this only ever
+// outside the project is somebody else's: a fixture under /tmp, a vendored package,
+// a sibling checkout. A relative path always resolves under cwd, so this only ever
 // narrows and never opens a path that used to be blocked. A Windows-style path seen
 // by a POSIX runtime reads as relative here and stays blocked, which is the safe
 // direction. Added 2026-08-15 after the guard blocked a subagent building a test
 // fixture under /tmp, which is the "must never trap legitimate work" case in this
 // file's own header.
+//
+// Containment is judged against the PROJECT ROOT above cwd, not against cwd. A
+// subagent routinely runs with cwd at a subdirectory, and judging against cwd let
+// an absolute path to the project's own docs/ read as outside the project and pass:
+// the whole guard was escapable by working one directory down. Live-fired
+// 2026-08-26 against this repo, identical payloads, cwd the only variable.
 function insideProject(target, cwd) {
     const t = String(target || '');
     if (!path.isAbsolute(t)) return true;
     try {
-        return (path.resolve(t) + path.sep).startsWith(path.resolve(cwd) + path.sep);
+        return (path.resolve(t) + path.sep).startsWith(path.resolve(repoRoot(cwd)) + path.sep);
     } catch { return true; }   // cannot resolve: block, the safe direction
 }
 
@@ -91,13 +113,20 @@ function insideProject(target, cwd) {
 // residual false hit on a cmdlet name sitting in command position inside a quoted
 // string (a docs path merely named in prose, e.g. a commit message). The
 // command-position anchor keeps an embedded name (Reset-Content) from matching.
+//
+// EVERY writer in the command is judged, not just the first. A non-global match
+// stopped at the first docs/-shaped target, so one out-of-project writer ahead of
+// an in-project one hid it and the command passed
+// (`echo x > /tmp/docs/a.md && echo y > docs/README.md`). Live-fired 2026-08-26.
 function commandWritesDocs(cmd, cwd) {
     const c = String(cmd || '');
-    const redirect = /(?:>>?|tee(?:\s+-a)?\s)\s*["']?((?:[^\s"'|;&><]*[\\/])?docs[\\/])/i;
-    const cmdlet = /(?:^|[\s;|&(])(?:Out-File|Set-Content|Add-Content|Tee-Object)\b\s+(?:-\w+(?::\S+)?(?:\s+(?!-)[^\s"';|&]+)?\s+){0,4}(?:-(?:FilePath|Path|LiteralPath)[:\s]\s*)?["']?((?:[^\s"']*[\\/])?docs[\\/])/i;
+    const redirect = /(?:>>?|tee(?:\s+-a)?\s)\s*["']?((?:[^\s"'|;&><]*[\\/])?docs[\\/])/gi;
+    const cmdlet = /(?:^|[\s;|&(])(?:Out-File|Set-Content|Add-Content|Tee-Object)\b\s+(?:-\w+(?::\S+)?(?:\s+(?!-)[^\s"';|&]+)?\s+){0,4}(?:-(?:FilePath|Path|LiteralPath)[:\s]\s*)?["']?((?:[^\s"']*[\\/])?docs[\\/])/gi;
     for (const re of [redirect, cmdlet]) {
-        const m = c.match(re);
-        if (m && insideProject(m[1], cwd)) return true;
+        let m;
+        while ((m = re.exec(c)) !== null) {
+            if (insideProject(m[1], cwd)) return true;
+        }
     }
     return false;
 }

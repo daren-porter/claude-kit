@@ -50,9 +50,15 @@ function commitsBefore(cmd, end) {
 
 // True if docs/ has uncommitted or untracked changes vs HEAD; null if we cannot
 // tell (git failed, not a repo), which the caller treats as allow (fail open).
+//
+// The pathspec is root-relative (`:/docs`), not `docs`. A plain pathspec resolves
+// against cwd, so from a subdirectory this looked for <subdir>/docs, found nothing,
+// and reported the curated tree clean while it was dirty: the guard was escapable
+// by running one directory down. `:/docs` stays anchored at the repo root from any
+// cwd and still does not match a nested sub/docs/. Live-fired 2026-08-26.
 function docsDirty(cwd) {
     try {
-        const out = execSync('git status --porcelain -- docs', {
+        const out = execSync('git status --porcelain -- :/docs', {
             cwd,
             timeout: 5000,
             stdio: ['ignore', 'pipe', 'ignore'],

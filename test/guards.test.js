@@ -381,6 +381,52 @@ describe('pr-docs-guard (smoke)', () => {
         }
     });
 
+    test('dirty docs/ is seen from a subdirectory cwd', () => {
+        // The dirty check ran `git status -- docs`, and a git pathspec resolves
+        // against cwd, so from a subdirectory it looked for <subdir>/docs, found
+        // nothing, and let the PR through with docs/ uncommitted. Same defect class
+        // as the docs-write-guard containment bug: a cwd-relative resolution that
+        // under-reports in silence. Live-fired 2026-08-26 against this repo.
+        const repo = mkTmp('prd-subdir-');
+        try {
+            initGitRepo(repo, 'https://github.com/example/repo.git');
+            fs.mkdirSync(path.join(repo, 'docs'));
+            fs.writeFileSync(path.join(repo, 'docs', 'plan.md'), 'uncommitted\n');
+            fs.mkdirSync(path.join(repo, 'plugins'));
+            const payload = { tool_name: 'Bash', tool_input: { command: 'gh pr create --fill' } };
+            // Control: the same dirty tree denies from the root, so a red below is
+            // about cwd and nothing else.
+            assert.strictEqual(
+                runGuard(PR_DOCS_GUARD, { ...payload, cwd: repo }, { cwd: repo }).code, 2,
+                'control: repo-root cwd should deny'
+            );
+            const sub = path.join(repo, 'plugins');
+            assert.strictEqual(
+                runGuard(PR_DOCS_GUARD, { ...payload, cwd: sub }, { cwd: sub }).code, 2,
+                'subdirectory cwd should deny'
+            );
+        } finally {
+            rmrf(repo);
+        }
+    });
+
+    test('a nested docs/ elsewhere in the tree does not count as the curated one', () => {
+        // The root-relative pathspec must stay anchored: a dirty sub/docs/ is not
+        // the curated tree and must not block a PR on its own.
+        const repo = mkTmp('prd-nested-');
+        try {
+            initGitRepo(repo, 'https://github.com/example/repo.git');
+            fs.mkdirSync(path.join(repo, 'sub', 'docs'), { recursive: true });
+            fs.writeFileSync(path.join(repo, 'sub', 'docs', 'note.md'), 'uncommitted\n');
+            const r = runGuard(PR_DOCS_GUARD, {
+                tool_name: 'Bash', tool_input: { command: 'gh pr create --fill' }, cwd: repo
+            }, { cwd: repo });
+            assert.strictEqual(r.code, 0, r.stderr);
+        } finally {
+            rmrf(repo);
+        }
+    });
+
     test('chained git commit ahead of the PR create is allowed with docs/ dirty', () => {
         const repo = mkTmp('prd-chained-');
         try {
