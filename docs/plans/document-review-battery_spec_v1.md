@@ -136,7 +136,7 @@ Acceptance criteria:
 
 Execution mode: delegate-capable.
 
-### 2. The `blind-reader` agent
+### 2. The `blind-reader` agent (Complete)
 
 `plugins/claude-kit/agents/blind-reader.md`.
 
@@ -322,4 +322,68 @@ test/*.test.js tools/*.test.js` at 324 pass / 0 fail, unchanged from the pre-edi
 durable test: nothing in the harness reads markdown for register or completeness, and all three
 of the implementer and both reviewers reached that independently.
 
-Next: 2. The `blind-reader` agent
+Next: 3. The `prose-reviewer` agent
+
+### Chapter 2 - 2026-08-26
+Completed: 2. The `blind-reader` agent
+Implemented By: implementer-fable (fable override, per the `Fable Spend:` header; two rounds, no escalation)
+Metrics: 1 review round (paired, both CHANGES_REQUIRED); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Commit Model: Commit-and-Push
+
+**Bar: normal RED/GREEN.** A local RED was stageable and fired.
+
+RED: a rep dispatched as an outside reader with no charter, on a fixture guide carrying planted
+gaps, opened the script a step named and grepped the README. Its own disclosure: reading them was
+"more than the guide gives a reader" (verbatim, hard-wrapped in the record). It led with the
+reader's finding and labelled what it appended as verification, but the label did not hold the
+lens: the appended note ends "it is a step for a program that is not in this repository", a claim
+about the program rather than about the read.
+
+**GREEN was run twice, because the first arm was invalid and the adversarial reviewer caught it.**
+That failure is the orchestrator's, not the implementer's. The first arm's persona ("handed this
+repository by a colleague") is exactly the case the charter's reach predicate did not decide, so
+either the outsider clause was never staged or all three reps breached it; either way the arm
+could not establish the clause it was run for. This is the same "not in the guarded state" branch
+correctly applied to Section 1's first rep and then not applied to this one.
+
+Second arm, against the round-2 charter, persona unambiguously outside (a non-technical operations
+manager at a customer, emailed the document): the guarded behavior, opening source to resolve a
+gap the document left, occurred in none of the three. Rep 3 explicitly page-only. Rep 1 page-only
+on the document, plus one `git status` self-check after writing, which it disclosed and declined to
+reason from, exercising the decline-to-reason rule ported in round 2. Rep 2 is page-only in
+substance but carries no process record, so its compliance is recorded as inferred.
+
+Decisions / Surprises:
+- **The charter's inline dated finding shipped an overstatement in round 1, and the orchestrator
+  wrote it.** The dispatch brief characterized the RED rep's step-4 entry as having "become" an
+  auditor's finding. The record shows it led with the reader's finding and appended a labelled
+  parenthetical. Corrected in round 2 to what the record supports, with both quoted phrases
+  verified verbatim against the source.
+- No `effort:` frontmatter: none of this kit's twelve agent charters carries that field, and
+  upstream's does. Adding one is a separate candidate, not this effort's.
+- The Standing Brief Amendment about scoping the tells catalog has no bearing on this charter,
+  which never invokes the catalog. The implementer said so rather than inserting a sentence to
+  look compliant, which is the right answer.
+
+Review Findings:
+- 2 Critical addressed: the invalid GREEN arm (re-run, above) and the overstated inline finding.
+- 11 Major addressed: the reach predicate had no default (now defaults to outside, with the
+  asymmetry stated: an outsider read that should have been insider loses a dry-run and is
+  re-dispatched, while the reverse destroys the findings the seat exists to produce); the two
+  insider bounds contradicted each other (now four bullets, existence never contents); an outside
+  persona could not produce the mandatory part 4 (now defined as a page-only walk); a referent
+  under `docs/` was reported as a step the persona could not perform, manufacturing a Major
+  against a correct document; the contamination test had three incompatible forms; there was no
+  counterpart to the sibling's decline-to-reason rule; the spec-as-subject carve-out had no
+  single-document restriction; the charter forbade writing and named no delivery channel while
+  3/3 validation reps wrote into the tree; plus de-duplication, missing-input behavior, and the
+  singular-versus-plural summary-back.
+- **2 Major deliberately not fixed, and this is a consequence of the section order rather than a
+  defect.** Both reviewers found that nothing dispatches this agent and that its description
+  contradicts `executing-work/SKILL.md:77`, which says a docs-only section gets the adversarial
+  review alone. Document deliverables land in `docs/`. Section 5 owns the dispatcher and the
+  carve-out, and will be written against this charter's wording. Every review of Sections 2 and 3
+  will legitimately raise this until S5 lands; recorded here so it is adjudicated once.
+
+Evidence: pure ASCII, no `effort:` field, no enforcement claim, 324 pass / 0 fail unchanged. No
+durable test: nothing in the harness reads an agent charter.
