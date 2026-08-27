@@ -495,3 +495,60 @@ Review Findings:
 
 Evidence: pure ASCII, no `effort:` field, no enforcement claim, 324 pass / 0 fail unchanged. No
 durable test: nothing in the harness reads an agent charter.
+
+### Chapter 4 - 2026-08-26
+Completed: the finishing pass, partially. **The plan is deliberately still `In Progress`.**
+Implemented By: main session, with implementer-fable for the Major fix round
+Metrics: QA PASS; 1 whole-changeset adversarial round (0 Critical, 5 Major, all fixed); security skipped by rule; 6 drift items adjudicated; advisor off
+Commit Model: Commit-and-Push
+
+**This Chapter exists to be read by a fresh session picking the effort up.** The finishing pass
+was interrupted near a usage limit, so what follows is the state and the remaining list rather
+than a close-out.
+
+**What ran and passed.** QA verification: PASS, 324/0/0, every acceptance criterion in Sections
+1 to 6 checked against disk. It found two record-vs-disk mismatches in this spec's own prose, both
+fixed. Security review: **skipped by rule**, since `finishing-work` step 2 skips the dispatch when
+the changeset has no production-code surface, which this one does not (agent charters, skills,
+README, a plan doc). The final adversarial pass carried the security read and found nothing.
+Final adversarial review: 0 Critical, 5 Major, all fixed in `64dfe8b`'s predecessor commit. Two of
+those five were false claims in this effort's own records, which is the failure this effort
+produced repeatedly and caught every time.
+
+**Drift adjudicated with the operator, all six items.** D1 fixed (a README claim that would have
+sent two finishing dispatches into metered Fable), D3 fixed (both review enumerations omitted the
+battery), D4 fixed (the adoption ledger still called candidates 6 and 7 pending after both
+shipped), D5 fixed (an agent count wrong by five). D2 noted only: read-only-by-intent agents
+granting `Bash` went from seven to nine, so the `readonly-agent-guard` candidate is further behind
+than when it was written, and both new charters carry a permitted-write carve-out no other
+read-only charter has. D6 left as written.
+
+**Still to do, in order:**
+
+1. **The `docs-write-guard` live-fire, first, before anything else.** During this effort an
+   `implementer-fable` subagent wrote into `docs/plans/` and the guard did not block it, though
+   its whole purpose is denying a non-curator subagent any `docs/` write. Two candidate causes
+   with very different consequences: the installed plugin cache still holds the pre-fix guard
+   (but that version would still deny a repo-root cwd, so it does not explain this on its own),
+   or the hook payload does not carry an agent-type field for this dispatch shape, in which case
+   `subagentType()` returns null, the guard fails open, and it has never been enforcing against
+   subagents at all. A probe was written and killed before it ran: dispatch a governed agent,
+   have it attempt both a `Write` and a Bash redirect into `docs/`, and report the exact refusal
+   text or its absence. `docs/backlog.md` carries this too.
+2. **An operator decision is outstanding:** whether the `docs-curator`'s writes to
+   `docs/README.md` and `docs/architecture.md` are committed in this repo. They are on disk,
+   uncommitted, deliberately. This repo states no docs-commit stance and `finishing-work` says to
+   ask rather than assume. Nothing else blocks on it.
+3. Close the plan: `Status: Complete`, a final Chapter, then the `curating-docs` close path
+   (archive the plan, cross-reference, prune the backlog, refresh the index).
+4. Bank the learnings (finishing-work step 7), naming which of the three memory destinations each
+   fact belongs to.
+5. Kaizen check (step 8). The inbox had 8 pending items at session start and this session added
+   one, about a persisted Bash tool result being unreadable through Bash.
+
+**Everything through `64dfe8b` is committed and pushed.** Nothing is at risk in the working tree.
+Note that none of it is live until `/plugin update` runs, since the runtime loads from the
+installed plugin cache; that applies to the three guard fixes from earlier in the session as much
+as to the battery.
+
+Next: the live-fire, then finishing-work steps 4 through 8
