@@ -27,6 +27,15 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/take-stock-nudge.js\""
           }
         ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/usage-autocontinue-nudge.js\""
+          }
+        ]
       }
     ],
     "PreToolUse": [

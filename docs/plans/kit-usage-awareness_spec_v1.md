@@ -11,8 +11,9 @@ When an unattended kit run approaches a plan usage boundary the operator cares a
 session winds down at a section boundary, stops, tells the operator, and on the five-hour
 window arms its own resume for the reset instant. What exists at the end is a kit-owned
 reader of Anthropic's OAuth usage endpoint, a threshold policy the operator configures, a
-mid-turn wind-down channel, a hard barrier on subagent dispatch, and a documented
-credential path. It matters because on this Team seat with overage enabled nothing 429s at
+mid-turn wind-down channel, a hard barrier on subagent dispatch, a Fable routing ratchet
+that caps model choice at Opus rather than pausing anything, and a documented credential
+path. It matters because on this Team seat with overage enabled nothing 429s at
 the session limit: requests are served and the account spends, so the harness's native
 `autoContinueAtUsageLimit` never fires and there is no existing control at any threshold.
 
@@ -105,13 +106,30 @@ consecutive readings, and it is out of scope here. S1 records what it would need
 
 ### The harness's own controls, and why they do not collide
 
-`autoContinueAtUsageLimit` defaults on and already does pause-and-resume, but it hangs off
-a **rejection**, so on an overage-enabled seat nothing is rejected and it never fires. It
-remains the right mechanism for a seat where overage is not enabled or is exhausted, which
-is a real configuration this kit may run under. The two are complementary rather than
-competing: the kit's barrier fires earlier and at a clean boundary, so it pre-empts the
-native flow rather than fighting it. What the kit owes here is a posture check rather than a
-mechanism, which is S7.
+`autoContinueAtUsageLimit` already does pause-and-resume, but it hangs off a **rejection**, so on
+an overage-enabled seat nothing is rejected and it never fires. It remains the right mechanism for
+a seat where overage is not enabled or is exhausted, which is a real configuration this kit may run
+under.
+
+Two claims in this spec's first draft were wrong, both corrected on 2026-08-27 against the 2.1.247
+binary after the blind reviewer flagged the first:
+
+- **Turning it off does not stop the session pausing.** The setting's own schema description reads
+  "When off, the limit dialog offers the wait as a choice instead", so off removes the *automatic*
+  resume and leaves the pause and the wait as a manual choice. Anything the kit emits must say that
+  and not more.
+- **"Defaults on" is true in effect but not by a literal default, and the `/config` toggle does not
+  write a settings file.** The effective value is the settings value where one is defined, and
+  otherwise the key being absent from the harness's own `storageV5`. The toggle is `consentGated`
+  and persists through an async writer rather than the synchronous local-settings writer its
+  neighbouring toggle uses. So a settings-file value does win when present, which is what makes S7
+  worth shipping, but the ordinary opt-out never lands in any file S7 reads. S7's reach is
+  therefore narrower than this spec first claimed, and its emitted text has to bound itself
+  honestly rather than implying it can see the setting.
+
+The two are complementary rather than competing: the kit's barrier fires earlier and at a clean
+boundary, so it pre-empts the native flow rather than fighting it. What the kit owes here is a
+posture check rather than a mechanism, which is S7.
 
 The harness also carries a wind-down at 95% of the window. On the operator's report it has
 never been seen on this seat, which is consistent with it being rejection-gated like
@@ -120,6 +138,34 @@ that way deliberately: `kit-adoptions.md` candidate 1 withdrew an absence-of-evi
 argument about this exact flow once already, and the operator's own report is what it
 settled on as valid. If the native wind-down ever does appear at 95%, the kit's barrier
 must drop below it so the kit's instruction lands first rather than competing.
+
+### The Fable ratchet, which is a different response to a third window
+
+The Fable-scoped weekly window gets a response unlike the other two: not a pause but a
+**routing cap**. At or above 85%, the kit stops sending work to Fable and caps at the
+session model until that window resets. Nothing stops; the effort continues at Opus.
+
+This is cheap because the kit already has the slot for it. `executing-work` already says to
+"downgrade the dispatch to the session model and flag the downgrade in the Chapter" when
+Fable headroom runs out, and `finishing-work` carries the metered-Fable authorization rule.
+Both have always run on the operator's estimate. What is new is the number, which is the
+consumer `kit-adoptions.md` candidate 1 predicted would be the cheapest and most useful.
+
+**The ratchet gates dispatch and never interrupts work in flight.** An `implementer-fable`
+already running is left to finish and stage its work. Killing it would throw away everything
+it had already spent, strand a half-written file mid-section, and reproduce the
+strand-a-section failure the barrier design avoids, while refusing the next dispatch
+captures nearly all the saving at no cost.
+
+Its mechanical half lives inside S4's hook rather than in a hook of its own, because both
+are the same event and matcher (`PreToolUse` on `Agent`) differing only in predicate and
+scope. One file means one cache read per tool call and an explicit precedence rather than
+two guards racing.
+
+One limit is structural and belongs in the shipped prose. The hook can only see an
+**explicit** `model: "fable"` override, which is what a below-fable session carries. A
+Fable-led session inherits Fable with no override at all, so its dispatches are invisible to
+the mechanical half and the prose rule is the only control there.
 
 ### Why the reader is a second poller
 
@@ -180,14 +226,35 @@ Ships `plugins/claude-kit/hooks/usage-lib.js` with a never-throws contract in th
 Exports a read returning either a success carrying per-window `{percent, severity,
 resetsAt}` keyed `session` / `weeklyAll` / `fableWeekly`, plus `spend` as
 `{amountMinor, exponent, currency}` and a `fetchedAt`, or a typed failure whose reason is
-one of `no-token`, `expired`, `rate-limited`, `timeout`, `parse` or `locked`.
+one of `no-token`, `expired`, `rate-limited`, `timeout`, `parse`, `locked` or `bad-call`.
+
+`bad-call` was added during S1 rather than at plan time, and it is kept: it reports
+kit-internal misuse (an unusable `maxAgeSeconds` or clock) and every other reason is a
+statement about the endpoint or the credential, so folding a caller bug into one of them
+would misreport. Consumers branch on `ok` first, so the addition is additive.
 
 Token resolution reads `$CLAUDE_CONFIG_DIR/.credentials.json`, falling back to
 `~/.claude/.credentials.json`, at every call. The token is never cached, never logged and
 never written to any file.
 
-Cache at `~/.claude-kit-usage/usage.json`, directory 0700 and file 0600, with a
-`usage.lock` carrying a `blockedUntil`. Backoff is per failure class: 401 marks `expired`
+**The store is keyed per config profile, not per machine.** This corrects the plan: the first
+draft named a single `~/.claude-kit-usage/` root while also requiring per-profile token
+resolution, and the blind reviewer reproduced what that combination does. A stale token in one
+profile writes a backoff lock that refuses a *valid* token in another, which defeats this
+section's own stated invariant that a stale profile cannot poison backoff; and the cache serves one
+account's percentages to another, while the reading log interleaves several accounts with no way to
+separate them afterwards. So every store file lives under a subdirectory keyed by the **resolved
+credentials directory**, legible rather than opaque, and each reading-log line carries the same
+discriminator.
+
+The key is the directory path and never the token or a hash of it, which keeps "no token material
+reaches any file" absolutely true. The residual limit, accepted and recorded: re-authenticating the
+same config directory as a different account mixes that directory's readings until the window
+rolls.
+
+Cache at `<store>/usage.json`, directory 0700 and file 0600, with a
+`usage.lock` carrying a `blockedUntil` and a `reason`. The `locked` check honors the reason class,
+so an auth-class lock never gates a fetch it could not have caused. Backoff is per failure class: 401 marks `expired`
 and goes quiet for 900s without writing a rate-limit lock, 429 honors `retry-after` and
 defaults to 300s, timeout and transport errors take 60s.
 
@@ -219,8 +286,8 @@ first of these red before fixing.
 
 Adds threshold evaluation to `usage-lib.js`, reading
 `~/.claude-kit-usage/config.json` with a `warn` and `barrier` percent for each of the
-session and weekly-all windows, an absolute overage-dollar delta for the generic trigger,
-and an `enabled` flag.
+session and weekly-all windows, a single `ratchet` percent for the Fable weekly window, an
+absolute overage-dollar delta for the generic trigger, and an `enabled` flag.
 
 Evaluation returns a verdict naming the state (`clear`, `warn` or `barrier`), the window
 that produced it, its `resets_at` and its percent. Precedence is fixed: any barrier
@@ -234,6 +301,11 @@ under `~/.claude-kit-usage/baseline-<session-id>.json`. No SessionStart hook is 
 whichever of the two consumer hooks reads first establishes the baseline, and until one
 has, the generic trigger reports `clear` rather than a failure. A negative delta is read as
 no overage.
+
+The Fable window is evaluated separately and never feeds the `clear`/`warn`/`barrier`
+state, because its response is a routing cap rather than a pause. Evaluation returns it as
+its own boolean plus the percent and reset instant, and an unknown Fable percent never trips
+it.
 
 Evaluation also computes the staleness budget the callers pass to the reader: 600s at
 `clear`, 120s when any window is within ten points of its barrier.
@@ -294,8 +366,26 @@ It denies only on a positive determination from data no older than the evaluated
 budget. Stale data, any reader failure, an absent or disabled config, and an unknown window
 percent all allow. It denies nothing outside `Agent` and `Task` at any threshold.
 
+**The same hook carries the Fable ratchet**, as a second and narrower predicate evaluated
+after the barrier. Precedence: a session-or-weekly `barrier` denies every `Agent` dispatch;
+failing that, a Fable weekly percent at or above the ratchet denies only a dispatch whose
+`tool_input.model` is `fable`, with a reason naming the percent, the reset instant and the
+instruction to re-dispatch without the override. A dispatch carrying no fable override is
+untouched by the ratchet.
+
+Denying is deliberate rather than rewriting the call through `updatedInput`: a silent
+downgrade would leave the orchestrator believing it got Fable and writing a Chapter saying
+so. The hook cannot see an inherited Fable model on a Fable-led session, only an explicit
+override, and its reason text says so rather than implying full coverage.
+
 Acceptance criteria:
 - Denies only at `barrier` on data inside the staleness budget. Watch this red first.
+- The ratchet denies a dispatch with `model: "fable"` at or above the Fable threshold, and
+  allows the identical dispatch without that override. Watch the first of these red.
+- A session-or-weekly barrier outranks the ratchet, so at a barrier every `Agent` dispatch
+  is denied regardless of model.
+- The ratchet allows everything on stale data, on any reader failure, and when the Fable
+  window's percent is unknown.
 - Allows on stale data, on every reader failure reason including `expired`, on absent
   config and on `enabled: false`.
 - The deny reason names the window and the reset instant, so the model can act on it
@@ -394,9 +484,13 @@ what it found in those. A value set anywhere else is invisible to it, and the em
 says so rather than implying full coverage.
 
 Acceptance criteria:
-- When the setting is explicitly `false` in one of those four files, one line reaches the
-  operator naming which file holds it, that a seat without overage will not pause at the
-  limit without it, and that only those four files were checked.
+- When the setting is explicitly `false` in one of those files, one line reaches the operator
+  naming which file holds it and stating the consequence **accurately**: that a seat whose overage
+  is absent or exhausted loses the automatic resume, not the pause.
+- The emitted text names the files the run actually consulted rather than a fixed count, since with
+  `CLAUDE_CONFIG_DIR` unset only two are read.
+- The emitted text says the `/config` toggle persists outside these files, so an operator cannot
+  read the nudge as a claim about the session's effective setting.
 - When it is absent or `true`, nothing is emitted. The default-on case is silent.
 - The kit never writes, patches or suggests patching a settings file itself.
 - A settings file that cannot be read or parsed emits nothing rather than a warning.
@@ -405,13 +499,43 @@ Execution mode: delegate-mechanical.
 Tests: the silence cases, since a nudge that fires on the default-on configuration would
 fire in every session forever; and that an unreadable settings file stays silent.
 
+### 8. The Fable ratchet's prose half
+
+Adds the rule that gives the kit's existing Fable-downgrade path a number, in
+`plugins/claude-kit/skills/executing-work/SKILL.md` and
+`plugins/claude-kit/skills/finishing-work/SKILL.md`.
+
+Before any dispatch carrying a fable model override (a `delegate-fable` section, an
+escalation into fable, or finishing-work's reviews), the orchestrator reads the Fable weekly
+percent. At or above the ratchet it dispatches at the session model instead and records the
+downgrade in the Chapter, naming the percent and the reset instant. Work already in flight is
+left alone. The rule states the structural limit: on a Fable-led session the mechanical
+backstop in S4 sees nothing, so this prose is the only control.
+
+This is behavior-shaping prose in two of the kit's load-bearing skills, so `writing-skills`
+gates it and its bar applies. It also governs this very effort, whose own S1 and S4 are
+`delegate-fable`.
+
+Acceptance criteria:
+- Both skills name the ratchet at the point where each already decides a fable dispatch,
+  rather than as a new standalone section bolted on.
+- The rule says explicitly that in-flight work is not interrupted.
+- The rule says explicitly that a Fable-led session's inherited model is invisible to the
+  hook, so the prose is the only control there.
+- The Chapter-recording obligation names both the percent and the reset instant, so a later
+  session reading a downgraded Chapter can tell whether the window has since reset.
+- The prose passes the `writing-skills` gate for a behavior-shaping change.
+
+Execution mode: main.
+
 ## Out of Scope
 
 - A kit-owned statusline, and any replacement of `ccstatusline`. Candidate 21 stays rejected.
 - Reading `ccstatusline`'s cache as a data source.
-- Triggering on the Fable-scoped weekly window, and wiring the Fable number into
-  `finishing-work`'s metered-Fable authorization decision. The reader exposes
-  `fableWeekly` so a later effort can consume it; this one does not.
+- Pausing or stopping on the Fable-scoped weekly window. That window ratchets model routing
+  down to the session model (S4 and S8) and never pauses an effort, because running at Opus
+  is a working state rather than a barrier.
+- Interrupting, killing or reverting work already in flight, on any window.
 - A threshold on **cumulative** overage spend. No cap is exposed to this seat, so there is
   no denominator; only the per-session delta described in S2 is used.
 - Any attempt to refresh the OAuth token. The kit reads a credential it does not own.
@@ -427,8 +551,9 @@ fire in every session forever; and that an unreadable settings file stays silent
 
 ## Open Questions
 
-- Threshold defaults are set at session 80/95 and weekly-all 85/95 with the spend-delta
-  trigger at the first dollar, and they are a starting point rather than a settled answer.
+- Threshold defaults are set at session 80/95, weekly-all 85/95, the Fable ratchet at 85,
+  and the spend-delta trigger at the first dollar. The Fable figure is the operator's
+  decision of 2026-08-27; the rest are a starting point rather than a settled answer.
   What would settle them is how much window one section of a kit effort actually costs,
   which S1's reading log is what measures. Owner: the operator, on real data.
 - Whether the harness's native 95% wind-down is rejection-gated. The operator reports never
@@ -442,6 +567,88 @@ fire in every session forever; and that an unreadable settings file stays silent
 - Whether `spend.used.amount_minor` is a monthly or an all-time counter. S2 handles a
   negative delta either way. Owner: observation.
 
+## Standing Brief Amendments
+
+Folded into every later section's dispatch brief. Each entry exists because a defect of its
+class was already found once in this effort, so the guard travels rather than the fix.
+
+1. **Enumerations in the kit's own docs stop short of the newest member.** Raised by S7,
+   which added a fourth SessionStart hook while `docs/architecture.md` and
+   `docs/security-model.md` each still enumerate exactly three, and neither the count nor the
+   trusted-channel table was updated. This effort adds hooks and trusted channels in S3, S4
+   and S7, so any section that adds one must update every enumeration that counts them, and
+   S6 must sweep all of them. `docs/plans/enumerations-stop-short_spec_v1.md` records at
+   least five prior instances of this exact class in this repo, which is why it is a standing
+   amendment on first occurrence here rather than on the second.
+
+   **Broadened 2026-08-27 after the class recurred inside this effort, in this spec itself.**
+   S1's fix round added a fourth store file (the in-flight lease) and a second cause of the
+   `locked` reason, while S1's own store paragraph still enumerated two files and one cause.
+   The first draft of this amendment scoped the travelling guard to hooks and trusted channels,
+   which is exactly why it did not catch a spec-internal enumeration. The guard now covers
+   **every enumeration this effort owns, in code comments, in this spec, and in the living
+   docs**: any section adding a store file, a failure reason, a hook, a trusted channel or a
+   sanitizer site updates every list that counts them, lists inside this plan included.
+
 ## Chapters
 
-(Appended by executing-work as sections complete.)
+### Chapter 1 - 2026-08-27
+Completed: **none closed.** S7 is review-clean and holding; S1 is stalled at its mode ceiling.
+Implemented By: S1 `implementer-fable` (explicit fable override, 2 dispatches); S7
+`implementer-sonnet`, then `implementer-opus` for its fix round.
+Metrics: S1 two review rounds, both CHANGES_REQUIRED; S7 one round plus a clean fix round.
+NEEDS_CONTEXT 0. Escalations: S7 mechanical to capable for its fix round, the orchestrator's
+call rather than a ladder escalation since S7 never failed twice. Advisor on (opus), not
+consulted this Chapter. Reviewers dispatched: 6 (adversarial x3, blind x2, security x1).
+Gate at Chapter close: 375 pass, 0 fail, from a 324 baseline.
+
+Decisions / Surprises:
+- **Two spec errors of mine, both found by review rather than by me.** The store was specced
+  machine-global while the credential resolves per profile; the blind reviewer reproduced one
+  profile's stale token refusing another profile's valid one, and one account's percentages
+  being served to another. And the spec claimed a seat without overage "will not pause"
+  without `autoContinueAtUsageLimit`, where the binary's own schema description says off
+  removes the *automatic resume* and leaves the pause as a manual choice. Both corrected.
+- **The `/config` toggle for `autoContinueAtUsageLimit` writes no settings file.** It is
+  `consentGated` and persists through an async writer. S7 therefore catches a hand-edited
+  settings value, which does win when present, but not the ordinary opt-out. Its reach is
+  narrower than specced and its emitted text now says so.
+- **The two reviewers disagreed once and the blind one was right.** Adversarial rated the
+  mtime lock-supersession a self-limiting Minor; blind reproduced it defeating the 900s
+  backoff permanently whenever the credentials mtime sits ahead of the wall clock. A
+  reproduction beat a chain of reasoning, which is the argument for keeping the pair.
+- **An implementer argued against my brief and won.** I specified a `[0, 100]` percent bound;
+  it shipped `[0, 1000]` because an overage seat legitimately exceeds 100, and nulling a real
+  130 would make the window "unknown" exactly when a barrier is due, turning S2's
+  unknown-never-barriers rule into silence at the worst moment. Accepted, and the premise is
+  now an Open Question for the reading log to settle.
+- **A reviewer's repro script overwrote the orchestrator's own file in the session
+  scratchpad.** No warning; noticed only when the tool stopped working. Routed to the kaizen
+  inbox rather than fixed here.
+
+Review Findings:
+- S1 round 1: 2 Critical (a machine-global store defeating this section's own stale-profile
+  invariant; the same collision on the cache and the reading log) plus 3 Major. All fixed.
+- S1 round 2: 3 Critical (an uncapped lease horizon that bricks the store where the sibling
+  lock correctly caps; a lease acquire that fails CLOSED on a write error its own contract
+  says must fail open; an unresolved relative `CLAUDE_CONFIG_DIR` making a repo-local
+  `.credentials.json` the Bearer token) plus 6 Major. **None fixed. This is the stall.**
+- S7 round 1: 4 Major, all fixed, fix round clean.
+- Security over the whole changeset: 1 Major (the living docs no longer described the kit) and
+  8 Minor. The Major is fixed in this Chapter's docs work.
+
+Docs work done here under Standing Brief Amendment 1 rather than deferred to S6, because that
+amendment puts an enumeration on the section that broke it: `architecture.md` and
+`security-model.md` SessionStart hook counts, the state-location count and table, the
+trusted-channel count and table row, the sanitizer site count and its new 300 cap group, the
+same-uid store list, a new credential-path section, and the secrets-at-rest qualification.
+
+Next: **BLOCKED on a user decision about S1's execution mode.** S7 is ready to close as soon
+as S1 lands, since the two share one gate. Nothing else can start: S2 edits S1's file, and
+S3, S4 and S8 all need S2's policy API.
+
+Commit Model: Commit-and-Push, deliberately deviated this Chapter. Only this plan doc is
+committed and pushed. All five code files and both living docs stay staged and uncommitted,
+because putting code with three open Criticals on `main`, or docs describing hooks that are
+not on `main`, is worse than a staged pause. `git diff --staged` is the review surface until
+S1 closes.
