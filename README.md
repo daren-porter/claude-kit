@@ -73,12 +73,27 @@ The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"sou
 
 ## INSTALL (per machine)
 
+**Prerequisite: `node` on PATH.** Check with `node --version`. Claude Code does not provide one:
+the native installer, Homebrew, WinGet, apt/dnf/apk and the desktop app all ship a native binary,
+and while the npm install method needs Node to install, the binary it delivers does not use Node
+at runtime. Every hook this plugin registers is `node "${CLAUDE_PLUGIN_ROOT}/hooks/<file>.js"`, so
+on a machine without Node the plugin installs, loads, and lists its skills normally while none of
+its hooks run. **That failure is quiet by design of the harness rather than of this kit:** a hook
+whose command cannot be spawned reports a non-blocking error and the tool call proceeds, so the
+three PreToolUse guards stop guarding and nothing blocks. The kit cannot warn you about this
+itself, because the hook that would carry the warning is also a Node script.
+
 1. Clone the repo. It is private, so this and step 3 both need GitHub access already working
-   for your account (an SSH key on the account, or `gh auth login`, or a PAT your git
-   credential helper serves).
+   for your account. Claude Code uses your existing git credential helpers for both, so whatever
+   authenticates `git clone` in your terminal (`gh auth login`, macOS Keychain,
+   `git-credential-store`) is what it will use.
    ```
-   git clone git@github.com:daren-porter/claude-kit.git
+   git clone https://github.com/daren-porter/claude-kit.git
    ```
+   SSH works too, if the key is loaded in `ssh-agent` and `github.com` is already in your
+   `known_hosts`. Worth knowing before step 3: the `owner/repo` shorthand that step uses clones
+   over SSH by default, so a machine set up for HTTPS only may authenticate here and still fail
+   there. If that happens, get SSH working rather than assuming the marketplace is unreachable.
    Steps 4 and 5 read two files that ship outside the plugin (`settings/settings.recommended.json`,
    and `setup.sh` on alias-profile machines), so the checkout is a prerequisite rather than a
    convenience. Repo-relative paths below are from the clone root; paths beginning
@@ -101,7 +116,7 @@ The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"sou
 
 5. Merge `settings/settings.recommended.json` (from the clone in step 1) into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
-Updating: run `/plugin update claude-kit` on each machine. (Publishing the change in the first place is the maintainer half, under PUBLISHING below.) Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
+Updating: run `/plugin update claude-kit` on each machine. (Publishing the change in the first place is the maintainer half, under PUBLISHING below.) Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. Background auto-updates on a private repo need more than the foreground path does, and setting `GITHUB_TOKEN` in your environment is not enough on its own: a provider token takes effect only through a configured credential helper, such as the `gh` CLI's, which reads `GH_TOKEN` and `GITHUB_TOKEN`. Background marketplace refreshes also disable credential helpers by default, so an HTTPS private repo fails there until you either set `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` to keep the cached copy, configure a git URL rewrite embedding a read-only token, or configure a helper the re-clone fallback can use. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
 
 ## THE WORKFLOW
 
