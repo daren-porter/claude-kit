@@ -91,6 +91,13 @@ sessions (and post-compaction recovery) understand intent, not just steps.
 What gets built. Acceptance criteria as verifiable statements.
 Execution mode: main | delegate-fable | delegate-capable | delegate-mechanical.
 Tests: <optional> the behaviors this section must lock and the risk driving each.
+Audience: <these five lines are for document-deliverable sections only; delete all
+  five otherwise> each persona, its knowledge level, and whether it holds this repository.
+Must answer: the questions each persona must be able to answer after reading.
+Fact base: the paths (code, living docs, figures) the document's claims rest on.
+Style authority: <a writing-style skill path | a document-governing CLAUDE.md section | none>
+Disclosure: <where any persona sits outside the operator> what must not appear: names,
+  identifiers, paths, internal states.
 ### 2. ...
 
 ## Out of Scope
@@ -104,6 +111,39 @@ Unresolved items and who owns the answer.
 ```
 
 Specs stay at acceptance-criteria altitude: goal, approach, sections, verifiable criteria. Do not pre-write implementation code into the spec; detailed direction for delegated tasks is generated at dispatch time by executing-work, in contact with the actual code.
+
+## A section whose deliverable is a document
+
+Where what a section ships is a document written for someone to read, rather than code, its
+body carries five more things. They exist to feed the document review battery (the
+`blind-reader` and `prose-reviewer` agents, dispatched by executing-work), and they are
+required only for such a section: an ordinary code section gains no ceremony from this.
+
+- **`Audience:`** each persona and its knowledge level. The predicate the reviewers key on is
+  whether the persona holds this repository, never the job title, so say which: "an operator
+  who works in this repo daily" and "an operations manager at a customer who has never seen
+  the code" are different reaches, and a job title alone settles neither.
+- **`Must answer:`** the questions, per persona, this reader has to be able to answer after
+  reading. A question left unanswered is what the prose reviewer rates Major, so this list is
+  the section's acceptance criteria for the document rather than decoration.
+- **`Fact base:`** the code, the living docs, and any table of figures the document
+  cites. The prose reviewer checks every claim against these and lists the load-bearing claims
+  it could not check, so a source you leave out becomes an unverifiable claim rather than a
+  silent pass.
+- **`Style authority:`** one of three values, decided here at plan time; the dispatching
+  session relays the recorded value, and nothing downstream re-resolves it. A path to a
+  writing-style skill; or a designated document-governing section of a CLAUDE.md,
+  which the reviewer treats as advisory only and caps at Minor; or `none`, under which the
+  style lens is not run at all and the report says it was unavailable. **`none` is the normal
+  value in this kit**, which has no writing-voice skill and has decided against having one, so
+  it is an answer rather than a gap to be filled.
+- **`Disclosure:`** the list of names, identifiers, paths and internal states that must not
+  appear, wherever any persona sits outside the operator. The prose reviewer sweeps every
+  document in scope against the list, and a hit is Critical.
+
+Naming the reader and the questions before the document exists is most of the value here, and
+it lands on the plan rather than on the document: a section that cannot say who reads its
+output usually has not decided what the output is.
 
 Give a section the optional `Tests:` line where it carries real behavioral risk, and hold it to three constraints so it orients the implementer instead of confining one. It states **intent, never design**: what to lock and the risk driving each, never fixtures, seams, or structure, which are implementation knowledge the plan does not have. It is a **floor, never a ceiling**: the implementer's duty to settle the test question runs past whatever the line names. And it is **amendable on contact with the code** like any other spec claim, with the delta flagged in the Chapter.
 

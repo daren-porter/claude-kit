@@ -48,7 +48,8 @@ visible rather than passing silently. Absence from a `CLAIMS CHECKED` block curr
 
 **Style resolves through a three-tier ladder, and the bottom tier is silence.** This is the
 largest departure from upstream, whose `Voice: scott` branch points at a skill this kit
-refused. The dispatching session resolves one `Style authority:` field:
+refused. The spec records one `Style authority:` field per document section, decided at
+plan time and relayed at dispatch:
 
 | Tier | Value | Reviewer behavior |
 |---|---|---|
@@ -114,6 +115,24 @@ Binding on every later section's dispatches, added mid-run as review rounds surf
   reviewer told to hunt tells without this scoping flags an em dash inside a block quote and
   the fix corrupts the quotation.
 
+- **(S3 to S6 review, 2026-08-26) A cross-reference is not written until it has been resolved
+  against this tree.** Second instance of one class in this effort, which `executing-work`'s
+  recurrence rule prices as an amendment rather than a second fix: Chapter 1 corrected an
+  em-dash authority pointing at a file this kit does not carry, and the S3 to S6 round found
+  `executing-work` citing a "Dispatch Brief" that exists only in the upstream kit, beside a
+  path missing its `plugins/claude-kit/` prefix. Both were lifted from upstream prose where
+  they did resolve. Every later dispatch resolves each path and each named section against
+  this repository before the wording is written, and the brief says so. The reason this class
+  is expensive rather than cosmetic: `prose-reviewer` degrades an unreadable catalog path into
+  skipping the by-name tell hunt, so a wrong path silently removes a lens and the report still
+  reads as a completed pass.
+
+- **(S3 to S6 review, 2026-08-26) `git commit` with no pathspec sweeps the whole index,
+  including files a subagent staged.** `plugins/claude-kit/agents/prose-reviewer.md` shipped
+  inside `78ad592`, a commit whose message is entirely about the adoption ledger. Implementers
+  stage and never commit, so the index routinely holds work from a section that is still open.
+  Every commit in this effort names its paths explicitly.
+
 ## Sections of Work
 
 ### 1. The machine-prose tells catalog (Complete)
@@ -160,7 +179,7 @@ Acceptance criteria:
 
 Execution mode: delegate-fable.
 
-### 3. The `prose-reviewer` agent
+### 3. The `prose-reviewer` agent (Complete)
 
 `plugins/claude-kit/agents/prose-reviewer.md`.
 
@@ -183,7 +202,7 @@ Acceptance criteria:
 
 Execution mode: delegate-fable.
 
-### 4. Spec-template fields
+### 4. Spec-template fields (Complete)
 
 `plugins/claude-kit/skills/brainstorming/SKILL.md`.
 
@@ -199,7 +218,7 @@ Acceptance criteria:
 
 Execution mode: main.
 
-### 5. The dispatch contract
+### 5. The dispatch contract (Complete)
 
 `plugins/claude-kit/skills/executing-work/SKILL.md`.
 
@@ -215,7 +234,7 @@ Acceptance criteria:
 
 Execution mode: main.
 
-### 6. Wiring
+### 6. Wiring (Complete)
 
 Acceptance criteria:
 - `responding-to-review`'s list of fallible review agents includes both new agents, so their
@@ -322,7 +341,83 @@ test/*.test.js tools/*.test.js` at 324 pass / 0 fail, unchanged from the pre-edi
 durable test: nothing in the harness reads markdown for register or completeness, and all three
 of the implementer and both reviewers reached that independently.
 
-Next: 3. The `prose-reviewer` agent
+Next: finishing-work
+
+### Chapter 3 - 2026-08-26
+Completed: 3, 4, 5 and 6, reviewed as one round
+Implemented By: implementer-fable for S3 and the fix round (fable override per the header); main session for S4, S5 and S6
+Metrics: 1 review round (paired, both CHANGES_REQUIRED, 6 Critical between them); 0 NEEDS_CONTEXT; 0 escalations; advisor off
+Commit Model: Commit-and-Push
+
+**Reviewed as one round, which is a deviation.** S4, S5 and S6 are one coherent prose change
+across four files and were implemented concurrently; reviewing them separately would have read
+each half of a contradiction without the other. Recorded so it is deliberate.
+
+**Bars.** S3 took the normal RED/GREEN bar on a local arm: two reps given the tells catalog and
+told to de-tell a fixture, of which one went to the source, drafted a close whose style-driven
+shape contradicted the document's opening accuracy claim, and by its own account "was about to
+edit paragraph 1 to fit". What stopped it was an advisor consult rather than any ordering rule,
+and `executing-work` explicitly does not let the kit rely on that. So the ordering Pass 1 before
+Pass 2 guards a failure observed here, at one rep in two.
+
+S5 is a **narrowing** of a rule the kit already ships (`executing-work`'s docs-only rule), which
+`writing-skills` prices at a third arm in the state the change leaves alone. Run: three reps read
+the amended step and dispatched reviewers for three scenarios. All three gave a docs-only section
+with no `Audience:` line the adversarial review alone, so the narrowing did not take the untouched
+case with it; all three gave a code-plus-document section the full additive set. Two flagged one
+genuinely undecided call, whether that section also earns `security-reviewer`, which turns on
+facts the fixture did not supply rather than on the wording.
+
+**S4's bar is not discharged and is recorded as debt.** It adds five required spec fields. The
+judgment made was that a template slot is a structural mechanism rather than a rule, which
+`writing-skills` itself ranks above a prose reminder, so no arm was run. The adversarial reviewer
+called that new claims at the normal bar and it is right that nothing on disk records the
+decision. A backlog line carries it.
+
+Decisions / Surprises:
+- **The battery is additive, decided at the fix round.** Both reviewers found the first carve-out
+  undecidable for a section shipping a document and code: one reading dropped both code reviewers
+  from any section carrying an `Audience:` line. A section now takes the battery on that line and
+  takes whatever code review its changeset warrants, unchanged.
+- **`Disclosure:` had no consumer and now has one.** The field was specified in S4 and read by
+  nothing: `prose-reviewer` had a closed tag set without it, `security-reviewer` says nothing
+  about disclosure, and `finishing-work` waives the security dispatch entirely for an all-prose
+  changeset. A `[disclosure]` lens was added to `prose-reviewer` rather than dropping the field.
+- **`executing-work` cited a "Dispatch Brief" that exists only in the upstream kit.** Lifted from
+  upstream prose where it resolves. The failure was silent by construction, since `prose-reviewer`
+  degrades an unreadable catalog path into skipping the by-name tell hunt, so a wrong path removes
+  a lens and the report still reads complete. Second instance of the resolves-to-nothing class in
+  this effort, so it became a Standing Brief Amendment rather than a second fix.
+- **The `writing-skills` description edit was reverted whole.** It broke that file's own rule
+  fifty lines below it, that a description states the trigger and not the workflow. Restored
+  byte-identical.
+- **`prose-reviewer.md` shipped inside `78ad592`, a commit about the adoption ledger.** An
+  implementer had staged it and a pathspec-less `git commit` swept the index. Already pushed, so
+  it is recorded rather than rewritten, and a Standing Brief Amendment now requires every commit
+  in this effort to name its paths.
+- An implementer wrote into `docs/` without the docs-write-guard blocking it. The installed plugin
+  cache still holds the pre-fix guard, since `/plugin update` has not run since the fix landed.
+  Worth a live-fire once it has.
+
+Review Findings:
+- 6 Critical addressed across the two reviews: the dangling Dispatch Brief and unresolvable
+  catalog path; `Disclosure:` with no consumer; the undecidable mixed section; `finishing-work`
+  reusing a per-section brief whose persona pairing, must-answer questions and style authority
+  have no whole-effort value; the `README.md` STRUCTURE entry Chapter 1 routed here and was not
+  done; and the unrecorded bars for S4 and S5.
+- 13 Major addressed, including the three-way disagreement on who resolves `Style authority:`,
+  four of five fields having no template slot, the missing tenure predicate in the `Audience:`
+  line, no severity slot for a frequency-level `[tell]` finding, no degradation for a missing
+  `Audience:` line, `finishing-work`'s fable-override enumeration leaving an unauthorized-spend
+  path, and its unqualified instruction to tell finishing reviewers what earlier passes covered,
+  which reaches `blind-reader` and is contamination by that charter's own definition.
+- 1 Major corrected against the orchestrator: the dated finding's denominator. The brief said one
+  in three; the claim-checking arm used a different fixture and tested a different question, so
+  only two reps ran the guarded task.
+
+Evidence: all seven touched files pure ASCII, `grep -rn "Dispatch Brief" plugins/ README.md`
+empty, `writing-skills/SKILL.md` byte-identical to its pre-effort state, 324 pass / 0 fail. No
+durable test: nothing in the harness reads a skill or a charter.
 
 ### Chapter 2 - 2026-08-26
 Completed: 2. The `blind-reader` agent

@@ -1,6 +1,6 @@
 # claude-kit
 
-A personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm → execute → finish) with per-section model down-selection, fresh-context review agents, discipline skills (systematic debugging, skill authoring, review response, kaizen self-improvement, a multi-lens design council, and cold judgment calls), C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
+A personal Claude Code marketplace. One private repo that every project picks up: workflow skills (brainstorm -> execute -> finish) with per-section model down-selection, fresh-context review agents, discipline skills (systematic debugging, skill authoring, review response, kaizen self-improvement, a multi-lens design council, and cold judgment calls), C# and T-SQL house-style guides, and a compaction-recovery hook - packaged as the `claude-kit` plugin in the `daren` marketplace.
 
 Forked from Scott Applefeld's claude-kit and personalized: same workflow philosophy (autonomous execution with fresh-context agent reviews, plan docs as the single source of truth), different style content and several policy changes (three-valued commit model with branch discipline, delegate-by-default implementation with capable-by-default subagent models, staged-not-committed subagent work, no formatter hook).
 
@@ -15,7 +15,7 @@ claude-kit/                          (repo = the marketplace)
       .claude-plugin/plugin.json     Plugin manifest (no version field - every
                                      commit counts as a new version)
       skills/
-        brainstorming/               Design conversation → spec in docs/plans/ + commit model
+        brainstorming/               Design conversation -> spec in docs/plans/ + commit model
           assets/frame.css           Visual companion frame: styles the static screens a session writes to a project's .kit/visuals/
           references/visual-companion.md  The push loop, on-disk conventions, class catalogue and sweep
         executing-work/              Autonomous section loop: implement, verify, review, Chapter
@@ -23,6 +23,7 @@ claude-kit/                          (repo = the marketplace)
         systematic-debugging/        Root-cause discipline before proposing fixes
         responding-to-review/        Adjudicate review findings and direct feedback; no performative agreement
         writing-skills/              Author and improve kit skills (match form to failure, baseline-test wording)
+          references/ai-tells.md     The machine-prose tells catalog: named tells with rewrites and licensed exceptions
         kaizen/                      Capture kit friction; reflect into briefs; apply as improvements
         design-council/              Opt-in multi-lens pressure-test for a hard-to-reverse design fork
         cold/                        Neutral evidence-first lens for non-code judgment calls
@@ -38,6 +39,8 @@ claude-kit/                          (repo = the marketplace)
       agents/
         adversarial-reviewer.md      Fresh-context spec-compliance + code-quality review
         blind-reviewer.md            Diff-only correctness review, dispatched without the spec or intent story
+        blind-reader.md              Reader-experience review of a deliverable document, dispatched as a named persona with no intent story
+        prose-reviewer.md            Adversarial prose review: claims against the fact base first, then style, tells and presumed knowledge
         pr-reviewer.md               Precision-calibrated incoming-PR review: finding bar, blocker/suggestion/note, comment drafts
         qa-verifier.md               Build, tests, acceptance criteria with evidence; pinned sonnet
         security-reviewer.md         OWASP + SOC 2 review, any production codebase (deep on C#/T-SQL; covers hooks, shell, config)
