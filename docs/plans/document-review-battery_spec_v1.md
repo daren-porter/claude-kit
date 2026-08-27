@@ -108,9 +108,9 @@ Binding on every later section's dispatches, added mid-run as review rounds surf
 - **(S1 review, 2026-08-26) The tells catalog is scoped to prose the author wrote, and never
   to material reproduced verbatim.** Any agent charter that invokes the catalog carries that
   exemption explicitly. Both S1 reviewers reached this independently, and the kit already
-  ships the rule with a near-miss behind it: `pr-review/SKILL.md:53` bars editing a fenced
+  ships the rule with a near-miss behind it: `plugins/claude-kit/skills/pr-review/SKILL.md:53` bars editing a fenced
   `suggestion` body because it is written into the author's file byte for byte, and
-  `archive/kit-denaming_s1-rules.md:139` traces it to commit `74adfa9`, where stripping a
+  `docs/archive/kit-denaming_s1-rules.md:139` traces it to commit `74adfa9`, where stripping a
   character from a copied body would have written altered code into a teammate's file. A
   reviewer told to hunt tells without this scoping flags an em dash inside a block quote and
   the fix corrupts the quotation.
@@ -258,10 +258,21 @@ Execution mode: delegate-capable.
 
 ## Open Questions
 
-- Whether tier 2 should name a specific CLAUDE.md heading convention, or leave the designation
-  to the dispatching session. Owner: settle in S4 against the actual file.
-- Whether `finishing-work`'s document pass needs a persona distinct from the per-section one.
-  Owner: settle in S6.
+Both are closed; the answers are on disk and are recorded here so the block is not read as
+still open.
+
+- **Answered in S4.** Whether tier 2 should name a specific CLAUDE.md heading convention, or
+  leave the designation to the dispatching session. It is designated at plan time and relayed
+  at dispatch, and nothing downstream re-resolves it
+  (`plugins/claude-kit/skills/brainstorming/SKILL.md:133`). No heading convention is named,
+  because the kit ships no document-governing CLAUDE.md section to name and `none` is the
+  normal value here.
+- **Answered in S6.** Whether `finishing-work`'s document pass needs a persona distinct from
+  the per-section one. It does not: the close-out dispatches one `blind-reader` per pairing of
+  a persona with the document set actually written for it, reusing the personas the sections'
+  `Audience:` lines already named (`plugins/claude-kit/skills/finishing-work/SKILL.md:29`).
+  The reason a distinct persona was tempting is the reason it is wrong: handing a persona
+  documents never addressed to it manufactures findings against correct documents.
 
 ## Chapters
 
@@ -416,8 +427,10 @@ Review Findings:
   only two reps ran the guarded task.
 
 Evidence: all seven touched files pure ASCII, `grep -rn "Dispatch Brief" plugins/ README.md`
-empty, `writing-skills/SKILL.md` byte-identical to its pre-effort state, 324 pass / 0 fail. No
-durable test: nothing in the harness reads a skill or a charter.
+empty, `writing-skills/SKILL.md` byte-identical to its post-S1 state: the S6 description edit
+was reverted whole, and only S1's pointer section separates the file from the effort's base
+`5f23707`. 324 pass / 0 fail. No durable test: nothing in the harness reads a skill or a
+charter.
 
 ### Chapter 2 - 2026-08-26
 Completed: 2. The `blind-reader` agent

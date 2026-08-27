@@ -186,4 +186,4 @@ Rewrite: "The approach cuts read load on the primary by about 60 percent at peak
 
 ---
 
-Adapted from `plugins/claude-kit/skills/scott-writing-style/references/ai-tells.md` in the upstream kit `SApplefeld/sapplefeld-claude-kit`, at commit `a5fce80`.
+Adapted from `plugins/claude-kit/skills/scott-writing-style/references/ai-tells.md` in the upstream kit `SApplefeld/sapplefeld-claude-kit`, at commit `ba1060b`: the catalog landed at `a5fce80` and the upstream finishing pass amended it, so `ba1060b` is the version this adaptation worked from.

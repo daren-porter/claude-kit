@@ -24,17 +24,27 @@ On a session running below Fable, dispatch the security review (step 2) and the 
    an `Audience:` line on the section that produced it; the reason is whole-effort cohesion,
    since a document that read cleanly on its own may contradict a sibling written three sections
    later, and only a whole-effort pass sees that. The per-section Document Review Brief does not
-   stretch to this pass, because three of its fields are per-section by construction, so build
-   the close-out brief from the plan doc instead:
+   stretch to this pass, because five of its fields are per-section by construction, so build
+   the close-out brief from the plan doc instead, giving every field the charters' Inputs name a
+   whole-effort source:
    - `blind-reader`: one dispatch per pairing of a persona with the document set written for it,
      the documents whose sections named that persona in their `Audience:` line. Name the pairing
      explicitly in each dispatch: a blind reader cannot infer it, and a persona handed a document
      never written for it files real comprehension gaps against a correct document.
-   - `prose-reviewer`: one dispatch over the full document set. The must-answer questions are the
+   - `prose-reviewer`: one dispatch over the full document set, kept whole so cross-document
+     inconsistency stays visible to a single head. The spec path is the plan doc, and the
+     document paths are the full set. `Audience:` is the union of the sections' `Audience:`
+     lines, each persona at its stated knowledge level. The must-answer questions are the
      union of the sections' `Must answer:` lines per persona, each question naming its source
-     section. `Style authority:` is stated per document, at the value the document's own section
-     recorded; where sections left one document with conflicting values, the dispatch states the
-     style lens as unavailable for that document rather than picking a winner.
+     section. The fact-base paths are the union of the sections' `Fact base:` lines.
+     `Disclosure:` is the union of the sections' `Disclosure:` lists; where no section carried
+     one, no list rides, and the reviewer's report states that the disclosure lens did not run.
+     The catalog path rides exactly as in the per-section brief, resolved and confirmed readable
+     the same way. `Style authority:` is stated per document, at the value the document's own
+     section recorded, and the charter applies its ladder document by document; where sections
+     left one document with conflicting values, relay `none` for that document and name the
+     conflict beside it, because `none` is a value whose behavior the charter defines (the lens
+     does not run there and the report says so) rather than a wording it has no rule to parse.
    Dispatch both in the same message as the reviews above. An effort that shipped no such
    document skips this and says so in the close-out Chapter, the same as any other skipped gate.
 
