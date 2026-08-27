@@ -56,6 +56,7 @@ claude-kit/                          (repo = the marketplace)
         kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
         docs-write-guard.js / stop-docs-hygiene.js Docs-library guards: non-curator subagent writes into docs/ denied; Stop-time scratch-leak flag (unarchived plans are session-start's nudge, never a turn-end block)
         pr-docs-guard.js / merged-pr-push-guard.js / branch-reaper-nudge.js Branch/PR guards: dirty-docs PR block, merged-branch push block, reap/strand nudge
+        accretion-lib.js             Shared level-2 section parser (ships in the payload; tools/accretion.js uses it too)
         take-stock-nudge.js          Kit-repo-only SessionStart nudge: how many prose sections changed since the last docs/take-stock.md entry (ranking lives in tools/accretion.js)
         memory.js / memory-lib.js / memory-index.js The cross-project memory tier: authoring CLI, shared library (the record schema lives in its header), generated index sidecar and the [body revised] marker
       assets/
@@ -63,44 +64,48 @@ claude-kit/                          (repo = the marketplace)
                                      (assets/ also exists at skill level, for a file a session copies into a project rather than into the user's config: see brainstorming/assets/)
   .githooks/pre-commit               Validates the plugin payload on commits that touch it; wire with git config core.hooksPath .githooks
   settings/settings.recommended.json acceptEdits + curated allow-list starting point
-  test/                              Hook test suite (repo-level, not shipped): node --test test/*.test.js
-  setup.ps1 / setup.sh               Optional: point alias CLAUDE_CONFIG_DIR profiles at one canonical ~/.claude/CLAUDE.md (most users just accept the reconcile offer)
-  docs/                              Curated docs library: README index, architecture.md, security-model.md, cross-project-memory.md, visual-companion.md, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
+  test/                              Hook test suite (repo-level, not shipped); the gate command is under MAINTAINER TOOLS
+  setup.ps1 / setup.sh               Alias CLAUDE_CONFIG_DIR profiles only: create the canonical ~/.claude/CLAUDE.md and link both profiles at it (default setups just accept the reconcile offer)
+  docs/                              Curated docs library: README index, architecture.md, security-model.md, cross-project-memory.md, visual-companion.md, prose-accretion.md, take-stock.md, backlog.md, kit-adoptions.md, plans/ (active), archive/ (finished)
 ```
 
 The catalog at `.claude-plugin/marketplace.json` points to the plugin with `"source": "./plugins/claude-kit"` - relative paths resolve against the repo root and work because the marketplace is added via git. Additional plugins later: add a folder under `plugins/` and a second entry in the catalog.
 
 ## INSTALL (per machine)
 
-1. Validate before pushing (catches structure/schema mistakes):
+1. Clone the repo. It is private, so this and step 3 both need GitHub access already working
+   for your account (an SSH key on the account, or `gh auth login`, or a PAT your git
+   credential helper serves).
    ```
-   claude plugin validate .
-   claude plugin validate ./plugins/claude-kit
+   git clone git@github.com:daren-porter/claude-kit.git
    ```
+   Steps 4 and 5 read two files that ship outside the plugin (`settings/settings.recommended.json`,
+   and `setup.sh` on alias-profile machines), so the checkout is a prerequisite rather than a
+   convenience. Repo-relative paths below are from the clone root; paths beginning
+   `plugins/claude-kit/` are inside the plugin and also reachable from the installed cache.
 
-2. Push this repo to GitHub (`daren-porter/claude-kit`, private).
+2. **Uninstall superpowers first.** This kit replaces superpowers' workflow skills; running both creates competing skill triggers (superpowers' session-start routing claims design work before this kit's skills can). In Claude Code: `/plugin uninstall superpowers`, or disable it in settings. This is deliberate - see THE WORKFLOW below for what replaces it.
 
-3. **Uninstall superpowers first.** This kit replaces superpowers' workflow skills; running both creates competing skill triggers (superpowers' session-start routing claims design work before this kit's skills can). In Claude Code: `/plugin uninstall superpowers`, or disable it in settings. This is deliberate - see THE WORKFLOW below for what replaces it.
-
-4. In Claude Code:
+3. In Claude Code (the marketplace is `daren`, which is what the repo registers; the plugin
+   inside it is `claude-kit`):
    ```
    /plugin marketplace add daren-porter/claude-kit
    /plugin install claude-kit@daren
    ```
    Default scope is user, so every project picks it up. If the marketplace was added before a structure fix, refresh it first: `/plugin marketplace update daren` (or remove and re-add).
 
-5. Install the user-level CLAUDE.md. The recommended rules ship inside the plugin (`assets/CLAUDE.md`), so per-machine setup is just: accept the SessionStart offer to reconcile (it fires when the kit's baseline has advanced past your last sync, including the first machine where you have never reconciled), or run the `reconcile-claude-md` skill explicitly. On first run it installs the recommended verbatim to `~/.claude/CLAUDE.md`; later it offers merge (keep your customizations) or overwrite, always backing up first. Reconcile state lives in two files at `~/.claude`: `.claude-kit-md-version` (the SHA-256 of the recommended you last synced, which the hook compares against) and `.claude-kit-md-base.md` (that recommended's content, the base the next merge diffs against).
-   - Only if you use alias config dirs (`CLAUDE_CONFIG_DIR` profiles like `~/.claude-work`, `~/.claude-personal`): run `./setup.sh` (or `.\setup.ps1` on Windows) once to symlink each profile's `CLAUDE.md` to the single canonical `~/.claude/CLAUDE.md`. Claude Code dedupes the directory-walk copy against the config-dir copy by realpath, so the rules load exactly once. The repo is only the author's edit source; nothing at runtime depends on the checkout.
+4. Install the user-level CLAUDE.md. The recommended rules ship inside the plugin (`assets/CLAUDE.md`), so per-machine setup is just: accept the SessionStart offer to reconcile (it fires when the kit's baseline has advanced past your last sync, including the first machine where you have never reconciled), or run the `reconcile-claude-md` skill explicitly. It works on the active config dir's `CLAUDE.md` (`~/.claude/CLAUDE.md` by default, the profile's under `CLAUDE_CONFIG_DIR`). With no live file it installs the recommended verbatim; with one already there it compares against the sync marker and either reports it in sync and stops, or offers merge (keep your customizations) or overwrite. It backs up before every write that could lose content, so an existing file is never overwritten unbacked. Reconcile state lives in two files at `~/.claude`: `.claude-kit-md-version` (the SHA-256 of the recommended you last synced, which the hook compares against) and `.claude-kit-md-base.md` (that recommended's content, the base the next merge diffs against).
+   - **If you use alias config dirs, do this before the reconcile above.** The scripts link exactly two profiles, `~/.claude-personal` and `~/.claude-work`, skipping either one that is absent; any other profile directory is not handled. Run `./setup.sh` (or `.\setup.ps1` on Windows) once. It points both profiles' `CLAUDE.md` at the single canonical `~/.claude/CLAUDE.md`, creating that canonical from the shipped asset if it does not exist; they are symlinks, so Claude Code's realpath dedup collapses the directory-walk copy against the config-dir copy and the rules load exactly once. What happens next depends on which case you were in. If the script created the canonical, it also writes the sync marker and you are done, and reconciling the active profile alone here would have left the canonical empty. If a canonical already existed, the script leaves the marker alone and says so, and you then run the reconcile above to fold the kit's rules in. On Windows, symlinks need Developer Mode or an elevated shell; `setup.ps1` falls back to copying and warns when it does, and copies neither dedupe by realpath nor track later rule changes, so re-run it after the rules change. Once setup has run, nothing at session time reads the checkout: it is needed for the two files in steps 1 and 5, and after that only for maintaining the kit.
 
    The old double-load workaround (removing `~/.claude/CLAUDE.md`) is gone: `~/.claude/CLAUDE.md` is now the canonical file itself, and Claude Code dedupes it by realpath against the directory-walk copy, so it loads once.
 
-6. Merge `settings/settings.recommended.json` into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
+5. Merge `settings/settings.recommended.json` (from the clone in step 1) into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
-Updating: commit and push here, then `/plugin update claude-kit` on each machine. Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
+Updating: run `/plugin update claude-kit` on each machine. (Publishing the change in the first place is the maintainer half, under PUBLISHING below.) Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. For private-repo background auto-updates, set `GITHUB_TOKEN` in your environment. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
 
 ## THE WORKFLOW
 
-Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review paired with a blind diff-only review (plus security review on sensitive surfaces, and, where the section's deliverable is a document for a named reader, a second pair chosen for prose: `blind-reader` per persona and `prose-reviewer`), update the plan, append a Chapter, apply the commit model. Implementation runs per a per-section execution mode (main-context tokens re-bill every turn, so the orchestrator stays the designer): **main** in the session on whatever model is selected, **delegate-fable** to the implementer-fable agent for sections needing the strongest model that are still briefable, **delegate-capable** to the implementer-opus agent (the delegated default), or **delegate-mechanical** to the implementer-sonnet agent - capable by default, mechanical only for genuinely well-bounded sections, reviewers never downgrading. The main-thread model is never hard-coded, so it tracks whatever you run. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, the document battery over any reader-facing documents the effort shipped, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
+Brainstorming produces a spec in `docs/plans/<project>_spec_v1.md` with a recorded commit model: **Review-Only** (changes accumulate uncommitted/staged for review), **Branch-and-PR** (work on a branch, finish with a PR - the default for shared repos), or **Commit-and-Push** (commit and push as sections complete - greenfield/personal repos). Executing-work runs the spec section by section - implement, verify with evidence, adversarial review paired with a blind diff-only review (plus security review on sensitive surfaces, and, where the section's deliverable is a document for a named reader, a pair chosen for prose instead: `blind-reader` per persona and `prose-reviewer`, which replace the code pair when the whole changeset is under `docs/` and sit on top of it when the section ships code as well), update the plan, append a Chapter, apply the commit model. Implementation runs per a per-section execution mode (main-context tokens re-bill every turn, so the orchestrator stays the designer): **main** in the session on whatever model is selected, **delegate-fable** to the implementer-fable agent for sections needing the strongest model that are still briefable, **delegate-capable** to the implementer-opus agent (the delegated default), or **delegate-mechanical** to the implementer-sonnet agent - capable by default, mechanical only for genuinely well-bounded sections, reviewers never downgrading. The main-thread model is never hard-coded, so it tracks whatever you run. Nothing is committed to main/master without explicit permission. Implementer subagents stage their work but never commit; `git diff --staged` is always the review surface for agent output. Finishing-work closes the effort: qa-verifier, security-reviewer, final adversarial-reviewer pass, the document battery over any reader-facing documents the effort shipped, docs-curator with Drift Report, plan closed, changes presented / PR opened / pushed per the model.
 
 Compaction recovery is deterministic: the SessionStart hook fires on startup, resume, and after every compaction, finds in-progress plans, and instructs the session to re-read them - Chapters included - before any work proceeds. Section boundaries are clean recovery points by construction: once a Chapter is written, the plan doc carries the full state, so a fresh session - whenever the user chooses to start one - resumes with nothing lost.
 
@@ -128,10 +133,25 @@ The spend wall governs how far Fable reaches: its plan-included allotment is the
 ## NOTES AND KNOWN TRADEOFFS
 
 - Plugin skills are namespaced: explicit invocation is `/claude-kit:brainstorming`. Automatic (model-invoked) triggering is unaffected.
-- Plugins are copied to a cache at install (`~/.claude/plugins/cache`); the plugin cannot reference files outside `plugins/claude-kit/`. The recommended CLAUDE.md therefore lives *inside* the plugin (`assets/CLAUDE.md`), so the hook and skill can read it from the cache. `settings/` stays outside the plugin - it is a machine-setup asset, not a plugin component.
+- Plugins are copied to a cache at install, under the active config directory (`~/.claude/plugins/cache` by default, `$CLAUDE_CONFIG_DIR/plugins/cache` under an alias profile, so a machine running profiles has one cache per profile); the plugin cannot reference files outside `plugins/claude-kit/`. The recommended CLAUDE.md therefore lives *inside* the plugin (`assets/CLAUDE.md`), so the hook and skill can read it from the cache. `settings/` stays outside the plugin - it is a machine-setup asset, not a plugin component.
 - Plugin-shipped agents cannot declare their own hooks, MCP servers, or permissionMode (Claude Code security restriction). None of these agents need them.
 - There is deliberately no format-on-edit hook: shared repos own their formatting, and a formatter rewriting files after every edit causes edit-mismatch churn.
 - `settings.recommended.json` reflects the settings schema as of June 2026; verify key names against current docs if something is ignored: https://code.claude.com/docs/en/settings
+
+## PUBLISHING (maintainer)
+
+Validate before pushing: `claude plugin validate` catches structure and schema mistakes.
+`.githooks/pre-commit` runs the payload check below on any commit touching `plugins/claude-kit/`,
+but only in a clone where `git config core.hooksPath .githooks` has been wired, and it skips
+itself with a note when the `claude` CLI is not on PATH.
+
+```
+claude plugin validate .
+claude plugin validate ./plugins/claude-kit
+```
+
+Then push to GitHub (`daren-porter/claude-kit`, private). Consumers pick the change up with
+`/plugin update claude-kit`.
 
 ## MAINTAINER TOOLS
 
@@ -143,7 +163,7 @@ node tools/standing-context-audit.js
 
 It also accepts an optional transcript path as its first argument. It lives outside the distributed plugin, adds zero standing footprint, and is not something kit end-users need to run.
 
-`tools/accretion.js` is the other one, and it is the tool with a live trigger: it reports lines, commits and span per level-2 section across the kit's 33 prose files, ranked by lines x commits, measuring HEAD rather than the working tree. It edits nothing and recommends nothing. `hooks/take-stock-nudge.js` points a kaizen pass at it whenever the kit's prose has changed since the last `docs/take-stock.md` entry, and `docs/prose-accretion.md` covers the loop.
+`tools/accretion.js` is the other one, and it is the tool with a live trigger: it measures lines, commits and span for every level-2 section of the plugin's prose payload (skills, references, agents and the recommended CLAUDE.md; `docs/` and this file are outside its globs) and prints the top 15 by lines x commits, measuring HEAD rather than the working tree. It edits nothing and recommends nothing. `hooks/take-stock-nudge.js` points a kaizen pass at it whenever the kit's prose has changed since the last `docs/take-stock.md` entry, and `docs/prose-accretion.md` covers the loop.
 
 ```
 node tools/accretion.js

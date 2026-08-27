@@ -11,6 +11,10 @@ Created: 2026-08-26
   act on. Its records produced the false-claim class repeatedly (Chapters 1 through 5), every
   review round caught the instances in front of it, and Chapter 5 still found one that a review
   had written and no review re-read.
+- `archive/reader-facing-docs_spec_v1.md` - the effort that first dispatched this battery, on
+  2026-08-27, and the one that discharged the never-dispatched debt Chapter 5 recorded. Its
+  Chapter 1 is the only evidence either charter has about how they behave in a real run, and its
+  Chapter 2 records the one gap that run found in them.
 
 ## Goal
 
