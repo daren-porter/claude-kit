@@ -39,7 +39,7 @@ deterministic detectors at zero token cost, and a live browser mode
 SvelteKit, Astro, TanStack and Vite.
 
 **"Wholesale" is arithmetically dead, and this is the first thing to internalize.**
-This kit's entire plugin payload is 528 KB, covering 18 skills, 8 hooks and 8 agents.
+This kit's entire plugin payload is 528 KB, covering 18 skills, 8 hooks and 13 agents (the agent figure was stated as 8 when this plan was written and was already wrong by three; the document review battery has since added two more, corrected 2026-08-26).
 Hallmark alone is 1.3x that. Impeccable is 4.2x. The failure mode this stub most
 wants to prevent is a session opening it and beginning by reading 690 KB of source.
 Frame the work as the smallest thing that carries the value, never as port-then-trim.
