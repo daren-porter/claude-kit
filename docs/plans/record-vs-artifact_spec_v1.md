@@ -9,6 +9,10 @@ Created: 2026-08-20
 - `archive/arm-boundaries_spec_v1.md` - the effort that produced both findings below, in quantity.
 - `plans/enumerations-stop-short_spec_v1.md` - a narrower sibling: an enumeration that stops one
   short is one way a record stops describing its set.
+- `archive/document-review-battery_spec_v1.md` - a second effort that produced the class in
+  quantity, closed 2026-08-27. It also supplies the case this plan's review-sufficiency question
+  turns on: its Chapter 4 recorded a probe as never run when the transcript shows it ran and
+  returned, and no review re-read that Chapter, so the correction waited for the next session.
 
 ## Why this exists
 

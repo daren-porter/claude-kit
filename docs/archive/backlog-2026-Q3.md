@@ -62,3 +62,30 @@ quarter rather than being written once.
 
   Line reference drift worth noting for whoever reads the closed item: the stdout site in
   `session-start.js` was recorded at `:604` and was at `:612` by the time this ran.
+
+- **Live-fire `docs-write-guard` against a real subagent dispatch (opened 2026-08-26, closed
+  2026-08-27).** Opened because an `implementer-fable` subagent wrote into `docs/plans/` during
+  the document-review-battery effort and the guard did not stop it. The item named two candidate
+  causes, a stale plugin cache or a hook payload carrying no agent-type field, the second of which
+  would have meant the guard had never enforced against subagents at all. **Both are wrong.**
+
+  The channel was `python3`. The subagent (`agentType: claude-kit:implementer-fable`) wrote
+  `fixes4.py` into its scratchpad and ran it; the shell redirect in that command targets `/tmp`
+  and the `docs/plans/` path appears only inside the Python source, so `commandWritesDocs` had
+  nothing to match. That is the interpreter miss the guard's own header already declared.
+
+  Three-arm probe on the current cache `10e4078df8f5`, dispatched as `claude-kit:implementer-sonnet`:
+  the `Write` tool was blocked, `echo probe > docs/.guard-probe-bash.md` was blocked, and
+  `python3 - <<EOF` opening the same path was **allowed and the file landed**. Both denials named
+  `claude-kit:implementer-sonnet` verbatim, so `subagentType()` resolves a plugin-namespaced id out
+  of the live payload, which retires the second hypothesis on its own. A probe run in the original
+  session had already returned the first two arms blocked against the *pre-update* cache
+  `970827b6dc4f`, naming `claude-kit:implementer-opus`, so the stale-cache hypothesis was falsified
+  before it was written down; that session recorded the probe as never run and Chapter 5 of
+  `archive/document-review-battery_spec_v1.md` corrects it.
+
+  What the fire also found, and what carries forward as a live item: the guard's header claimed the
+  `stop-docs-hygiene` Stop-scan catches these. It catches a leaked scratch file by name or
+  directory, and it vetoes any name match on a file carrying the plan-header contract, so an edit
+  to an existing curated doc passes both. The comment was corrected in the same close-out. Whether
+  the guard should reach interpreter writes at all is the open question and stays in `backlog.md`.

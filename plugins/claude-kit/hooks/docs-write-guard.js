@@ -15,9 +15,13 @@
 //
 // Covers Write/Edit/MultiEdit (exact, by file_path) and shell commands
 // (heuristic): a Bash write-redirect/tee into docs/, and a PowerShell Out-File /
-// Set-Content / Add-Content / Tee-Object cmdlet targeting docs/. Exotic writes
-// (python, sed -i, Copy-Item, a path passed through a variable) are out of reach
-// here and are caught by the stop-docs-hygiene Stop-scan backstop.
+// Set-Content / Add-Content / Tee-Object cmdlet targeting docs/. An interpreter
+// that opens the file itself (python, sed -i, Copy-Item, a path passed through a
+// variable) is out of reach here, and the stop-docs-hygiene Stop-scan backs that
+// up only partway: it catches a LEAKED SCRATCH FILE by name or directory, and it
+// exempts anything carrying the plan-header contract, so an edit to an existing
+// curated doc passes both. Live-fired 2026-08-27, three arms: Write blocked,
+// Bash redirect blocked, `python3 - <<EOF` allowed and the file landed.
 //
 // SAFETY: this hook can BLOCK a tool call, so it fails OPEN. Any parse error,
 // unrecognized payload, or inability to positively identify a non-curator

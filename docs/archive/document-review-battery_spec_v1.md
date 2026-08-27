@@ -1,9 +1,16 @@
 # Document Review Battery
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: S2, S3, finishing reviews
 Created: 2026-08-26
+
+## Related
+
+- `plans/record-vs-artifact_spec_v1.md` - this effort is the evidence that plan was opened to
+  act on. Its records produced the false-claim class repeatedly (Chapters 1 through 5), every
+  review round caught the instances in front of it, and Chapter 5 still found one that a review
+  had written and no review re-read.
 
 ## Goal
 
@@ -552,3 +559,90 @@ installed plugin cache; that applies to the three guard fixes from earlier in th
 as to the battery.
 
 Next: the live-fire, then finishing-work steps 4 through 8
+
+### Chapter 5 - 2026-08-27
+Completed: the finishing pass, closed. Status flipped to Complete.
+Implemented By: main session, with one `implementer-sonnet` dispatch for the live-fire probe
+Metrics: no new review round (Chapter 4's whole-changeset pass stands, 0 Critical, 5 Major all
+fixed); document review battery not dispatched, trigger absent; 1 live-fire probe, 3 arms; advisor
+consulted once before the close
+Commit Model: Commit-and-Push
+
+**The `docs-write-guard` live fire settled it, and both of Chapter 4's hypotheses were wrong.**
+Chapter 4 offered a stale plugin cache or a missing agent-type field. Neither holds. The channel
+was `python3`, which the guard's own header already listed as out of reach, so nothing failed
+open and nothing was ever unenforced.
+
+The evidence came in two parts. The first was in the prior session's own subagent transcripts:
+`implementer-fable` (meta `agentType: claude-kit:implementer-fable`) edited the spec by writing
+`fixes4.py` into the scratchpad and running `python3` on it. The redirect in that command targets
+`/tmp`, and the `docs/plans/` path appears only inside the Python source, so `commandWritesDocs`
+had nothing to match. The second was the three-arm probe, run on the current cache `10e4078df8f5`
+after `/plugin update`:
+
+| Arm | Result | File after |
+|---|---|---|
+| `Write` tool at `docs/.guard-probe-write.md` | blocked | absent |
+| `echo probe > docs/.guard-probe-bash.md` | blocked | absent |
+| `python3 - <<EOF` opening the same path | **allowed** | **present** |
+
+Both denials named `claude-kit:implementer-sonnet` verbatim, so `subagentType()` resolves a
+plugin-namespaced id out of the live payload. That was the open question behind hypothesis two
+and it is answered in the same breath as hypothesis one.
+
+**Chapter 4 records the probe as "written and killed before it ran". That is false and this
+Chapter corrects it.** The probe ran at 2026-08-27T00:53Z, returned both of its arms blocked
+against the *pre-update* cache `970827b6dc4f`, and named `claude-kit:implementer-opus` in the
+deny text; the interrupt landed after those results, during an unrelated `ls`. So the stale-cache
+hypothesis was already falsified on disk at the moment it was written down. Every prior instance
+of this class in the effort (Chapters 1 through 4 record at least seven, a floor rather than a
+count) was caught inside the session that wrote it, by a review or by QA. This one is the first
+caught by a later session reading the record back against disk, which is the case
+`plans/record-vs-artifact_spec_v1.md` was opened for.
+
+**One out-of-plan fix, disclosed rather than folded in.** The guard's header said exotic writes
+"are caught by the stop-docs-hygiene Stop-scan backstop". Read against `stop-docs-hygiene.js:53-85`,
+that is true only of a leaked scratch file: the scan matches `reviews/` and `_impl_reports/`
+directories and a `_adversarial|_blind|_security|_qa|_rev[_-]` filename, and it vetoes any name
+match on a file carrying the plan-header contract. An edit to an existing curated plan doc passes
+both tests, which is exactly what happened. The comment now states the partial coverage and carries
+the live-fire result. No behavior changed and no test reads the comment. Whether the guard should
+reach interpreter writes at all is a design call with a real cost (parsing what an interpreter will
+do is unbounded), so it is a backlog item rather than a fix made in this close-out.
+
+**The document review battery did not run over this effort's own documents, and the reason is the
+literal trigger.** `finishing-work` step 3 fires the pair on an `Audience:` line, and no section of
+this spec carries one: the fields it specifies were added in S4, after the spec that specifies them
+was written. Retrofitting the fields at close time to manufacture the trigger would have tested the
+retrofit rather than the machinery, so the pass is skipped and named here the way any other skipped
+gate is. The consequence worth carrying forward is that both agents, the brief and the close-out
+pass have shipped without ever being dispatched once. That debt is folded into the existing S4
+backlog item rather than opened as a second one, since both close on the same event: the next
+effort that ships a document with an `Audience:` line.
+
+**The user's two close-out decisions.** The `docs-curator`'s writes to `docs/README.md` and
+`docs/architecture.md` are committed with the close-out; this repo states no docs-commit stance and
+`finishing-work` says to ask. And the leftover `<!-- DRIFT: D1 pending adjudication -->` marker at
+`docs/architecture.md:80` was stripped rather than converted: its content is Chapter 4's D2,
+adjudicated as noted-only, so committing the marker would have shipped a pending-state claim that
+is false. The prose it annotated stands as written. The stale markers in
+`docs/cross-project-memory.md` belong to a prior effort and were left alone; `backlog.md` already
+carries the marker-slug convention gap.
+
+Decisions / Surprises:
+- **The probe agent flagged its own instruction channel.** After its first arm was blocked it saw an
+  auto-mode reminder preferring Bash over the `Write` tool, noted that the timing and content were
+  worth a reader's attention, declined to act on it, and finished the arms as briefed. That is the
+  behavior the read-only and decline-to-reason rules in both new charters are written for, produced
+  by an agent that carries neither.
+- No new review round. Chapter 4's whole-changeset adversarial pass covered every payload file, and
+  what this Chapter adds is one comment in a hook plus records. Manufacturing a pass over that would
+  be ceremony.
+
+Evidence: `node --test test/*.test.js tools/*.test.js` at 324 pass / 0 fail, unchanged from the
+effort's base. All touched files pure ASCII. Probe cleanup verified: `ls docs/.guard-probe-*.md`
+returns no matches and the probe left no other trace. Live-fire report at
+`.kit/finishing/guard-live-fire.md` (gitignored, so the arms are transcribed above rather than
+pointed at).
+
+Next: none. The effort is closed.
