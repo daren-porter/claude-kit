@@ -244,6 +244,9 @@ Acceptance criteria:
 - An unknown window percent cannot produce `barrier` at any threshold.
 - A negative spend delta returns `clear` for that trigger rather than a failure.
 - The staleness budget tightens to 120s at ten points below a barrier and not before.
+- Both session-keyed files, the per-session baseline here and S3's dedupe marker, are
+  reaped when older than the longest window this spec tracks (eight days). Nothing else in
+  the effort owns cleanup, so without this the store grows one file per session forever.
 
 Execution mode: delegate-capable.
 Tests: the precedence table, since a weekly barrier mishandled as a session barrier would
@@ -334,9 +337,18 @@ its constrain-at-source emission door, the deliberate second-poller decision, an
 `usage-barrier.js` denies on a network-derived signal, which no prior guard does, and that
 it still fails open.
 
-`docs/kit-adoptions.md` corrects candidate 1 of the 2026-08-26 pass: the overage unit is
-stated in the payload; the endpoint has now been called successfully from a plain Node
-caller on this machine, retiring "never been called from a kit hook"; `limits[]`,
+It also records one invariant rather than leaving it as an S1 acceptance line: nothing
+emits `readings.log` to the model. It holds every window's history and exists for the
+operator and for a later burn-rate effort, which is precisely the effort that would consume
+it and could break the invariant without noticing. S6 is what the next reviewer reads, so
+the constraint belongs there.
+
+`docs/kit-adoptions.md` corrects candidate 1 of the 2026-08-26 pass. The overage unit is
+stated in the payload. The endpoint answers a caller other than `ccstatusline` on this
+machine, in 290ms, which narrows "never been called from a kit hook" without retiring it:
+the probe was a plain Node script, and hook context (the timeout budget, fail-open
+behavior, the harness's process environment) is untested until S1 runs live behind a
+`/plugin update`. The correction claims only what the probe established. Also: `limits[]`,
 `severity` and `is_active` exist and are the parse surface; the three-profile stakes; and
 the 401-versus-429 discrimination. The `Last pass:` line is not touched.
 
@@ -368,13 +380,23 @@ kit never writes it.
 
 Where the check lives is the implementer's call between the existing SessionStart nudge and
 the usage hooks, decided in contact with the code, on one constraint: it costs no network
-call and no measurable latency, since resolving the effective value means reading settings
-files rather than asking the harness.
+call and no measurable latency.
+
+**The scope of the check is bounded deliberately, and the bound is not a shortcut.** The
+harness resolves an effective setting by merging five tiers of private minified code, and
+`kit-adoptions.md` candidate 1 of the 2026-08-07 pass records the upstream abandoning
+harness detection outright for a sibling setting after two review rounds each found another
+layer. That was auto-memory rather than this key, so it is precedent and not proof, but the
+mechanism is the same and this section does not re-fight it. The check therefore reads only
+the four files the kit can name (`~/.claude/settings.json`,
+`$CLAUDE_CONFIG_DIR/settings.json`, and the `settings.local.json` beside each) and reports
+what it found in those. A value set anywhere else is invisible to it, and the emitted line
+says so rather than implying full coverage.
 
 Acceptance criteria:
-- When the setting is explicitly `false` in any settings tier the kit can read, one line
-  reaches the operator naming which file holds it and that a seat without overage will not
-  pause at the limit without it.
+- When the setting is explicitly `false` in one of those four files, one line reaches the
+  operator naming which file holds it, that a seat without overage will not pause at the
+  limit without it, and that only those four files were checked.
 - When it is absent or `true`, nothing is emitted. The default-on case is silent.
 - The kit never writes, patches or suggests patching a settings file itself.
 - A settings file that cannot be read or parsed emits nothing rather than a warning.
