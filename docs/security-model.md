@@ -49,11 +49,11 @@ so a reader who has internalized "kit text arrives at session start" is now wron
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
-| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and only ever the orchestrator's (a payload carrying a subagent identity returns before this channel is reached): a window label from a two-literal whitelist, two rounded integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
+| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and only ever the orchestrator's (a payload carrying a subagent identity returns before this channel is reached): a window label from a two-literal whitelist, two FLOORED integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
-| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (about 1240 characters and 11 lines at its longest branch) rather than merely bounded |
+| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (about 1300 characters and 11 lines at its longest branch, measured rather than estimated) rather than merely bounded |
 
 `take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
 reviewer looking for a sixth sanitizer idiom will not find one. Nothing repo-controlled reaches its
@@ -64,9 +64,12 @@ block is a hardcoded literal plus a non-negative integer. Constrain-at-source is
 than the delete-and-truncate doors above, not a new instance of them.
 
 `usage-nudge.js` and `usage-barrier.js` answer it the same way, which is why the sanitizer ledger
-below still counts six sites after two channels were added. Both interpolate only a rounded
+below still counts six sites after two channels were added. Both interpolate only a floored
 integer, a window label from a fixed two-literal map, and a timestamp `usage-lib.js` validated at
-its own parse door. There is no scrubbing step in either hook because there is nothing arriving
+its own parse door. Floored rather than rounded, and the difference was a defect rather than a
+detail: rounding the percent and its threshold independently let a WARN print a first line whose
+numbers assert a barrier (94.6 against a barrier of 95 rendered both as 95), above text telling the
+model to wind down before the barrier. Flooring cannot overstate usage. There is no scrubbing step in either hook because there is nothing arriving
 that could need one: a value that fails the library's door is `null`, and `null` makes the hook
 silent rather than sanitized. That is the property to re-check first if either hook ever grows a
 new interpolated value, because the design has no fallback door to catch one.

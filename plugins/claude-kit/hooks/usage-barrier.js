@@ -36,9 +36,12 @@
 // on purpose. Whether additionalContext renders to the model on a DENIED tool
 // call is chain-confirmed but not live-verified, so the load-bearing
 // instruction belongs in the one channel a deny is guaranteed to deliver; and
-// the sibling wind-down hook already owns the additionalContext channel for
-// this same state, so emitting it here would put the same instruction into one
-// turn twice. permissionDecisionReason is therefore written self-sufficient,
+// for the BARRIER the sibling wind-down hook already owns the
+// additionalContext channel for the same state, so emitting it here would put
+// the same instruction into one turn twice. The ratchet has no sibling
+// channel at all (the nudge emits only on warn and barrier, and fableRatchet
+// is never a verdict state), so its justification is self-sufficiency alone.
+// permissionDecisionReason is therefore written self-sufficient,
 // and kept short on purpose: the stop instruction sits at its END, so anything
 // that truncates the field costs exactly the part the model needs. The longest
 // branch measures 1297 characters over 11 lines with a typical reset instant
@@ -191,7 +194,14 @@ function barrierReason(verdict, config, nested) {
     const label = WINDOW_LABELS[verdict.window];
     const percent = flooredOrNull(verdict.percent);
     if (percent === null) return null;
-    const barrier = Math.floor(config[verdict.window].barrier);
+    // The config-derived number goes through the same finite door as the
+    // verdict's: the header's claim is EVERY interpolated integer, and a
+    // non-finite threshold is now a value the library deliberately produces
+    // (a stood-down warn is Infinity), so this shape is live in the config
+    // object, not hypothetical, even though readConfig keeps barriers finite
+    // on every path through main today.
+    const barrier = flooredOrNull(config[verdict.window].barrier);
+    if (barrier === null) return null;
     const lead = 'Denied by the kit usage barrier: the ' + label + ' usage window is at ' + percent + '%, at or past the barrier of ' + barrier + '%. ' + resetClause(verdict.resetsAt) + ' Subagent dispatch is held until this window resets.';
     const close = 'This is a spend control the operator armed, not an error and not a rate limit.';
     if (nested) {
@@ -227,7 +237,9 @@ function barrierReason(verdict, config, nested) {
 function ratchetReason(verdict, config, nested) {
     const percent = flooredOrNull(verdict.fablePercent);
     if (percent === null) return null;
-    const ratchet = Math.floor(config.fableRatchet);
+    // Same finite door as barrierReason's threshold, same reason.
+    const ratchet = flooredOrNull(config.fableRatchet);
+    if (ratchet === null) return null;
     return [
         'Held by the kit Fable ratchet: the Fable weekly window is at ' + percent + '%, at or past the ratchet of ' + ratchet + '%. ' + resetClause(verdict.fableResetsAt),
         '',

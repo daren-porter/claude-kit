@@ -605,6 +605,16 @@ test('a background-main "claude" caller is the main session of its job and gets 
         const reason = denyReason(runHook(env, agentPayload(undefined, { agent_type: 'claude' })));
         assert.ok(reason.includes('Stop now, in this order:'), 'the orchestrator form, not the subagent form');
         assert.strictEqual(reason.split('\n').length, 11);
+
+        // The exemption's case-insensitivity, observed through an EMISSION
+        // rather than through silence: a bare CLAUDE must get the 11-line
+        // orchestrator form, where dropping the /i flag would send the 7-line
+        // subagent form. Both branches deny, so the difference a regression
+        // makes is in the text, and a silence-based assertion here could
+        // never fail.
+        const upper = denyReason(runHook(env, agentPayload(undefined, { agent_type: 'CLAUDE' })));
+        assert.ok(upper.includes('Stop now, in this order:'), 'CLAUDE is the same background main as claude');
+        assert.strictEqual(upper.split('\n').length, 11);
     });
 });
 

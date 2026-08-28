@@ -1319,7 +1319,7 @@ test('one garbage field falls back on its own default rather than disabling the 
         writeConfig({
             enabled: true,
             session: { warn: 'eighty', barrier: 60 },
-            weeklyAll: { warn: 85, barrier: 1e300 },
+            weeklyAll: { warn: 85, barrier: -5 },
             fableRatchet: -1,
         });
         const config = lib.readConfig();
@@ -1327,11 +1327,15 @@ test('one garbage field falls back on its own default rather than disabling the 
         // The stated values stand...
         assert.strictEqual(config.session.barrier, 60);
         assert.strictEqual(config.weeklyAll.warn, 85);
-        // ...and only the unusable ones fall back, each on its own default:
-        // a threshold outside [0, 1000] is outside anything a percent can read.
-        assert.strictEqual(config.session.warn, lib.DEFAULT_CONFIG.session.warn);
+        // ...and only the unusable ones (a non-number, a negative: values
+        // that state no policy at all) fall back, each on its own default.
         assert.strictEqual(config.weeklyAll.barrier, lib.DEFAULT_CONFIG.weeklyAll.barrier);
         assert.strictEqual(config.fableRatchet, lib.DEFAULT_CONFIG.fableRatchet);
+        // The garbage session warn takes the default 80 first, and 80 sits
+        // above the stated barrier of 60, so it then STANDS DOWN (Infinity,
+        // see normWindowThresholds) rather than pretending a warn of 80 is
+        // reachable under a barrier of 60.
+        assert.strictEqual(config.session.warn, Infinity);
         // The half-edited config still evaluates on the value it did state.
         const verdict = lib.evaluate(usageOf({ session: 70 }), config);
         assert.strictEqual(verdict.state, 'barrier');
@@ -1381,23 +1385,82 @@ test('a threshold past 100 is honored as written, not replaced by the stricter d
     });
 });
 
-// A warn above its own barrier inverts the design: windowState tests the
-// barrier first, so the wind-down the operator meant to precede the deadline
-// would silently never happen.
-test('a warn above its barrier falls back to the default warn', async () => {
+// The CLASS the two rounds of point fixes kept missing, pinned as a table: a
+// parseable threshold (any finite number at or above 0) is honored as
+// written, and an unusable one falls back to the default, so the default is
+// never a REPLACEMENT for a stated policy, only for the absence of one. The
+// end-to-end half asserts the consequence that matters: no out-of-range
+// threshold can produce a barrier verdict at a percent below it. barrier:
+// 999999 is the natural way to write "never fire this window", so the huge
+// values are the operator-intent cases, not adversarial ones.
+test('threshold policy: parseable thresholds are honored, unusable ones never resolve to something stricter', async () => {
+    await withUsageEnv(async () => {
+        // Honored as written, through the config file.
+        for (const value of [0, 42, 80.5, 96, 100, 200, 1000, 1001, 999999, 1e300]) {
+            writeConfig({ enabled: true, session: { warn: value, barrier: value }, weeklyAll: { warn: value, barrier: value }, fableRatchet: value });
+            const config = lib.readConfig();
+            assert.strictEqual(config.session.warn, value, 'honored warn: ' + value);
+            assert.strictEqual(config.session.barrier, value, 'honored barrier: ' + value);
+            assert.strictEqual(config.weeklyAll.barrier, value, 'honored weekly barrier: ' + value);
+            assert.strictEqual(config.fableRatchet, value, 'honored ratchet: ' + value);
+        }
+        // Unusable: a non-number or a negative states no policy, so the
+        // default stands in for ABSENCE, never for a stated value.
+        for (const value of [-1, -0.5, 'eighty', '95', null, true, [], {}]) {
+            writeConfig({ enabled: true, session: { barrier: value }, fableRatchet: value });
+            const config = lib.readConfig();
+            assert.strictEqual(config.session.barrier, lib.DEFAULT_CONFIG.session.barrier, 'fallback barrier: ' + String(value));
+            assert.strictEqual(config.fableRatchet, lib.DEFAULT_CONFIG.fableRatchet, 'fallback ratchet: ' + String(value));
+        }
+        // NaN and the Infinities cannot ride JSON; they reach evaluate only in
+        // a hand-built config, and fall back the same way (the default 95 is
+        // then correctly at or under this percent, hence barrier).
+        for (const value of [NaN, Infinity, -Infinity]) {
+            const verdict = lib.evaluate(usageOf({ session: 96 }), on({ session: { barrier: value } }));
+            assert.strictEqual(verdict.state, 'barrier', 'non-finite barrier falls back to the default: ' + String(value));
+        }
+        // End to end: 96 sits below every honored value here, so nothing may
+        // deny, and the Fable ratchet may not trip. (A warn from the default
+        // is fine; the class is about the barrier verdict and the ratchet.)
+        for (const value of [200, 1000, 1001, 999999, 1e300]) {
+            const config = on({ session: { warn: value, barrier: value }, weeklyAll: { warn: value, barrier: value }, fableRatchet: value });
+            const verdict = lib.evaluate(usageOf({ session: 96, weeklyAll: 96, fable: 96 }), config);
+            assert.notStrictEqual(verdict.state, 'barrier', 'no barrier at 96 below a threshold of ' + value);
+            assert.strictEqual(verdict.fableRatchet, false, 'no ratchet at 96 below ' + value);
+        }
+    });
+});
+
+// A warn above its own barrier cannot fire as written (windowState tests the
+// barrier first). The old response substituted the DEFAULT warn, which is an
+// inversion: {warn: 96} became a wind-down at 80, sixteen points STRICTER
+// than anything the operator wrote. An unreachable warn stands down instead.
+test('a warn above its barrier stands down rather than substituting a stricter default', async () => {
     await withUsageEnv(async () => {
         writeConfig({ enabled: true, session: { warn: 99, barrier: 90 }, weeklyAll: { warn: 50, barrier: 60 } });
         const config = lib.readConfig();
-        assert.strictEqual(config.session.warn, lib.DEFAULT_CONFIG.session.warn);
+        assert.strictEqual(config.session.warn, Infinity);
         // The barrier is the safety-bearing half and is kept exactly as stated:
-        // only the value that could not fire falls back.
+        // only the trigger that could not fire stands down.
         assert.strictEqual(config.session.barrier, 90);
         // A warn below its barrier is left alone.
         assert.strictEqual(config.weeklyAll.warn, 50);
         assert.strictEqual(config.weeklyAll.barrier, 60);
-        // And the fallback warn is reachable under this operator's barrier, so
-        // the wind-down does happen rather than being replaced by silence.
-        assert.strictEqual(lib.evaluate(usageOf({ session: 85 }), config).state, 'warn');
+        // Stood down means no wind-down below the barrier...
+        assert.strictEqual(lib.evaluate(usageOf({ session: 85 }), config).state, 'clear');
+        // ...while the barrier still fires exactly as stated...
+        assert.strictEqual(lib.evaluate(usageOf({ session: 91 }), config).state, 'barrier');
+        // ...and the stand-down survives evaluate re-normalizing the caller's
+        // config, which is the live readConfig -> evaluate path: without the
+        // Infinity door in normWindowThresholds, the second normalization
+        // would resolve the stood-down warn back to the default and the
+        // inversion would return through re-entry.
+        assert.strictEqual(lib.evaluate(usageOf({ session: 85 }), lib.readConfig()).state, 'clear');
+
+        // The reviewer's repro, pinned: {warn: 96} under the default barrier
+        // of 95 must not emit a wind-down at 82.
+        writeConfig({ enabled: true, session: { warn: 96 } });
+        assert.strictEqual(lib.evaluate(usageOf({ session: 82 }), lib.readConfig()).state, 'clear');
     });
 });
 

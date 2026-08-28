@@ -1088,33 +1088,49 @@ function configFilePath() {
     return path.join(path.dirname(storeRoot()), 'config.json');
 }
 
-// A threshold percent, or the default. Bounded [0, 1000], the SAME range
-// normPercent admits, because the two bounds must agree: a percent READ off
-// the wire legitimately runs past 100 on an overage seat, so a threshold past
-// 100 is a policy the kit can act on (and `barrier: 200` is a working "never
-// fire this window"), not a typo. The earlier [0, 100] bound silently
-// replaced an out-of-range threshold with the STRICTER default, which was the
-// one place the fail-open posture inverted: a config written to disable a
-// window instead armed it at 95 and denied, quoting a number the operator
-// never wrote. A value outside anything a percent can read still falls back.
+// A threshold percent, or the default. The policy: a PARSEABLE threshold is
+// honored as written, and an unusable one never resolves to something
+// stricter. Any finite number at or above 0 is honored, with no upper bound:
+// windowState's comparison is safe at any finite value, so there is nothing
+// to protect against, and `barrier: 999999` is the natural way to write
+// "never fire this window". Two earlier bounds here ([0, 100], then
+// [0, 1000]) each silently replaced an out-of-range threshold with the
+// STRICTER default, which was the one place the fail-open posture inverted: a
+// config written to put a window out of reach instead armed it at 95 and
+// denied, quoting a number the operator never wrote. Only a non-number, NaN,
+// a non-finite value or a negative falls back, and those are the ABSENCE of a
+// policy rather than an unreachable one. What an out-of-reach barrier
+// actually does: it disables the DENY and leaves the wind-down armed at
+// whatever the warn is, so disabling a window outright means putting both
+// thresholds out of reach.
 function normThreshold(value, fallback) {
     const n = normNumber(value);
-    return n === null || n < 0 || n > 1000 ? fallback : n;
+    return n === null || n < 0 ? fallback : n;
 }
 
 function normWindowThresholds(raw, fallback) {
     const source = raw && typeof raw === 'object' ? raw : {};
     const barrier = normThreshold(source.barrier, fallback.barrier);
-    const statedWarn = normThreshold(source.warn, fallback.warn);
-    // A warn above its own barrier inverts the design: the wind-down exists to
-    // PRECEDE the deadline, and windowState tests the barrier first, so a warn
-    // past it can never be reached and the operator's wind-down would silently
-    // never happen. The barrier is the safety-bearing half and is kept as
-    // stated; only the warn that could not fire falls back. This does not
-    // guarantee warn <= barrier (a barrier of 60 leaves the default warn of 80
-    // unreachable too), and inventing a value under someone's barrier would be
-    // policy the operator did not write.
-    return { warn: statedWarn > barrier ? fallback.warn : statedWarn, barrier };
+    // Infinity is the stood-down warn this function itself produces below.
+    // Admitting it back keeps normalization idempotent, which is load-bearing
+    // because evaluate re-normalizes the caller's config: without this door,
+    // the live readConfig -> evaluate path would resolve a stood-down warn to
+    // the DEFAULT on the second pass, and the inversion the stand-down exists
+    // to prevent would return through re-entry. A barrier can never be
+    // Infinity (normThreshold returns the finite input or the finite
+    // default), so nearBarrier's `barrier - NEAR_BARRIER_POINTS` arithmetic
+    // never sees it, and no consumer interpolates a warn threshold.
+    const statedWarn = source.warn === Infinity ? Infinity : normThreshold(source.warn, fallback.warn);
+    // A warn above its own barrier cannot fire as written: the wind-down
+    // exists to PRECEDE the deadline, and windowState tests the barrier
+    // first. It STANDS DOWN (Infinity, which `percent >= warn` never
+    // reaches) rather than falling back, because the default here is not a
+    // fallback but a substitution: {warn: 96} used to resolve to the default
+    // 80 and emit a wind-down sixteen points STRICTER than anything the
+    // operator wrote. Standing a trigger down beats substituting a stricter
+    // one: the cost of a stand-down is a wind-down that does not fire, while
+    // the cost of substitution is a run stopped early on policy nobody wrote.
+    return { warn: statedWarn > barrier ? Infinity : statedWarn, barrier };
 }
 
 // Defaults applied FIELD BY FIELD rather than all-or-nothing: one garbage

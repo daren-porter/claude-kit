@@ -23,7 +23,8 @@
 // marker's timestamps are exact arithmetic rather than a tolerance band.
 //
 // What these lock, and why:
-//   - The five canonical texts, asserted whole rather than by substring. A
+//   - All eight canonical renderings, asserted whole rather than by substring:
+//     two states by two windows by whether the reset instant validated. A
 //     second hook emits instructions about the same state through a different
 //     channel, so the wording is a contract between them: an unattended run
 //     told to arm a resume by one and not to by the other is the failure this
@@ -31,7 +32,10 @@
 //     they are FLOORED rather than rounded (a rounded warn could print numbers
 //     asserting a barrier), and each expected string here was generated from the
 //     canonical source file rather than typed, after diffing the hook's own
-//     output against it byte for byte.
+//     output against it byte for byte. The warn carries the resume step exactly
+//     as the barrier does: without it the warn stops an unattended run at the
+//     warn threshold and nothing arms a resume, because the barrier that would
+//     have is never reached once the run has stopped spending.
 //   - The dedupe, which is the load-bearing behavior: a nudge fires after every
 //     tool call, so one that failed to record itself would flood a long run.
 //     Both halves are here, the second identical run staying silent and a
@@ -97,6 +101,7 @@ const WEEKLY_RESET = '2026-09-01T00:00:00Z';
 // depending on the reader's TZ. The library nulls it, and a null reset instant
 // is what the marker key and two of the texts below have to tolerate.
 const NO_ZONE = '2026-08-27T15:30:00';
+const WEEKLY_NO_ZONE = '2026-09-01T00:00:00';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -105,6 +110,11 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 // whatever that code chose.
 const MARKER_MAX_LINES = 5000;
 
+// The eight reachable renderings, two states by two windows by whether the
+// reset instant validated. Every one was GENERATED from the canonical source
+// file after the hook's own output was diffed against it byte for byte, rather
+// than typed here: four hand copies of one step had already drifted apart
+// under a contract that said never to paraphrase.
 const WARN_SESSION_TEXT = [
     'Kit usage wind-down: the session (5-hour) usage window is at 82% and the barrier the operator set for it is 95%. Resetting at 2026-08-27T15:30:00Z.',
     '',
@@ -112,7 +122,8 @@ const WARN_SESSION_TEXT = [
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
     "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
-    '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
+    "4. Arm a one-shot resume: create a single scheduled job at 2026-08-27T15:30:00Z, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
+    '5. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
     'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
 ].join('\n');
@@ -124,7 +135,34 @@ const WARN_SESSION_NO_RESET_TEXT = [
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
     "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
-    '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
+    "4. Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.",
+    '5. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
+    '',
+    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+].join('\n');
+
+const WARN_WEEKLY_TEXT = [
+    'Kit usage wind-down: the weekly all-models usage window is at 88% and the barrier the operator set for it is 95%. Resetting at 2026-09-01T00:00:00Z.',
+    '',
+    'Wind down now rather than at the barrier:',
+    '1. Finish the section in flight and stage it. Start nothing new.',
+    '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    '4. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
+    '5. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
+    '',
+    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+].join('\n');
+
+const WARN_WEEKLY_NO_RESET_TEXT = [
+    'Kit usage wind-down: the weekly all-models usage window is at 88% and the barrier the operator set for it is 95%. Its reset instant could not be read.',
+    '',
+    'Wind down now rather than at the barrier:',
+    '1. Finish the section in flight and stage it. Start nothing new.',
+    '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    '4. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
+    '5. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
     'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
 ].join('\n');
@@ -161,6 +199,18 @@ const BARRIER_WEEKLY_TEXT = [
     "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
     '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
+    '',
+    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+].join('\n');
+
+const BARRIER_WEEKLY_NO_RESET_TEXT = [
+    'Kit usage barrier: the weekly all-models usage window is at 97%, at or past the barrier of 95%. Its reset instant could not be read.',
+    '',
+    'Stop now, in this order:',
+    '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
+    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+    '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
+    '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
     'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
 ].join('\n');
@@ -384,6 +434,37 @@ test('a session barrier whose reset instant could not be read arms no resume', (
         enable();
         writeCache({ session: { percent: 96, resetsAt: NO_ZONE } });
         assert.strictEqual(block(runHook()), BARRIER_SESSION_NO_RESET_TEXT);
+    });
+});
+
+test('a weekly all-models warn arms no resume and says why', () => {
+    withEnv(() => {
+        enable();
+        // The combination the amendment created: now that the warn carries the
+        // resume step, its text branches on the WINDOW too, and the weekly
+        // branch must refuse the resume it would otherwise arm. Session sits
+        // below its own warn so precedence cannot pick it.
+        writeCache({ session: { percent: 10 }, weeklyAll: { percent: 88 } });
+        assert.strictEqual(block(runHook()), WARN_WEEKLY_TEXT);
+    });
+});
+
+test('a weekly all-models warn with an unreadable reset instant still refuses the resume', () => {
+    withEnv(() => {
+        enable();
+        // The weekly resume step is fixed regardless of the instant, so this
+        // case pins that the unknown-instant branching applies to the reset
+        // clause and step 5 without leaking into step 4.
+        writeCache({ session: { percent: 10 }, weeklyAll: { percent: 88, resetsAt: WEEKLY_NO_ZONE } });
+        assert.strictEqual(block(runHook()), WARN_WEEKLY_NO_RESET_TEXT);
+    });
+});
+
+test('a weekly all-models barrier with an unreadable reset instant refuses the resume', () => {
+    withEnv(() => {
+        enable();
+        writeCache({ session: { percent: 10 }, weeklyAll: { percent: 97, resetsAt: WEEKLY_NO_ZONE } });
+        assert.strictEqual(block(runHook()), BARRIER_WEEKLY_NO_RESET_TEXT);
     });
 });
 
@@ -720,7 +801,16 @@ test("a background job's bare claude agent type is still nudged", () => {
         // wind-down. Exact match only, which is why the namespaced case above
         // stays gated.
         assert.strictEqual(block(runHook({ agent_type: 'claude' })), BARRIER_SESSION_TEXT);
-        assert.strictEqual(block(runHook({ agent_type: 'CLAUDE' })), null, 'and it dedupes like any other main session');
+        // Case-insensitivity is observed through an EMISSION, on a session id
+        // nothing has nudged yet. Asserting silence here would have passed
+        // whether or not the match ignored case, because a gate rejection and a
+        // dedupe suppression are both silent and the run above had already
+        // written the marker: dropping the `i` from the pattern left the whole
+        // suite green.
+        assert.strictEqual(block(runHook({ agent_type: 'CLAUDE', session_id: 'ses-upper-9999' })), BARRIER_SESSION_TEXT,
+            'the exemption ignores case, and only an emission can show it');
+        // And an exempted call dedupes like any other main session.
+        assert.strictEqual(block(runHook({ agent_type: 'claude' })), null);
     });
 });
 

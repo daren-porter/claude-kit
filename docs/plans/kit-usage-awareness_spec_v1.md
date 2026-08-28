@@ -353,10 +353,30 @@ window (`barrier: 200`) instead armed it at 95 and denied, with the reason quoti
 operator never wrote above the sentence "This is a spend control the operator armed". The cause was
 a contradiction twenty lines wide: `normThreshold`'s comment justified the bound with "a threshold
 set past 100 is one the kit could never act on", while `normPercent` admits `[0, 1000]` precisely
-because an overage seat legitimately runs past 100. The bound is now `[0, 1000]` for both, which
-honors a past-100 threshold as written and so gives "never fire this window" working semantics, and
-makes a typo fail in the allowing direction. Warns still fire under a disabled barrier, which was
-checked rather than assumed.
+because an overage seat legitimately runs past 100.
+
+**The first fix widened the bound to `[0, 1000]` and only relocated the defect**, which the
+verification review reproduced and which is worth recording because the mistake was in the brief
+rather than the code: the fix was aimed at the failing example's range instead of at the policy.
+Above 1000 an out-of-range threshold still collapsed to the stricter default and still denied, and
+`barrier: 999999` is the natural way to write "never fire this window", so the reachable case was
+the operator-intent case. The test written alongside that fix pinned `1e300` as correctly
+defaulting, so the suite actively asserted the broken behavior.
+
+The policy actually shipped states the invariant rather than a range: **a parseable threshold is
+honored as written, and an unusable one never resolves to something stricter.** Any finite value at
+or above zero is honored, so `barrier: 999999` simply never fires. Only a non-number, a negative or
+a non-finite value falls back to the default, and those are the absence of a policy rather than an
+unreachable one. The same inversion lived one line away in `normWindowThresholds`, where a stated
+warn above its barrier was replaced by the default warn, so `warn: 96` became 80 and armed a
+trigger sixteen points stricter than anything written; an unreachable warn now stands down instead
+(represented as `Infinity`, which `percent >= warn` never satisfies), because standing a trigger
+down is honest where substituting a stricter one is the policy the operator did not write.
+
+What follows for the operator, and it is not obvious: an out-of-reach **barrier** disables the deny
+and nothing else, because the warn is independent and keeps its own value. `{barrier: 200}` alone
+still winds a run down at the default warn of 80. Disabling a window means putting **both** out of
+reach.
 
 Acceptance criteria:
 - A threshold outside `[0, 100]` but inside what a percent can read is honored as written
@@ -384,8 +404,19 @@ emitting `additionalContext` through `hookSpecificOutput`.
 At `warn` it emits once per window per session, deduped by a marker keyed on session id,
 window and reset instant, so a new window re-arms. The text names the window, its percent
 and its reset time, and instructs the model to finish the section in flight, start no new
-subagents, then surface a `BLOCKED:` line and stop. At `barrier` the text additionally
-carries the resume instruction for the window's horizon.
+subagents, write the Chapter, arm the resume for the window's horizon, then surface a
+`BLOCKED:` line and stop.
+
+**Both states carry the resume instruction, and the first draft gave it to the barrier alone,
+which was a defect rather than a milder response.** The verification review traced it: on the
+defaults a gradual burn crosses 80 first, the warn fires, its turn-ending `BLOCKED:` step halts
+the run with no resume armed, and the barrier at 95 that would have armed one is then never
+reached. So an unattended overnight effort stopped at 80% and stayed stopped, and the warn's own
+lead line ("Wind down now rather than at the barrier") is what steered it off the only path that
+resumes. The Goal is a single sequence, "winds down at a section boundary, stops, tells the
+operator, and on the five-hour window arms its own resume", and the warn is the wind-down in that
+sentence. What separates the two states is now step 1 alone: the warn gets to finish the section
+in flight, the barrier does not.
 
 **The marker is one append-only file for the whole profile, not one file per session**,
 and the difference is a safety property rather than a style choice. A session id arrives
@@ -417,10 +448,24 @@ and stop the turn. That is the same mis-delivery this section already avoided by
 `SubagentStop`, arriving by a second route that the first fix did not close. The hook now returns
 early on any payload carrying a subagent identity, copying `docs-write-guard.js`'s
 `subagentType`/`isBackgroundMain` pair including the bare-`claude` exemption for a background job's
-main session. The guard is correct under every version of the harness behavior, which is why it did
-not wait on resolving which holds: it prevents consumption if the session id is shared, prevents
+main session. The guard is fail-open under every harness behavior, which is why it did not wait
+on resolving which holds: it prevents consumption if the session id is shared, prevents
 mis-delivery if the context lands in the subagent, and is inert if `PostToolUse` does not fire
 there at all.
+
+**That enumeration is not exhaustive, and an earlier draft of this paragraph claimed it was.**
+The adversarial verification pass caught it, and the shape of the error is the same as this
+effort's other retraction. All three arms above presuppose that a subagent's `PostToolUse` payload
+carries an agent identity. A fourth behavior exists: the event fires in subagent context and omits
+those fields, in which case the gate is inert and BOTH failure modes stay open. The mirror case
+exists too: if the orchestrator's own payload for an `Agent` call carries a top-level agent
+identity, the nudge is silenced at exactly the boundary that made dropping `SubagentStop` costless.
+What is actually established is narrower than the claim was: `docs-write-guard.js`'s live-fire
+evidence covers `PreToolUse` only, and "`PostToolUse` rides the same tool loop" is an inference.
+The code is fail-open in all four behaviors, so nothing is at risk; what the false claim cost was
+the reason to check. **This is the first thing to verify on the first live armed run behind a
+`/plugin update`**, and it is recorded here rather than in a Chapter because it is a standing
+question about the design, not a fact about one section's execution.
 
 Acceptance criteria:
 - A payload carrying a subagent identity emits nothing and consumes no marker, in every
@@ -440,7 +485,12 @@ Acceptance criteria:
   assumes non-null would collide across windows instead of deduping within one.
 - Emits nothing at `clear`, nothing when the signal is stale or unavailable, and nothing
   when the config is absent or disabled.
-- Emits once per window per session, and re-emits after the reset instant changes.
+- Emits once per window **per verdict state** per reset instant, and re-emits when the reset
+  instant changes. The state is load-bearing in that sentence and its absence was one of this
+  section's two review Criticals: keyed without it, a warn permanently suppressed the barrier for
+  the same window, so the resume instruction the Goal names could never be emitted. The earlier
+  wording ("once per window per session") was literally satisfied by that broken behavior, which
+  is why it is spelled out here rather than left to be inferred from the criterion above.
 - Any internal error exits 0 with no output and never blocks.
 - Every value interpolated into the emitted text is an integer, a whitelisted window
   literal, or a parse-validated ISO-8601 timestamp; everything else in it is a hardcoded
@@ -530,8 +580,10 @@ Acceptance criteria:
 - The deny reason names the window and the reset instant, so the model can act on it
   without another read, and says explicitly not to retry the dispatch, not to reshape it,
   and not to do the subagent's work in the main thread instead. A bare refusal on `Agent` in
-  an unattended run invites a dispatch loop, which spends more than the barrier saves.
-- The deny reason stays short by budget rather than to a discovered limit: about 1240
+  an unattended run invites a dispatch loop, which spends more than the barrier saves. Both
+  clauses describe the ORCHESTRATOR form; the nested form below carries neither, because a
+  subagent has no main thread to route the work into and no turn of the effort's to end.
+- The deny reason stays short by budget rather than to a discovered limit: about 1300
   characters and 11 lines at its longest branch. A deny whose instruction was truncated away is
   a wedge with no instruction, and since the instruction is at the end of the text, that is the
   half any truncation would take.
@@ -596,9 +648,17 @@ until the review pointed it out. The Goal promises a policy the operator configu
 defaults to false, and the only way to arm the feature is to hand-author
 `~/.claude-kit-usage/config.json`, whose path and schema existed only in a code comment. The
 document states the path, every field with its default, that the file is operator-written and
-never kit-written, and the two things that will otherwise bite: a threshold outside `[0, 100]`
-or written as a string falls back to its default with no signal anywhere, and `warn` above
-`barrier` silently makes the wind-down unreachable.
+never kit-written, and the three things that will otherwise bite. A threshold written as a string,
+as a negative, or as anything non-finite falls back to its default with no signal anywhere, and the
+default is the strictest value the kit ships. An out-of-reach **barrier** disables the deny alone,
+so a window is only really off when both its warn and its barrier are out of reach. And a `warn`
+above its own `barrier` stands the warn down rather than firing, which is deliberate but silent, so
+an operator who writes one and expects a wind-down gets none.
+
+(An earlier draft of this criterion said a threshold outside `[0, 100]` falls back to its default.
+That was true when written and is now false: see the S2 paragraph above for the policy that
+replaced it. Recorded rather than quietly edited, because a criterion silently tracking the code is
+how the record stops describing the work.)
 
 Audience: the `security-reviewer` agent, which holds this repository and reads
 `security-model.md` first; and a future kit session with no memory of this effort, which
@@ -1065,7 +1125,7 @@ Decisions / Surprises:
   `permissionDecision: "allow"`, `"defer"` and `updatedInput` for PreToolUse, which local command
   hooks demonstrably use, so it governs a narrower path; on the local path the `additionalContext`
   handler is a persist-to-disk-above-threshold helper and no line cap on `permissionDecisionReason`
-  was found at all. Nothing was at risk (the as-built text is ~1240 characters and 11 lines) and the
+  was found at all. Nothing was at risk (the as-built text is ~1300 characters and 11 lines) and the
   guidance survives, but the confidence was wrong in the one document a reviewer is told to read
   first. The `CONFIRMED`/`INFERRED` marking the brief format requires is only as good as the
   orchestrator's discipline about which it is entitled to.
@@ -1112,3 +1172,82 @@ live observation behind a `/plugin update`, which the payload has never had.
 Commit Model: Commit-and-Push, honored. `hooks.json` is staged explicitly this time: a reviewer
 noted it was modified-unstaged while both hooks were staged, and committing the index alone would
 have shipped both hooks unregistered and inert with the suite green.
+
+### Chapter 6 - 2026-08-28
+Completed: **S3 and S4 are closed**, after a two-reviewer verification round and a third fix round
+each. `finishing-work`'s full-changeset pass is the remaining net over them.
+Implemented By: `implementer-opus` (S3, third round), `implementer-fable` (S4, third round, which
+also carried the `usage-lib.js` threshold policy); main session for every doc and spec correction
+and for the canonical contract's fifth and sixth amendments.
+Metrics: one verification round (blind plus adversarial, both over the committed changeset at
+`f39b1e0`), two fix rounds. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), not consulted this
+Chapter. Gate at close: 489 pass, 0 fail, from a 412 baseline.
+
+Decisions / Surprises:
+- **Running a verification round after the fixes was the right call and it is the transferable
+  lesson.** It found five Majors in code and prose that had just passed a five-reviewer round, which
+  is the pattern Chapters 2 and 3 already recorded and the reason the round was dispatched at all.
+  Two were design defects, not polish.
+- **The warn stopped the run without arming a resume, which made the feature counterproductive
+  rather than merely incomplete.** The canonical text gave `resumeStep` to the barrier alone while
+  giving the warn the same turn-ending `blockedStep`. On the defaults a gradual burn crosses 80
+  first, so the warn halted the run with no resume armed and the barrier at 95 that would have armed
+  one was never reached: an unattended overnight effort stopped at 80% and stayed stopped. The
+  warn's own lead line, "Wind down now rather than at the barrier", is what steered it off the only
+  path that resumes. The Goal is a single sequence and the warn is the wind-down in it, so both
+  states now arm, and step 1 alone separates them.
+- **My threshold fix pinned the example instead of the policy, and the test I briefed pinned the
+  broken behavior as correct.** I asked for the bound to be widened from `[0, 100]` to `[0, 1000]`
+  "matching normPercent", which relocated the inversion rather than removing it: above 1000 an
+  out-of-range threshold still collapsed to the stricter default and denied. `test/usage-lib.test.js`
+  then asserted `1e300` correctly defaulting. The shipped policy states the invariant instead of a
+  range, and the same inversion turned out to live one line away in `normWindowThresholds` where an
+  unreachable warn was replaced by a stricter default.
+- **A second false-exhaustiveness claim, retracted.** After Chapter 5's caps retraction I had an
+  implementer write that the subagent gate "is correct under every version of the harness behavior",
+  over a three-way enumeration whose every arm presupposes the payload carries an agent identity. A
+  fourth behavior exists (the event fires in subagent context and omits those fields) under which
+  the gate is inert and both failure modes stay open. The code is fail-open in all four, so nothing
+  was at risk; what the claim cost was the reason to check. It is now the named first thing to verify
+  on the first live armed run.
+- **The cause distribution across this effort is now too consistent to read as noise.** S3 and S4
+  took three fix rounds each. Every Critical and every Major traced to spec prose, a dispatch brief,
+  or a main-thread fix of mine. Not one originated in an implementer's code. Meanwhile implementers
+  corrected the brief five times across the effort and were right every time, and this Chapter's
+  reviewers again confirmed every piece of logic they were asked to doubt: both hooks' staleness
+  protocol, both emission doors, the text contract byte-for-byte across ten branches, the shared
+  interpolants identical between the two files, and no fourth route into the mis-delivery class.
+- I introduced a typo into the canonical contract while amending it ("session's Chapter" for
+  "section's") and caught it in the same turn. Noted because that file is a no-paraphrase contract
+  two hooks reproduce verbatim, so an uncaught typo there propagates into model-facing text.
+- **A degenerate case judged rather than changed**, on the implementer's reasoning: at `barrier: 0`
+  the verdict is percent-independent, so `nearBarrier`'s floor of 1 leaves that one config able to
+  deny on 599-second-old data. Closing it would put every low-barrier config on the permanent fast
+  poll, a trade the floor deliberately refuses. Recorded as degenerate.
+- One latent note for a later effort: `JSON.stringify` renders a stood-down warn (`Infinity`) as
+  `null`. No live path round-trips a normalized config today, so nothing is wrong; a future
+  serializer needs the same awareness.
+
+Review Findings: verification blind 2 Major + 5 Minor (APPROVED_WITH_CONCERNS); verification
+adversarial 3 Major + 3 Minor (CHANGES_REQUIRED). All five Majors fixed, two of them in code and
+three in prose. Minors fixed: the finite check on both interpolated thresholds at the barrier's
+emission door (the header claimed it and the sibling did it), the `additionalContext` justification
+scoped per predicate since the Fable ratchet has no sibling channel, an exemption assertion that
+could not fail for its stated reason in either hook, the stale length figures in two documents, and
+`security-model.md` describing rounded interpolation where both hooks floor. Minors accepted with
+reasons recorded: the read-then-append race (reproduced at two duplicate emissions in one of three
+six-process runs, bounded by batch width, and the obvious fix would put a session id back into a
+path), and the `barrier: 0` staleness edge above.
+
+Mutation verification: five more, each restored from a file copy rather than with `git checkout`
+after Chapter 5's data-loss incident. The two that matter are the warn's resume step removed (which
+reddened all four warn renderings) and the threshold upper bound reintroduced (which reddened the
+new class test). No mutation was claimed for the barrier's finite-threshold door, because the branch
+is unreachable through `main` and the implementer judged a fixture there would be vacuous rather
+than manufacturing one.
+
+Next: S5 (resume and the shipped prose), S6 (security model, ledger corrections, docs) and S8 (the
+Fable ratchet's prose half). S5 and S6 both want one live observation behind a `/plugin update`,
+which the payload has never had, and the standing question named in S3 above is the first thing that
+run should answer.
+Commit Model: Commit-and-Push, honored.

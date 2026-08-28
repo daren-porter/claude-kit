@@ -64,18 +64,36 @@
 // line, keyed on (session id, window, reset instant, verdict state) so a new
 // window re-arms the nudge and an escalation from warn to barrier is not
 // swallowed by the warn that preceded it. The state belongs in the key because
-// the two states carry different instructions (only the barrier text carries
-// the resume step), so a key without it would make the barrier unreachable on
-// the ordinary escalation path. The reverse order is suppressed explicitly: a
-// warn is silent once a barrier has fired for the same window and reset
-// instant, because telling a winding-down run to wind down less reads as a bug. The session id is a JSON value and never a
-// path component, which is why this hook needs no path-safety door on it: an
-// earlier draft of this feature put a session id into a filename and needed a
-// strict character class to make that safe, and both were removed. This hook
-// also owns reaping that file, and it is the only store file this hook writes.
+// the two states carry different instructions, so a key without it would make
+// the barrier text unreachable on the ordinary escalation path: a gradual burn
+// crosses the warn first, and a key that could not tell the two apart would
+// report the barrier as already delivered. The reverse order is suppressed
+// explicitly: a warn is silent once a barrier has fired for the same window and
+// reset instant, because telling a winding-down run to wind down less reads as
+// a bug.
 //
-// A known accepted cost, recorded so the next reader does not rediscover it as
-// a defect. The dedupe check sits AFTER both reads, so a session parked in an
+// The session id is a JSON value and never a path component, which is why this
+// hook needs no path-safety door on it: an earlier draft of this feature put a
+// session id into a filename and needed a strict character class to make that
+// safe, and both were removed. This hook also owns reaping that file, and it is
+// the only store file this hook writes.
+//
+// Two known accepted costs, recorded so the next reader does not rediscover
+// them as defects.
+//
+// One: the dedupe is read-then-append with nothing between, so two hook
+// processes that read the marker before either appends both emit. Reproduced at
+// six concurrent processes against one store: two identical blocks and two
+// marker lines, on one run in three. It is bounded by the width of a parallel
+// tool-call batch rather than being a flood, and the duplicate says the same
+// true thing twice. The obvious fix, a per-key claim file created with 'wx' as
+// the mutex, is refused on purpose: the key contains the session id, so a
+// per-key file would put a harness-supplied string back into a filesystem path
+// and reintroduce the character-class door this design exists to do without.
+// One append-only file whose id is a JSON value is the trade, and this is its
+// cost.
+//
+// Two: the dedupe check sits AFTER both reads, so a session parked in an
 // already-nudged barrier state runs the two-pass protocol on every tool call
 // and can pay a live fetch every 120 seconds for a nudge that can never speak
 // again for that key. Moving the check earlier is not available: the re-read is
@@ -141,7 +159,9 @@ function readStdin() {
 // including the four spellings, because the same payload shape is being read
 // for the same purpose: that hook's header records that plugin PreToolUse hooks
 // fire for tool calls made INSIDE subagents and that the payload carries the
-// subagent identity, and PostToolUse rides the same tool loop.
+// subagent identity. Whether PostToolUse behaves the same way is an inference
+// from riding the same tool loop rather than something observed; the gate's own
+// comment in main states what that leaves open.
 function subagentType(payload) {
     const cand = payload.agent_type || payload.agentType || payload.subagent_type || payload.subagentType;
     return (typeof cand === 'string' && cand.trim().length) ? cand.trim() : null;
@@ -376,7 +396,21 @@ function blockedStep(resetsAt) {
 // The wind-down text. It names the BARRIER rather than the warn threshold it
 // just crossed, on purpose: the warn exists to precede the deadline, so the
 // number worth stating is the deadline being wound down ahead of.
-function warnText(label, percent, barrier, resetsAt) {
+//
+// The warn ARMS THE RESUME, exactly as the barrier does, and the first draft's
+// omission was a defect rather than a milder response. Step 5 tells the model to
+// lead with `BLOCKED:` and stop the turn, and kit-goal-stop.js releases its
+// leash on exactly that prefix, so a warn without a resume step halts an
+// unattended run at the warn threshold and leaves it halted: the barrier that
+// would have armed one is then never reached, because the run is no longer
+// spending. The wind-down IS the pause this feature promises, so the resume
+// belongs to it. What separates this text from the barrier's is step 1 and
+// nothing else: the warn gets to finish the section in flight.
+//
+// One consequence worth stating for the next reader: this text now branches on
+// the WINDOW as well as on the reset instant, because resumeStep does, so warn
+// and barrier have the same four reachable renderings each.
+function warnText(windowKey, label, percent, barrier, resetsAt) {
     return [
         `Kit usage wind-down: the ${label} usage window is at ${percent}% and the barrier the operator set for it is ${barrier}%. ${resetClause(resetsAt)}`,
         '',
@@ -384,13 +418,15 @@ function warnText(label, percent, barrier, resetsAt) {
         '1. Finish the section in flight and stage it. Start nothing new.',
         '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
         "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
-        '4. ' + blockedStep(resetsAt),
+        '4. ' + resumeStep(windowKey, resetsAt),
+        '5. ' + blockedStep(resetsAt),
         '',
         'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
     ].join('\n');
 }
 
-// Step 3 of the barrier text, and the one line that splits by horizon. The
+// The resume step, step 3 of the barrier text and step 4 of the warn's, and the
+// one line that splits by horizon. The
 // session window resets in under five hours, so a paused session arms a
 // one-shot job at the reset instant, and such a job fires only while the REPL
 // is idle, which is precisely the paused state. The weekly window resets days
@@ -448,23 +484,42 @@ async function main() {
     try { payload = JSON.parse(readStdin() || '{}'); } catch { return; }
 
     // A tool call made INSIDE a subagent is not this hook's business, and this
-    // gate is first because it costs no I/O and because every other door
-    // downstream would answer the wrong question. It is the correct guard under
-    // all three possible harness behaviours, which is why it does not wait on
-    // resolving which one holds: if PostToolUse fires in subagents carrying the
-    // PARENT session id (what subagent transcripts on this machine show, parent
-    // session_id plus a separate agentId), then without this gate a subagent's
-    // tool call consumes the orchestrator's one nudge for that key and the
-    // orchestrator is never told, and that is the normal case rather than an
-    // edge, because while an Agent call is in flight EVERY tool call is the
-    // subagent's; if instead the additionalContext lands in the subagent's own
+    // gate is first because it costs no I/O and because every door downstream
+    // would answer the wrong question.
+    //
+    // What is ESTABLISHED, and it is less than it looks: docs-write-guard.js's
+    // header records live-fire evidence that plugin hooks fire for tool calls
+    // made inside subagents and that the payload carries the subagent identity,
+    // and that evidence is PreToolUse only. That PostToolUse rides the same tool
+    // loop is an inference from the harness's structure rather than a fact
+    // anyone has observed, and this payload has never run in a live session
+    // behind a `/plugin update`.
+    //
+    // Two failure modes this gate closes IF the identity arrives here. With the
+    // PARENT session id in the payload (what subagent transcripts on this
+    // machine show: the parent session_id plus a separate agentId), a subagent's
+    // tool call would consume the orchestrator's one nudge for that key and the
+    // orchestrator would never be told, and that is the normal case rather than
+    // an edge, because while an Agent call is in flight EVERY tool call is the
+    // subagent's. If instead the additionalContext lands in the subagent's own
     // loop, an implementer is told to write the section's Chapter (which
     // docs-write-guard then denies it) and to stop the turn, the exact
-    // mis-delivery that dropping SubagentStop avoided; and if PostToolUse turns
-    // out not to fire in subagent contexts at all, the gate is inert. The
-    // agent identity deliberately does NOT go into the dedupe key instead:
-    // per-agent keying would preserve orchestrator delivery while multiplying
-    // the mis-delivery, which is the worse half.
+    // mis-delivery that dropping SubagentStop avoided.
+    //
+    // Two behaviours it does NOT close, neither of them verifiable from here.
+    // PostToolUse may fire in subagent context while OMITTING the identity
+    // fields, in which case this gate is inert and both failure modes above
+    // stay open. And the mirror: if the orchestrator's own PostToolUse payload
+    // for an `Agent` call carries a top-level agent identity, this gate silences
+    // the nudge at exactly the section boundary that made dropping SubagentStop
+    // costless. So this is not an exhaustive guard, and the first live armed run
+    // is the point at which to check which behaviour actually holds.
+    //
+    // Under every one of the four it is fail-open in this hook's sense: the gate
+    // can only ever add silence, never an emission and never a deny. The agent
+    // identity deliberately does NOT go into the dedupe key instead: per-agent
+    // keying would preserve orchestrator delivery while multiplying the
+    // mis-delivery, which is the worse half.
     const agentType = subagentType(payload);
     if (agentType !== null && !isBackgroundMain(agentType)) return;
 
@@ -580,7 +635,7 @@ async function main() {
 
     emit(verdict.state === 'barrier'
         ? barrierText(verdict.window, label, percent, barrier, verdict.resetsAt)
-        : warnText(label, percent, barrier, verdict.resetsAt));
+        : warnText(verdict.window, label, percent, barrier, verdict.resetsAt));
 
     // Last, and only on this path. After the emission rather than before it, so
     // a failure in the bookkeeping cannot cost a nudge whose marker already
