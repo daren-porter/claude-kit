@@ -76,7 +76,13 @@
 // usage.json (the cached normalized read), usage.lock (the backoff) and
 // readings.log (one JSON line per successful FETCH, never a cache hit, bounded
 // and self-truncating, each line carrying the profile key as its
-// discriminator). A fourth file deliberately sits OUTSIDE the profile
+// discriminator). Those three are what THIS MODULE writes, which is not the
+// same as the store's inventory: usage-nudge.js writes a fourth file into the
+// same profile directory, nudged.log, its own bounded append-only dedupe
+// marker. This module neither reads nor reaps it, and the distinction is
+// stated because the sentence above reads like a store inventory and would
+// otherwise go quietly wrong the next time a consumer adds a file.
+// A further file deliberately sits OUTSIDE the profile
 // directory, in its shared parent: ~/.claude-kit-usage/config.json holds the
 // operator's thresholds, which are a policy preference rather than an account
 // fact, so a profile switch must not switch the policy with it. That one the
@@ -1082,13 +1088,18 @@ function configFilePath() {
     return path.join(path.dirname(storeRoot()), 'config.json');
 }
 
-// A threshold percent, or the default. Bounded [0, 100] rather than
-// normPercent's [0, 1000]: a percent READ off the wire can legitimately run
-// past 100 on an overage seat, but a threshold set past 100 is one the kit
-// could never act on, so it is an operator typo rather than a policy.
+// A threshold percent, or the default. Bounded [0, 1000], the SAME range
+// normPercent admits, because the two bounds must agree: a percent READ off
+// the wire legitimately runs past 100 on an overage seat, so a threshold past
+// 100 is a policy the kit can act on (and `barrier: 200` is a working "never
+// fire this window"), not a typo. The earlier [0, 100] bound silently
+// replaced an out-of-range threshold with the STRICTER default, which was the
+// one place the fail-open posture inverted: a config written to disable a
+// window instead armed it at 95 and denied, quoting a number the operator
+// never wrote. A value outside anything a percent can read still falls back.
 function normThreshold(value, fallback) {
     const n = normNumber(value);
-    return n === null || n < 0 || n > 100 ? fallback : n;
+    return n === null || n < 0 || n > 1000 ? fallback : n;
 }
 
 function normWindowThresholds(raw, fallback) {

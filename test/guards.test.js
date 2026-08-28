@@ -7,6 +7,13 @@
 // The guards never read tool_name, so command cases are exercised under both Bash
 // and PowerShell tool names to pin payload parity across the two shells.
 //
+// SCOPE: this file covers the three guards that deny by EXIT CODE. The kit's fourth
+// blocking PreToolUse guard, usage-barrier.js, denies by writing permissionDecision
+// JSON to stdout and exiting 0, so the exit-code assertion above cannot express it
+// and it carries its own harness in test/usage-barrier.test.js. Someone auditing
+// "the blocking guards" from this header alone would miss it, which is why the
+// pointer is here rather than only in that file.
+//
 // Run: node --test test/guards.test.js
 //
 // All git repos and shims live under os.tmpdir() and are removed after each suite;

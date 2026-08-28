@@ -51,7 +51,7 @@ claude-kit/                          (repo = the marketplace)
         council-member.md            Read-only design-council lens
         design-facilitator.md        Neutral design-council convergence judge
       hooks/
-        hooks.json                   Hook registrations (SessionStart + PreToolUse + Stop)
+        hooks.json                   Hook registrations (SessionStart + PreToolUse + PostToolUse + Stop)
         session-start.js             Re-injects in-progress plans on startup/resume/compaction; nudges on pending kaizen items (kit repo); offers the CLAUDE.md reconcile when the kit's recommended rules advance; surfaces an armed kit goal; nudges on unarchived Complete plans; nudges when the upstream-kit adoption pass has gone stale (kit repo); emits the cross-project memory tier's generated index and its advisory decay count
         kit-goal.js / kit-goal-lib.js / kit-goal-stop.js The /kit-goal leash: arm/clear/status CLI, shared library, deterministic Stop hook
         docs-write-guard.js / stop-docs-hygiene.js Docs-library guards: non-curator subagent writes into docs/ denied; Stop-time scratch-leak flag (unarchived plans are session-start's nudge, never a turn-end block)
@@ -59,6 +59,9 @@ claude-kit/                          (repo = the marketplace)
         accretion-lib.js             Shared level-2 section parser (ships in the payload; tools/accretion.js uses it too)
         take-stock-nudge.js          Kit-repo-only SessionStart nudge: how many prose sections changed since the last docs/take-stock.md entry (ranking lives in tools/accretion.js)
         memory.js / memory-lib.js / memory-index.js The cross-project memory tier: authoring CLI, shared library (the record schema lives in its header), generated index sidecar and the [body revised] marker
+        usage-lib.js                 Usage awareness, shared half: never-throws reader of Anthropic's OAuth usage endpoint plus the operator's threshold policy, per-profile store under ~/.claude-kit-usage/ (the credential path is documented in docs/security-model.md)
+        usage-nudge.js / usage-barrier.js Usage awareness, consumers: PostToolUse wind-down instruction at a warn or barrier, and the PreToolUse guard that denies subagent dispatch at a barrier and caps model routing at the session model once the Fable weekly window passes its ratchet
+        usage-autocontinue-nudge.js  SessionStart posture check: names a settings file that turns autoContinueAtUsageLimit off, and stays silent on the default-on case
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
                                      (assets/ also exists at skill level, for a file a session copies into a project rather than into the user's config: see brainstorming/assets/)
@@ -80,7 +83,7 @@ at runtime. Every hook this plugin registers is `node "${CLAUDE_PLUGIN_ROOT}/hoo
 on a machine without Node the plugin installs, loads, and lists its skills normally while none of
 its hooks run. **That failure is quiet by design of the harness rather than of this kit:** a hook
 whose command cannot be spawned reports a non-blocking error and the tool call proceeds, so the
-three PreToolUse guards stop guarding and nothing blocks. The kit cannot warn you about this
+four PreToolUse guards stop guarding and nothing blocks. The kit cannot warn you about this
 itself, because the hook that would carry the warning is also a Node script.
 
 1. Clone the repo. It is private, so this and step 3 both need GitHub access already working
@@ -194,6 +197,6 @@ node tools/token-profiler.js
 
 Add `--detail` for a per-session and per-subagent breakdown, or pass a session id to profile a single session. Like the audit, it reads transcripts only, edits nothing, and adds zero standing footprint.
 
-The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, and the branch guards on one gate. `session-start.js` is partly covered: its adoption-staleness nudge, the cross-project memory block, and the decay nudge are pinned, and plan recovery is exercised alongside them, leaving four of its eight blocks verified manually (pinning the rest is a backlog item). Gate: `node --test test/*.test.js tools/*.test.js` from the repo root, widened 2026-08-16 because `hooks/accretion-lib.js` ships in the payload and its only coverage is `tools/accretion.test.js`, so the narrower gate left a payload file untested by the thing called the gate. Run it after any change to `plugins/claude-kit/hooks/`.
+The hook test suite lives in `test/` (repo-level, excluded from the plugin payload) and covers the kit-goal leash, the docs guards, the branch guards, the four usage-awareness components (the reader and threshold library, the wind-down nudge, the barrier, and the autoContinueAtUsageLimit posture check), and `hooks.json` itself on one gate. That last is `test/hooks-registration.test.js`, and it exists because nothing read `hooks.json` at all until 2026-08-28: a wrong event name, a stray matcher or a path typo left every other test green while the hook never fired, which for a hook that can deny a tool call is a whole feature shipping dead. `session-start.js` is partly covered: its adoption-staleness nudge, the cross-project memory block, and the decay nudge are pinned, and plan recovery is exercised alongside them, leaving four of its eight blocks verified manually (pinning the rest is a backlog item). Gate: `node --test test/*.test.js tools/*.test.js` from the repo root, widened 2026-08-16 because `hooks/accretion-lib.js` ships in the payload and its only coverage is `tools/accretion.test.js`, so the narrower gate left a payload file untested by the thing called the gate. Run it after any change to `plugins/claude-kit/hooks/`.
 
 END RESULT: clone, install, and every project on every machine has the same rules, the same workflow, the same reviewers, and the same recovery behavior - maintained in one place.

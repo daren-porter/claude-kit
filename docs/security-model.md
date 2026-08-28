@@ -37,9 +37,11 @@ than accepted ones.
 
 ## Trusted channels: what is instruction and what is data
 
-**Seven surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
+**Nine surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
 `session-start.js`'s `additionalContext` was the only one, which would have told a later review to
-audit one door out of seven:
+audit one door out of nine. The two newest are also the first two that are not
+session-lifecycle: `usage-nudge.js` speaks mid-turn and `usage-barrier.js` speaks on a refusal,
+so a reader who has internalized "kit text arrives at session start" is now wrong about both.
 
 | Surface | Written by | Reaches the model as |
 |---|---|---|
@@ -47,9 +49,11 @@ audit one door out of seven:
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
+| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and only ever the orchestrator's (a payload carrying a subagent identity returns before this channel is reached): a window label from a two-literal whitelist, two rounded integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
-| stderr on a deny | `docs-write-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the second the allowlisted branch) |
+| stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
+| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (about 1240 characters and 11 lines at its longest branch) rather than merely bounded |
 
 `take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
 reviewer looking for a sixth sanitizer idiom will not find one. Nothing repo-controlled reaches its
@@ -58,6 +62,14 @@ channel at all: the only repo-derived values are a date and a sha, and both are 
 emission. An entry that does not match is not sanitized, it is not a marker. Everything else in the
 block is a hardcoded literal plus a non-negative integer. Constrain-at-source is a stronger answer
 than the delete-and-truncate doors above, not a new instance of them.
+
+`usage-nudge.js` and `usage-barrier.js` answer it the same way, which is why the sanitizer ledger
+below still counts six sites after two channels were added. Both interpolate only a rounded
+integer, a window label from a fixed two-literal map, and a timestamp `usage-lib.js` validated at
+its own parse door. There is no scrubbing step in either hook because there is nothing arriving
+that could need one: a value that fails the library's door is `null`, and `null` makes the hook
+silent rather than sanitized. That is the property to re-check first if either hook ever grows a
+new interpolated value, because the design has no fallback door to catch one.
 
 One property is new and worth naming rather than leaving for a later pass to re-derive: that
 block's closing sentence tells the model to run `node tools/accretion.js`, so it is the first
@@ -131,7 +143,7 @@ absent, because a wrong-profile read reports a different account's numbers), and
 bearer to `https://api.anthropic.com/api/oauth/usage`. The host, path and beta header are module
 constants; the transport is a code-level seam for tests with no environment path to it.
 
-Five properties, each verified against the code rather than intended:
+Six properties, each verified against the code rather than intended:
 
 - **Resolved per call, never held.** The token goes into one local and from there only into the
   `Authorization` header. It is never cached across calls, never returned in any result, and never
@@ -152,16 +164,67 @@ Five properties, each verified against the code rather than intended:
 - **Wire trust rests on the ambient Node and TLS environment.** `NODE_EXTRA_CA_CERTS` and
   `NODE_OPTIONS=--require` are already total-compromise levers against every hook in this kit, so
   this adds no new exposure. Recorded so a later pass does not read it as one.
-- **Nothing calls it yet.** `hooks.json` wires no consumer, so the credential read and the network
-  call are latent in the payload rather than live in a session. They go live when S3 and S4 of
-  `plans/kit-usage-awareness_spec_v1.md` register their hooks, and that is the point at which a
-  review should re-verify the first three properties above rather than trusting this paragraph.
+- **It is live as of S3 and S4, and this is the paragraph that said to re-verify at that point.**
+  `hooks.json` now wires two consumers: `usage-nudge.js` on `PostToolUse` and `usage-barrier.js`
+  on `PreToolUse` for `Agent|Task`. So the credential read and the network call happen in ordinary
+  sessions rather than sitting latent in the payload, and the first three properties above were
+  re-verified against the as-built hooks rather than carried forward. Two consequences a reviewer
+  should hold. Both consumers read `readConfig()` before anything else and return on
+  `enabled: false`, which is the default, so an unarmed machine makes no network call at all. And
+  `usage-nudge.js` runs on **every tool call**, so when disarmed it costs one capped read of a
+  small JSON file plus a Node process start, per tool call, and when armed it additionally pays the
+  reader's 6-second request deadline in-turn on the one tool call per staleness window that misses
+  cache. Both were accepted rather than overlooked.
+- **`usage-nudge.js`'s `PostToolUse` registration carries no matcher, and that is load-bearing
+  rather than lazy.** Confirmed against the 2.1.248 binary: in the tool-call path a `PreToolUse`
+  chain that yields a stop returns immediately with the deny message, before the tool is called, so
+  **the `PostToolUse` chain never runs for a denied call**. At a barrier `usage-barrier.js` denies
+  every `Agent` dispatch, so had the nudge been matched to `Agent` its barrier text would have been
+  undeliverable at precisely the moment it matters. Narrowing that matcher to cut process spawns is
+  an obvious-looking optimisation and it would silently break the wind-down channel, which is why
+  the reason is recorded here and in the hook's own header rather than left to be rediscovered. It
+  is also why `permissionDecisionReason` on the barrier is written to be self-sufficient: the deny
+  cannot rely on the nudge arriving in the same turn.
+- **Both hooks fire for tool calls made INSIDE subagents, and both had to answer for it.** This is
+  the other consequence of an unmatched registration, and the first draft of the bullet above
+  taught "do not narrow this" while saying nothing about whose context the text lands in.
+  `docs-write-guard.js`'s header already records that plugin PreToolUse hooks fire inside subagents
+  and that the payload carries the subagent identity, and PostToolUse rides the same tool loop. Two
+  failures followed, and the second is the one worth remembering. A subagent's tool call would have
+  consumed the orchestrator's one nudge, because the session id on a subagent's entries is the
+  PARENT's, and because while an `Agent` call is in flight *every* tool call is the subagent's, so
+  this was the normal case rather than an edge. And an orchestrator-shaped instruction ("write the
+  section's Chapter", "surface `BLOCKED:` and stop the turn") would have landed on an implementer,
+  which `docs-write-guard` would then have denied. The two hooks answer differently and the
+  difference is the point: **`usage-nudge.js` returns early**, because a wind-down aimed at the
+  orchestrator has no meaning for a subagent, while **`usage-barrier.js` still denies** and swaps
+  the reason text for a shorter form that says to stop and report back rather than to write a
+  Chapter or arm a resume, because the deny is about stopping spend whoever is spending. Both copy
+  `docs-write-guard.js`'s `subagentType`/`isBackgroundMain` pair including its bare-`claude`
+  exemption, since a user-launched background job presents that way and is the main session of its
+  job. That pair now exists in three hooks: the kit has no shared hook-payload module and
+  inventing one for four lines would be the worse trade, but a fourth copy is the point to stop and
+  build one.
+- **The kit deliberately has no request coalescing here, and the cost is worth stating in its
+  sharpest form.** Several concurrent `Agent` dispatches on a cold cache each issue their own
+  request, and a 429 then locks the reader for its retry-after, which on this endpoint has been
+  observed at roughly 54 minutes. So the spend control can go dark exactly when spend is highest.
+  This is an accepted cost rather than an oversight: coalescing was built earlier in this effort and
+  removed after it was reproduced bricking the store two separate ways, and every variant of it
+  makes the loser either wait or go without. Both consumers fail open when the reader is locked, so
+  the failure is a silent absence of control, never a wedge.
 
 `~/.claude-kit-usage/` is its store, and it has two levels. A per-profile subdirectory keyed by
-the resolved credentials directory holds a cache of the normalized response, a backoff lock, and
-an append-only reading log bounded at 5000 lines; the log accumulates this account's usage
-percentages and overage spend over time, which is why it is 0600 and why the store is named in
-the same-uid store list, but it holds no credential and no third-party data. The shared parent
+the resolved credentials directory holds four files: a cache of the normalized response, a
+backoff lock, an append-only reading log bounded at 5000 lines, and `nudged.log`, the
+append-only marker `usage-nudge.js` dedupes against. The reading log accumulates this account's
+usage percentages and overage spend over time, which is why it is 0600 and why the store is named
+in the same-uid store list, but it holds no credential and no third-party data. `nudged.log` holds
+session ids, which is the one place in this effort a harness-supplied string is persisted, and it
+is persisted as a JSON **value** rather than as a path component on purpose: an earlier design put
+a session id in a filename and needed a strict character-class door to make that safe, so the
+shape that needs the door was removed rather than the door re-added. Nothing reads either log back
+to the model. The shared parent
 holds one more file, `config.json`, carrying the operator's thresholds. That one sits outside the
 profile subdirectory deliberately, because thresholds are a policy preference rather than an
 account fact, and it is the only file in this store **no kit code ever writes**: the operator
@@ -179,11 +242,33 @@ backwards.
   never break a session. `take-stock-nudge.js` adds a second bound of the same kind, a 6-second
   budget for its whole run on top of a 5-second timeout per git call, and a failed measurement is
   reported as a failure rather than rounded down to a smaller number.
-- The three PreToolUse guards (`docs-write-guard`, `pr-docs-guard`, `merged-pr-push-guard`) exit 2
-  to deny, but **only on a positive determination**. Each one also ends in
+- The four PreToolUse guards deny **only on a positive determination**, and they now span two
+  mechanisms. `docs-write-guard`, `pr-docs-guard` and `merged-pr-push-guard` exit 2 with the reason
+  on stderr. `usage-barrier` writes `permissionDecision: "deny"` as JSON on stdout and exits 0,
+  because its reason has to be a complete instruction for an unattended run rather than an error
+  line. Each of the four ends in
   `try { main(); } catch { /* fail open */ }` and each has explicit allow-on-doubt branches: an
   unidentifiable subagent type is `null` and allowed, a `docs/` dirtiness it could not determine is
   allowed, a PR state that is not confirmed `MERGED` is allowed.
+- `usage-barrier` is the first kit guard that denies on a **network-derived** signal, so its
+  allow-on-doubt set is wider than any other guard's and is worth reading as the interesting case
+  rather than as more of the same. It allows on a stale reading, on every one of the reader's eight
+  failure reasons including `expired`, on an absent or disabled config, on a window whose percent
+  the endpoint did not report, and on any tool that is not `Agent` or `Task`. It denies only from a
+  positive determination on data inside the staleness budget the evaluator handed it, and it
+  re-reads once rather than deciding on data older than the budget it was given. A wrong deny here
+  wedges an unattended run with nobody present to clear it, which is why every branch points the
+  allowing way.
+- `usage-nudge` is the kit's first `PostToolUse` hook and its first mid-turn channel. It blocks
+  nothing: it can only add context, and any internal error leaves it silent.
+- **Two hooks now swallow through a promise rather than a bare catch**, which matters only because
+  the paragraph above asserts the idiom rather than the outcome. `usage-nudge.js` and
+  `usage-barrier.js` both have an `async main()`, so their guard is a catch on the returned promise
+  instead of `try { main(); } catch {}`. The effect is the same and slightly wider: a synchronous
+  throw inside an `async` function arrives as a rejection, so the catch still covers the whole of
+  `main`, and it additionally covers a rejection from the `await`ed reader. What a reviewer should
+  check on either file is that nothing runs outside that promise chain, since a throw there would
+  escape the guard the sync form cannot leak past.
 - The two Stop hooks (`stop-docs-hygiene`, `kit-goal-stop`) block by writing
   `{"decision":"block","reason":...}` to stdout and still exiting 0, never by exit 2, and any
   internal error allows the stop.
@@ -196,7 +281,25 @@ trivially bypassable by design (a guard that fails open cannot be otherwise). So
 circumvented" is not a vulnerability in this kit; it is the stated design. What *is* worth
 reporting is a guard that fails **closed** by accident, because that can wedge a session, and a
 guard whose deny path is silent, because exit 2 without a reason on stderr costs the model the
-explanation it needs to comply.
+explanation it needs to comply. `usage-barrier.js` denies through JSON rather than exit 2, so the
+equivalent defect there is an empty or a **truncated** `permissionDecisionReason`. The harness caps
+no cap on that field that this kit has established, so the risk is not a known limit but an
+unknown one: the stop instruction sits at the END of the reason, so whatever does eventually
+truncate it costs exactly the part the model needs, and costs it silently. A change that lengthens
+that text is therefore worth the same scrutiny as one that removes it.
+
+**A retraction worth reading, because it is the kind of error this document exists to prevent.**
+An earlier version of this section stated that the harness caps `permissionDecisionReason` at 2000
+characters and 20 lines, "read off the 2.1.248 binary". Those constants are real and do sit in a
+hook-output normalizer in that binary, but the same normalizer also DROPS
+`permissionDecision: "allow"`, `"defer"` and `updatedInput` for PreToolUse, which local command
+hooks demonstrably use, so it governs a narrower path than this kit's, most plausibly hooks
+forwarded from another machine. On the local command-hook path the handler for `additionalContext`
+is a persist-to-disk-above-threshold helper rather than a line truncator, and no line cap on
+`permissionDecisionReason` was found at all. One sanitizer's constants were generalised into a
+harness-wide guarantee and then written here as verified fact. The practical guidance did not
+change and the as-built text is far inside any plausible limit, so nothing was ever at risk; what
+was wrong was the confidence, in the one document a reviewer is told to read first.
 
 One availability exception to know before rating a stop-hook finding: `kit-goal-stop` deliberately
 omits a `stop_hook_active` loop guard, so it re-blocks every stop until an allow condition is met.

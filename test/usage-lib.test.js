@@ -1328,7 +1328,7 @@ test('one garbage field falls back on its own default rather than disabling the 
         assert.strictEqual(config.session.barrier, 60);
         assert.strictEqual(config.weeklyAll.warn, 85);
         // ...and only the unusable ones fall back, each on its own default:
-        // a threshold outside [0, 100] is one the kit could never act on.
+        // a threshold outside [0, 1000] is outside anything a percent can read.
         assert.strictEqual(config.session.warn, lib.DEFAULT_CONFIG.session.warn);
         assert.strictEqual(config.weeklyAll.barrier, lib.DEFAULT_CONFIG.weeklyAll.barrier);
         assert.strictEqual(config.fableRatchet, lib.DEFAULT_CONFIG.fableRatchet);
@@ -1336,6 +1336,48 @@ test('one garbage field falls back on its own default rather than disabling the 
         const verdict = lib.evaluate(usageOf({ session: 70 }), config);
         assert.strictEqual(verdict.state, 'barrier');
         assert.strictEqual(verdict.window, 'session');
+    });
+});
+
+// An out-of-range threshold used to be silently replaced by the STRICTER
+// default, which was the one place the barrier's fail-open posture inverted:
+// a config written as `barrier: 200` to disable a window instead armed it at
+// 95 and denied with a number the operator never wrote. normThreshold now
+// admits [0, 1000], the same bound normPercent admits, so a threshold past
+// 100 is honored as written: an overage seat legitimately reads past 100, and
+// a window that never reaches 200 simply never fires.
+test('a threshold past 100 is honored as written, not replaced by the stricter default', async () => {
+    await withUsageEnv(async () => {
+        writeConfig({ enabled: true, session: { warn: 200, barrier: 200 }, weeklyAll: { warn: 200, barrier: 200 }, fableRatchet: 200 });
+        const config = lib.readConfig();
+        assert.strictEqual(config.session.warn, 200);
+        assert.strictEqual(config.session.barrier, 200);
+        assert.strictEqual(config.weeklyAll.barrier, 200);
+        assert.strictEqual(config.fableRatchet, 200);
+
+        // The reviewer's repro, pinned: 96% against a stated barrier of 200
+        // is clear, never a deny quoting a default the operator did not write.
+        const verdict = lib.evaluate(usageOf({ session: 96 }), config);
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(lib.evaluate(usageOf({ fable: 96 }), config).fableRatchet, false);
+
+        // A percent can still legitimately reach a past-100 threshold on an
+        // overage seat, so the honored value stays actionable rather than
+        // becoming a de-facto disable flag with special semantics.
+        assert.strictEqual(lib.evaluate(usageOf({ session: 250 }), config).state, 'barrier');
+
+        // The interaction with the warn fallback, confirmed rather than
+        // assumed: a barrier raised to 200 with the warn left unstated keeps
+        // the default warn (80 > 200 is false, so nothing falls back), so
+        // warns still fire while the barrier never does. Coherent: the
+        // operator raised only the deadline, not the wind-down.
+        writeConfig({ enabled: true, session: { barrier: 200 } });
+        const raisedOnly = lib.readConfig();
+        assert.strictEqual(raisedOnly.session.warn, lib.DEFAULT_CONFIG.session.warn);
+        assert.strictEqual(raisedOnly.session.barrier, 200);
+        const warned = lib.evaluate(usageOf({ session: 96 }), raisedOnly);
+        assert.strictEqual(warned.state, 'warn');
+        assert.strictEqual(warned.window, 'session');
     });
 });
 

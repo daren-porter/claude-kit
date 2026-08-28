@@ -307,7 +307,7 @@ Acceptance criteria:
 - A `limits[]` entry of kind `weekly_scoped` is attributed to `fableWeekly` only when
   `scope.model.display_name` is `Fable`.
 - Every successful read appends one line to a bounded, self-truncating observation log at
-  `~/.claude-kit-usage/readings.log`, carrying the timestamp, each window's percent and
+  `<store>/readings.log`, carrying the timestamp, each window's percent and
   `severity`, `is_active`, and `spend.amountMinor`. This is what answers the three
   observation-owned Open Questions and what a later burn-rate projection would need. It
   holds no token material and is never emitted to the model.
@@ -345,7 +345,23 @@ read: a hook that read at 600 and is then handed 120 is holding data that may be
 budget it was just given, which is precisely what S4's positive-determination criterion forbids.
 Without the age in the verdict S4 would have to re-parse the reader's timestamp itself.
 
+**One defect in this section's own code outlived its review and was found by S4's blind
+reviewer, and it is the only place in the effort where the fail-open posture inverted.**
+`normThreshold` bounded a configured threshold to `[0, 100]` and replaced anything outside it with
+the default. Since the defaults are the strictest values in play, a config written to disable a
+window (`barrier: 200`) instead armed it at 95 and denied, with the reason quoting a percentage the
+operator never wrote above the sentence "This is a spend control the operator armed". The cause was
+a contradiction twenty lines wide: `normThreshold`'s comment justified the bound with "a threshold
+set past 100 is one the kit could never act on", while `normPercent` admits `[0, 1000]` precisely
+because an overage seat legitimately runs past 100. The bound is now `[0, 1000]` for both, which
+honors a past-100 threshold as written and so gives "never fire this window" working semantics, and
+makes a typo fail in the allowing direction. Warns still fire under a disabled barrier, which was
+checked rather than assumed.
+
 Acceptance criteria:
+- A threshold outside `[0, 100]` but inside what a percent can read is honored as written
+  rather than replaced by a default, so a barrier set past any reachable percent disables that
+  window instead of arming it at the default.
 - An absent config file, an unparseable one, or `enabled: false` all return `clear`.
 - The precedence table holds for every combination of two windows and three states.
 - An unknown window percent cannot produce `barrier` at any threshold.
@@ -362,8 +378,8 @@ they are what keep the feature off by default.
 
 ### 3. The wind-down channel
 
-Ships `plugins/claude-kit/hooks/usage-nudge.js`, registered on `PostToolUse` and
-`SubagentStop`, emitting `additionalContext` through `hookSpecificOutput`.
+Ships `plugins/claude-kit/hooks/usage-nudge.js`, registered on `PostToolUse`,
+emitting `additionalContext` through `hookSpecificOutput`.
 
 At `warn` it emits once per window per session, deduped by a marker keyed on session id,
 window and reset instant, so a new window re-arms. The text names the window, its percent
@@ -371,13 +387,53 @@ and its reset time, and instructs the model to finish the section in flight, sta
 subagents, then surface a `BLOCKED:` line and stop. At `barrier` the text additionally
 carries the resume instruction for the window's horizon.
 
-`SubagentStop` is registered alongside `PostToolUse` specifically because it is a natural
-section boundary: a wind-down that lands mid-section strands half-built work.
+**The marker is one append-only file for the whole profile, not one file per session**,
+and the difference is a safety property rather than a style choice. A session id arrives
+from the harness payload, so putting it in a path needs a strict character-class door, and
+Chapter 4 records that this effort deleted exactly that door along with the feature it
+served. Keeping the id as a JSON *value* in `<store>/nudged.log` removes the path surface
+entirely, so there is no door to reintroduce and none to forget. Reaping becomes a bounded
+rewrite of one file rather than a directory sweep, which is the `readings.log` idiom
+`usage-lib.js` already carries.
+
+**`SubagentStop` was specced alongside `PostToolUse` and dropped at dispatch, on
+evidence.** The reasoning for it was sound (a subagent finishing is a natural section
+boundary, and a wind-down landing mid-section strands half-built work) but the mechanism
+does not do what the spec assumed. The 2.1.248 binary's own schema description for the
+SubagentStop event reads "additionalContext is non-error feedback delivered to the
+subagent; the subagent continues so it can act on it", where the Stop event's equivalent
+says "delivered to the model". So the emission would hand an instruction written for the
+orchestrator ("write the section's Chapter, surface `BLOCKED:`, stop the turn") to an
+implementer subagent, and encourage that subagent to keep going. `PostToolUse` fires after
+the `Agent` tool call returns in the orchestrator's own turn, which is the same boundary
+delivered to the right reader, so nothing is lost by dropping it.
+
+**A subagent's tool call is not a nudge-worthy event, and missing that was the second
+Critical of S3's review round.** `PostToolUse` fires for tool calls made inside subagents, the
+session id on those is the parent's, and while an `Agent` call is in flight every tool call is the
+subagent's, so a subagent would normally have consumed the orchestrator's one nudge; and if
+`additionalContext` instead lands in the calling loop, an implementer gets told to write a Chapter
+and stop the turn. That is the same mis-delivery this section already avoided by dropping
+`SubagentStop`, arriving by a second route that the first fix did not close. The hook now returns
+early on any payload carrying a subagent identity, copying `docs-write-guard.js`'s
+`subagentType`/`isBackgroundMain` pair including the bare-`claude` exemption for a background job's
+main session. The guard is correct under every version of the harness behavior, which is why it did
+not wait on resolving which holds: it prevents consumption if the session id is shared, prevents
+mis-delivery if the context lands in the subagent, and is inert if `PostToolUse` does not fire
+there at all.
 
 Acceptance criteria:
-- The dedupe marker is the only session-keyed file this effort creates, so this section owns
-  reaping it: a marker older than eight days (the longest window tracked) is removed, bounded
-  and silently, touching no other store file.
+- A payload carrying a subagent identity emits nothing and consumes no marker, in every
+  spelling `docs-write-guard.js` reads, while a bare `claude` background-job type is nudged
+  like any other main session.
+- The dedupe marker key carries the verdict state as well as the session, window and reset
+  instant, so a warn cannot suppress the barrier for the same window. A barrier already
+  recorded does suppress a later warn for that same window and instant, because the milder
+  instruction after the stronger one tells a winding-down run to wind down less.
+- The dedupe marker is the only session-keyed state this effort creates, so this section
+  owns reaping it: a marker line older than eight days (the longest window tracked) is
+  removed, bounded and silently, touching no other store file. No session id reaches a path
+  component.
 - The marker's key tolerates a null reset instant. `evaluate` reports `resetsAt: null` on a
   non-clear verdict whenever the producing window's timestamp failed validation, which is
   reachable off the wire from a valid percent with a malformed `resets_at`, so a key that
@@ -393,16 +449,40 @@ Acceptance criteria:
 
 Execution mode: delegate-capable.
 Tests: the once-per-window dedupe and its re-arm on a new reset instant, since a nudge on
-every tool call would flood a long run; and the emission door, since it is the sixth
-trusted channel in `docs/security-model.md`'s table and the first carrying network-derived
-values.
+every tool call would flood a long run; and the emission door, since it is the first
+channel in `docs/security-model.md`'s table to carry network-derived values.
 
 ### 4. The barrier
 
 Ships `plugins/claude-kit/hooks/usage-barrier.js`, registered `PreToolUse` with matcher
-`Agent|Task`, returning `permissionDecision: "deny"` with a reason naming the window, its
-percent and its reset instant, plus `additionalContext` carrying the `BLOCKED:` and resume
-instruction.
+`Agent|Task`, returning `permissionDecision: "deny"` with a `permissionDecisionReason` that
+is by itself a sufficient instruction: it names the window, its percent and its reset
+instant, says not to retry or route around the deny, and carries the `BLOCKED:` and resume
+sequence.
+
+**The `additionalContext` the first draft asked for here was dropped at dispatch**, for two
+reasons that both point the same way. Whether `additionalContext` renders to the model on a
+DENIED tool call is confirmed only as far as the hook chain (the binary yields it in a
+branch independent of the permission decision) and is not verified live, so the
+load-bearing instruction belongs in the channel a deny is guaranteed to deliver. And S3
+already owns the `additionalContext` channel for this same state, so emitting it here would
+put one instruction into a single turn twice. What follows is a constraint rather than a
+saving: the deny reason has to be self-sufficient, and its length is therefore budgeted rather
+than merely bounded. The first draft of this paragraph claimed a hard harness cap of 2000
+characters and 20 lines "read off the binary"; that was over-derived from a normalizer governing a
+narrower hook path, was marked CONFIRMED in the dispatch brief on that basis, and was caught by the
+security review rather than by me. What is actually true is that nothing this effort could find
+caps the field on the local command-hook path, and that the stop instruction sits at the end of the
+text, so any future truncation costs precisely the part that matters.
+
+Three further facts from that same read shape the hook. The `permissionDecision` enum is
+`["allow","deny","ask","defer"]`, and PreToolUse's `hookSpecificOutput` schema does accept
+`additionalContext` even though the binary's own help text for that event omits it.
+`updatedInput` is honored only on `allow` and `ask`, never on a `deny`, so rewriting the
+dispatch instead of denying it was never available on this path and the choice below is
+load-bearing rather than stylistic. And an explicit `permissionDecision: "allow"` is a
+positive approval rather than an abstention, so this hook allows by silence like every
+other kit guard.
 
 It denies only on a positive determination from data no older than the evaluated staleness
 budget. Stale data, any reader failure, an absent or disabled config, and an unknown window
@@ -415,9 +495,23 @@ failing that, a Fable weekly percent at or above the ratchet denies only a dispa
 instruction to re-dispatch without the override. A dispatch carrying no fable override is
 untouched by the ratchet.
 
+**A dispatch made INSIDE a subagent gets the same deny and a different instruction**, added
+after review found the third instance of one mis-delivery class in this effort. `PreToolUse` fires
+for tool calls made inside subagents, and some agent types carry the `Agent` tool, so a nested
+dispatch reaches this hook. Unlike S3's channel, the answer here is not to return early: the deny
+is about stopping spend whoever is spending, and a subagent spends. What is wrong is the
+instruction, since a subagent must not write a Chapter, must not arm a resume, and must not surface
+`BLOCKED:` to end a turn that is not the effort's. So a payload carrying a subagent identity gets a
+shorter form of each reason, saying to stop and report back to whoever dispatched it. Detection
+copies `docs-write-guard.js`'s `subagentType`/`isBackgroundMain` pair including the bare-`claude`
+exemption, because a user-launched background job presents that way and is the main session of its
+job.
+
 Denying is deliberate rather than rewriting the call through `updatedInput`: a silent
 downgrade would leave the orchestrator believing it got Fable and writing a Chapter saying
-so. The hook cannot see an inherited Fable model on a Fable-led session, only an explicit
+so. Review then established the stronger form of that point from the binary itself: the hook
+chain honors `updatedInput` only on an `allow` or an `ask` and never on a `deny`, so the rewrite
+was never available on this path and the choice is load-bearing rather than stylistic. The hook cannot see an inherited Fable model on a Fable-led session, only an explicit
 override, and its reason text says so rather than implying full coverage.
 
 Acceptance criteria:
@@ -434,7 +528,13 @@ Acceptance criteria:
 - Allows on stale data, on every reader failure reason including `expired`, on absent
   config and on `enabled: false`.
 - The deny reason names the window and the reset instant, so the model can act on it
-  without another read.
+  without another read, and says explicitly not to retry the dispatch, not to reshape it,
+  and not to do the subagent's work in the main thread instead. A bare refusal on `Agent` in
+  an unattended run invites a dispatch loop, which spends more than the barrier saves.
+- The deny reason stays short by budget rather than to a discovered limit: about 1240
+  characters and 11 lines at its longest branch. A deny whose instruction was truncated away is
+  a wedge with no instruction, and since the instruction is at the end of the text, that is the
+  half any truncation would take.
 - No tool other than `Agent` or `Task` is ever denied.
 
 Execution mode: delegate-fable.
@@ -900,6 +1000,115 @@ that silently made the wind-down unreachable, and roughly a dozen comments left 
 the removal.
 
 Next: S3 and S4. Both were blocked on the verdict shape, which is now settled.
-Commit Model: Commit-and-Push, honored.
-Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
-land together, because the docs describe hooks that are now on `main`.
+Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan
+doc land together, because the docs describe hooks that are now on `main`.
+
+### Chapter 5 - 2026-08-28
+Completed: S3 (the wind-down channel) and S4 (the barrier), both built, reviewed and repaired.
+**Both are code-complete with a verification pass outstanding**, dispatched at close; anything it
+finds lands in Chapter 6.
+Implemented By: S3 `implementer-opus` (three dispatches: build, then two fix rounds); S4
+`implementer-fable` (two dispatches, explicit fable override on an Opus session per the
+`Fable Spend:` header); main session for `hooks.json`, every living-doc edit, the canonical text
+contract, and the four spec corrections.
+Metrics: one paired review round per section plus one security pass over both, five reviewers in
+one parallel dispatch. Three fix rounds total. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus),
+**consulted once and it changed the dispatch materially** (see below), which is the first
+successful consultation recorded in this repo's advisor experiment. Gate at close: 485 pass, 0 fail,
+from a 412 baseline.
+
+Decisions / Surprises:
+- **The advisor earned its line in the Metrics for the first time.** Consulted before dispatch, it
+  found that S3 had inherited the eight-day reaping obligation from the removed spend delta but not
+  the session-id path-safety door deleted alongside it, so the specced marker would have put a
+  harness-supplied string into a filesystem path with its guard gone. Its proposed alternative (one
+  append-only file per profile, session id as a JSON value) removed the path surface rather than
+  re-guarding it. It also predicted the cross-hook text divergence and named the fix that was taken.
+- **Reading the binary changed the design four times, and three of those were spec claims that were
+  simply false.** `SubagentStop`'s `additionalContext` is delivered "to the subagent; the subagent
+  continues so it can act on it", where `Stop`'s says "to the model", so the registration the spec
+  called a natural section boundary would have handed an orchestrator instruction to an implementer:
+  dropped. `updatedInput` is honored only on `allow` and `ask`, never on a `deny`. A `PreToolUse`
+  chain that yields a stop returns before the tool is called, so a denied call fires **no**
+  `PostToolUse`, which is what makes the nudge's unmatched registration load-bearing rather than
+  lazy. And the fourth was my own error in the other direction: see the retraction below.
+- **Both of S3's review Criticals traced to my spec text, not to the implementation.** The dedupe
+  key was specced as "session id, window and reset instant" and omitted the verdict state, so a
+  warn permanently suppressed the barrier for the same window and the resume instruction the Goal
+  names was unreachable on the ordinary escalation path. Two reviewers reproduced it independently.
+  The section's own acceptance criterion ("emits once per window per session, and re-emits after the
+  reset instant changes") was *literally satisfied* by the broken behavior while the section's
+  preceding sentence was contradicted by it, which is `plans/record-vs-artifact_spec_v1.md`'s thesis
+  exactly: the defect lived in the gap between two sentences of one document, and no rewording of
+  either would have reached it.
+- **One mis-delivery class appeared three times and each fix opened the next.** An instruction
+  written for the orchestrator reaching a subagent: closed on `SubagentStop` at dispatch, found open
+  on `PostToolUse` by the blind reviewer, then found open on the barrier's deny reason too. The
+  three answers differ because the right answer differs (drop the registration, return early, keep
+  the deny and swap the text), which is why closing one told me nothing about the others.
+- **A defect in closed S1/S2 code survived six earlier review rounds and was found by S4's blind
+  reviewer.** `normThreshold` replaced an out-of-range threshold with the stricter default, so a
+  config disabling a window armed it and denied. Recorded against S2 above. The lesson is not the
+  bug but where it was caught: a reviewer scoped to S4 read the library as context and noticed a
+  contradiction between two of its own comments.
+- **Nothing in the suite read `hooks.json`.** A wrong event name, stray matcher or typo'd path left
+  every test green while the hook never fired, and that now covered a hook that can deny tool calls,
+  so the whole feature could have shipped dead. `test/hooks-registration.test.js` pins the inventory
+  and, deliberately, pins that the `PostToolUse` entry carries **no** matcher, with the reason:
+  narrowing it to `Agent` to cut per-tool-call process spawns is an obvious-looking optimisation
+  that would make the barrier text undeliverable exactly when it matters.
+- **A retraction, because it is the class this effort keeps producing.** I read 2000-character and
+  20-line constants out of a hook-output normalizer in the 2.1.248 binary and generalised them into
+  "the harness caps `permissionDecisionReason`", marked it CONFIRMED in a dispatch brief with
+  evidence, and wrote it into `security-model.md`, this spec, the hook's header and the canonical
+  contract. The security reviewer could not reconfirm it. That normalizer also drops
+  `permissionDecision: "allow"`, `"defer"` and `updatedInput` for PreToolUse, which local command
+  hooks demonstrably use, so it governs a narrower path; on the local path the `additionalContext`
+  handler is a persist-to-disk-above-threshold helper and no line cap on `permissionDecisionReason`
+  was found at all. Nothing was at risk (the as-built text is ~1240 characters and 11 lines) and the
+  guidance survives, but the confidence was wrong in the one document a reviewer is told to read
+  first. The `CONFIRMED`/`INFERRED` marking the brief format requires is only as good as the
+  orchestrator's discipline about which it is entitled to.
+- **My own canonical text drifted before anyone copied it.** Step 4 of the stop sequence existed as
+  four hand-written copies under a header instructing the implementer never to paraphrase, and two
+  had already diverged. It is now one named interpolant with two forms, and its null form no longer
+  demands the model name a reset instant the same text has just said was unreadable.
+- **An implementer's `git checkout` silently reverted an orchestrator edit.** Restoring a mutation
+  that way reverts to HEAD rather than to the pre-mutation state, so it destroyed a comment edit
+  made to `usage-lib.js` minutes earlier. The implementer reported the incident and verified its
+  restore by confirming its own staged diff was "exactly one hunk", which is precisely the check
+  that cannot detect the loss. Caught only by re-reading the full file diff. Routed to the kaizen
+  inbox with the two fixes that compose.
+- **What the reviewers could not fault is worth recording too**, because it is the same split as
+  every prior Chapter: both hooks' two-pass staleness protocol (no reachable third read, no deny
+  outside the budget handed), the emission door on both channels (no path found for any other
+  payload string), precedence across fifteen-plus allow-on-doubt branches, the Fable match breadth,
+  and the three credential properties `security-model.md` demanded be re-verified at registration.
+  Every defect found was in something written in prose; nothing was found in the logic.
+
+Review Findings: S3 adversarial 1 Critical + 3 Minor; S3 blind 2 Critical + 3 Minor; S4 adversarial
+0 Critical + 5 Minor (APPROVED_WITH_CONCERNS); S4 blind 1 Major + 8 Minor; security over both
+0 Critical + 1 Major + 3 Minor (CONCERNS). Both Criticals and both Majors fixed. Minors fixed:
+the marker reader's two-directions-for-one-condition (a chmod-0200 store was a reproduced flood),
+`hasOwnProperty` at the barrier's label door, `Number.isFinite` before every rendered percent, floor
+rather than round (rounding let a warn print numbers asserting a barrier), the past-instant resume
+clause, `pr-docs-guard.js` missing from the trusted-channel deny row, and five test pins where a
+one-token mutation passed the suite green. Minors accepted with reasons recorded: the read-then-
+append TOCTOU, the over-cap silence needing a foreign writer, the parked-barrier re-read cost, the
+absent request coalescing (removed earlier in this effort after being reproduced bricking the store
+two ways, and now documented in its sharpest framing, that the spend control can go dark exactly
+when spend is highest), and the `subagentType` pair existing in three hooks (no shared
+hook-payload module exists; a fourth copy is the point to build one).
+
+Mutation verification: twelve mutations across the two fix rounds, each watched red and restored.
+The ones worth naming are the four that had passed the suite green before they were pinned: the
+verdict state removed from the marker key, `state === 'barrier'` widened to `state !== 'clear'`
+(which would deny every dispatch at the warn threshold), the post-re-read `wouldDeny` check deleted
+(which emitted a deny naming a fabricated "0%"), and the staleness boundary operator flipped.
+
+Next: the verification pass, then S5 (resume and shipped prose), S6 (security model, ledger
+corrections, docs) and S8 (the Fable ratchet's prose half). S5 documents behavior that wants one
+live observation behind a `/plugin update`, which the payload has never had.
+Commit Model: Commit-and-Push, honored. `hooks.json` is staged explicitly this time: a reviewer
+noted it was modified-unstaged while both hooks were staged, and committing the index alone would
+have shipped both hooks unregistered and inert with the suite green.

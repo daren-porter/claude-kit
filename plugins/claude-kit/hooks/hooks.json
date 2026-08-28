@@ -65,6 +65,25 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/merged-pr-push-guard.js\""
           }
         ]
+      },
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/usage-barrier.js\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/usage-nudge.js\""
+          }
+        ]
       }
     ],
     "Stop": [
