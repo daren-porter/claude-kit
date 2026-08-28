@@ -21,7 +21,6 @@
 // discriminator: an expired token (401) must never write a rate-limit lock, a
 // persistent non-401/429 4xx backs off long rather than re-polling every
 // minute forever, a corrupt lock value cannot brick the reader, and
-// overlapping cold reads coalesce onto one request instead of piling onto a
 // rate-limited endpoint. After that, payload tolerance: the live top level
 // carries unreleased-codename buckets and null slots, so parsing must key on
 // limits[].kind, report a missing window as percent null (never 0), refuse an
@@ -90,12 +89,13 @@ function writeCredentials(dir, token) {
 // test can assert the transport was never invoked at all.
 function fakeTransport(outcome) {
     const calls = [];
+    const destroyed = [];
     function impl(options, cb) {
         calls.push(options);
         const handlers = {};
         return {
             on(event, fn) { handlers[event] = fn; return this; },
-            destroy() { /* the lib calls this after a timeout */ },
+            destroy() { destroyed.push(true); },
             end() {
                 setImmediate(() => {
                     if (outcome.event === 'timeout') { if (handlers.timeout) handlers.timeout(); return; }
@@ -114,7 +114,7 @@ function fakeTransport(outcome) {
             },
         };
     }
-    return { impl, calls };
+    return { impl, calls, destroyed };
 }
 
 // Structurally faithful to a live 200 captured on 2026-08-27 and deliberately
@@ -610,47 +610,6 @@ test('a lock whose blockedUntil exceeds the retry-after cap does not brick the r
         assert.strictEqual(fs.existsSync(lib.lockFilePath()), false);
     });
 });
-
-// The cache is written only after a fetch completes, so without the in-flight
-// lease every concurrent cold-store caller misses and fetches: several
-// sessions starting together would pile simultaneous requests onto a
-// rate-limited endpoint and buy the 429 whose retry-after locks them all out.
-test('overlapping cold-store reads coalesce onto one request', async () => {
-    await withUsageEnv(async ({ config }) => {
-        writeCredentials(config, TOKEN);
-        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
-        const results = await Promise.all([read(fake), read(fake), read(fake)]);
-        assert.strictEqual(fake.calls.length, 1);
-        assert.strictEqual(results.filter((r) => r.ok).length, 1);
-        for (const r of results.filter((r) => !r.ok)) assert.strictEqual(r.reason, 'locked');
-        // One fetch, one observation line, and the winner released the lease.
-        const lines = fs.readFileSync(lib.logFilePath(), 'utf8').split('\n').filter((l) => l !== '');
-        assert.strictEqual(lines.length, 1);
-        assert.strictEqual(fs.existsSync(lib.leaseFilePath()), false);
-    });
-});
-
-test('a live in-flight lease answers locked without a request; a stale one is reaped', async () => {
-    await withUsageEnv(async ({ config }) => {
-        writeCredentials(config, TOKEN);
-        assert.strictEqual(lib.ensureStore().ok, true);
-        fs.writeFileSync(lib.leaseFilePath(), JSON.stringify({ expiresAt: NOW_SECONDS + 10 }));
-        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
-        const blocked = await read(fake);
-        assert.strictEqual(blocked.ok, false);
-        assert.strictEqual(blocked.reason, 'locked');
-        assert.strictEqual(fake.calls.length, 0);
-
-        // A lease left by a crashed fetch has a short TTL; once past it, the
-        // next caller reaps it and fetches.
-        fs.writeFileSync(lib.leaseFilePath(), JSON.stringify({ expiresAt: NOW_SECONDS - 10 }));
-        const freed = await read(fake);
-        assert.strictEqual(freed.ok, true);
-        assert.strictEqual(fake.calls.length, 1);
-        assert.strictEqual(fs.existsSync(lib.leaseFilePath()), false);
-    });
-});
-
 test('the store dirs are 0700, the cache file is 0600, and no written file holds the token', async () => {
     await withUsageEnv(async ({ config }) => {
         writeCredentials(config, TOKEN);
@@ -774,5 +733,306 @@ test('an unparsable CLAUDE_KIT_USAGE_NOW returns bad-call without touching the t
             if (prior === undefined) delete process.env.CLAUDE_KIT_USAGE_NOW;
             else process.env.CLAUDE_KIT_USAGE_NOW = prior;
         }
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Locks added after the second review round, for behaviors that a later edit
+// could have broken with a green suite. Each one pins a guarantee the module's
+// own comments or docs/security-model.md state.
+
+test('no-token outranks an in-force lock, so a missing credential is never reported as transient', async () => {
+    await withUsageEnv(async () => {
+        // Lock in force, and no credentials file at all.
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        fs.writeFileSync(lib.lockFilePath(), JSON.stringify({ blockedUntil: NOW_SECONDS + 500, reason: 'rate-limited' }));
+        const fake = fakeTransport({ status: 200, body: '{}' });
+        const result = await read(fake);
+        // 'locked' reads as transient to a consumer and would never self-clear.
+        assert.strictEqual(result.reason, 'no-token');
+        assert.strictEqual(fake.calls.length, 0);
+    });
+});
+
+test('the credentials fallback fires only when CLAUDE_CONFIG_DIR is unset, never when its file is absent', async () => {
+    await withUsageEnv(async ({ home }) => {
+        // A valid credential in ~/.claude, none in the named config dir.
+        fs.mkdirSync(path.join(home, '.claude'), { recursive: true });
+        writeCredentials(path.join(home, '.claude'), TOKEN);
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        const result = await read(fake);
+        // Falling back here would report another account's numbers as this
+        // profile's, while the store key still says this profile.
+        assert.strictEqual(result.ok, false);
+        assert.strictEqual(result.reason, 'no-token');
+        assert.strictEqual(fake.calls.length, 0);
+    });
+});
+
+test('a relative CLAUDE_CONFIG_DIR is refused rather than read as a repo-local credentials file', async () => {
+    await withUsageEnv(async ({ home }) => {
+        const cwd = process.cwd();
+        const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'usage-lib-repo-'));
+        try {
+            // A planted repo-local credential, the shape that arrives in a clone.
+            fs.mkdirSync(path.join(repo, '.claude'), { recursive: true });
+            writeCredentials(path.join(repo, '.claude'), 'REPO-LOCAL-PLANTED-TOKEN');
+            process.chdir(repo);
+            process.env.CLAUDE_CONFIG_DIR = '.claude';
+            const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+            const result = await read(fake);
+            // Resolution happens against the real config dir, not the cwd, so
+            // the planted token is never read and never sent.
+            // Refused outright: resolving would have made <cwd>/.claude the
+            // credential source, which is one account per repo.
+            assert.strictEqual(fake.calls.length, 0);
+            assert.strictEqual(result.ok, false);
+            assert.strictEqual(result.reason, 'no-token');
+        } finally {
+            process.chdir(cwd);
+        }
+    });
+});
+
+test('a token carrying CRLF is refused rather than sent, which is the header-injection door', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, 'abc\r\nX-Injected: 1');
+        const fake = fakeTransport({ status: 200, body: '{}' });
+        const result = await read(fake);
+        assert.strictEqual(result.reason, 'no-token');
+        assert.strictEqual(fake.calls.length, 0);
+    });
+});
+
+test('the token never appears in the returned value, on success or on failure', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const ok = await read(fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) }));
+        const bad = await read(fakeTransport({ status: 401, body: '{}' }), { maxAgeSeconds: 0 });
+        for (const result of [ok, bad]) {
+            assert.strictEqual(JSON.stringify(result).includes(TOKEN), false);
+        }
+    });
+});
+
+test('an implausible exponent or amount_minor is unknown rather than data', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        for (const exponent of [1e300, -308, 2.5]) {
+            const payload = syntheticPayload();
+            payload.spend.used.exponent = exponent;
+            const result = await read(fakeTransport({ status: 200, body: JSON.stringify(payload) }));
+            // A bad multiplier turns a real amount into 0 or Infinity downstream.
+            assert.strictEqual(result.spend.exponent, null, 'exponent ' + exponent);
+        }
+        const payload = syntheticPayload();
+        payload.spend.used.amount_minor = 1e300;
+        const result = await read(fakeTransport({ status: 200, body: JSON.stringify(payload) }));
+        assert.strictEqual(result.spend.amountMinor, null);
+    });
+});
+
+test('a timestamp without a zone is refused, because Date.parse would read it as local time', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const payload = syntheticPayload();
+        payload.limits[0].resets_at = '2026-08-27T17:00:00';
+        const result = await read(fakeTransport({ status: 200, body: JSON.stringify(payload) }));
+        // Accepting it would put the reset instant up to fourteen hours out
+        // depending on the reader's TZ, and a resume is armed against it.
+        assert.strictEqual(result.windows.session.resetsAt, null);
+        assert.strictEqual(result.windows.weeklyAll.resetsAt, '2026-08-31T07:00:00+00:00');
+    });
+});
+
+test('a duplicate limits kind keeps the first entry rather than silently taking the last', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const payload = syntheticPayload();
+        payload.limits.push({ kind: 'session', percent: 3, severity: 'normal', resets_at: null, is_active: false });
+        const result = await read(fakeTransport({ status: 200, body: JSON.stringify(payload) }));
+        assert.strictEqual(result.windows.session.percent, 42);
+    });
+});
+
+test('an over-cap response body is abandoned, the request destroyed, and nothing cached', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const fake = fakeTransport({ status: 200, body: 'x'.repeat(600 * 1024) });
+        const result = await read(fake);
+        assert.strictEqual(result.ok, false);
+        // Without the cap a hook buffers an unbounded response.
+        assert.strictEqual(fake.destroyed.length > 0, true);
+        assert.strictEqual(fs.existsSync(lib.usageFilePath()), false);
+    });
+});
+
+test('a socket timeout destroys the request rather than leaking it', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const fake = fakeTransport({ event: 'timeout' });
+        const result = await read(fake);
+        assert.strictEqual(result.reason, 'timeout');
+        assert.strictEqual(fake.destroyed.length > 0, true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Locks added after the third review round.
+
+test('the auth lock snapshots the credential as of the READ, not as of the 401', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const credFile = path.join(config, '.credentials.json');
+        const before = fs.statSync(credFile).mtimeMs;
+        // A 401 is exactly when the harness renews, so simulate the refresh
+        // landing while the request is in flight.
+        const fake = fakeTransport({ status: 401, body: '{}' });
+        const inner = fake.impl;
+        const racing = {
+            impl(options, cb) {
+                const future = new Date(Date.now() + 60000);
+                fs.utimesSync(credFile, future, future);
+                return inner(options, cb);
+            },
+            calls: fake.calls,
+        };
+        const result = await read(racing);
+        assert.strictEqual(result.reason, 'expired');
+        const lock = readLockFile();
+        // Snapshotting after the 401 would record the REFRESHED credential as
+        // the one that caused it, and the next read would then compare the new
+        // credential against itself and supersede its own lock.
+        assert.strictEqual(Math.round(lock.credsMtimeMs), Math.round(before));
+        // And the consequence that makes the snapshot placement matter: the
+        // refreshed credential is newer than the snapshot, so it supersedes the
+        // lock and gets its retry. Snapshotting after the 401 would have
+        // recorded the refreshed credential as its own cause, leaving a fresh
+        // valid token blocked for the full 900s it never earned.
+        const nextFake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        const next = await read(nextFake);
+        assert.strictEqual(next.ok, true);
+        assert.strictEqual(nextFake.calls.length, 1);
+    });
+});
+
+test('a store that cannot be written refuses the fetch rather than losing every backoff', async () => {
+    await withUsageEnv(async ({ config, home }) => {
+        writeCredentials(config, TOKEN);
+        // A plain file where the store root belongs: mkdir cannot succeed.
+        fs.writeFileSync(path.join(home, '.claude-kit-usage'), 'not a directory');
+        const fake = fakeTransport({ status: 429, headers: { 'retry-after': '3242' }, body: '{}' });
+        for (let i = 0; i < 3; i++) {
+            const result = await read(fake);
+            assert.strictEqual(result.reason, 'no-store');
+        }
+        // Without the refusal every call refetches, because no lock can persist,
+        // which is precisely what earns the 54-minute retry-after.
+        assert.strictEqual(fake.calls.length, 0);
+    });
+});
+
+test('a limits array with no recognized kind is parse, not an all-null success', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const payload = syntheticPayload();
+        payload.limits = [
+            { kind: 'five_hour', percent: 96, severity: 'normal', resets_at: null, is_active: true },
+            { kind: 'weekly_total', percent: 88, severity: 'normal', resets_at: null, is_active: true },
+        ];
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(payload) });
+        const result = await read(fake);
+        // An all-null "success" would cache, suppress real fetches, and read to
+        // the evaluator as a clear account while it is actually saturated.
+        assert.strictEqual(result.ok, false);
+        assert.strictEqual(result.reason, 'parse');
+        assert.strictEqual(fs.existsSync(lib.usageFilePath()), false);
+    });
+});
+
+test('a relative CLAUDE_CONFIG_DIR is refused before the cache, not only at the credential', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        // Seed a real cache under the absolute config dir.
+        await read(fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) }));
+        assert.strictEqual(fs.existsSync(lib.usageFilePath()), true);
+        process.env.CLAUDE_CONFIG_DIR = 'relative-dir';
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        const result = await read(fake, { maxAgeSeconds: 600 });
+        // Gating only at token resolution would serve this cache to a config
+        // dir that is refused the moment the cache goes stale.
+        assert.strictEqual(result.ok, false);
+        assert.strictEqual(result.reason, 'no-token');
+        assert.strictEqual(fake.calls.length, 0);
+    });
+});
+
+test('the request carries the socket timeout the module advertises', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        await read(fake);
+        assert.strictEqual(typeof fake.calls[0].timeout, 'number');
+        assert.strictEqual(fake.calls[0].timeout > 0, true);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// Locks added after the fourth review round.
+
+test('an existing but read-only store refuses the fetch, because creatable is not writable', async (t) => {
+    if (typeof process.getuid === 'function' && process.getuid() === 0) {
+        t.skip('root ignores the mode bits this case turns on');
+        return;
+    }
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        // Create the store, then make it unwritable. mkdirSync with recursive
+        // succeeds on an existing directory whatever its mode, so a gate that
+        // only creates would wave this through.
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        fs.chmodSync(lib.storeRoot(), 0o500);
+        try {
+            const fake = fakeTransport({ status: 429, headers: { 'retry-after': '3242' }, body: '{}' });
+            for (let i = 0; i < 3; i++) {
+                assert.strictEqual((await read(fake)).reason, 'no-store');
+            }
+            assert.strictEqual(fake.calls.length, 0);
+        } finally {
+            fs.chmodSync(lib.storeRoot(), 0o700);
+        }
+    });
+});
+
+test('an all-unknown cache is refused at the cache door, the same as off the wire', async ({ }) => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        // The shape a pre-change build could have written, no tampering needed.
+        const allNull = { percent: null, severity: null, resetsAt: null, isActive: null };
+        fs.writeFileSync(lib.usageFilePath(), JSON.stringify({
+            fetchedAt: NOW.toISOString(),
+            windows: { session: allNull, weeklyAll: allNull, fableWeekly: allNull },
+            spend: { amountMinor: null, exponent: null, currency: null },
+        }) + '\n');
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        const result = await read(fake, { maxAgeSeconds: 600 });
+        // Serving it would read to the evaluator as a clear account while the
+        // account may be saturated, through the one door the wire guard misses.
+        assert.strictEqual(result.fromCache, false);
+        assert.strictEqual(fake.calls.length, 1);
+    });
+});
+
+test('a payload whose kinds were all renamed takes the long backoff, not the 60s transient one', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        const payload = syntheticPayload();
+        payload.limits = [{ kind: 'five_hour', percent: 96, severity: 'normal', resets_at: null, is_active: true }];
+        const result = await read(fakeTransport({ status: 200, body: JSON.stringify(payload) }));
+        assert.strictEqual(result.reason, 'parse');
+        // A server-side rename does not self-heal, so re-polling it every 60s
+        // forever is the mistake the 4xx class already exists to avoid.
+        assert.strictEqual(readLockFile().blockedUntil, NOW_SECONDS + lib.PERSISTENT_BACKOFF_SECONDS);
     });
 });

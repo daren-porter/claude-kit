@@ -40,7 +40,19 @@
 // the backoff horizon are independent axes, and a 403 or a retired-beta 404
 // does not self-heal, so re-polling it every 60s forever would hammer the
 // endpoint for nothing. `locked` reports that no request was made because a
-// backoff lock is in force or another caller's fetch is in flight. `bad-call`
+// backoff lock is in force. `no-store` reports that the store could not be
+// created or written, so no backoff could be held and no request was made:
+// fetching without a place to record the result is what earns the 429.
+//
+// NOT guarded, and deliberately: concurrent readers. Request coalescing was
+// built here and removed, because a lease that makes the loser wait or go
+// without adds failure modes of its own, and both of the ones it added were a
+// permanent brick. So several sessions starting at once each issue their own
+// request, once per staleness window, and readings.log gains a line for each.
+// That cost is accepted rather than overlooked: the sequential amplification
+// `no-store` prevents is unbounded, while this one is bounded by the number of
+// simultaneous session starts.
+// `bad-call`
 // is the one reason outside the operational set: kit-internal misuse (no
 // usable maxAgeSeconds, an unparsable clock) or an unmodeled internal error,
 // returned typed rather than folded into a class that would blame the
@@ -58,8 +70,8 @@
 // any file" literally true; the accepted residual is that re-authenticating
 // one directory as a different account mixes that directory's readings until
 // the window rolls. Files: usage.json (the cached normalized read),
-// usage.lock (the backoff), usage.fetching (the in-flight lease),
-// readings.log (one JSON line per successful read, bounded and
+// usage.lock (the backoff),
+// readings.log (one JSON line per successful FETCH, never a cache hit, bounded and
 // self-truncating, each line carrying the profile key as its discriminator).
 // Directories are created 0700 and files 0600; as docs/security-model.md
 // records for the sibling memory store, those are creation-time properties
@@ -122,10 +134,6 @@ const TRANSIENT_BACKOFF_SECONDS = 60;
 // must not brick the reader for longer.
 const RATE_LIMIT_CAP_SECONDS = 86400;
 
-// The in-flight lease's horizon: comfortably past the request deadline, and
-// short enough that a lease orphaned by a crashed fetch parks the store for
-// seconds rather than minutes.
-const FETCH_LEASE_TTL_SECONDS = 15;
 
 // The observation log's bound. At one line per successful fetch on a 120-600s
 // floor this is weeks of history, which is what the spec's open questions need.
@@ -153,9 +161,6 @@ function lockFilePath() {
     return path.join(storeRoot(), 'usage.lock');
 }
 
-function leaseFilePath() {
-    return path.join(storeRoot(), 'usage.fetching');
-}
 
 function logFilePath() {
     return path.join(storeRoot(), 'readings.log');
@@ -168,10 +173,22 @@ function logFilePath() {
 function ensureStore() {
     try {
         fs.mkdirSync(storeRoot(), { recursive: true, mode: 0o700 });
-        return { ok: true };
     } catch (err) {
         return { ok: false, reason: 'cannot create store: ' + sanitize(err && err.message, 120) };
     }
+    // mkdirSync with recursive succeeds on an EXISTING directory even when it
+    // is read-only, on a full filesystem, or owned by another user, so
+    // creatability is not writability and only a write proves the store can
+    // hold a backoff. The probe is paid only on the paths that are about to
+    // write anyway.
+    const probe = path.join(storeRoot(), '.writable-' + process.pid);
+    try {
+        fs.writeFileSync(probe, '', { mode: 0o600, flag: 'w' });
+    } catch (err) {
+        return { ok: false, reason: 'store not writable: ' + sanitize(err && err.message, 120) };
+    }
+    try { fs.unlinkSync(probe); } catch { /* the write is what mattered */ }
+    return { ok: true };
 }
 
 // The clock, memory-lib's resolveNow seam under this feature's own variable so
@@ -246,7 +263,16 @@ function readTailCapped(file, cap) {
         const start = Math.max(0, stat.size - cap);
         const buf = Buffer.alloc(Math.min(cap, stat.size));
         const bytes = fs.readSync(fd, buf, 0, buf.length, start);
-        return { text: buf.toString('utf8', 0, bytes), truncated: start > 0 };
+        // Whether the window opened on a line boundary decides if its first
+        // line is a whole record or the tail of one, which is the difference
+        // between keeping a good line and keeping a fragment.
+        let startedOnBoundary = start === 0;
+        if (start > 0) {
+            const probe = Buffer.alloc(1);
+            const got = fs.readSync(fd, probe, 0, 1, start - 1);
+            startedOnBoundary = got === 1 && probe[0] === 0x0a;
+        }
+        return { text: buf.toString('utf8', 0, bytes), truncated: start > 0, startedOnBoundary };
     } catch {
         return null;
     } finally {
@@ -287,9 +313,22 @@ function publishText(file, text) {
 // numbers as this one's. The cost, accepted, is that a misconfigured
 // CLAUDE_CONFIG_DIR leaves the feature silently inert (every reason allows).
 function credentialsDir() {
-    const dir = process.env.CLAUDE_CONFIG_DIR;
-    if (dir && String(dir).trim()) return String(dir).trim();
-    return path.join(os.homedir(), '.claude');
+    const raw = process.env.CLAUDE_CONFIG_DIR;
+    const named = raw && String(raw).trim() ? String(raw).trim() : path.join(os.homedir(), '.claude');
+    // Resolved HERE and nowhere else, so every derived path agrees within a
+    // call. A relative CLAUDE_CONFIG_DIR would otherwise resolve against the
+    // hook's cwd, which is the project directory: that makes a repo-local
+    // .credentials.json the Bearer token, and it scatters the store one per
+    // repo so the backoff lock never applies across sessions. realpath also
+    // collapses a symlinked config dir onto a single store; it throws when the
+    // directory does not exist yet, and path.resolve is the fallback because a
+    // store key must stay derivable even then.
+    const resolved = path.resolve(named);
+    try {
+        return fs.realpathSync(resolved);
+    } catch {
+        return resolved;
+    }
 }
 
 // The store key for the active profile: the resolved credentials directory
@@ -299,7 +338,7 @@ function credentialsDir() {
 // or a hash of it: "no token material reaches any file" is a documented
 // property in docs/security-model.md and the key lands in every store path.
 function profileKey() {
-    const resolved = path.resolve(credentialsDir());
+    const resolved = credentialsDir();
     const base = path.basename(resolved)
         .replace(/^\.+/, '')
         .replace(/[^A-Za-z0-9._-]/g, '-')
@@ -312,7 +351,20 @@ function credentialsFilePath() {
     return path.join(credentialsDir(), '.credentials.json');
 }
 
+// A relative CLAUDE_CONFIG_DIR cannot identify a profile: both the credential
+// and the store key would depend on the directory the hook happened to fire
+// in, so one configured value would mean a different account per repo, and a
+// repo-local .claude/.credentials.json arriving in a clone would become the
+// Bearer token. Refused rather than resolved, and refused as no-token, which
+// every consumer already treats as allow.
+function configDirUsable() {
+    const raw = process.env.CLAUDE_CONFIG_DIR;
+    if (!raw || !String(raw).trim()) return true;
+    return path.isAbsolute(String(raw).trim());
+}
+
 function resolveToken() {
+    if (!configDirUsable()) return null;
     const read = readCapped(credentialsFilePath(), CREDENTIALS_READ_CAP);
     if (read === null || read.truncated) return null;
     let parsed;
@@ -359,11 +411,34 @@ function normPercent(value) {
 // is nonsense at the source).
 function normAmountMinor(value) {
     const n = normNumber(value);
-    if (n === null || n < 0) return null;
+    // A ceiling as well as a floor: finite is not the same as plausible, and
+    // this rides into the cache and the reading log. Number.MAX_SAFE_INTEGER
+    // is the bound past which the value stops being an exact integer anyway.
+    if (n === null || n < 0 || n > Number.MAX_SAFE_INTEGER) return null;
     return n;
 }
 
-// Bounded printable ASCII or null. severity and currency ride into the cache
+// The exponent is a UNIT MULTIPLIER for amountMinor rather than a value to
+// compare, so an implausible one is worse than an implausible percent: a
+// consumer computing amountMinor / 10 ** exponent gets 0 or Infinity from a
+// payload that claims a real amount. Observed value is 2 (cents).
+function normExponent(value) {
+    const n = normNumber(value);
+    if (n === null || !Number.isInteger(n) || n < 0 || n > 6) return null;
+    return n;
+}
+
+// severity and currency are short tokens that S3 interpolates into
+// model-facing text. A printable-ASCII shape check admits spaces and
+// punctuation; this admits only token characters, which stays tolerant of
+// values the server has not shipped yet (the payload is volatile) while
+// leaving nothing that could read as prose or markup at the emission door.
+function normToken(value, cap) {
+    if (typeof value !== 'string' || !value || value.length > cap) return null;
+    return /^[A-Za-z0-9_-]+$/.test(value) ? value : null;
+}
+
+// Bounded printable ASCII or null. The lock reason and the timestamp door ride into the cache
 // and the readings log, and S3 interpolates window values into model-facing
 // text, so they are constrained at this source as well as at that door.
 function normShortString(value, cap) {
@@ -378,7 +453,11 @@ function normShortString(value, cap) {
 // admits only date, time, optional seconds and fraction, optional zone;
 // Date.parse then rejects the shapes the anchor cannot (a 60th second, a
 // 13th month).
-const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?$/;
+// The zone is REQUIRED, not optional. Without it Date.parse reads the value as
+// LOCAL time, so the same payload yields a reset instant up to fourteen hours
+// out depending on the reader's TZ, and this value is what a resume is armed
+// against.
+const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})$/;
 
 function normTimestamp(value) {
     const s = normShortString(value, 40);
@@ -389,7 +468,7 @@ function normTimestamp(value) {
 function windowFields(percent, severity, resetsAt, isActive) {
     return {
         percent: normPercent(percent),
-        severity: normShortString(severity, 40),
+        severity: normToken(severity, 40),
         resetsAt: normTimestamp(resetsAt),
         isActive: typeof isActive === 'boolean' ? isActive : null,
     };
@@ -432,18 +511,31 @@ function normalizeBody(text) {
         return { ok: false };
     }
     const windows = { session: emptyWindow(), weeklyAll: emptyWindow(), fableWeekly: emptyWindow() };
+    const seen = new Set();
     for (const entry of parsed.limits) {
         if (!entry || typeof entry !== 'object') continue;
         const key = windowKeyFor(entry);
         if (!key) continue;
+        // First match wins. The payload is volatile enough to grow a second
+        // entry per kind, and last-wins would silently replace a real reading
+        // with whatever trailed it; first-wins is at least deterministic.
+        if (seen.has(key)) continue;
+        seen.add(key);
         windows[key] = windowFields(entry.percent, entry.severity, entry.resets_at, entry.is_active);
     }
+    // A limits[] carrying no recognized kind is the volatile-payload case this
+    // file's header opens by warning about, and it fails exactly the way an
+    // empty array would: an all-null "success" that caches, suppresses real
+    // fetches for the staleness window, pollutes the observation log, and
+    // reads to S2's unknown-never-barriers rule as a clear account when the
+    // account may be saturated. Treated as a parse failure for that reason.
+    if (seen.size === 0) return { ok: false, persistent: true };
     const spendObj = parsed.spend && typeof parsed.spend === 'object' ? parsed.spend : {};
     const used = spendObj.used && typeof spendObj.used === 'object' ? spendObj.used : {};
     const spend = {
         amountMinor: normAmountMinor(used.amount_minor),
-        exponent: normNumber(used.exponent),
-        currency: normShortString(used.currency, 10),
+        exponent: normExponent(used.exponent),
+        currency: normToken(used.currency, 10),
     };
     return { ok: true, windows, spend };
 }
@@ -476,9 +568,14 @@ function readCache() {
     const rawSpend = parsed.spend && typeof parsed.spend === 'object' ? parsed.spend : {};
     const spend = {
         amountMinor: normAmountMinor(rawSpend.amountMinor),
-        exponent: normNumber(rawSpend.exponent),
-        currency: normShortString(rawSpend.currency, 10),
+        exponent: normExponent(rawSpend.exponent),
+        currency: normToken(rawSpend.currency, 10),
     };
+    // The same refusal the wire door applies, because the header promises both
+    // doors hold the same shape: an all-unknown cache reads to the evaluator as
+    // a clear account when the account may be saturated, and one is reachable
+    // without tampering from any usage.json a pre-change build wrote.
+    if (WINDOW_KEYS.every((key) => windows[key].percent === null)) return null;
     return { fetchedAt: parsed.fetchedAt, windows, spend };
 }
 
@@ -505,7 +602,7 @@ function readLock(nowSeconds) {
     const blockedUntil = normNumber(parsed.blockedUntil);
     if (blockedUntil === null) return null;
     if (blockedUntil > nowSeconds + RATE_LIMIT_CAP_SECONDS) return null;
-    return { blockedUntil, reason: normShortString(parsed.reason, 40) };
+    return { blockedUntil, reason: normShortString(parsed.reason, 40), credsMtimeMs: normNumber(parsed.credsMtimeMs) };
 }
 
 // Whether an auth-class lock has been superseded by a re-auth. An `expired`
@@ -516,20 +613,42 @@ function readLock(nowSeconds) {
 // ordering with no token material involved. Any stat failure keeps the lock:
 // the cost of honoring a stale auth lock is bounded at 900s, and this check
 // must never throw.
-function authLockSuperseded() {
+function credentialsMtimeMs() {
     try {
-        const lockMtime = fs.statSync(lockFilePath()).mtimeMs;
-        const credsMtime = fs.statSync(credentialsFilePath()).mtimeMs;
-        return credsMtime > lockMtime;
+        return fs.statSync(credentialsFilePath()).mtimeMs;
     } catch {
-        return false;
+        return null;
     }
 }
 
-function writeLock(blockedUntil, reason) {
+// Has the credential been rewritten since this auth lock was taken? A lock
+// written before the snapshot existed, or a credentials file that cannot be
+// stat'd, both answer no and keep the lock: the pre-existing 900s wait is the
+// safe direction, and a missing credential is a no-token condition rather than
+// grounds to retry a 401.
+function authLockSuperseded(lock) {
+    if (!lock || lock.credsMtimeMs === null) return false;
+    const current = credentialsMtimeMs();
+    if (current === null) return false;
+    return current > lock.credsMtimeMs;
+}
+
+function writeLock(blockedUntil, reason, credsMtimeMs) {
     // Best effort: a lock that cannot be written costs an extra fetch on the
     // next call, which the endpoint itself will refuse if it must.
-    publishText(lockFilePath(), JSON.stringify({ blockedUntil, reason }) + '\n');
+    const payload = { blockedUntil, reason };
+    // An auth-class lock carries the credential's mtime AS OF THE LOCK. The
+    // supersession test then asks "did the credential change since the lock",
+    // which is a question about one file compared with itself, so the wall
+    // clock's direction cannot make it true forever. Comparing the credential
+    // against the LOCK's own mtime instead would do exactly that: a credentials
+    // file stamped ahead of the clock (a backward NTP step, rsync -t, a restore
+    // from a faster machine) would supersede every auth lock forever and defeat
+    // this backoff entirely.
+    if (reason === 'expired' && credsMtimeMs !== null && credsMtimeMs !== undefined) {
+        payload.credsMtimeMs = credsMtimeMs;
+    }
+    publishText(lockFilePath(), JSON.stringify(payload) + '\n');
 }
 
 function clearLock() {
@@ -538,49 +657,6 @@ function clearLock() {
     } catch { /* absent already, which is the goal */ }
 }
 
-// The in-flight lease. The cache is written only after a fetch completes, so
-// without a lease every concurrent cold-store caller misses and fetches:
-// several sessions starting together (these hooks run on session-start and
-// per-tool-call paths) would pile simultaneous requests onto a rate-limited
-// endpoint and buy the 429 whose retry-after then locks them all out. One
-// caller takes the lease ('wx' refuses an existing file, which is the whole
-// mechanism), the rest report locked and serve nothing, and the short TTL
-// means a lease orphaned by a crashed fetch parks the store for seconds. A
-// store that cannot be created yields the lease-less fetch rather than a
-// refusal: coalescing is an optimization and must not fail a read closed.
-function acquireLease(nowSeconds) {
-    if (!ensureStore().ok) return 'acquired';
-    const file = leaseFilePath();
-    for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-            fs.writeFileSync(file, JSON.stringify({ expiresAt: nowSeconds + FETCH_LEASE_TTL_SECONDS }) + '\n', {
-                encoding: 'utf8', mode: 0o600, flag: 'wx',
-            });
-            return 'acquired';
-        } catch { /* exists (held) or unwritable; inspect below */ }
-        const read = readCapped(file, LOCK_READ_CAP);
-        if (read === null) return 'busy';
-        let parsed = null;
-        try {
-            parsed = JSON.parse(read.text);
-        } catch { /* corrupt lease, reaped below */ }
-        const expiresAt = parsed && typeof parsed === 'object' ? normNumber(parsed.expiresAt) : null;
-        if (expiresAt !== null && expiresAt > nowSeconds) return 'busy';
-        // Expired or corrupt: a crashed fetch left it. Reap and retry once.
-        try {
-            fs.unlinkSync(file);
-        } catch {
-            return 'busy';
-        }
-    }
-    return 'busy';
-}
-
-function releaseLease() {
-    try {
-        fs.unlinkSync(leaseFilePath());
-    } catch { /* already gone */ }
-}
 
 function logWindow(w) {
     return { percent: w.percent, severity: w.severity, isActive: w.isActive };
@@ -638,12 +714,20 @@ function appendReading(fetchedAt, windows, spend) {
 function trimLog() {
     const read = readTailCapped(logFilePath(), LOG_READ_CAP);
     if (read === null) return;
-    let lines = read.text.split('\n').filter((l) => l !== '');
+    let lines = read.text.split('\n');
     if (read.truncated) {
-        lines = lines.slice(1);
+        // Split BEFORE filtering: a window opening exactly on a record's
+        // terminating newline yields an empty leading element, and filtering
+        // first would remove it so the slice below would eat a whole record
+        // instead of a fragment. A window with no newline at all holds no
+        // complete record to keep.
+        if (read.text.indexOf('\n') === -1) lines = [];
+        else if (!read.startedOnBoundary && lines[0] !== '') lines = lines.slice(1);
+        lines = lines.filter((l) => l !== '');
         publishText(logFilePath(), lines.slice(-LOG_MAX_LINES).join('\n') + '\n');
         return;
     }
+    lines = lines.filter((l) => l !== '');
     if (lines.length <= LOG_MAX_LINES) return;
     publishText(logFilePath(), lines.slice(-LOG_MAX_LINES).join('\n') + '\n');
 }
@@ -689,7 +773,7 @@ function fetchUsage(token, transport) {
                     }
                     chunks.push(buf);
                 });
-                res.on('end', () => done({
+                res.on('end', () => done(res.complete === false ? { kind: 'transport' } : {
                     kind: 'response',
                     status: res.statusCode,
                     headers: res.headers || {},
@@ -698,6 +782,8 @@ function fetchUsage(token, transport) {
                 res.on('error', () => done({ kind: 'transport' }));
             });
         } catch {
+            // No destroy here: req is assigned by the very expression that
+            // throws, so on this path it does not exist yet.
             return done({ kind: 'transport' });
         }
         if (!settled) {
@@ -764,6 +850,11 @@ async function readUsage(opts) {
 }
 
 async function readUsageInner(opts) {
+    // Before the cache, not just before the credential: a relative
+    // CLAUDE_CONFIG_DIR also picks which store's cache is served, so gating it
+    // only at token resolution would let one repo serve another's numbers from
+    // disk while reporting no-token once that cache went stale.
+    if (!configDirUsable()) return { ok: false, reason: 'no-token' };
     if (typeof opts.maxAgeSeconds !== 'number' || !Number.isFinite(opts.maxAgeSeconds) || opts.maxAgeSeconds < 0) {
         return { ok: false, reason: 'bad-call' };
     }
@@ -792,73 +883,88 @@ async function readUsageInner(opts) {
         }
     }
 
+    // Resolved here, after the cache short-circuit, and held only in this
+    // local: a fresh cache needs no credential at all. This runs BEFORE the
+    // lock check so that a missing or empty credential reports the condition
+    // that is actually true: a lock in force would otherwise mask it as
+    // 'locked', which reads as transient to a consumer and never self-clears.
+    // Stat BEFORE the read, not after: a refresh landing between the two would
+    // otherwise stamp the lock with the new credential's mtime while the old
+    // token is what took the 401.
+    const tokenMtimeMs = credentialsMtimeMs();
+    const token = resolveToken();
+    if (token === null) return { ok: false, reason: 'no-token' };
+
+
+    // A store that cannot be written cannot hold the backoff this module is
+    // about to decide on, so every failure would refetch immediately and the
+    // 429 with its ~54 minute retry-after is exactly what that earns. Refused
+    // typed instead, before any request.
+    const store = ensureStore();
+    if (!store.ok) return { ok: false, reason: 'no-store' };
+
     const lock = readLock(nowSeconds);
     if (lock && lock.blockedUntil > nowSeconds) {
-        // The reason class matters: an expired (auth-class) lock does not
-        // gate a fetch it could not have caused, which is any fetch fed by a
-        // credential written after the lock. Every other class gates on time
+        // The reason class matters: an expired (auth-class) lock does not gate
+        // a fetch it could not have caused, which is any fetch fed by a
+        // credential rewritten since the lock. Every other class gates on time
         // alone.
-        if (!(lock.reason === 'expired' && authLockSuperseded())) {
+        if (!(lock.reason === 'expired' && authLockSuperseded(lock))) {
             return { ok: false, reason: 'locked' };
         }
     }
 
-    // Resolved here, after the cache short-circuit, and held only in this
-    // local: a fresh cache needs no credential at all.
-    const token = resolveToken();
-    if (token === null) return { ok: false, reason: 'no-token' };
+    const transport = opts.requestImpl || https.request;
+    const outcome = await fetchUsage(token, transport);
 
-    if (acquireLease(nowSeconds) !== 'acquired') return { ok: false, reason: 'locked' };
-    try {
-        const transport = opts.requestImpl || https.request;
-        const outcome = await fetchUsage(token, transport);
-
-        if (outcome.kind !== 'response') {
-            writeLock(nowSeconds + TRANSIENT_BACKOFF_SECONDS, 'timeout');
-            return { ok: false, reason: 'timeout' };
-        }
-        if (outcome.status === 401) {
-            writeLock(nowSeconds + EXPIRED_BACKOFF_SECONDS, 'expired');
-            return { ok: false, reason: 'expired' };
-        }
-        if (outcome.status === 429) {
-            const retryAfterSeconds = parseRetryAfter(outcome.headers);
-            writeLock(nowSeconds + retryAfterSeconds, 'rate-limited');
-            return { ok: false, reason: 'rate-limited', retryAfterSeconds };
-        }
-        if (outcome.status !== 200) {
-            // Reported as the in-enum timeout either way, but backed off by
-            // what the status says about persistence: a non-401/429 4xx does
-            // not self-heal (a retired oauth beta answers 404 until someone
-            // ships a fix), so it takes the long class rather than a 60s
-            // re-poll forever, while 5xx and oddities stay transient. The
-            // lock records the literal status so a 403 is distinguishable
-            // from a real timeout afterwards.
-            const status = Number.isInteger(outcome.status) ? outcome.status : 0;
-            const persistent = status >= 400 && status < 500;
-            writeLock(
-                nowSeconds + (persistent ? PERSISTENT_BACKOFF_SECONDS : TRANSIENT_BACKOFF_SECONDS),
-                'status-' + status,
-            );
-            return { ok: false, reason: 'timeout' };
-        }
-        const normalized = normalizeBody(outcome.body);
-        if (!normalized.ok) {
-            writeLock(nowSeconds + TRANSIENT_BACKOFF_SECONDS, 'parse');
-            return { ok: false, reason: 'parse' };
-        }
-
-        const fetchedAt = now.toISOString();
-        // All three writes are best effort: the fetched data is good, and a
-        // disk hiccup in the bookkeeping must not turn a successful read into
-        // a failure.
-        publishText(usageFilePath(), JSON.stringify({ fetchedAt, windows: normalized.windows, spend: normalized.spend }) + '\n');
-        clearLock();
-        appendReading(fetchedAt, normalized.windows, normalized.spend);
-        return { ok: true, fetchedAt, fromCache: false, windows: normalized.windows, spend: normalized.spend };
-    } finally {
-        releaseLease();
+    if (outcome.kind !== 'response') {
+        writeLock(nowSeconds + TRANSIENT_BACKOFF_SECONDS, 'timeout');
+        return { ok: false, reason: 'timeout' };
     }
+    if (outcome.status === 401) {
+        writeLock(nowSeconds + EXPIRED_BACKOFF_SECONDS, 'expired', tokenMtimeMs);
+        return { ok: false, reason: 'expired' };
+    }
+    if (outcome.status === 429) {
+        const retryAfterSeconds = parseRetryAfter(outcome.headers);
+        writeLock(nowSeconds + retryAfterSeconds, 'rate-limited');
+        return { ok: false, reason: 'rate-limited', retryAfterSeconds };
+    }
+    if (outcome.status !== 200) {
+        // Reported as the in-enum timeout either way, but backed off by
+        // what the status says about persistence: a non-401/429 4xx does
+        // not self-heal (a retired oauth beta answers 404 until someone
+        // ships a fix), so it takes the long class rather than a 60s
+        // re-poll forever, while 5xx and oddities stay transient. The
+        // lock records the literal status so a 403 is distinguishable
+        // from a real timeout afterwards.
+        const status = Number.isInteger(outcome.status) ? outcome.status : 0;
+        const persistent = status >= 400 && status < 500;
+        writeLock(
+            nowSeconds + (persistent ? PERSISTENT_BACKOFF_SECONDS : TRANSIENT_BACKOFF_SECONDS),
+            'status-' + status,
+        );
+        return { ok: false, reason: 'timeout' };
+    }
+    const normalized = normalizeBody(outcome.body);
+    if (!normalized.ok) {
+        // A malformed body may be a blip; a body whose limits[] carries no kind
+        // this module recognizes is a server-side rename, which does not
+        // self-heal. Re-polling that every 60s forever is the same mistake the
+        // 4xx class exists to avoid.
+        const backoff = normalized.persistent ? PERSISTENT_BACKOFF_SECONDS : TRANSIENT_BACKOFF_SECONDS;
+        writeLock(nowSeconds + backoff, 'parse');
+        return { ok: false, reason: 'parse' };
+    }
+
+    const fetchedAt = now.toISOString();
+    // All three writes are best effort: the fetched data is good, and a
+    // disk hiccup in the bookkeeping must not turn a successful read into
+    // a failure.
+    publishText(usageFilePath(), JSON.stringify({ fetchedAt, windows: normalized.windows, spend: normalized.spend }) + '\n');
+    clearLock();
+    appendReading(fetchedAt, normalized.windows, normalized.spend);
+    return { ok: true, fetchedAt, fromCache: false, windows: normalized.windows, spend: normalized.spend };
 }
 
 module.exports = {
@@ -869,12 +975,10 @@ module.exports = {
     resolveNow,
     usageFilePath,
     lockFilePath,
-    leaseFilePath,
     logFilePath,
     LOG_MAX_LINES,
     EXPIRED_BACKOFF_SECONDS,
     PERSISTENT_BACKOFF_SECONDS,
     RATE_LIMIT_DEFAULT_SECONDS,
     TRANSIENT_BACKOFF_SECONDS,
-    FETCH_LEASE_TTL_SECONDS,
 };

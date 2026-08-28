@@ -50,7 +50,7 @@ const HOOK = path.join(__dirname, '..', 'plugins', 'claude-kit', 'hooks', 'usage
 const SAFE_PATH_MAX = 300;
 
 function sanitized(value) {
-    return value.replace(/[^\x20-\x7E]/g, '').slice(0, SAFE_PATH_MAX);
+    return value.replace(/[^\x20-\x7E]|`/g, '').slice(0, SAFE_PATH_MAX);
 }
 
 function makeDir(prefix) {
@@ -406,5 +406,68 @@ test('a malformed file does not stop a later file from being checked', () => {
     } finally {
         rmDir(home);
         rmDir(configDir);
+    }
+});
+
+// Two locks added after the second review round.
+
+test('a backtick in the path is stripped, because the value lands inside a code span', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'autocont-tick-'));
+    try {
+        const cfg = path.join(home, 'cfg`dir');
+        fs.mkdirSync(cfg, { recursive: true });
+        fs.writeFileSync(path.join(cfg, 'settings.json'), JSON.stringify({ autoContinueAtUsageLimit: false }));
+        const res = runHook(home, cfg);
+        assert.strictEqual(res.status, 0);
+        const ctx = JSON.parse(res.stdout).hookSpecificOutput.additionalContext;
+        // A surviving backtick would close the markdown span early and leave
+        // the rest of the path reading as prose in a trusted channel.
+        assert.strictEqual(ctx.includes('cfg`dir'), false);
+        assert.strictEqual(ctx.includes('cfgdir'), true);
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test('a symlinked CLAUDE_CONFIG_DIR pointing at the home config dir is deduped, not listed twice', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'autocont-link-'));
+    try {
+        const real = path.join(home, '.claude');
+        fs.mkdirSync(real, { recursive: true });
+        fs.writeFileSync(path.join(real, 'settings.json'), JSON.stringify({ autoContinueAtUsageLimit: false }));
+        const link = path.join(home, 'link-to-config');
+        fs.symlinkSync(real, link, 'dir');
+        const res = runHook(home, link);
+        assert.strictEqual(res.status, 0);
+        const ctx = JSON.parse(res.stdout).hookSpecificOutput.additionalContext;
+        // Two directories, one real: the emitted list must name two files, not
+        // four, or the channel states something untrue.
+        const listed = (ctx.match(/settings(\.local)?\.json/g) || []).length;
+        assert.strictEqual(listed, 3, 'one named file plus a two-file list: ' + ctx);
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+    }
+});
+
+test('a relative CLAUDE_CONFIG_DIR is ignored, so a clone cannot make this hook speak', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'autocont-rel-'));
+    const repo = fs.mkdtempSync(path.join(os.tmpdir(), 'autocont-repo-'));
+    try {
+        fs.mkdirSync(path.join(home, '.claude'), { recursive: true });
+        // The planted repo-local settings a clone would carry.
+        fs.mkdirSync(path.join(repo, '.claude'), { recursive: true });
+        fs.writeFileSync(path.join(repo, '.claude', 'settings.json'), JSON.stringify({ autoContinueAtUsageLimit: false }));
+        const env = Object.assign({}, process.env, { HOME: home, USERPROFILE: home, CLAUDE_CONFIG_DIR: '.claude' });
+        const res = spawnSync(process.execPath, [HOOK], {
+            input: JSON.stringify({ cwd: repo, source: 'startup', hook_event_name: 'SessionStart' }),
+            env, encoding: 'utf8', timeout: 15000, cwd: repo,
+        });
+        assert.strictEqual(res.status, 0);
+        // Honoring it would let the clone decide both that the hook speaks and
+        // which paths it names in the trusted context channel.
+        assert.strictEqual(res.stdout.trim(), '');
+    } finally {
+        fs.rmSync(home, { recursive: true, force: true });
+        fs.rmSync(repo, { recursive: true, force: true });
     }
 });

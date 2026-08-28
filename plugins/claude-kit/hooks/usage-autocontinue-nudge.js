@@ -77,8 +77,11 @@ function readStdin() {
 // uses for repo-derived strings bound for this same channel (its
 // findCompletedUnarchived), rather than the prose sanitizer that replaces instead
 // of drops - a file path has no word-boundary hazard a dropped byte could fuse.
+// The backtick is stripped as well as the non-ASCII: this value is emitted
+// inside a markdown code span, so a path carrying one would close the span
+// early and leave the rest of the path reading as prose in a trusted channel.
 function safePath(value) {
-    return String(value).replace(/[^\x20-\x7E]/g, '').slice(0, SAFE_PATH_MAX);
+    return String(value).replace(/[^\x20-\x7E]|`/g, '').slice(0, SAFE_PATH_MAX);
 }
 
 // The settings files the kit can name, in the fixed order this hook checks and
@@ -93,13 +96,31 @@ function safePath(value) {
 function candidateFiles() {
     const envDir = process.env.CLAUDE_CONFIG_DIR;
     const dirs = [];
-    if (envDir && envDir.trim() !== '') dirs.push(envDir);
+    // A relative CLAUDE_CONFIG_DIR resolves against this hook's cwd, which is
+    // the project directory. Honoring one would let a cloned repo decide both
+    // whether this hook speaks and which paths it names in trusted context, so
+    // a relative value is ignored and only the home config dir is consulted.
+    // usage-lib.js refuses the same shape at its own credential door.
+    if (envDir && envDir.trim() !== '' && path.isAbsolute(envDir.trim())) dirs.push(envDir.trim());
     dirs.push(path.join(os.homedir(), '.claude'));
 
     const seen = new Set();
     const files = [];
     for (const dir of dirs) {
-        const resolved = path.resolve(dir);
+        // realpath, not just resolve: the case this dedupe exists for is
+        // CLAUDE_CONFIG_DIR naming the home config directory, and a symlink is
+        // one of the ordinary ways it does. path.resolve alone would let the
+        // pair through twice and the emitted file list would then name four
+        // paths for two files, which is a false statement in a trusted
+        // channel. realpath throws on a directory that does not exist, and
+        // resolve is the fallback because a missing directory still has to be
+        // listed as looked at.
+        let resolved;
+        try {
+            resolved = fs.realpathSync(path.resolve(dir));
+        } catch {
+            resolved = path.resolve(dir);
+        }
         if (seen.has(resolved)) continue;
         seen.add(resolved);
         files.push(path.join(resolved, 'settings.json'));

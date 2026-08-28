@@ -18,7 +18,7 @@ Skills are on that list for a measured reason rather than by symmetry. A subagen
 
 ## Hook execution model
 
-Three separate hooks fire on SessionStart, and every block count below belongs to one of them. `session-start.js` emits up to eight blocks inside one JSON object; `branch-reaper-nudge.js` and `take-stock-nudge.js` are their own processes and emit at most one block each. A session start can therefore carry up to ten blocks from three processes, and "the eight blocks" always means `session-start.js`'s, never the session-start total.
+Four separate hooks fire on SessionStart, and every block count below belongs to one of them. `session-start.js` emits up to eight blocks inside one JSON object; `branch-reaper-nudge.js`, `take-stock-nudge.js` and `usage-autocontinue-nudge.js` are their own processes and emit at most one block each. A session start can therefore carry up to eleven blocks from four processes, and "the eight blocks" always means `session-start.js`'s, never the session-start total.
 
 `session-start.js` runs on `startup`, `resume`, and `compact`, and is the widest-reach code in the kit: everything it writes lands in trusted context at the top of every session. It emits one JSON object carrying `additionalContext`, built from up to eight blocks joined by blank lines, in this order:
 
@@ -45,7 +45,7 @@ Three PreToolUse guards deny rather than advise, and are the only kit code that 
 
 ## State, and where it lives
 
-Two of the kit's five state locations sit under a project root and three are home-rooted, shared by every project on the machine. Of the two, only `docs/` is tracked; `.kit/` is scratch, and the next paragraph covers how each project comes to ignore it.
+Two of the kit's six state locations sit under a project root and four are home-rooted, shared by every project on the machine. Of the two, only `docs/` is tracked; `.kit/` is scratch, and the next paragraph covers how each project comes to ignore it.
 
 | State | Location | Written by |
 |---|---|---|
@@ -54,10 +54,11 @@ Two of the kit's five state locations sit under a project root and three are hom
 | Cross-project memory tier | `~/.claude-kit-memory/` | `hooks/memory.js` only |
 | Kaizen inbox | `~/.claude-kaizen/notes.md` | Any session, one line at a time |
 | CLAUDE.md reconcile state | `~/.claude/.claude-kit-md-version` and `.claude-kit-md-base.md` | `reconcile-claude-md` |
+| Usage cache, lock and reading log | `~/.claude-kit-usage/` | `hooks/usage-lib.js` only |
 
 `.kit/` is the kit's designated per-repo scratch zone rather than the leash's private file. `docs-write-guard`'s deny text and `stop-docs-hygiene`'s flag text both route working artifacts there, `kit-goal.js` writes `goal-state.json`, and the visual companion writes `visuals/`, which is the first content in that tree authored by a session rather than by a hook. The ignore is a convention each project acquires, not a property of the location, and the two writers acquire it differently. `kit-goal`'s ignore step is skill prose (`skills/kit-goal/SKILL.md:47-48`) and not code, so it holds only as far as a model follows it: it says to check that the project's `.gitignore` covers `.kit/` and to add the line if not, and because it names no mechanism, the check it gets is whatever the model reaches for. Two gaps survive even a diligent reading: a project with no `.gitignore` at all, and a project whose ignores name a narrower path, which the obvious substring check passes wrongly. The visual companion resolves both, because a screen can hold project-confidential content where goal state cannot: it confirms with `git check-ignore -q` on the actual path, which honors global, nested and narrow ignores, and when that fails it writes `.kit/.gitignore` containing `*`, which ignores itself, needs no git repo, and touches no file the project already tracks. That idiom is the one worth spreading to `kit-goal`; see `backlog.md`.
 
-Claude Code's native per-project auto-memory is a sixth store the kit reads about but does not own and does not touch. It lives under the active config directory, which on this machine means `~/.claude-work/projects/<encoded-repo-path>/memory/`. The cross-project tier sits beside it, which is why the routing question (which store does this fact belong in) has a documented answer rather than a convention.
+Claude Code's native per-project auto-memory is a seventh store the kit reads about but does not own and does not touch. It lives under the active config directory, which on this machine means `~/.claude-work/projects/<encoded-repo-path>/memory/`. The cross-project tier sits beside it, which is why the routing question (which store does this fact belong in) has a documented answer rather than a convention.
 
 Home-rooted state is deliberate for the memory tier and for kaizen: both are cross-project by nature, so a repo-rooted store would strand their contents in whichever project learned them. `~/.claude-kit-memory/` is also outside `~/.claude` and `~/.claude-work` on purpose, since those hold credentials and history, which would force any future sync behind an allowlist.
 

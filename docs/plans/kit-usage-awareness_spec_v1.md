@@ -226,7 +226,13 @@ Ships `plugins/claude-kit/hooks/usage-lib.js` with a never-throws contract in th
 Exports a read returning either a success carrying per-window `{percent, severity,
 resetsAt}` keyed `session` / `weeklyAll` / `fableWeekly`, plus `spend` as
 `{amountMinor, exponent, currency}` and a `fetchedAt`, or a typed failure whose reason is
-one of `no-token`, `expired`, `rate-limited`, `timeout`, `parse`, `locked` or `bad-call`.
+one of `no-token`, `expired`, `rate-limited`, `timeout`, `parse`, `locked`, `no-store` or
+`bad-call`.
+
+`no-store` was added in S1's third review round: a store that cannot be written cannot hold the
+backoff the module is about to decide on, so fetching anyway means every failure refetches
+immediately, which is exactly what earns a 429 carrying a ~54 minute `retry-after`. Refusing the
+request typed is the only way to honor a decision the module cannot persist.
 
 `bad-call` was added during S1 rather than at plan time, and it is kept: it reports
 kit-internal misuse (an unusable `maxAgeSeconds` or clock) and every other reason is a
@@ -247,14 +253,34 @@ separate them afterwards. So every store file lives under a subdirectory keyed b
 credentials directory**, legible rather than opaque, and each reading-log line carries the same
 discriminator.
 
+**A relative `CLAUDE_CONFIG_DIR` is refused rather than resolved**, and reported as `no-token`.
+Resolving one would resolve it against the hook's cwd, which is the project directory, so a single
+configured value would mean a different account per repo and a `.claude/.credentials.json` arriving
+in a clone would become the Bearer token. Refusing costs nothing a consumer notices, since
+`no-token` already allows everywhere.
+
 The key is the directory path and never the token or a hash of it, which keeps "no token material
 reaches any file" absolutely true. The residual limit, accepted and recorded: re-authenticating the
 same config directory as a different account mixes that directory's readings until the window
 rolls.
 
 Cache at `<store>/usage.json`, directory 0700 and file 0600, with a
-`usage.lock` carrying a `blockedUntil` and a `reason`. The `locked` check honors the reason class,
-so an auth-class lock never gates a fetch it could not have caused. Backoff is per failure class: 401 marks `expired`
+`usage.lock` carrying a `blockedUntil`, a `reason`, and for an auth-class lock the credential
+file's mtime **as of the lock**. The `locked` check honors the reason class, so an auth-class lock
+stops gating once the credential has been rewritten since it was taken. Comparing the credential
+against the lock file's own mtime instead would be defeated permanently by a credentials file
+stamped ahead of the wall clock, so the question asked is "did this file change since the lock"
+rather than "is this file newer than that one".
+
+**Request coalescing was built and removed, and the removal is the decision worth recording.** A
+second review round reproduced two ways an in-flight lease bricks the store permanently: an
+uncapped horizon that is never reaped, and an acquire that fails closed on a write error where its
+own contract demands fail-open. Coalescing inherently requires the loser to wait or to go without,
+so every variant adds a failure mode, and the mechanism built to avoid one rate-limit response
+introduced two ways to stop reading entirely. Without it a burst of concurrent session starts costs
+one request each, once per staleness window, against an endpoint a third-party tool already polls
+every 180s. The token resolution now also precedes the lock check, so a missing credential reports
+`no-token` rather than being masked as a transient `locked` that never self-clears. Backoff is per failure class: 401 marks `expired`
 and goes quiet for 900s without writing a rate-limit lock, 429 honors `retry-after` and
 defaults to 300s, timeout and transport errors take 60s.
 
@@ -652,3 +678,63 @@ committed and pushed. All five code files and both living docs stay staged and u
 because putting code with three open Criticals on `main`, or docs describing hooks that are
 not on `main`, is worse than a staged pause. `git diff --staged` is the review surface until
 S1 closes.
+
+### Chapter 2 - 2026-08-27
+Completed: S1 (The usage reader) and S7 (the `autoContinueAtUsageLimit` posture check).
+Implemented By: main session. The stall raised in Chapter 1 was resolved by the operator
+narrowing S1 rather than by another dispatch, and the ladder bars a mid-effort downgrade to a
+cheaper agent, so the remaining work ran here.
+Metrics: two further review rounds on S1 (blind, rounds 3 and 4). NEEDS_CONTEXT 0. Escalations 0.
+Advisor on (opus), not consulted. Gate: 391 pass, 0 fail, from a 324 baseline.
+
+Decisions / Surprises:
+- **The operator's call was to delete rather than to fix.** The in-flight lease came out
+  entirely. It was never in the spec (I added it to a fix brief after round 1), and it was the
+  source of two Criticals in round 2. Coalescing inherently makes the loser wait or go without,
+  so every variant of it adds a failure mode, and the thing built to avoid one rate-limit
+  response had introduced two ways to stop reading permanently.
+- **The mtime supersession was kept with a better mechanism than either reviewer proposed.**
+  Rather than patching the clock-direction hole, the credential's mtime is snapshotted into the
+  lock, so the test asks "did this file change since the lock" instead of "is this file newer
+  than that one". Clock direction stops mattering rather than being guarded against.
+- **Round 3 then found that snapshot in the wrong place, which was my error.** It was taken
+  inside `writeLock`, after the 401 returned. A 401 is exactly when the harness renews a
+  credential, so a refresh landing mid-flight recorded itself as its own cause and a fresh valid
+  token would have served the full 900s. Moved beside the token read and pinned by a test that
+  fails when moved back.
+- **Two more of my own main-thread errors, both found by review.** I fixed the relative
+  `CLAUDE_CONFIG_DIR` door in `usage-lib.js` and not in the sibling hook reading the same
+  variable, where a cloned repo could otherwise decide both whether the hook speaks and which
+  paths it names in trusted context. And my first attempt at that fix resolved the path rather
+  than refusing it, which restored consistency while leaving the repo-local file as the
+  credential source; the test caught it immediately.
+- **A deletion left an orphaned contract.** The module header still promised that `locked`
+  covered an in-flight fetch after the lease that produced that state was gone. That is Standing
+  Brief Amendment 1's class pointing the other way, a list that went long rather than short.
+- **Reproducing beat reasoning again.** Round 3's five Majors were four reproductions and one
+  argument, and every reproduction stood.
+- One process note worth the line: I reproduced a reviewer's own Minor on myself, hanging a
+  command by `require()`ing a hook that reads stdin.
+
+Review Findings: round 3, 5 Major (the mtime snapshot placement; an unwritable store silently
+losing every backoff so a 429 is refetched immediately; the sibling hook missing the relative
+config-dir door; a non-empty `limits[]` with no recognized kind caching as an all-null success
+that reads to the evaluator as a clear account while it may be saturated; the orphaned in-flight
+clause) plus 8 Minor. All Majors fixed, and the Minors worth fixing were: the config-dir door
+moved ahead of the cache, `res.complete` so a truncated body is transport rather than a complete
+200, `req.destroy` on the throw path, `trimLog` keeping a whole boundary line and refusing to
+rewrite a bare newline, and the test whose name said "resolves" where it asserted refusal.
+A new failure reason, `no-store`, was added and enumerated in the header and the spec per the
+broadened amendment.
+
+Tests: 45 in `usage-lib`, 22 in the nudge suite. Nine locks added across rounds 3 and 4 for
+behaviors a later edit could have broken with a green suite, each mutation-verified: the
+relative config-dir refusal, the exponent and amount bounds, the required ISO zone, the
+token-before-lock ordering, the CRLF header-injection door, the mtime snapshot placement, the
+unwritable-store refusal, the unrecognized-kind parse failure, and the two nudge fixes. One
+mutation (M5, the token/lock ordering) was malformed and broke 36 tests rather than swapping
+cleanly, so that lock rests on weaker evidence than the other eight.
+
+Next: S2 (threshold policy and evaluation), which edits this same file.
+Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
+land together, because the docs describe hooks that are now on `main`.

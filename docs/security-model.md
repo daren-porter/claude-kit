@@ -19,8 +19,8 @@ that reaches the model, plus files it reads and writes under `$HOME` and the cur
 
 ## Two premises that bound almost every finding
 
-**Same uid.** Every store the kit owns (`~/.claude-kit-memory/`, `~/.claude-kaizen/`, the plan
-docs, and `.kit/goal-state.json` in the repo) is writable by exactly the account that can also edit `~/.claude/settings.json`
+**Same uid.** Every store the kit owns (`~/.claude-kit-memory/`, `~/.claude-kaizen/`,
+`~/.claude-kit-usage/`, the plan docs, and `.kit/goal-state.json` in the repo) is writable by exactly the account that can also edit `~/.claude/settings.json`
 and register an arbitrary hook. So "an attacker who can write to the store can make the model do
 X" describes a precondition that already grants strictly more than X. This is the ceiling on a
 whole class of findings, and naming it is not a dismissal: it is the difference between a Critical
@@ -37,15 +37,16 @@ than accepted ones.
 
 ## Trusted channels: what is instruction and what is data
 
-**Six surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
+**Seven surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
 `session-start.js`'s `additionalContext` was the only one, which would have told a later review to
-audit one door out of six:
+audit one door out of seven:
 
 | Surface | Written by | Reaches the model as |
 |---|---|---|
 | `additionalContext` | `session-start.js` | trusted session context |
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
+| `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the second the allowlisted branch) |
@@ -87,9 +88,11 @@ The marked-record note names records from validated filenames rather than from r
 is the fix for a real laundering path (a record could otherwise trigger a kit instruction by
 carrying its token).
 
-**Recorded divergence, three idioms across five sites.** Delete-and-truncate-silently at 120
+**Recorded divergence, three idioms across six sites and three cap values.** Delete-and-truncate-silently at 120
 (`session-start.js` three filename doors, `kit-goal-stop.js`'s plan path); delete-and-truncate-
-silently at 160 (`stop-docs-hygiene.js`, two sites); and substitute-a-space-collapse-and-announce
+silently at 160 (`stop-docs-hygiene.js`, two sites); delete-and-truncate-silently at 300
+(`usage-autocontinue-nudge.js`'s `safePath`, one site, the wider cap because a `CLAUDE_CONFIG_DIR`
+path has a plausible claim on more room than a filename); and substitute-a-space-collapse-and-announce
 (`session-start.js`'s `safeContext`, `memory-lib.js`'s `sanitize`, `memory-index.js`). All are safe
 and none is identical to another. Unifying them would mean editing doors no effort has had reason
 to touch, so the divergence is a recorded choice rather than a new oversight. A SIXTH idiom, or an
@@ -117,13 +120,55 @@ there reopens the injection class. So: any relaxation of that pattern, or any ne
 value in those commands, is a live finding rather than a defense-in-depth note. This is the one row
 in this document where the premise is a regex rather than an environmental assumption.
 
+## The one credential the kit reads
+
+`hooks/usage-lib.js` is the only component that touches a credential, and it is the newest thing
+in this document, so what it does is stated rather than left to be inferred.
+
+It reads `claudeAiOauth.accessToken` from `<CLAUDE_CONFIG_DIR>/.credentials.json`, falling back to
+`~/.claude/.credentials.json` only when the variable is unset (never when the named file is
+absent, because a wrong-profile read reports a different account's numbers), and sends it as a
+bearer to `https://api.anthropic.com/api/oauth/usage`. The host, path and beta header are module
+constants; the transport is a code-level seam for tests with no environment path to it.
+
+Five properties, each verified against the code rather than intended:
+
+- **Resolved per call, never held.** The token goes into one local and from there only into the
+  `Authorization` header. It is never cached across calls, never returned in any result, and never
+  written to any file.
+- **It cannot reach an error string.** Every transport and status failure collapses to a typed
+  reason from a fixed set plus an integer. The response body is discarded, and the only
+  `sanitize`d error text in the module comes from filesystem failures, which carry store paths.
+- **An anchored `^[\x21-\x7E]+$` test on the trimmed value is doing two jobs.** It is the
+  header-injection barrier against a doctored `.credentials.json`, and it is also the door that
+  refuses an empty bearer. That second job matters operationally: this machine's
+  `~/.claude/.credentials.json` holds an empty `accessToken`, and the endpoint answers an empty
+  bearer with 429 and a ~54 minute `retry-after` rather than 401, so sending one would look
+  exactly like the endpoint throttling the kit.
+- **A relative `CLAUDE_CONFIG_DIR` is refused, not resolved.** Resolving one would resolve it
+  against the hook's cwd, making a repo-local `.claude/.credentials.json` the bearer token and
+  scattering the store one per repo. The refusal reports `no-token`, which every consumer treats
+  as allow.
+- **Wire trust rests on the ambient Node and TLS environment.** `NODE_EXTRA_CA_CERTS` and
+  `NODE_OPTIONS=--require` are already total-compromise levers against every hook in this kit, so
+  this adds no new exposure. Recorded so a later pass does not read it as one.
+- **Nothing calls it yet.** `hooks.json` wires no consumer, so the credential read and the network
+  call are latent in the payload rather than live in a session. They go live when S3 and S4 of
+  `plans/kit-usage-awareness_spec_v1.md` register their hooks, and that is the point at which a
+  review should re-verify the first three properties above rather than trusting this paragraph.
+
+`~/.claude-kit-usage/` is its store: a cache of the normalized response, a backoff lock, and an
+append-only reading log bounded at 5000 lines. The log accumulates this account's usage
+percentages and overage spend over time, which is why it is 0600 and why it is named in the
+same-uid store list, but it holds no credential and no third-party data.
+
 ## Every hook fails open. There is no fail-closed hook in this kit.
 
 This is the single most important thing to know before rating a finding, and it is easy to get
 backwards.
 
-- All three SessionStart hooks (`session-start.js`, `branch-reaper-nudge.js`,
-  `take-stock-nudge.js`) wrap `main()` in a bare catch and then let the process end on its own
+- All four SessionStart hooks (`session-start.js`, `branch-reaper-nudge.js`,
+  `take-stock-nudge.js`, `usage-autocontinue-nudge.js`) wrap `main()` in a bare catch and then let the process end on its own
   with status 0. None of them calls `process.exit()`; that idiom was swept out of the payload and
   a re-added `process.exit(0)` is a change worth questioning rather than the invariant. A hook must
   never break a session. `take-stock-nudge.js` adds a second bound of the same kind, a 6-second
@@ -193,7 +238,9 @@ discipline, not a control.
 - Supply chain. There is no `package.json`, no lockfile, and no dependency anywhere: Node core
   only, CommonJS, in every hook. That is a deliberate property worth preserving, and it is why
   `npm audit` has no target here.
-- Secrets at rest. The kit stores none. `~/.claude-kit-memory/` is 0700 with 0600 records because
+- Secrets at rest. The kit stores none, and that still holds literally now that one component
+  reads a credential: `usage-lib.js` sends the token and persists none of it (see the credential
+  section above, which also names the store it does write). `~/.claude-kit-memory/` is 0700 with 0600 records because
   its content can describe production configuration, not because it holds credentials; an
   independent audit of the seeded set confirmed no credential or key material. Note that 0700/0600
   is a **creation-time** property, not a verified invariant: `ensureStore` sets 0700 only when it
