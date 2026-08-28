@@ -805,6 +805,19 @@ lease made concurrent successful fetches impossible; `ensureStore` now writing o
 including where it is about to report `locked`; and the `res.complete` branch shipping with no
 coverage because the test fake cannot produce it.
 
-Next: S2 review, then S3 and S4.
+**Open and unresolved, raised by S2 and owed to the design rather than to the implementer: the
+generic spend trigger is inert.** `spendDeltaMinor` is read, validated and the delta computed, but
+no rule consumes it, so the effort currently has two triggers and a number rather than the three
+this spec describes. The cause is the verdict shape in S2's dispatch brief, which carries `state`,
+`window` and a separate `fableRatchet` boolean and leaves the spend delta nowhere to produce a
+state. The implementer's reason for not inventing one holds: S3 may interpolate only a whitelisted
+window literal and S4's deny reason must name a window, so a spend-triggered state carrying
+`window: null` cannot be rendered by either consumer. Resolving it means deciding what the spend
+delta's response IS, and the options are not equivalent: a fourth window literal (`spend`) that
+both consumers learn to render, a separate boolean beside `fableRatchet` on the grounds that its
+response differs from a pause, or dropping it and saying so. **This blocks S3 and S4**, because
+both would otherwise be built against a verdict shape that is about to change.
+
+Next: resolve the spend-delta shape, then S2 review, then S3 and S4.
 Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
 land together, because the docs describe hooks that are now on `main`.
