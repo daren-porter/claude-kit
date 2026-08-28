@@ -145,8 +145,11 @@ const TRANSIENT_BACKOFF_SECONDS = 60;
 // rather than clamped to the cap: clamping wrote a horizon sitting exactly on
 // the guard, where a one-second backward clock step makes the next read
 // discard the lock as corruption and immediately re-request the endpoint that
-// just rate-limited us. Refusing keeps every horizon this module writes well
-// inside the horizon it will later read.
+// just rate-limited us. Refusing the class is what keeps an absurd header off
+// that boundary, where ANY backward step erases the lock. It does not buy
+// unlimited slack, and the bound is worth stating: the widest horizon still
+// honored is 86399, one second inside the guard, while the value this endpoint
+// was actually observed to send (3242) sits hours inside it.
 const RATE_LIMIT_CAP_SECONDS = 86400;
 
 
