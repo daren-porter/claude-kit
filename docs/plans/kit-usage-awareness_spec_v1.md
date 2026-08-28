@@ -685,7 +685,7 @@ Implemented By: main session. The stall raised in Chapter 1 was resolved by the 
 narrowing S1 rather than by another dispatch, and the ladder bars a mid-effort downgrade to a
 cheaper agent, so the remaining work ran here.
 Metrics: two further review rounds on S1 (blind, rounds 3 and 4). NEEDS_CONTEXT 0. Escalations 0.
-Advisor on (opus), not consulted. Gate: 391 pass, 0 fail, from a 324 baseline.
+Advisor on (opus), not consulted. Gate: 394 pass, 0 fail, from a 324 baseline.
 
 Decisions / Surprises:
 - **The operator's call was to delete rather than to fix.** The in-flight lease came out
@@ -734,6 +734,35 @@ token-before-lock ordering, the CRLF header-injection door, the mtime snapshot p
 unwritable-store refusal, the unrecognized-kind parse failure, and the two nudge fixes. One
 mutation (M5, the token/lock ordering) was malformed and broke 36 tests rather than swapping
 cleanly, so that lock rests on weaker evidence than the other eight.
+
+Round 4 then found one Critical and four Majors, all of them in code the round-3 fixes had just
+added, which is the honest signal to record about this section: it did not converge quickly, and
+each round found real defects in the previous round's repairs. The Critical was mine and it is the
+instructive one. My `no-store` gate called `ensureStore()`, and `mkdirSync` with `recursive`
+succeeds on an EXISTING directory whatever its mode, so the gate proved creatability and never
+writability. A read-only store therefore lost every backoff and refetched a 429 immediately, which
+is the precise amplification the gate had been added to prevent. It probe-writes now.
+
+The other four: the cache door never got the wire door's new all-unknown refusal, so identical
+bytes were accepted from disk and rejected off the wire, reachable without tampering from any
+`usage.json` a pre-change build wrote; a payload whose kinds have all been renamed server-side sat
+on the 60-second transient class though it cannot self-heal; `trimLog`'s new boundary handling
+filtered the empty leading element away before its slice, so a window opening exactly on a newline
+ate a whole record; and the header still promised `locked` covered an in-flight fetch, along with a
+coalescing guarantee the deletion had removed. That last is fixed by stating what is true, that
+concurrent readers each fetch once per staleness window, as an accepted and named cost.
+
+Left unfixed and noted, all Minor, routed to `finishing-work`'s full-changeset pass: `profileKey`
+hashing the realpath so an unresolvable symlink relocates the store, `configDirUsable`'s asymmetry
+with `credentialsDir`, and three stale comments in the nudge hook and the test headers.
+
+**Correction to Chapter 1's commit record.** That Chapter states only the plan doc was committed.
+That is false, and the commit message of `05ee720` repeats it. `git add <plan doc>` followed by a
+`git commit` with no pathspec commits the whole index, and the implementer agents had already
+staged their five files, so the code landed on `main` with three open Criticals. The living docs
+were the only things genuinely held back, which inverted the intent exactly: `main` briefly carried
+the new hooks without the documents describing them. Superseded by this Chapter's commit, recorded
+because the history now carries a message that misstates what it did.
 
 Next: S2 (threshold policy and evaluation), which edits this same file.
 Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
