@@ -1062,10 +1062,8 @@ test('a payload whose kinds were all renamed takes the long backoff, not the 60s
 // rather than checking for unknown would barrier on a window it knows nothing
 // about the moment a threshold sat at zero. After that the Fable ratchet,
 // which must fire and not fire entirely independently of the state, because
-// its response is a routing cap rather than a pause; the staleness budget's
-// exact boundary; and the spend baseline, whose first read establishes and
-// whose negative delta is a month rollover rather than an error. Finally the
-// reap, which is the only cleanup anything in this feature owns.
+// its response is a routing cap rather than a pause; and the staleness
+// budget's exact boundary.
 
 const SESSION_RESETS = '2026-08-27T17:00:00+00:00';
 const WEEKLY_RESETS = '2026-08-31T07:00:00+00:00';
@@ -1192,8 +1190,6 @@ test('enabled false, an absent config and an unparseable one all read as clear',
         assert.strictEqual(verdict.state, 'clear');
         assert.strictEqual(verdict.window, null);
         assert.strictEqual(verdict.fableRatchet, false);
-        assert.strictEqual(verdict.spendDelta, null);
-        // A feature that is off leaves nothing behind, baseline included.
         assert.deepStrictEqual(storeEntries(), []);
 
         // Explicitly off, with every threshold armed underneath it.
@@ -1226,10 +1222,9 @@ test('a failed read never barriers, whatever its reason', async () => {
             );
             assert.strictEqual(verdict.state, 'clear', reason);
             assert.strictEqual(verdict.fableRatchet, false, reason);
-            assert.strictEqual(verdict.spendDelta, null, reason);
             assert.strictEqual(verdict.maxAgeSeconds, lib.STALENESS_SECONDS, reason);
         }
-        // Every reader failure allows, so none of them establishes a baseline
+        // Every reader failure allows.
         // off a read that never happened either.
         assert.deepStrictEqual(storeEntries(), []);
     });
@@ -1242,7 +1237,6 @@ test('one garbage field falls back on its own default rather than disabling the 
             session: { warn: 'eighty', barrier: 60 },
             weeklyAll: { warn: 85, barrier: 1e300 },
             fableRatchet: -1,
-            spendDeltaMinor: null,
         });
         const config = lib.readConfig();
         assert.strictEqual(config.enabled, true);
@@ -1254,7 +1248,6 @@ test('one garbage field falls back on its own default rather than disabling the 
         assert.strictEqual(config.session.warn, lib.DEFAULT_CONFIG.session.warn);
         assert.strictEqual(config.weeklyAll.barrier, lib.DEFAULT_CONFIG.weeklyAll.barrier);
         assert.strictEqual(config.fableRatchet, lib.DEFAULT_CONFIG.fableRatchet);
-        assert.strictEqual(config.spendDeltaMinor, lib.DEFAULT_CONFIG.spendDeltaMinor);
         // The half-edited config still evaluates on the value it did state.
         const verdict = lib.evaluate(usageOf({ session: 70 }), config);
         assert.strictEqual(verdict.state, 'barrier');
@@ -1271,7 +1264,7 @@ test('the threshold config is machine-global: the shared parent, never the profi
         assert.strictEqual(lib.evaluate(usageOf({ session: 55 }), first).state, 'warn');
 
         // A second config profile reads the same policy. The cache, the lock,
-        // the log and the spend baseline are per profile because each is an
+        // the log are per profile because each is an
         // account fact; a threshold is an operator preference and is not.
         const other = fs.mkdtempSync(path.join(os.tmpdir(), 'usage-lib-profile-c-'));
         try {
@@ -1348,99 +1341,6 @@ test('the staleness budget tightens ten points below a barrier and not eleven', 
         // The Fable window has a ratchet rather than a barrier, so nothing
         // pauses on it and there is no deadline to sample faster for.
         assert.strictEqual(lib.evaluate(usageOf({ fable: 99 }), on()).maxAgeSeconds, lib.STALENESS_SECONDS);
-    });
-});
-
-test('the first read establishes the spend baseline and the second reports the delta', async () => {
-    await withUsageEnv(async () => {
-        const opts = { sessionId: 'session-abc_123' };
-        // The establishing read has nothing to compare against yet, which is
-        // reported as no delta rather than as a failure or as a zero.
-        let verdict = lib.evaluate(usageOf({ session: 10, spend: 1000 }), on(), opts);
-        assert.strictEqual(verdict.spendDelta, null);
-        const file = lib.baselineFilePath('session-abc_123');
-        assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { amountMinor: 1000 });
-        assert.strictEqual(fs.statSync(file).mode & 0o777, 0o600);
-
-        verdict = lib.evaluate(usageOf({ session: 10, spend: 1150 }), on(), opts);
-        assert.strictEqual(verdict.spendDelta, 150);
-        // The baseline is the FIRST read of the session and not the last: one
-        // that advanced with every read could never show a delta at all.
-        assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { amountMinor: 1000 });
-
-        // A second session keeps its own baseline.
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 1150 }), on(), { sessionId: 'session-def' }).spendDelta, null);
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 1200 }), on(), { sessionId: 'session-def' }).spendDelta, 50);
-
-        // No session id at all: no delta and nothing to key one on, and the
-        // trigger must not fail over it.
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 9999 }), on()).spendDelta, null);
-        // An unknown spend is not a zero either.
-        assert.strictEqual(lib.evaluate(usageOf({ spend: null }), on(), opts).spendDelta, null);
-    });
-});
-
-test('a negative spend delta is no overage rather than a failure', async () => {
-    await withUsageEnv(async () => {
-        const opts = { sessionId: 'rollover-session' };
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 5000 }), on(), opts).spendDelta, null);
-        // Whether this counter is monthly or all-time is not established, so a
-        // month rollover presents exactly like this and must read as no
-        // overage rather than as an error.
-        const verdict = lib.evaluate(usageOf({ spend: 100 }), on(), opts);
-        assert.strictEqual(verdict.spendDelta, -4900);
-        assert.strictEqual(verdict.state, 'clear');
-    });
-});
-
-test('a session id that is not path-safe is refused and writes nothing', async () => {
-    await withUsageEnv(async () => {
-        const unsafe = ['../../etc/passwd', 'a/b', 'sess.1', '', 'has space', 'x'.repeat(65), 'semi;colon', 42, null];
-        for (const sessionId of unsafe) {
-            const verdict = lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId });
-            const label = JSON.stringify(sessionId);
-            assert.strictEqual(verdict.spendDelta, null, label);
-            // The id arrives in the harness payload and lands in a FILENAME,
-            // so a refusal has to leave no file anywhere, not merely no delta.
-            assert.deepStrictEqual(storeEntries(), [], label);
-            // Where a traversal out of the profile store would land.
-            assert.deepStrictEqual(parentEntries(), [], label);
-        }
-        // The boundary in the other direction: 64 characters is accepted.
-        const longest = 'y'.repeat(64);
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId: longest }).spendDelta, null);
-        assert.strictEqual(fs.existsSync(lib.baselineFilePath(longest)), true);
-    });
-});
-
-test('a baseline past eight days is reaped while a fresh one and the store files stand', async () => {
-    await withUsageEnv(async () => {
-        assert.strictEqual(lib.ensureStore().ok, true);
-        const aged = new Date(Date.now() - (9 * 24 * 60 * 60 * 1000));
-        assert.strictEqual(lib.BASELINE_MAX_AGE_MS < Date.now() - aged.getTime(), true);
-        const write = (file) => { fs.writeFileSync(file, '{}\n'); return file; };
-        const old = write(lib.baselineFilePath('old-session'));
-        const fresh = write(lib.baselineFilePath('fresh-session'));
-        // A concurrent writer's in-flight temp file, aged: an unanchored name
-        // test would eat this one in the instant before its rename.
-        const tmp = write(lib.baselineFilePath('racing-session') + '.tmp.99999');
-        const untouchable = [lib.usageFilePath(), lib.lockFilePath(), lib.logFilePath()];
-        for (const file of untouchable) write(file);
-        writeConfig({ enabled: true });
-        // Age everything except the fresh baseline, so the sweep is proven
-        // scoped by NAME and not merely by age.
-        for (const file of [old, tmp, lib.configFilePath()].concat(untouchable)) fs.utimesSync(file, aged, aged);
-
-        // The sweep rides the one baseline write a session makes.
-        assert.strictEqual(lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId: 'new-session' }).spendDelta, null);
-
-        assert.strictEqual(fs.existsSync(old), false);
-        assert.strictEqual(fs.existsSync(fresh), true);
-        assert.strictEqual(fs.existsSync(tmp), true);
-        assert.strictEqual(fs.existsSync(lib.baselineFilePath('new-session')), true);
-        for (const file of untouchable.concat([lib.configFilePath()])) {
-            assert.strictEqual(fs.existsSync(file), true, file);
-        }
     });
 });
 

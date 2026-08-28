@@ -6,7 +6,7 @@
 // the answer to the three windows the kit acts on (session, weeklyAll,
 // fableWeekly) plus overage spend. The second half is the threshold policy:
 // the operator's config, the verdict S3's wind-down text and S4's dispatch
-// barrier act on, and the per-session spend baseline that verdict needs. It
+// barrier act on. It
 // makes no request and calls nothing in the first half; it answers about a
 // read the caller already holds.
 //
@@ -76,8 +76,6 @@
 // usage.lock (the backoff),
 // readings.log (one JSON line per successful FETCH, never a cache hit, bounded and
 // self-truncating, each line carrying the profile key as its discriminator),
-// baseline-<session-id>.json (the spend delta's baseline, the only per-SESSION
-// file here and so the only one needing a reap, at eight days).
 // One file deliberately sits OUTSIDE the profile directory, in its shared
 // parent: ~/.claude-kit-usage/config.json holds the operator's thresholds,
 // which are a policy preference rather than an account fact, so a profile
@@ -1014,11 +1012,9 @@ const DEFAULT_CONFIG = {
     session: { warn: 80, barrier: 95 },
     weeklyAll: { warn: 85, barrier: 95 },
     fableRatchet: 85,
-    spendDeltaMinor: 1,
 };
 
 const CONFIG_READ_CAP = 16 * 1024;
-const BASELINE_READ_CAP = 4 * 1024;
 
 // The staleness budget the verdict hands back to the caller for its next
 // readUsage. 600s is deliberate under-sampling (a third-party tool already
@@ -1037,40 +1033,13 @@ const NEAR_BARRIER_POINTS = 10;
 // total, rather than leaving warn-versus-warn to whichever branch ran first.
 const WINDOW_PRECEDENCE = ['weeklyAll', 'session'];
 
-// A session id arrives in the harness payload and lands in a FILENAME, so it
-// is held to a path-safe shape at the door rather than escaped afterwards. An
-// id that fails this reports no delta rather than being sanitized into some
-// other session's baseline.
-const SESSION_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
-
-// Anchored at BOTH ends, which is the whole point: unanchored it would also
-// match baseline-<id>.json.tmp.<pid>, the file a concurrent session's
-// publishText holds for the instant before its rename.
-const BASELINE_FILE_RE = /^baseline-[A-Za-z0-9_-]{1,64}\.json$/;
-
-// Eight days: the longest window this feature tracks, so a baseline older than
-// one cannot belong to a live session. Baselines are the only per-SESSION file
-// in the store and nothing else in this effort owns cleanup, so without the
-// sweep the store grows one file per session forever.
-const BASELINE_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
-// The sweep is opportunistic housekeeping on a hook's critical path, so it
-// considers a bounded slice of the store per pass rather than all of it. A
-// store somehow holding more than this drains a sweep at a time instead of
-// stalling one session start.
-const BASELINE_REAP_MAX_ENTRIES = 500;
-
 // The threshold config is MACHINE-GLOBAL: the shared parent of the per-profile
 // stores, never inside one. Thresholds are an operator policy preference
 // rather than an account fact, so switching config profiles must not silently
 // switch the policy with it, while the cache, the lock, the log and the spend
-// baseline all stay per profile because each of those IS an account fact.
+// log all stay per profile because each of those IS an account fact.
 function configFilePath() {
     return path.join(path.dirname(storeRoot()), 'config.json');
-}
-
-// Per profile, because spend is an account fact.
-function baselineFilePath(sessionId) {
-    return path.join(storeRoot(), 'baseline-' + sessionId + '.json');
 }
 
 // A threshold percent, or the default. Bounded [0, 100] rather than
@@ -1100,13 +1069,11 @@ function normConfig(raw) {
     // Minor units, not a percent, so this takes normAmountMinor's bound rather
     // than [0, 100]: no overage cap is exposed to this seat, so there is no
     // denominator and a threshold of $5 (500) is as legitimate as the first cent.
-    const spendDeltaMinor = normAmountMinor(source.spendDeltaMinor);
     return {
         enabled: source.enabled === true,
         session: normWindowThresholds(source.session, DEFAULT_CONFIG.session),
         weeklyAll: normWindowThresholds(source.weeklyAll, DEFAULT_CONFIG.weeklyAll),
         fableRatchet: normThreshold(source.fableRatchet, DEFAULT_CONFIG.fableRatchet),
-        spendDeltaMinor: spendDeltaMinor === null ? DEFAULT_CONFIG.spendDeltaMinor : spendDeltaMinor,
     };
 }
 
@@ -1124,86 +1091,6 @@ function readConfig() {
         return normConfig(null);
     }
     return normConfig(parsed);
-}
-
-// This session's spend baseline in minor units, or null when there is none
-// worth using. A baseline that is missing, unparseable or misshapen is
-// treated as absent so the next read re-establishes it, exactly like the
-// usage cache: a corrupt bookkeeping file must never become a failure.
-function readBaseline(file) {
-    const read = readCapped(file, BASELINE_READ_CAP);
-    if (read === null || read.truncated) return null;
-    let parsed;
-    try {
-        parsed = JSON.parse(read.text);
-    } catch {
-        return null;
-    }
-    if (!parsed || typeof parsed !== 'object') return null;
-    return normAmountMinor(parsed.amountMinor);
-}
-
-// Drop baseline files past the horizon. Opportunistic, bounded, and silent on
-// every error: this is housekeeping and must not fail the verdict that
-// triggered it.
-//
-// Age is file mtime against the WALL clock rather than this module's pinned
-// clock seam, because an mtime IS wall-clock: pairing the two is what makes
-// the comparison mean anything, and branch-reaper-nudge.js takes the same
-// pairing. Scope is by name and by regular-file-ness, so usage.json,
-// usage.lock, readings.log, config.json (which is not even in this directory)
-// and any symlink are all outside the sweep by construction rather than by an
-// exclusion list that would go short the next time a store file is added.
-function reapBaselines() {
-    const root = storeRoot();
-    let entries;
-    try {
-        entries = fs.readdirSync(root, { withFileTypes: true });
-    } catch {
-        return;
-    }
-    const cutoff = Date.now() - BASELINE_MAX_AGE_MS;
-    for (const entry of entries.slice(0, BASELINE_REAP_MAX_ENTRIES)) {
-        // A symlink is not a file under withFileTypes but unlinkSync would
-        // happily take the name, so the check is on the type rather than on
-        // the absence of a directory.
-        if (!entry.isFile() || !BASELINE_FILE_RE.test(entry.name)) continue;
-        const file = path.join(root, entry.name);
-        try {
-            if (fs.statSync(file).mtimeMs < cutoff) fs.unlinkSync(file);
-        } catch { /* one unreadable entry must not abort the sweep */ }
-    }
-}
-
-// The generic trigger's measurement: how much this account has spent since
-// this session's first successful read. Lagging rather than leading, and it
-// does not care which window caused the spend, which is what lets it catch
-// overage from a window this feature never modeled.
-//
-// Every uncertain case reports null rather than a number: no session id
-// (nothing to key a baseline on), an id that is not path-safe, an unknown
-// spend, a store that cannot be written, or the read that ESTABLISHES the
-// baseline, which has nothing to compare itself against yet.
-//
-// A negative delta is reported as it stands, never clamped and never a
-// failure: whether this counter is monthly or all-time is not established, so
-// a rollover presents exactly this way, and flattening it to zero would hide
-// the one observation that would settle the question.
-function spendDeltaFor(usage, sessionId) {
-    if (typeof sessionId !== 'string' || !SESSION_ID_RE.test(sessionId)) return null;
-    const spend = usage.spend && typeof usage.spend === 'object' ? usage.spend : {};
-    const amountMinor = normAmountMinor(spend.amountMinor);
-    if (amountMinor === null) return null;
-    const file = baselineFilePath(sessionId);
-    const baseline = readBaseline(file);
-    if (baseline === null) {
-        // publishText carries ensureStore's write probe, 0600 and the atomic
-        // tmp-and-rename; the sweep rides the one write per session rather
-        // than every evaluation.
-        if (publishText(file, JSON.stringify({ amountMinor }) + '\n').ok) reapBaselines();
-        return null;
-    }
-    return amountMinor - baseline;
 }
 
 // One window's state. An UNKNOWN percent is clear and can never be anything
@@ -1230,7 +1117,6 @@ function clearVerdict() {
         fableRatchet: false,
         fablePercent: null,
         fableResetsAt: null,
-        spendDelta: null,
         maxAgeSeconds: STALENESS_SECONDS,
     };
 }
@@ -1239,10 +1125,9 @@ function clearVerdict() {
 //   usage   a readUsage result, either shape
 //   config  a config object (readConfig's, or a literal); defaults are applied
 //           per field here too, so a partial or absent one is safe
-//   opts    { sessionId } for the spend baseline; anything else is ignored
 //
 // Returns { state, window, percent, resetsAt, fableRatchet, fablePercent,
-// fableResetsAt, spendDelta, maxAgeSeconds }. Never throws.
+// fableResetsAt, maxAgeSeconds }. Never throws.
 //
 // The Fable ratchet is evaluated SEPARATELY and never contributes to `state`,
 // because its response is a routing cap rather than a pause: at or above the
@@ -1318,7 +1203,6 @@ function evaluateInner(usage, rawConfig, opts) {
         fableRatchet: fablePercent !== null && fablePercent >= config.fableRatchet,
         fablePercent,
         fableResetsAt: normTimestamp(fable.resetsAt),
-        spendDelta: spendDeltaFor(usage, opts.sessionId),
         maxAgeSeconds: nearBarrier ? STALENESS_NEAR_BARRIER_SECONDS : STALENESS_SECONDS,
     };
 }
@@ -1340,11 +1224,8 @@ module.exports = {
     evaluate,
     readConfig,
     configFilePath,
-    baselineFilePath,
-    reapBaselines,
     DEFAULT_CONFIG,
     STALENESS_SECONDS,
     STALENESS_NEAR_BARRIER_SECONDS,
     NEAR_BARRIER_POINTS,
-    BASELINE_MAX_AGE_MS,
 };

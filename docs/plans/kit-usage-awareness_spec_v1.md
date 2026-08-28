@@ -76,17 +76,29 @@ Six facts from that probe shape the design, and each one corrects or extends the
   normalized schema drops the entire `limits[]` array, so `severity`, `is_active` and the
   Fable scope never reach disk. Reading it costs precisely the signals worth having.
 
-### Three triggers, two leading and one generic
+### Two triggers, both usage windows
 
-`limits[].kind=session` percent and `limits[].kind=weekly_all` percent are **leading**
-indicators: they let a run stop before the first overage dollar. `spend.used.amount_minor`
-rising between two reads is a **lagging** generic indicator: it does not care which window
-caused the spend, which means it catches overage from a window this spec never modeled.
-That is what permits the two percentages to be roughly tuned rather than exactly right.
+`limits[].kind=session` percent and `limits[].kind=weekly_all` percent, and nothing else.
+Both are **leading** indicators: they let a run stop before the first overage dollar.
 
-The generic trigger has one edge case. Whether `used_credits` is a monthly or an all-time
-counter is not established, and a month rollover would present as a large negative delta.
-A negative delta means no overage, never an error.
+**A third, spend-delta trigger was specced, built, and removed on 2026-08-28, and the removal
+is worth recording because the addition was a design error rather than a discovery.** The
+operator was offered an overage-dollar trigger when the windows were chosen and declined it.
+They then asked whether a single generic "overage is on" marker existed, saying explicitly that
+it might *simplify* having to check two conditions. The answer to that question was no, and the
+correct response was to stop there. Instead a third condition was added as a "backstop", which
+is a variant of the option already declined and the opposite of the simplification asked for.
+
+Removing it deleted more than a dead branch: the per-session baseline file, the session-id
+path-safety door, and the eight-day reaping obligation existed only to serve it, and each had
+been a source of review findings. Spend survives as **observation rather than trigger**: the
+reader still reports `spend` and the reading log still records `amountMinor`, which costs
+nothing and is what a later effort would need to revisit the question with real data.
+
+The cost of not having it, stated plainly: overage caused by a window this spec does not model
+goes uncaught. The payload carries nine unreleased codename buckets and null
+`seven_day_opus`/`seven_day_sonnet` slots, any of which could begin binding. The reading log is
+what would show that happening.
 
 ### Why the thresholds sit below 100 rather than at it
 
@@ -313,20 +325,13 @@ first of these red before fixing.
 Adds threshold evaluation to `usage-lib.js`, reading
 `~/.claude-kit-usage/config.json` with a `warn` and `barrier` percent for each of the
 session and weekly-all windows, a single `ratchet` percent for the Fable weekly window, an
-absolute overage-dollar delta for the generic trigger, and an `enabled` flag.
+and an `enabled` flag.
 
 Evaluation returns a verdict naming the state (`clear`, `warn` or `barrier`), the window
 that produced it, its `resets_at` and its percent. Precedence is fixed: any barrier
 outranks any warn, and a weekly barrier outranks a session barrier because its horizon is
 longer and its handling differs. A window whose percent is unknown never produces a
 barrier.
-
-The generic spend-delta trigger compares the current `spend.amountMinor` against a
-per-session baseline, which is the **first successful read in this session**, persisted
-under `~/.claude-kit-usage/baseline-<session-id>.json`. No SessionStart hook is involved:
-whichever of the two consumer hooks reads first establishes the baseline, and until one
-has, the generic trigger reports `clear` rather than a failure. A negative delta is read as
-no overage.
 
 The Fable window is evaluated separately and never feeds the `clear`/`warn`/`barrier`
 state, because its response is a routing cap rather than a pause. Evaluation returns it as
@@ -340,11 +345,10 @@ Acceptance criteria:
 - An absent config file, an unparseable one, or `enabled: false` all return `clear`.
 - The precedence table holds for every combination of two windows and three states.
 - An unknown window percent cannot produce `barrier` at any threshold.
-- A negative spend delta returns `clear` for that trigger rather than a failure.
 - The staleness budget tightens to 120s at ten points below a barrier and not before.
-- Both session-keyed files, the per-session baseline here and S3's dedupe marker, are
-  reaped when older than the longest window this spec tracks (eight days). Nothing else in
-  the effort owns cleanup, so without this the store grows one file per session forever.
+- S3's dedupe marker is the only session-keyed file in the store, and it is reaped when older
+  than the longest window this spec tracks (eight days). Nothing else in the effort owns
+  cleanup, so without this the store grows one file per session forever.
 
 Execution mode: delegate-capable.
 Tests: the precedence table, since a weekly barrier mishandled as a session barrier would
@@ -578,7 +582,7 @@ Execution mode: main.
 ## Open Questions
 
 - Threshold defaults are set at session 80/95, weekly-all 85/95, the Fable ratchet at 85,
-  and the spend-delta trigger at the first dollar. The Fable figure is the operator's
+  with no spend trigger. The Fable figure is the operator's
   decision of 2026-08-27; the rest are a starting point rather than a settled answer.
   What would settle them is how much window one section of a kit effort actually costs,
   which S1's reading log is what measures. Owner: the operator, on real data.
@@ -805,19 +809,12 @@ lease made concurrent successful fetches impossible; `ensureStore` now writing o
 including where it is about to report `locked`; and the `res.complete` branch shipping with no
 coverage because the test fake cannot produce it.
 
-**Open and unresolved, raised by S2 and owed to the design rather than to the implementer: the
-generic spend trigger is inert.** `spendDeltaMinor` is read, validated and the delta computed, but
-no rule consumes it, so the effort currently has two triggers and a number rather than the three
-this spec describes. The cause is the verdict shape in S2's dispatch brief, which carries `state`,
-`window` and a separate `fableRatchet` boolean and leaves the spend delta nowhere to produce a
-state. The implementer's reason for not inventing one holds: S3 may interpolate only a whitelisted
-window literal and S4's deny reason must name a window, so a spend-triggered state carrying
-`window: null` cannot be rendered by either consumer. Resolving it means deciding what the spend
-delta's response IS, and the options are not equivalent: a fourth window literal (`spend`) that
-both consumers learn to render, a separate boolean beside `fableRatchet` on the grounds that its
-response differs from a pause, or dropping it and saying so. **This blocks S3 and S4**, because
-both would otherwise be built against a verdict shape that is about to change.
+**Resolved 2026-08-28 by removal.** S2 shipped the spend delta computed but consumed by nothing,
+which surfaced the question of what its response should be. Put to the operator, the answer was
+that the trigger should never have existed: see "Two triggers, both usage windows" above for the
+provenance. The machinery is gone, spend remains as observation, and the verdict shape S3 and S4
+build against is now settled.
 
-Next: resolve the spend-delta shape, then S2 review, then S3 and S4.
+Next: S2 review (it has had none), then S3 and S4.
 Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
 land together, because the docs describe hooks that are now on `main`.
