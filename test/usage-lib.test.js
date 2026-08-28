@@ -1737,3 +1737,79 @@ test('the store write probe refuses a planted symlink rather than truncating its
         assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'important contents');
     });
 });
+
+// ---------------------------------------------------------------------------
+// The shared emission formatter (S6). One function, exported, used by both
+// hooks and the status CLI: three hand-copies of a numeric rule that must
+// agree are the drift hazard the canonical-text contract already demonstrated
+// once. The property-level pin (printed comparison always agrees with the
+// verdict) lives in usage.test.js against real CLI output; these pin the
+// rendering contract itself.
+// ---------------------------------------------------------------------------
+
+test('formatOneDecimal renders faithfully at one decimal, trailing .0 trimmed', () => {
+    // Integers stay integers.
+    assert.strictEqual(lib.formatOneDecimal(12), '12');
+    assert.strictEqual(lib.formatOneDecimal(0), '0');
+    assert.strictEqual(lib.formatOneDecimal(95), '95');
+    // One decimal survives as written, in both directions no rounding rule
+    // allowed: 94.6 floored to 94 or rounded to 95 were both reproduced
+    // defects.
+    assert.strictEqual(lib.formatOneDecimal(94.6), '94.6');
+    assert.strictEqual(lib.formatOneDecimal(95.5), '95.5');
+    assert.strictEqual(lib.formatOneDecimal(95.9), '95.9');
+    // Float noise is trimmed to the one decimal that is really there.
+    assert.strictEqual(lib.formatOneDecimal(94.60000000000001), '94.6');
+    // The second decimal resolves by the stored double, deterministically:
+    // 95.95 sits just above the tenth boundary and renders 96, 0.15 sits just
+    // below and renders 0.1. Rounding to nearest is monotone, which is what
+    // keeps a true at-or-past from ever printing as below.
+    assert.strictEqual(lib.formatOneDecimal(95.95), '96');
+    assert.strictEqual(lib.formatOneDecimal(0.15), '0.1');
+    // The "never fire this window" idiom stays a plain number.
+    assert.strictEqual(lib.formatOneDecimal(999999), '999999');
+});
+
+test('formatOneDecimal refuses anything that is not a finite number', () => {
+    // Math.floor(null) is 0 and 0 reads as a real measurement; the null
+    // answer is what makes a fabricated percent impossible at every emission
+    // door that uses this function.
+    assert.strictEqual(lib.formatOneDecimal(null), null);
+    assert.strictEqual(lib.formatOneDecimal(undefined), null);
+    assert.strictEqual(lib.formatOneDecimal(NaN), null);
+    assert.strictEqual(lib.formatOneDecimal(Infinity), null);
+    assert.strictEqual(lib.formatOneDecimal(-Infinity), null);
+    assert.strictEqual(lib.formatOneDecimal('95'), null);
+    assert.strictEqual(lib.formatOneDecimal({}), null);
+});
+
+// ---------------------------------------------------------------------------
+// configFileIssue: the status CLI's arming diagnostic. readConfig's
+// resolve-everything-to-defaults is the right degradation for the hooks, but
+// it left a rejected config.json indistinguishable from no config at all.
+// ---------------------------------------------------------------------------
+
+test('configFileIssue names a rejected file and stays quiet for a usable or absent one', async () => {
+    await withUsageEnv(async () => {
+        // Absent: nothing to diagnose.
+        assert.strictEqual(lib.configFileIssue(), null);
+        // The reproduced operator mistakes: a trailing comma and an over-cap
+        // file, both of which readConfig resolves to the disabled defaults.
+        writeConfig('{ "enabled": true, }');
+        assert.strictEqual(lib.configFileIssue(), 'not valid JSON');
+        writeConfig('{ "enabled": true, "pad": "' + 'x'.repeat(17000) + '" }');
+        assert.strictEqual(lib.configFileIssue(), 'over the read cap');
+        // Valid JSON that is not a config object: an array is typeof object,
+        // so it is refused explicitly rather than read as an empty config.
+        writeConfig('[]');
+        assert.strictEqual(lib.configFileIssue(), 'not a JSON object');
+        writeConfig('5');
+        assert.strictEqual(lib.configFileIssue(), 'not a JSON object');
+        // A parsed object is not an issue, whatever its fields hold:
+        // per-field fallback is normConfig's stated policy, not a rejection.
+        writeConfig({ enabled: 'not-a-boolean' });
+        assert.strictEqual(lib.configFileIssue(), null);
+        writeConfig({ enabled: true });
+        assert.strictEqual(lib.configFileIssue(), null);
+    });
+});

@@ -29,8 +29,10 @@
 //     channel, so the wording is a contract between them: an unattended run
 //     told to arm a resume by one and not to by the other is the failure this
 //     pins against. The values interpolated are the only ones allowed to vary,
-//     they are FLOORED rather than rounded (a rounded warn could print numbers
-//     asserting a barrier), and each expected string here was generated from the
+//     they render FAITHFULLY at one decimal through usage-lib's shared
+//     formatOneDecimal (every rounding direction let one sentence's two
+//     numbers compare differently than their originals; the lib's suite pins
+//     the rule), and each expected string here was generated from the
 //     canonical source file rather than typed, after diffing the hook's own
 //     output against it byte for byte. The warn carries the resume step exactly
 //     as the barrier does: without it the warn stops an unattended run at the
@@ -478,34 +480,37 @@ test('a weekly all-models barrier never arms a resume, reset instant or not', ()
     });
 });
 
-test('a fractional percent and a fractional threshold are floored, never emitted as floats', () => {
+test('a fractional percent and a fractional threshold render faithfully at one decimal', () => {
     withEnv(() => {
         // normPercent and normThreshold both admit fractions, so without the
-        // formatting at the emission door a float would reach trusted context.
-        // Floored, not rounded: 96.5 and 94.6 would round to 97 and 95.
+        // formatting at the emission door float noise would reach trusted
+        // context. Faithful, not rounded in either direction: flooring
+        // collapsed 96.5 onto 96 (and 95.5-vs-95.9 onto 95 and 95, reading as
+        // reached), rounding asserted barriers not reached.
         writeConfig(JSON.stringify({ enabled: true, session: { warn: 80.4, barrier: 94.6 } }));
         writeCache({ session: { percent: 96.5 } });
         const text = block(runHook());
         assert.strictEqual(text.split('\n')[0],
-            'Kit usage barrier: the session (5-hour) usage window is at 96%, at or past the barrier of 94%. Resetting at 2026-08-27T15:30:00Z.');
-        assert.strictEqual(/\d\.\d/.test(text), false, 'no decimal point may reach the emitted text');
+            'Kit usage barrier: the session (5-hour) usage window is at 96.5%, at or past the barrier of 94.6%. Resetting at 2026-08-27T15:30:00Z.');
+        assert.strictEqual(/\d\.\d\d/.test(text), false, 'never more than one decimal in the emitted text');
     });
 });
 
 test('a warn just under its barrier cannot print numbers that assert a barrier', () => {
     withEnv(() => {
-        // The reproduced defect behind flooring. At the default barrier of 95, a
+        // The original reproduced defect. At the default barrier of 95, a
         // percent of 94.6 is a WARN, and rounding both values independently
         // printed "is at 95% and the barrier the operator set for it is 95%"
         // above an instruction to wind down BEFORE the barrier: a model could
-        // reasonably read dispatch as already denied. Flooring cannot overstate
-        // usage, so the percent it prints is always strictly under the barrier
-        // it names.
+        // reasonably read dispatch as already denied. Faithful one-decimal
+        // rendering is monotone, so a warn's printed percent can never sit
+        // ABOVE the barrier it names, and it collapses onto it only when the
+        // true gap is under a tenth, which no one-decimal input can produce.
         enable();
         writeCache({ session: { percent: 94.6 } });
         const text = block(runHook());
         assert.strictEqual(text.split('\n')[0],
-            'Kit usage wind-down: the session (5-hour) usage window is at 94% and the barrier the operator set for it is 95%. Resetting at 2026-08-27T15:30:00Z.');
+            'Kit usage wind-down: the session (5-hour) usage window is at 94.6% and the barrier the operator set for it is 95%. Resetting at 2026-08-27T15:30:00Z.');
     });
 });
 
@@ -742,7 +747,7 @@ test('two-pass staleness: the hook re-reads once at the tighter budget and speak
         // The defect this protocol exists for. The first pass holds 300s-old
         // data reading 99, which is a barrier the hook may not speak on; the
         // stubbed endpoint answers the re-read with 96.4. An emission naming
-        // 96 rather than 99 is the proof the decision came from the second
+        // 96.4 rather than 99 is the proof the decision came from the second
         // verdict, and one transport call is the proof it took exactly one
         // re-read to get there. Without the re-read the wind-down would wait
         // for the 600s cache to age out, leaving the main thread spending at
@@ -751,7 +756,7 @@ test('two-pass staleness: the hook re-reads once at the tighter budget and speak
         const text = block(runHook(undefined, { mode: '200', body: wireBody(96.4, '2026-08-27T15:30:00+00:00') }));
         assert.ok(text, 'a barrier confirmed on fresh data must speak');
         assert.strictEqual(text.split('\n')[0],
-            'Kit usage barrier: the session (5-hour) usage window is at 96%, at or past the barrier of 95%. Resetting at 2026-08-27T15:30:00+00:00.');
+            'Kit usage barrier: the session (5-hour) usage window is at 96.4%, at or past the barrier of 95%. Resetting at 2026-08-27T15:30:00+00:00.');
         assert.strictEqual(transportCalls(), 1, 'exactly one re-read, never a loop');
         assert.deepStrictEqual(markerKeys(), [`${SESSION}|session|2026-08-27T15:30:00+00:00|barrier`],
             'the marker is keyed on the re-read verdict, so the first pass cannot suppress the next window');

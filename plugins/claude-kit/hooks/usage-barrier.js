@@ -66,9 +66,11 @@
 // allows, like every other kit guard.
 //
 // Nothing from the endpoint payload and nothing from tool_input crosses into
-// the reason text. The only interpolated values are Math.floor()ed integers
-// the library already bounded and this file re-checks as finite at the
-// emission door, a window label from a fixed two-literal map, and a reset
+// the reason text. The only interpolated values are numbers the library
+// already bounded, re-checked as finite at the emission door and rendered by
+// usage-lib's shared formatOneDecimal (faithful at one decimal; the three
+// rounding rules tried before it are the reproduced defects its comment
+// carries), a window label from a fixed two-literal map, and a reset
 // timestamp usage-lib has already validated against its anchored ISO-8601
 // pattern. The agent type, the prompt and the model value the hook saw are
 // never echoed.
@@ -138,17 +140,18 @@ function withinBudget(verdict) {
     return verdict.ageSeconds !== null && verdict.ageSeconds < verdict.maxAgeSeconds;
 }
 
-// The emission door for every number in the reason text: floored, never
-// rounded, and checked finite HERE rather than trusting the door that
-// decided. Flooring is the canonical rule because rounding can overstate
-// usage (94.6 against a barrier of 95 rounds to "95% at barrier 95%", which
-// asserts a state that has not happened). The finiteness check is the second
-// layer under evaluate's own unknown-never-trips guarantees: those are pinned
-// by usage-lib's suite, and this door is what makes "a deny quoting a
-// fabricated percent" impossible even if a future edit upstream breaks them,
-// because Math.floor(null) is 0 and 0 reads as a real measurement.
-function flooredOrNull(value) {
-    return Number.isFinite(value) ? Math.floor(value) : null;
+// The emission door for every number in the reason text: usage-lib's shared
+// formatOneDecimal, which renders faithfully at one decimal (each rounding
+// direction tried before it printed one sentence whose two numbers compared
+// differently than their originals; its comment carries the three reproduced
+// defects) and returns null for anything that is not a finite number. The
+// null answer is the second layer under evaluate's own unknown-never-trips
+// guarantees: those are pinned by usage-lib's suite, and this door is what
+// makes "a deny quoting a fabricated percent" impossible even if a future
+// edit upstream breaks them, because Math.floor(null) is 0 and 0 reads as a
+// real measurement.
+function renderedOrNull(value) {
+    return lib.formatOneDecimal(value);
 }
 
 function resetClause(resetsAt) {
@@ -192,15 +195,15 @@ function barrierReason(verdict, config, nested) {
     // weaker guard.
     if (typeof verdict.window !== 'string' || !Object.prototype.hasOwnProperty.call(WINDOW_LABELS, verdict.window)) return null;
     const label = WINDOW_LABELS[verdict.window];
-    const percent = flooredOrNull(verdict.percent);
+    const percent = renderedOrNull(verdict.percent);
     if (percent === null) return null;
     // The config-derived number goes through the same finite door as the
-    // verdict's: the header's claim is EVERY interpolated integer, and a
+    // verdict's: the header's claim is EVERY interpolated number, and a
     // non-finite threshold is now a value the library deliberately produces
     // (a stood-down warn is Infinity), so this shape is live in the config
     // object, not hypothetical, even though readConfig keeps barriers finite
     // on every path through main today.
-    const barrier = flooredOrNull(config[verdict.window].barrier);
+    const barrier = renderedOrNull(config[verdict.window].barrier);
     if (barrier === null) return null;
     const lead = 'Denied by the kit usage barrier: the ' + label + ' usage window is at ' + percent + '%, at or past the barrier of ' + barrier + '%. ' + resetClause(verdict.resetsAt) + ' Subagent dispatch is held until this window resets.';
     const close = 'This is a spend control the operator armed, not an error and not a rate limit.';
@@ -235,10 +238,10 @@ function barrierReason(verdict, config, nested) {
 // subagent can legitimately do. Returns null on a non-finite Fable percent:
 // emit nothing.
 function ratchetReason(verdict, config, nested) {
-    const percent = flooredOrNull(verdict.fablePercent);
+    const percent = renderedOrNull(verdict.fablePercent);
     if (percent === null) return null;
     // Same finite door as barrierReason's threshold, same reason.
-    const ratchet = flooredOrNull(config.fableRatchet);
+    const ratchet = renderedOrNull(config.fableRatchet);
     if (ratchet === null) return null;
     return [
         'Held by the kit Fable ratchet: the Fable weekly window is at ' + percent + '%, at or past the ratchet of ' + ratchet + '%. ' + resetClause(verdict.fableResetsAt),

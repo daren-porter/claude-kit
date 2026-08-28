@@ -357,14 +357,14 @@ test('barrier: an Agent dispatch at a session-window barrier on fresh data is de
         const reason = denyReason(runHook(env, agentPayload()));
         assert.strictEqual(reason, expectedBarrierReason({
             label: 'session (5-hour)',
-            percent: 97,
+            percent: 97.4,
             barrier: 95,
             resetClause: 'Resetting at ' + RESET_SESSION + '.',
             resumeStep: resumeArm(RESET_SESSION),
             blockedStep: BLOCKED_KNOWN,
         }));
         assert.strictEqual(reason.split('\n').length, 11);
-        assert.ok(!reason.includes('97.4'), 'percents are floored before rendering');
+        assert.ok(reason.includes('at 97.4%'), 'percents render faithfully at one decimal, never floored');
         assert.strictEqual(transportCalls(env.home), 0, 'fresh cache, no fetch');
     });
 });
@@ -379,7 +379,7 @@ test('barrier: the weekly all-models window names itself and instructs no resume
         const reason = denyReason(runHook(env, agentPayload()));
         assert.strictEqual(reason, expectedBarrierReason({
             label: 'weekly all-models',
-            percent: 96,
+            percent: 96.2,
             barrier: 95,
             resetClause: 'Resetting at ' + RESET_WEEKLY + '.',
             resumeStep: RESUME_WEEKLY,
@@ -397,7 +397,7 @@ test('barrier: a reset instant that failed validation renders the could-not-be-r
         const reason = denyReason(runHook(env, agentPayload()));
         assert.strictEqual(reason, expectedBarrierReason({
             label: 'session (5-hour)',
-            percent: 97,
+            percent: 97.4,
             barrier: 95,
             resetClause: 'Its reset instant could not be read.',
             resumeStep: RESUME_SESSION_UNKNOWN,
@@ -410,7 +410,7 @@ test('barrier: a reset instant that failed validation renders the could-not-be-r
         const weekly = denyReason(runHook(env, agentPayload()));
         assert.strictEqual(weekly, expectedBarrierReason({
             label: 'weekly all-models',
-            percent: 96,
+            percent: 96.2,
             barrier: 95,
             resetClause: 'Its reset instant could not be read.',
             resumeStep: RESUME_WEEKLY,
@@ -474,9 +474,11 @@ test('ratchet: a fable override at or above the Fable threshold is denied; the i
             fableWeekly: { percent: 92.6, resetsAt: RESET_WEEKLY },
         });
         const reason = denyReason(runHook(env, agentPayload('fable')));
-        // 92, not 93: floored, never rounded. Rounding could overstate usage.
+        // 92.6 renders as itself: faithful at one decimal, neither floored
+        // (which understates) nor rounded (which could overstate onto the
+        // ratchet).
         assert.strictEqual(reason, expectedRatchetReason({
-            percent: 92,
+            percent: 92.6,
             ratchet: 85,
             resetClause: 'Resetting at ' + RESET_WEEKLY + '.',
         }));
@@ -567,7 +569,7 @@ test('a barrier deny inside a subagent gets the subagent form: no Chapter, no re
         armSessionBarrier();
         const expected = expectedSubagentBarrier({
             label: 'session (5-hour)',
-            percent: 97,
+            percent: 97.4,
             barrier: 95,
             resetClause: 'Resetting at ' + RESET_SESSION + '.',
         });
@@ -590,7 +592,7 @@ test('a ratchet deny inside a subagent reports the downgrade upward instead of r
         writeCache({ fableWeekly: { percent: 92.6, resetsAt: RESET_WEEKLY } });
         const reason = denyReason(runHook(env, agentPayload('fable', { agent_type: 'implementer-sonnet' })));
         assert.strictEqual(reason, expectedSubagentRatchet({
-            percent: 92,
+            percent: 92.6,
             ratchet: 85,
             resetClause: 'Resetting at ' + RESET_WEEKLY + '.',
         }));
@@ -775,13 +777,13 @@ test('two-pass staleness: the hook re-reads exactly once at the tighter budget a
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
         // First pass holds age-300 data reading 99.4; the stubbed endpoint
-        // answers the re-read with 96.8. A deny naming 96 rather than 99 is
-        // the proof the decision came from the re-read.
+        // answers the re-read with 96.8. A deny naming 96.8 rather than 99.4
+        // is the proof the decision came from the re-read.
         writeCache({ ageSeconds: 300, session: { percent: 99.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
         const reason = denyReason(runHook(env, agentPayload(), { mode: '200', body: apiBody(96.8) }));
-        assert.ok(reason.includes('at 96%'), 'the deny reflects the re-read verdict, floored');
-        assert.ok(!reason.includes('at 99%'), 'not the stale first verdict');
+        assert.ok(reason.includes('at 96.8%'), 'the deny reflects the re-read verdict, rendered faithfully');
+        assert.ok(!reason.includes('at 99.4%'), 'not the stale first verdict');
         assert.strictEqual(transportCalls(env.home), 1, 'exactly one re-read, never a loop');
     });
 });
@@ -819,14 +821,16 @@ test('internal errors and malformed payloads exit 0 with no output', () => {
     });
 });
 
-test('fractional percents and thresholds are floored, never rounded, in the reason text', () => {
+test('fractional percents and thresholds render faithfully at one decimal in the reason text', () => {
     withEnv((env) => {
-        // 90.6 floors to 90 where rounding would say 91: flooring cannot
-        // overstate, which is the amended canonical rule.
+        // 90.6 prints as itself. Floored it became 90 (and let 95.5-vs-95.9
+        // print as reached); rounded it became 91 and overstated; the
+        // faithful rule is usage-lib's formatOneDecimal, whose comment
+        // carries all three reproduced defects.
         writeConfig({ enabled: true, session: { warn: 80, barrier: 90.6 } });
         writeCache({ session: { percent: 91, resetsAt: RESET_SESSION } });
         const reason = denyReason(runHook(env, agentPayload()));
-        assert.ok(reason.includes('at 91%, at or past the barrier of 90%'));
-        assert.ok(!reason.includes('90.6'));
+        assert.ok(reason.includes('at 91%, at or past the barrier of 90.6%'));
+        assert.ok(!reason.includes('at 90%'), 'the threshold is never floored away from what the operator wrote');
     });
 });

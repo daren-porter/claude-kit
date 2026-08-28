@@ -50,15 +50,18 @@
 // on every tool call for the rest of the run; nothing when the store cannot
 // hold the marker.
 //
-// The emission door. Every value interpolated into the emitted text is an
-// integer, one of two whitelisted window literals, or a timestamp usage-lib.js
-// has already put through normTimestamp. Everything else is a hardcoded literal
-// in this file. No string from the endpoint payload crosses, `spend.disclaimer`
-// included, because it carries a markdown link. Percents are FLOORED at the
-// door because normPercent and normThreshold both admit fractional numbers:
-// an unformatted value would put a float into trusted context, and rounding
-// (the first draft) could round a warn's percent up onto its own barrier and so
-// print numbers asserting a barrier above wind-down-first instructions.
+// The emission door. Every value interpolated into the emitted text is a
+// number rendered by usage-lib's shared formatOneDecimal, one of two
+// whitelisted window literals, or a timestamp usage-lib.js has already put
+// through normTimestamp. Everything else is a hardcoded literal in this file.
+// No string from the endpoint payload crosses, `spend.disclaimer` included,
+// because it carries a markdown link. Percents and thresholds render
+// FAITHFULLY at one decimal rather than through any rounding direction:
+// normPercent and normThreshold both admit fractional numbers, an unformatted
+// value would put float noise into trusted context, and every rounding rule
+// tried here let one sentence's two numbers compare differently than their
+// originals do (formatOneDecimal's comment carries the three reproduced
+// defects).
 //
 // The marker. One append-only file, `<store>/nudged.log`, one JSON object per
 // line, keyed on (session id, window, reset instant, verdict state) so a new
@@ -574,15 +577,14 @@ async function main() {
     if (!Object.prototype.hasOwnProperty.call(WINDOW_LABELS, verdict.window)) return;
     const label = WINDOW_LABELS[verdict.window];
 
-    // FLOORED at the door, not rounded, and the difference is load-bearing.
-    // normPercent and normThreshold both admit fractional numbers, so an
-    // unformatted value would put a float into trusted context; rounding
-    // instead let a WARN print a first line whose numbers assert a barrier (at
-    // barrier 95 and percent 94.6 both render 95, so the text read "is at 95%
-    // and the barrier the operator set for it is 95%" above an instruction to
-    // wind down BEFORE the barrier, and a model could reasonably read dispatch
-    // as already denied). Flooring cannot overstate usage and cannot make a
-    // warn read as a barrier.
+    // Rendered FAITHFULLY at one decimal by the library's shared formatter,
+    // never through a rounding direction: rounding let a WARN print a first
+    // line whose numbers assert a barrier (at barrier 95 and percent 94.6
+    // both rendered 95, so the text read "is at 95% and the barrier the
+    // operator set for it is 95%" above an instruction to wind down BEFORE
+    // the barrier), flooring reopened the same class from the other side
+    // (95.5 against a barrier of 95.9 rendered 95 and 95), and
+    // formatOneDecimal's comment carries why no rounding rule can close it.
     //
     // Both values are checked finite HERE rather than trusted from the door
     // that decided: a null percent can never reach a non-clear verdict
@@ -593,8 +595,8 @@ async function main() {
     // window keys in WINDOW_LABELS, so that lookup cannot miss.
     const rawBarrier = config[verdict.window].barrier;
     if (!Number.isFinite(verdict.percent) || !Number.isFinite(rawBarrier)) return;
-    const percent = String(Math.floor(verdict.percent));
-    const barrier = String(Math.floor(rawBarrier));
+    const percent = lib.formatOneDecimal(verdict.percent);
+    const barrier = lib.formatOneDecimal(rawBarrier);
 
     // The dedupe, and both questions are answered from the one read. The
     // verdict's own key is the ordinary one. The second is what keeps adding

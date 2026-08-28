@@ -1033,6 +1033,45 @@ async function readUsageInner(opts) {
 }
 
 // ---------------------------------------------------------------------------
+// Emission formatting. The one rendering rule for every percent and threshold
+// that reaches model-facing text, exported so usage-nudge.js, usage-barrier.js
+// and usage.js share a single implementation: the canonical sentence contract
+// already drifted once when it was hand-copied between consumers, and three
+// hand-copies of a numeric rule that must agree is the same hazard with
+// arithmetic in it.
+// ---------------------------------------------------------------------------
+
+// A finite number rendered faithfully at up to one decimal place, trailing .0
+// trimmed: 12 renders "12", 94.6 renders "94.6", 94.60000000000001 renders
+// "94.6". Returns null for anything that is not a finite number, so the
+// call-site rule that only a finite number is ever interpolated has one shape
+// (Math.floor(null) is 0, and 0 reads as a real measurement).
+//
+// Faithful rendering replaced a rounding rule three times over, each version
+// reproduced as a defect. Math.round let a WARN print 94.6-against-95 as "95%
+// ... 95%", asserting a barrier not reached; Math.floor let a warn print
+// 95.5-against-95.9 the same way; floor-the-percent with ceil-the-threshold
+// let a BARRIER print 95.95-against-95.9 as "95% ... 96%", reading as clear
+// when it is not. No pair of independently rounded numbers can be relied on
+// to compare the way their originals do, and the emitted sentence puts both
+// in one clause and invites exactly that comparison. Rendering at one-decimal
+// fidelity is the identity on every value the endpoint or an operator
+// actually writes, and rounding to nearest is monotone, so a true at-or-past
+// can never print as below it. The residual class (a warn whose two printed
+// values collide as equal) needs two distinct values inside one rounding
+// step, under a tenth apart, which no pair of one-decimal inputs can produce.
+//
+// toFixed(1) settles both the float noise and the tie by judging the stored
+// double: 95.95 is stored as 95.950000000000003 and renders "96", while 0.15
+// is stored just under and renders "0.1". Deterministic, and never biased by
+// a direction this module chose.
+function formatOneDecimal(value) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    const text = value.toFixed(1);
+    return text.endsWith('.0') ? text.slice(0, -2) : text;
+}
+
+// ---------------------------------------------------------------------------
 // Threshold policy and evaluation (S2). This half issues no request and calls
 // no reader entry point: it shares this file's normalizers and its clock seam,
 // and otherwise takes a read the caller already holds and answers what the kit
@@ -1176,6 +1215,45 @@ function readConfigInner() {
         return normConfig(null);
     }
     return normConfig(parsed);
+}
+
+// Whether a PRESENT config file was rejected whole, for the status CLI's
+// diagnostics: readConfig resolves every unusable file to the disabled
+// defaults, which is the right degradation for the hooks but leaves an
+// operator's rejected config.json indistinguishable from no config at all in
+// the one surface built to diagnose arming. Returns null when there is no
+// file to diagnose or the file parsed as a JSON object, and a short reason
+// from a fixed set otherwise, never file content. A file whose FIELDS fall
+// back one by one is deliberately not flagged: that is normConfig's stated
+// per-field policy, not a rejection. Never throws (configFilePath reaches
+// os.homedir(), which can raise).
+function configFileIssue() {
+    try {
+        return configFileIssueInner();
+    } catch {
+        return null;
+    }
+}
+
+function configFileIssueInner() {
+    try {
+        fs.statSync(configFilePath());
+    } catch {
+        return null;
+    }
+    const read = readCapped(configFilePath(), CONFIG_READ_CAP);
+    if (read === null) return 'unreadable';
+    if (read.truncated) return 'over the read cap';
+    let parsed;
+    try {
+        parsed = JSON.parse(read.text);
+    } catch {
+        return 'not valid JSON';
+    }
+    // Arrays are typeof object, so without the explicit check a [] would read
+    // as a config object whose every field happens to be absent.
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return 'not a JSON object';
+    return null;
 }
 
 // One window's state. An UNKNOWN percent is clear and can never be anything
@@ -1346,7 +1424,9 @@ module.exports = {
     RATE_LIMIT_DEFAULT_SECONDS,
     TRANSIENT_BACKOFF_SECONDS,
     evaluate,
+    formatOneDecimal,
     readConfig,
+    configFileIssue,
     configFilePath,
     DEFAULT_CONFIG,
     STALENESS_SECONDS,

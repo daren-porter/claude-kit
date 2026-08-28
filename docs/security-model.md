@@ -49,7 +49,7 @@ so a reader who has internalized "kit text arrives at session start" is now wron
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
-| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and only ever the orchestrator's (a payload carrying a subagent identity returns before this channel is reached): a window label from a two-literal whitelist, two FLOORED integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
+| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and the orchestrator's wherever the harness puts an agent identity on a subagent's payload, which is an inference rather than a verified fact: the hook returns before this channel on any payload carrying one, and if a subagent's payload omits those fields instead then this row's audience is wider than it says: a window label from a two-literal whitelist, two FLOORED integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
@@ -103,7 +103,8 @@ The marked-record note names records from validated filenames rather than from r
 is the fix for a real laundering path (a record could otherwise trigger a kit instruction by
 carrying its token).
 
-**Recorded divergence, three idioms across six sites and three cap values.** Delete-and-truncate-silently at 120
+**Recorded divergence, three idioms across six FILES and three cap values** (files rather than
+call sites, since two of those files carry the idiom at more than one door).** Delete-and-truncate-silently at 120
 (`session-start.js` three filename doors, `kit-goal-stop.js`'s plan path); delete-and-truncate-
 silently at 160 (`stop-docs-hygiene.js`, two sites); delete-and-truncate-silently at 300
 (`usage-autocontinue-nudge.js`'s `safePath`, one site, the wider cap because a `CLAUDE_CONFIG_DIR`
@@ -172,12 +173,29 @@ Six properties, each verified against the code rather than intended:
   on `PreToolUse` for `Agent|Task`. So the credential read and the network call happen in ordinary
   sessions rather than sitting latent in the payload, and the first three properties above were
   re-verified against the as-built hooks rather than carried forward. Two consequences a reviewer
-  should hold. Both consumers read `readConfig()` before anything else and return on
-  `enabled: false`, which is the default, so an unarmed machine makes no network call at all. And
+  should hold. Both HOOK consumers read `readConfig()` before anything else and return on
+  `enabled: false`, which is the default, so an unarmed machine makes no network call **from a
+  hook**, and the store is never created. What was actually observed on 2026-08-28 is narrower than
+  a verification and is stated as observed: the installed plugin cache at HEAD carries and registers
+  `usage-nudge.js`, a full session ran, and `~/.claude-kit-usage/` was still absent afterwards. An
+  absent store is equally consistent with the hook firing and returning early and with the hook
+  never firing at all, so it corroborates the config gate rather than proving the hook ran. The
+  gate itself is checkable in the code, which is where the claim rests. The store
+  does exist on this machine now, created a few minutes later by `usage.js status` run by hand,
+  which is the exception below behaving exactly as documented rather than a counter-example to the
+  sentence above. The
+  payload carries one deliberate exception, `hooks/usage.js status`, an operator-invoked read-only
+  command that answers whether or not the feature is armed, because refusing to say what the usage
+  is while the control is disarmed would be useless. It is the only path here that reaches the
+  credential and the network without `enabled` being true, and it is reached only by someone typing
+  it. And
   `usage-nudge.js` runs on **every tool call**, so when disarmed it costs one capped read of a
   small JSON file plus a Node process start, per tool call, and when armed it additionally pays the
   reader's 6-second request deadline in-turn on the one tool call per staleness window that misses
   cache. Both were accepted rather than overlooked.
+Three more properties belong to the two consumers rather than to the credential, and they are
+kept in this section because they are what a reviewer arriving at the credential path next needs:
+
 - **`usage-nudge.js`'s `PostToolUse` registration carries no matcher, and that is load-bearing
   rather than lazy.** Confirmed against the 2.1.248 binary: in the tool-call path a `PreToolUse`
   chain that yields a stop returns immediately with the deny message, before the tool is called, so
@@ -192,7 +210,11 @@ Six properties, each verified against the code rather than intended:
   the other consequence of an unmatched registration, and the first draft of the bullet above
   taught "do not narrow this" while saying nothing about whose context the text lands in.
   `docs-write-guard.js`'s header already records that plugin PreToolUse hooks fire inside subagents
-  and that the payload carries the subagent identity, and PostToolUse rides the same tool loop. Two
+  and that the payload carries the subagent identity. **That `PostToolUse` rides that same tool loop
+  is an inference and not an observation**, and it is marked here because this is the third time in
+  one effort that an inference about harness behavior was written into this document as settled
+  fact, the previous two having been retracted after review. The live-fire evidence in
+  `docs-write-guard.js` covers `PreToolUse` only. Two
   failures followed, and the second is the one worth remembering. A subagent's tool call would have
   consumed the orchestrator's one nudge, because the session id on a subagent's entries is the
   PARENT's, and because while an `Agent` call is in flight *every* tool call is the subagent's, so
@@ -208,6 +230,16 @@ Six properties, each verified against the code rather than intended:
   job. That pair now exists in three hooks: the kit has no shared hook-payload module and
   inventing one for four lines would be the worse trade, but a fourth copy is the point to stop and
   build one.
+- **The kit is deliberately a SECOND poller against this endpoint, and chose that over reading a
+  third party's cache.** `ccstatusline` already polls the same path every 180 seconds on this
+  machine, so the kit could have read its cache instead of adding traffic of its own. It does not,
+  and the reason is evidence rather than preference: that cache is field-conditional on the
+  operator's widget configuration, so fields absent from the live file are absent because no
+  configured widget needs them, and its private normalized schema drops the entire `limits[]` array,
+  which is where `severity`, `is_active` and the Fable scope live. Reading it would have cost
+  precisely the signals worth having, and coupled the kit to a third party's undocumented internal
+  shape. The kit polls at a 600-second floor instead, tightening to 120 near a barrier, which is
+  deliberate under-sampling: a spend control does not need three-minute resolution.
 - **The kit deliberately has no request coalescing here, and the cost is worth stating in its
   sharpest form.** Several concurrent `Agent` dispatches on a cold cache each issue their own
   request, and a 429 then locks the reader for its retry-after, which on this endpoint has been
@@ -227,7 +259,9 @@ session ids, which is the one place in this effort a harness-supplied string is 
 is persisted as a JSON **value** rather than as a path component on purpose: an earlier design put
 a session id in a filename and needed a strict character-class door to make that safe, so the
 shape that needs the door was removed rather than the door re-added. Nothing reads either log back
-to the model. The shared parent
+to the model, and `readings.log` is the one to watch: it is the file a later burn-rate
+projection would want to consume, which makes that effort both the natural consumer of this data
+and the one positioned to break the invariant without noticing. The shared parent
 holds one more file, `config.json`, carrying the operator's thresholds. That one sits outside the
 profile subdirectory deliberately, because thresholds are a policy preference rather than an
 account fact, and it is the only file in this store **no kit code ever writes**: the operator
@@ -285,9 +319,8 @@ circumvented" is not a vulnerability in this kit; it is the stated design. What 
 reporting is a guard that fails **closed** by accident, because that can wedge a session, and a
 guard whose deny path is silent, because exit 2 without a reason on stderr costs the model the
 explanation it needs to comply. `usage-barrier.js` denies through JSON rather than exit 2, so the
-equivalent defect there is an empty or a **truncated** `permissionDecisionReason`. The harness caps
-no cap on that field that this kit has established, so the risk is not a known limit but an
-unknown one: the stop instruction sits at the END of the reason, so whatever does eventually
+equivalent defect there is an empty or a **truncated** `permissionDecisionReason`. No cap on that
+field has been established by this kit, so the risk there is not a known limit but an unknown one: the stop instruction sits at the END of the reason, so whatever does eventually
 truncate it costs exactly the part the model needs, and costs it silently. A change that lengthens
 that text is therefore worth the same scrutiny as one that removes it.
 
@@ -323,7 +356,7 @@ one makes no request. The directory is confirmed ignored before the first write,
 is enforced by a hook; all three are skill instructions, so they hold to the extent the model
 follows them, which is the general caveat in the fail-open section below.
 
-## Operator-initiated egress
+## Operator-initiated egress that moves project content
 
 One path, and it is the only place any kit skill moves project content off the machine.
 `brainstorming` can flatten a screen into a single self-contained file to share, and an Artifact

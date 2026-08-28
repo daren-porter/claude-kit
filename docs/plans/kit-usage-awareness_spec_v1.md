@@ -613,6 +613,32 @@ Acceptance criteria:
 
 Execution mode: main.
 
+**PARKED 2026-08-28, on the operator's decision, with the reason recorded because it changes what
+this section should contain.** `writing-skills` gates behavior-shaping prose at RED and GREEN arms
+of three reps each, serial on the RED side, one fixture per rep, plus a third arm for a narrowing,
+and every fixture needs an isomorph because this effort's own committed plan doc answers the
+question a fixture would pose. That priced at roughly 15 to 18 mostly-serial subagent dispatches
+for this section and S8 together, which the spec authorized without knowing the figure. Put to the
+operator, the call was to ship S6 now and let a fresh session run the arms with the budget known.
+
+**Most of this section turned out to be redundant, and finding that is the point of the skill's
+"ask what already produces the behavior" rule.** S3's hook emits the whole instruction sequence
+directly into the model's context at the moment it matters, with the real percentages and reset
+instant interpolated. Prose restating it changes nothing and adds a rule every session carries.
+What survives is narrower and should be what a later session writes:
+
+- **One entry in `executing-work`'s blocker set**, which lists four blockers and does not include a
+  usage barrier, while the completion contract states as a hard prohibition that the only reason to
+  stop mid-spec is a true blocker. So the hook tells a session to stop and the skill tells it that
+  stopping is a contract violation. That conflict is the real gap, and it is a structural slot in an
+  existing enumeration rather than new prose.
+- **Naming the resume mechanism.** The hook text says "create a single scheduled job" and cannot
+  name a tool, because a hook has no way to know what is available in the session. `CronCreate` is
+  also a deferred tool, so a model told to create a scheduled job may not find it.
+
+The operator-facing half of this section shipped early, in `docs/usage-awareness.md` under S6,
+because it was the only thing standing between the feature and being usable at all.
+
 ### 6. Security model, ledger corrections, docs
 
 Ships three document updates.
@@ -721,9 +747,32 @@ Adds the rule that gives the kit's existing Fable-downgrade path a number, in
 `plugins/claude-kit/skills/executing-work/SKILL.md` and
 `plugins/claude-kit/skills/finishing-work/SKILL.md`.
 
+**S8 was unimplementable as first written, and the gap was found at execution rather than at
+plan time.** It told the orchestrator to read the Fable weekly percent and nothing could read one:
+`usage-lib.js` is a module with no CLI, and the store path carries a hash of the resolved
+credentials directory so it is not hand-guessable. The prose half was parked and
+`plugins/claude-kit/hooks/usage.js` was built to close it, a read-only `status` command mirroring
+`memory.js`'s split from `memory-lib.js`. Two things about that command bind this section's prose
+when it is written:
+
+- **`status` evaluates the threshold policy as if the feature were armed**, and marks the two
+  policy lines `[advisory: the feature is disabled, so no hook acts on this]` when it is not. The
+  alternative was to report `evaluate`'s inert verdict, which is what the library returns whenever
+  `enabled` is not true, and that would have printed `state: clear` and `fableRatchet: false` on a
+  saturated account: a non-evaluation wearing the clothes of a measurement. The as-if-armed reading
+  is also what an operator choosing thresholds for the first time actually needs. What follows for
+  the prose is a gating clause: the ratchet rule applies only where the feature is enabled, because
+  the operator opts into this whole feature by writing the config file, and a routing cap nobody
+  configured would be a surprise.
+- **A reading can be unavailable**, and the prose needs a branch for it rather than assuming a
+  percent. `usage-lib.js` exports no cache reader, so there is no stale-cache fallback: when the
+  backoff lock is held the command reports that no reading is available. The prose must say what to
+  do there, and the answer that matches every other door in this feature is to proceed at the
+  session model rather than to block.
+
 Before any dispatch carrying a fable model override (a `delegate-fable` section, an
 escalation into fable, or finishing-work's reviews), the orchestrator reads the Fable weekly
-percent. At or above the ratchet it dispatches at the session model instead and records the
+percent via that command. At or above the ratchet it dispatches at the session model instead and records the
 downgrade in the Chapter, naming the percent and the reset instant. Work already in flight is
 left alone. The rule states the structural limit: on a Fable-led session the mechanical
 backstop in S4 sees nothing, so this prose is the only control.
@@ -778,9 +827,14 @@ Execution mode: main.
   does appear, the session barrier drops below 95. Owner: observation.
 - What `limits[].is_active` means. Observed false on the session window and true on
   weekly-all. Nothing in this spec branches on it. Owner: observation.
-- Whether `severity` ever leaves `normal`, and at what percent. With `spend.limit` null and
-  `spend.percent` 0 it may never move on the spend object. Owner: observation, recorded by
-  S1 on every read.
+- **Answered 2026-08-28, partly.** `severity` does leave `normal`: the weekly all-models window
+  reported `warning` at 78% while the session window at 43% and the Fable window at 36% both still
+  read `normal`, observed through `usage.js status` on this account. So the field moves, it moves on
+  a window rather than only on the spend object, and it moved somewhere between 74% (observed
+  `normal` earlier the same day) and 78%. What remains open is the exact boundary, whether a level
+  above `warning` exists, and whether the spend object's own severity ever moves given a null
+  `spend.limit`. Nothing in this spec branches on it, and the reading log is what would settle the
+  boundary. Owner: observation.
 - Whether `spend.used.amount_minor` is a monthly or an all-time counter. Nothing branches on it
   now that the spend trigger is gone, so this is purely a question the reading log can answer for
   a later effort. Owner: observation.
@@ -1250,4 +1304,89 @@ Next: S5 (resume and the shipped prose), S6 (security model, ledger corrections,
 Fable ratchet's prose half). S5 and S6 both want one live observation behind a `/plugin update`,
 which the payload has never had, and the standing question named in S3 above is the first thing that
 run should answer.
+Commit Model: Commit-and-Push, honored.
+
+### Chapter 7 - 2026-08-28
+Completed: S6 (security model, ledger corrections, docs), plus `plugins/claude-kit/hooks/usage.js`,
+the read CLI that S8's prose needs. **S5 and S8 are PARKED** by the operator's decision, recorded
+against S5 above. The effort is not complete and `finishing-work` has not run.
+Implemented By: main session for every document; `implementer-opus` for the CLI; `implementer-fable`
+for the combined formatting and CLI fix round.
+Metrics: one document review battery (prose-reviewer plus one blind-reader persona) and one blind
+code review, three reviewers in one dispatch. Two implementer dispatches, one fix round.
+NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), not consulted this Chapter. Gate at close: 515
+pass, 0 fail, from a 412 baseline at the effort's start.
+
+Decisions / Surprises:
+- **S8 was unimplementable as specced and nobody noticed until execution.** It told the orchestrator
+  to read the Fable weekly percent and nothing could: `usage-lib.js` is a module with no CLI and the
+  store path carries a hash of the resolved credentials directory. The operator's call was to build
+  the read path, so `usage.js status` now exists, mirroring `memory.js`'s split from `memory-lib.js`.
+- **Running that CLI made kit code answer the endpoint for the first time**, which also created the
+  store on this machine and, fourteen minutes after I had written into the ledger that the store did
+  not exist, falsified my own claim. The prose reviewer caught the contradiction between two
+  documents in one changeset. Both now rest the claim on the config gate in the code, which is
+  checkable, rather than on an absence.
+- **The blind reader could not run the document's only self-check command.** I had written
+  `node "$CLAUDE_PLUGIN_ROOT/hooks/usage.js" status`, a hook-context variable that is unset in a
+  shell, so the section sold as "pick thresholds by seeing what the current ones would do" was
+  unrunnable by its reader. Worse for a later session: it is unset in a model's Bash tool
+  specifically, so S8 would have inherited a dead command. A further check found `usage.js` is
+  absent from the installed plugin cache, so the command genuinely cannot run from the installed
+  payload until the next `/plugin update`, which is the activation boundary the document never
+  stated and now does.
+- **The numeric rendering rule was wrong three times, in three directions.** `Math.round()`
+  reproduced a warn printing numbers that asserted a barrier. `Math.floor()` fixed that case and
+  left the class open. A reviewer then proposed flooring the percent and ceiling the threshold,
+  which I verified repairs both and breaks the opposite direction: percent 95.95 against barrier
+  95.9 IS a barrier and would print "at 95%, at or past the barrier of 96%". No rounding direction
+  survives, because two independently rounded numbers cannot be relied on to compare the way their
+  originals do, and the text puts both in one sentence and invites exactly that comparison. The fix
+  is faithful one-decimal rendering, and it is now **one exported function in `usage-lib.js`** rather
+  than three hand-copies, because a hand-copied contract in this same effort had already drifted.
+  The property test pins the invariant all three rules failed rather than pinning the arithmetic.
+- **A reviewer's proposed fix being wrong is worth recording alongside the reviews that were right.**
+  Nine reviewers across this effort found real defects; this is the first whose remedy would have
+  introduced one, and it was caught by testing the proposal rather than by reading it.
+- **The confidence-overclaim class recurred a third time, after two retractions of it.** I wrote
+  "PostToolUse rides the same tool loop" into `security-model.md` as settled fact while the hook's
+  own header, the spec and `usage-awareness.md` all correctly call it an inference. Marked as
+  inference now, in the document a reviewer reads first.
+- **One epistemic error I would have defended.** I wrote "verified live, with `usage-nudge.js` firing
+  on every tool call and the store still absent". An absent store is equally consistent with the hook
+  firing and returning early and with the hook never firing, so the observation corroborates the
+  config gate rather than establishing what "verified" claimed. Restated as observed.
+- **Two spec-enumerated S6 deliverables were simply missing** from the section I wrote: the
+  deliberate second-poller decision, and the three-profile stakes in the ledger correction. Both were
+  named in the spec's own list.
+- **`severity` was observed leaving `normal` for the first time**, which answers an Open Question
+  above: weekly all-models read `warning` at 78% while two other windows at 43% and 36% read
+  `normal`. Recorded because nothing in this spec branches on it and a later burn-rate effort might.
+- The enumeration class landed twice more, both caught by others: `architecture.md` said the kit
+  reaches four things outside itself while the next paragraph, edited by this effort, named the
+  fifth; and `README.md`'s payload inventory omitted `usage.js` while its test-suite sentence,
+  edited in the same changeset, counted five components.
+
+Review Findings: prose review 1 Critical, 12 Major, 13 Minor (CHANGES_REQUIRED); blind-reader 1
+Critical, 4 Major, 4 Minor plus five comprehension gaps; blind code review 5 Major, 6 Minor
+(CHANGES_REQUIRED). All Criticals and Majors addressed. The document was rewritten whole rather
+than patched, both because the fix list reached twenty items on one file and because the prose
+reviewer flagged bolded lead-ins on twelve of roughly twenty paragraphs as a machine-prose tell of
+frequency rather than of any single line. Minors accepted with reasons recorded: per-field config
+fallbacks are not flagged by `status` (that is `normConfig`'s stated policy), and the `barrier: 0`
+staleness edge from Chapter 6.
+
+**The cause distribution over the whole effort, stated once because it is the most useful thing in
+these Chapters.** Across S1 through S8, nineteen reviewer dispatches found every Critical and every
+Major in spec prose, dispatch briefs, living-doc claims, or main-thread fixes. Not one originated in
+an implementer's code. Implementers corrected the brief six times and were right every time, and one
+of them found an enumeration defect the orchestrator had missed. Three claims asserted as verified
+against the binary were retracted, the third written after the first two had already been retracted.
+The reviewers confirmed, unprompted and repeatedly, that the hard parts were right first time: both
+staleness protocols, both emission doors, precedence across fifteen-plus allow-on-doubt branches, the
+credential properties, and the text contract byte-for-byte.
+
+Next: S5 and S8, in a fresh session with the `writing-skills` arms budgeted, then `finishing-work`
+over the whole effort. The first armed run should answer the standing question recorded in S3 and in
+`usage-awareness.md`, and that document names the concrete check.
 Commit Model: Commit-and-Push, honored.
