@@ -13,9 +13,10 @@ you pick, not a retry control.
 
 **The hooks have to be in the installed plugin, not just in this repository.** A session loads
 the payload from the plugin cache, so a hook committed here is inert until `/plugin marketplace
-update <marketplace>` followed by `/reload-plugins`. This bites in a way worth naming: at the
-time of writing, `hooks/usage.js` is in the repository and absent from the installed cache, so
-the status command below runs from a repo checkout and not from the installed payload.
+update <marketplace>` followed by `/reload-plugins`. Nothing warns you about the gap, and it is
+wide enough to matter: a hook can be committed, tested and documented while every session on the
+machine still runs the previous payload. If the behaviour you are reading about here does not
+happen, check that before you check anything else.
 
 **The reader needs a credential it can find.** It reads `claudeAiOauth.accessToken` from
 `$CLAUDE_CONFIG_DIR/.credentials.json`, falling back to `~/.claude/.credentials.json` only when
