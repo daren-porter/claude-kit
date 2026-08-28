@@ -400,7 +400,17 @@ test('a persistent 4xx takes the long backoff and a 5xx the transient one, each 
 });
 
 test('a 200 that is not JSON, or has no usable limits array, returns parse', async () => {
-    for (const body of ['not json {', JSON.stringify({ spend: {} }), JSON.stringify({ limits: [], spend: {} })]) {
+    // A malformed body may be a blip and takes the transient class. A payload
+    // whose shape changed (no limits key, an empty limits, or no kind this
+    // module recognizes) is a server-side change that does not self-heal, so
+    // all three take the long backoff: splitting them would leave two of the
+    // three re-polling a rate-limited endpoint forever.
+    const cases = [
+        ['not json {', lib.TRANSIENT_BACKOFF_SECONDS],
+        [JSON.stringify({ spend: {} }), lib.PERSISTENT_BACKOFF_SECONDS],
+        [JSON.stringify({ limits: [], spend: {} }), lib.PERSISTENT_BACKOFF_SECONDS],
+    ];
+    for (const [body, backoff] of cases) {
         await withUsageEnv(async ({ config }) => {
             writeCredentials(config, TOKEN);
             const fake = fakeTransport({ status: 200, body });
@@ -409,7 +419,7 @@ test('a 200 that is not JSON, or has no usable limits array, returns parse', asy
             assert.strictEqual(result.reason, 'parse');
             const lock = readLockFile();
             assert.strictEqual(lock.reason, 'parse');
-            assert.strictEqual(lock.blockedUntil, NOW_SECONDS + lib.TRANSIENT_BACKOFF_SECONDS);
+            assert.strictEqual(lock.blockedUntil, NOW_SECONDS + backoff, body.slice(0, 30));
         });
     }
 });
@@ -1034,5 +1044,479 @@ test('a payload whose kinds were all renamed takes the long backoff, not the 60s
         // A server-side rename does not self-heal, so re-polling it every 60s
         // forever is the mistake the 4xx class already exists to avoid.
         assert.strictEqual(readLockFile().blockedUntil, NOW_SECONDS + lib.PERSISTENT_BACKOFF_SECONDS);
+    });
+});
+
+// ---------------------------------------------------------------------------
+// S2: threshold policy and evaluation.
+//
+// What these lock. First the safety defaults, because they are what keeps a
+// component that can DENY a tool dispatch from arming itself at install: an
+// absent config, an unparseable one and enabled:false all evaluate to clear,
+// and so does every reader failure, so no barrier is ever reached except on a
+// positive determination from data the kit actually has. Then the precedence
+// table over two windows and three states, because a weekly barrier mishandled
+// as a session one would arm a resume for a window three days out. Then the
+// unknown-percent rule, which is subtler than it looks: JavaScript coerces
+// null to 0 in a relational test, so an evaluator that leaned on the coercion
+// rather than checking for unknown would barrier on a window it knows nothing
+// about the moment a threshold sat at zero. After that the Fable ratchet,
+// which must fire and not fire entirely independently of the state, because
+// its response is a routing cap rather than a pause; the staleness budget's
+// exact boundary; and the spend baseline, whose first read establishes and
+// whose negative delta is a month rollover rather than an error. Finally the
+// reap, which is the only cleanup anything in this feature owns.
+
+const SESSION_RESETS = '2026-08-27T17:00:00+00:00';
+const WEEKLY_RESETS = '2026-08-31T07:00:00+00:00';
+
+// A readUsage success carrying exactly what the evaluator reads. Every
+// percentage defaults to UNKNOWN rather than to a number, because unknown is
+// the state most of these rules are about.
+function usageOf(spec) {
+    const s = spec || {};
+    const w = (percent, resetsAt) => ({
+        percent: percent === undefined ? null : percent,
+        severity: 'normal',
+        resetsAt,
+        isActive: true,
+    });
+    return {
+        ok: true,
+        fetchedAt: NOW.toISOString(),
+        fromCache: false,
+        windows: {
+            session: w(s.session, SESSION_RESETS),
+            weeklyAll: w(s.weeklyAll, WEEKLY_RESETS),
+            fableWeekly: w(s.fable, WEEKLY_RESETS),
+        },
+        spend: { amountMinor: s.spend === undefined ? 1234 : s.spend, exponent: 2, currency: 'USD' },
+    };
+}
+
+// An armed config. Every field the caller does not state takes its default
+// inside the lib, which is the per-field fallback these tests lean on.
+function on(extra) {
+    return Object.assign({ enabled: true }, extra || {});
+}
+
+function writeConfig(config) {
+    fs.mkdirSync(path.dirname(lib.configFilePath()), { recursive: true, mode: 0o700 });
+    fs.writeFileSync(lib.configFilePath(), typeof config === 'string' ? config : JSON.stringify(config));
+}
+
+// What the profile store and its shared parent hold right now. An absent
+// directory is an empty store rather than an error: several of these cases
+// assert that nothing was written at all.
+function storeEntries() {
+    try { return fs.readdirSync(lib.storeRoot()).sort(); } catch { return []; }
+}
+
+function parentEntries() {
+    try { return fs.readdirSync(path.dirname(lib.storeRoot())).sort(); } catch { return []; }
+}
+
+test('the precedence table holds for every combination of two windows and three states', async () => {
+    await withUsageEnv(async () => {
+        // Against the default thresholds: session 80/95, weeklyAll 85/95.
+        const percentOf = { clear: 10, warn: 90, barrier: 99 };
+        const table = [
+            // weeklyAll state, session state, expected state, expected window
+            ['clear', 'clear', 'clear', null],
+            ['clear', 'warn', 'warn', 'session'],
+            ['clear', 'barrier', 'barrier', 'session'],
+            ['warn', 'clear', 'warn', 'weeklyAll'],
+            ['warn', 'warn', 'warn', 'weeklyAll'],
+            ['warn', 'barrier', 'barrier', 'session'],
+            ['barrier', 'clear', 'barrier', 'weeklyAll'],
+            ['barrier', 'warn', 'barrier', 'weeklyAll'],
+            ['barrier', 'barrier', 'barrier', 'weeklyAll'],
+        ];
+        for (const [weekly, session, state, window] of table) {
+            const label = 'weeklyAll ' + weekly + ' / session ' + session;
+            const usage = usageOf({ weeklyAll: percentOf[weekly], session: percentOf[session] });
+            const verdict = lib.evaluate(usage, on());
+            // Any barrier outranks any warn, and weeklyAll outranks session at
+            // the same level: its horizon is days rather than hours and the
+            // consumers handle the two differently.
+            assert.strictEqual(verdict.state, state, label);
+            assert.strictEqual(verdict.window, window, label);
+            // The percent and the reset instant come from the window that
+            // produced the state, so a consumer can act without another read.
+            const producer = window === 'session' ? session : weekly;
+            assert.strictEqual(verdict.percent, window === null ? null : percentOf[producer], label);
+            assert.strictEqual(
+                verdict.resetsAt,
+                window === null ? null : (window === 'session' ? SESSION_RESETS : WEEKLY_RESETS),
+                label,
+            );
+        }
+    });
+});
+
+test('an unknown window percent never produces warn or barrier, at any threshold', async () => {
+    await withUsageEnv(async () => {
+        // Nothing known, ordinary thresholds: nothing to act on.
+        let verdict = lib.evaluate(usageOf({}), on());
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.window, null);
+        assert.strictEqual(verdict.percent, null);
+
+        // The case that actually pins the rule, and the reason the null check
+        // is written out rather than left to the language: `null >= 95` is
+        // false, but `null >= 0` is TRUE. With the thresholds at zero, an
+        // evaluator leaning on that coercion barriers on a window it knows
+        // nothing about, and tightens the staleness budget for it too.
+        verdict = lib.evaluate(usageOf({}), on({ session: { warn: 0, barrier: 0 } }));
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.window, null);
+        assert.strictEqual(verdict.maxAgeSeconds, lib.STALENESS_SECONDS);
+
+        // Unknown is per window: a saturated session still barriers while the
+        // unknown weekly window stays out of the verdict entirely.
+        verdict = lib.evaluate(usageOf({ session: 99 }), on());
+        assert.strictEqual(verdict.state, 'barrier');
+        assert.strictEqual(verdict.window, 'session');
+    });
+});
+
+test('enabled false, an absent config and an unparseable one all read as clear', async () => {
+    await withUsageEnv(async () => {
+        const saturated = usageOf({ session: 99, weeklyAll: 99, fable: 99 });
+
+        // The safety default, with no config file at all: a component that can
+        // deny a dispatch does not arm itself at install.
+        assert.deepStrictEqual(lib.readConfig(), lib.DEFAULT_CONFIG);
+        assert.strictEqual(lib.DEFAULT_CONFIG.enabled, false);
+        let verdict = lib.evaluate(saturated, lib.readConfig(), { sessionId: 'disabled-session' });
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.window, null);
+        assert.strictEqual(verdict.fableRatchet, false);
+        assert.strictEqual(verdict.spendDelta, null);
+        // A feature that is off leaves nothing behind, baseline included.
+        assert.deepStrictEqual(storeEntries(), []);
+
+        // Explicitly off, with every threshold armed underneath it.
+        writeConfig({ enabled: false, session: { warn: 1, barrier: 1 }, weeklyAll: { warn: 1, barrier: 1 }, fableRatchet: 1 });
+        verdict = lib.evaluate(saturated, lib.readConfig());
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.fableRatchet, false);
+
+        // Unparseable: the defaults apply whole, and the defaults are off.
+        writeConfig('{ not json at all');
+        const config = lib.readConfig();
+        assert.deepStrictEqual(config, lib.DEFAULT_CONFIG);
+        assert.strictEqual(lib.evaluate(saturated, config).state, 'clear');
+
+        // And a config that is valid JSON but the wrong shape entirely.
+        writeConfig('[1, 2, 3]');
+        assert.deepStrictEqual(lib.readConfig(), lib.DEFAULT_CONFIG);
+    });
+});
+
+test('a failed read never barriers, whatever its reason', async () => {
+    await withUsageEnv(async () => {
+        // The whole reason enum the reader half contracts to return.
+        const reasons = ['no-token', 'expired', 'rate-limited', 'timeout', 'parse', 'locked', 'no-store', 'bad-call'];
+        for (const reason of reasons) {
+            const verdict = lib.evaluate(
+                { ok: false, reason },
+                on({ session: { warn: 0, barrier: 0 }, weeklyAll: { warn: 0, barrier: 0 }, fableRatchet: 0 }),
+                { sessionId: 'failed-session' },
+            );
+            assert.strictEqual(verdict.state, 'clear', reason);
+            assert.strictEqual(verdict.fableRatchet, false, reason);
+            assert.strictEqual(verdict.spendDelta, null, reason);
+            assert.strictEqual(verdict.maxAgeSeconds, lib.STALENESS_SECONDS, reason);
+        }
+        // Every reader failure allows, so none of them establishes a baseline
+        // off a read that never happened either.
+        assert.deepStrictEqual(storeEntries(), []);
+    });
+});
+
+test('one garbage field falls back on its own default rather than disabling the rest', async () => {
+    await withUsageEnv(async () => {
+        writeConfig({
+            enabled: true,
+            session: { warn: 'eighty', barrier: 60 },
+            weeklyAll: { warn: 85, barrier: 1e300 },
+            fableRatchet: -1,
+            spendDeltaMinor: null,
+        });
+        const config = lib.readConfig();
+        assert.strictEqual(config.enabled, true);
+        // The stated values stand...
+        assert.strictEqual(config.session.barrier, 60);
+        assert.strictEqual(config.weeklyAll.warn, 85);
+        // ...and only the unusable ones fall back, each on its own default:
+        // a threshold outside [0, 100] is one the kit could never act on.
+        assert.strictEqual(config.session.warn, lib.DEFAULT_CONFIG.session.warn);
+        assert.strictEqual(config.weeklyAll.barrier, lib.DEFAULT_CONFIG.weeklyAll.barrier);
+        assert.strictEqual(config.fableRatchet, lib.DEFAULT_CONFIG.fableRatchet);
+        assert.strictEqual(config.spendDeltaMinor, lib.DEFAULT_CONFIG.spendDeltaMinor);
+        // The half-edited config still evaluates on the value it did state.
+        const verdict = lib.evaluate(usageOf({ session: 70 }), config);
+        assert.strictEqual(verdict.state, 'barrier');
+        assert.strictEqual(verdict.window, 'session');
+    });
+});
+
+test('the threshold config is machine-global: the shared parent, never the profile store', async () => {
+    await withUsageEnv(async ({ home }) => {
+        assert.strictEqual(lib.configFilePath(), path.join(home, '.claude-kit-usage', 'config.json'));
+        assert.strictEqual(lib.configFilePath().startsWith(lib.storeRoot()), false);
+        writeConfig({ enabled: true, session: { warn: 50, barrier: 60 } });
+        const first = lib.readConfig();
+        assert.strictEqual(lib.evaluate(usageOf({ session: 55 }), first).state, 'warn');
+
+        // A second config profile reads the same policy. The cache, the lock,
+        // the log and the spend baseline are per profile because each is an
+        // account fact; a threshold is an operator preference and is not.
+        const other = fs.mkdtempSync(path.join(os.tmpdir(), 'usage-lib-profile-c-'));
+        try {
+            const priorStore = lib.storeRoot();
+            process.env.CLAUDE_CONFIG_DIR = other;
+            assert.notStrictEqual(lib.storeRoot(), priorStore);
+            assert.deepStrictEqual(lib.readConfig(), first);
+        } finally {
+            try { fs.rmSync(other, { recursive: true, force: true }); } catch { /* best effort */ }
+        }
+
+        // Including the two config-dir shapes that move the profile key.
+        // Only the LAST segment of the store path varies with the credentials
+        // directory and the config sits above it, so an unset variable, and
+        // even a relative one (which the reader half refuses as no-token),
+        // still read the one machine-global policy rather than a per-repo one.
+        const expected = path.join(home, '.claude-kit-usage', 'config.json');
+        delete process.env.CLAUDE_CONFIG_DIR;
+        assert.strictEqual(lib.configFilePath(), expected);
+        assert.deepStrictEqual(lib.readConfig(), first);
+        process.env.CLAUDE_CONFIG_DIR = 'relative-dir';
+        assert.strictEqual(lib.configFilePath(), expected);
+        assert.deepStrictEqual(lib.readConfig(), first);
+    });
+});
+
+test('the Fable ratchet trips independently of the state and never on an unknown percent', async () => {
+    await withUsageEnv(async () => {
+        // Everything else clear: the ratchet is a routing cap rather than a
+        // pause, so it has to be able to fire entirely on its own.
+        let verdict = lib.evaluate(usageOf({ session: 10, weeklyAll: 10, fable: 85 }), on());
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.window, null);
+        assert.strictEqual(verdict.fableRatchet, true);
+        assert.strictEqual(verdict.fablePercent, 85);
+        assert.strictEqual(verdict.fableResetsAt, WEEKLY_RESETS);
+
+        // At or above, so just below does not trip it.
+        assert.strictEqual(lib.evaluate(usageOf({ fable: 84.9 }), on()).fableRatchet, false);
+
+        // An unknown Fable percent never trips it, and a barrier elsewhere
+        // does not trip it either: the two are separate determinations.
+        verdict = lib.evaluate(usageOf({ session: 99 }), on());
+        assert.strictEqual(verdict.state, 'barrier');
+        assert.strictEqual(verdict.fableRatchet, false);
+        assert.strictEqual(verdict.fablePercent, null);
+        assert.strictEqual(verdict.fableResetsAt, WEEKLY_RESETS);
+
+        // And a saturated Fable window never feeds the state, so it can never
+        // pause an effort: work continues at the session model.
+        verdict = lib.evaluate(usageOf({ fable: 100 }), on());
+        assert.strictEqual(verdict.state, 'clear');
+        assert.strictEqual(verdict.window, null);
+        assert.strictEqual(verdict.fableRatchet, true);
+    });
+});
+
+test('the staleness budget tightens ten points below a barrier and not eleven', async () => {
+    await withUsageEnv(async () => {
+        // Ten points below the default 95 barrier.
+        assert.strictEqual(lib.evaluate(usageOf({ session: 85 }), on()).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
+        // Eleven points below: the 600s floor, so high burn is discovered at
+        // the boundary rather than one poll too late.
+        assert.strictEqual(lib.evaluate(usageOf({ session: 84 }), on()).maxAgeSeconds, lib.STALENESS_SECONDS);
+        // Either window arms it, and past the barrier certainly does.
+        assert.strictEqual(lib.evaluate(usageOf({ weeklyAll: 85 }), on()).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
+        assert.strictEqual(lib.evaluate(usageOf({ weeklyAll: 99 }), on()).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
+
+        // It follows the CONFIGURED barrier rather than the default one.
+        const low = on({ session: { warn: 20, barrier: 40 } });
+        assert.strictEqual(lib.evaluate(usageOf({ session: 30 }), low).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
+        assert.strictEqual(lib.evaluate(usageOf({ session: 29 }), low).maxAgeSeconds, lib.STALENESS_SECONDS);
+
+        // The Fable window has a ratchet rather than a barrier, so nothing
+        // pauses on it and there is no deadline to sample faster for.
+        assert.strictEqual(lib.evaluate(usageOf({ fable: 99 }), on()).maxAgeSeconds, lib.STALENESS_SECONDS);
+    });
+});
+
+test('the first read establishes the spend baseline and the second reports the delta', async () => {
+    await withUsageEnv(async () => {
+        const opts = { sessionId: 'session-abc_123' };
+        // The establishing read has nothing to compare against yet, which is
+        // reported as no delta rather than as a failure or as a zero.
+        let verdict = lib.evaluate(usageOf({ session: 10, spend: 1000 }), on(), opts);
+        assert.strictEqual(verdict.spendDelta, null);
+        const file = lib.baselineFilePath('session-abc_123');
+        assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { amountMinor: 1000 });
+        assert.strictEqual(fs.statSync(file).mode & 0o777, 0o600);
+
+        verdict = lib.evaluate(usageOf({ session: 10, spend: 1150 }), on(), opts);
+        assert.strictEqual(verdict.spendDelta, 150);
+        // The baseline is the FIRST read of the session and not the last: one
+        // that advanced with every read could never show a delta at all.
+        assert.deepStrictEqual(JSON.parse(fs.readFileSync(file, 'utf8')), { amountMinor: 1000 });
+
+        // A second session keeps its own baseline.
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 1150 }), on(), { sessionId: 'session-def' }).spendDelta, null);
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 1200 }), on(), { sessionId: 'session-def' }).spendDelta, 50);
+
+        // No session id at all: no delta and nothing to key one on, and the
+        // trigger must not fail over it.
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 9999 }), on()).spendDelta, null);
+        // An unknown spend is not a zero either.
+        assert.strictEqual(lib.evaluate(usageOf({ spend: null }), on(), opts).spendDelta, null);
+    });
+});
+
+test('a negative spend delta is no overage rather than a failure', async () => {
+    await withUsageEnv(async () => {
+        const opts = { sessionId: 'rollover-session' };
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 5000 }), on(), opts).spendDelta, null);
+        // Whether this counter is monthly or all-time is not established, so a
+        // month rollover presents exactly like this and must read as no
+        // overage rather than as an error.
+        const verdict = lib.evaluate(usageOf({ spend: 100 }), on(), opts);
+        assert.strictEqual(verdict.spendDelta, -4900);
+        assert.strictEqual(verdict.state, 'clear');
+    });
+});
+
+test('a session id that is not path-safe is refused and writes nothing', async () => {
+    await withUsageEnv(async () => {
+        const unsafe = ['../../etc/passwd', 'a/b', 'sess.1', '', 'has space', 'x'.repeat(65), 'semi;colon', 42, null];
+        for (const sessionId of unsafe) {
+            const verdict = lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId });
+            const label = JSON.stringify(sessionId);
+            assert.strictEqual(verdict.spendDelta, null, label);
+            // The id arrives in the harness payload and lands in a FILENAME,
+            // so a refusal has to leave no file anywhere, not merely no delta.
+            assert.deepStrictEqual(storeEntries(), [], label);
+            // Where a traversal out of the profile store would land.
+            assert.deepStrictEqual(parentEntries(), [], label);
+        }
+        // The boundary in the other direction: 64 characters is accepted.
+        const longest = 'y'.repeat(64);
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId: longest }).spendDelta, null);
+        assert.strictEqual(fs.existsSync(lib.baselineFilePath(longest)), true);
+    });
+});
+
+test('a baseline past eight days is reaped while a fresh one and the store files stand', async () => {
+    await withUsageEnv(async () => {
+        assert.strictEqual(lib.ensureStore().ok, true);
+        const aged = new Date(Date.now() - (9 * 24 * 60 * 60 * 1000));
+        assert.strictEqual(lib.BASELINE_MAX_AGE_MS < Date.now() - aged.getTime(), true);
+        const write = (file) => { fs.writeFileSync(file, '{}\n'); return file; };
+        const old = write(lib.baselineFilePath('old-session'));
+        const fresh = write(lib.baselineFilePath('fresh-session'));
+        // A concurrent writer's in-flight temp file, aged: an unanchored name
+        // test would eat this one in the instant before its rename.
+        const tmp = write(lib.baselineFilePath('racing-session') + '.tmp.99999');
+        const untouchable = [lib.usageFilePath(), lib.lockFilePath(), lib.logFilePath()];
+        for (const file of untouchable) write(file);
+        writeConfig({ enabled: true });
+        // Age everything except the fresh baseline, so the sweep is proven
+        // scoped by NAME and not merely by age.
+        for (const file of [old, tmp, lib.configFilePath()].concat(untouchable)) fs.utimesSync(file, aged, aged);
+
+        // The sweep rides the one baseline write a session makes.
+        assert.strictEqual(lib.evaluate(usageOf({ spend: 1000 }), on(), { sessionId: 'new-session' }).spendDelta, null);
+
+        assert.strictEqual(fs.existsSync(old), false);
+        assert.strictEqual(fs.existsSync(fresh), true);
+        assert.strictEqual(fs.existsSync(tmp), true);
+        assert.strictEqual(fs.existsSync(lib.baselineFilePath('new-session')), true);
+        for (const file of untouchable.concat([lib.configFilePath()])) {
+            assert.strictEqual(fs.existsSync(file), true, file);
+        }
+    });
+});
+
+test('a misshapen usage object degrades to clear rather than throwing', async () => {
+    await withUsageEnv(async () => {
+        const shapes = [
+            undefined,
+            null,
+            {},
+            { ok: true },
+            { ok: true, windows: 'nope', spend: 7 },
+            { ok: true, windows: { session: null, weeklyAll: 5 } },
+            // A percent that is a string is not a percent: the evaluator holds
+            // a hand-built usage object to the same doors the wire read passes.
+            { ok: true, windows: { session: { percent: '99', resetsAt: 'whenever' } }, spend: {} },
+        ];
+        for (const usage of shapes) {
+            const verdict = lib.evaluate(usage, on(), { sessionId: 'shape-session' });
+            const label = JSON.stringify(usage) || String(usage);
+            assert.strictEqual(verdict.state, 'clear', label);
+            assert.strictEqual(verdict.window, null, label);
+            assert.strictEqual(verdict.fableRatchet, false, label);
+            assert.strictEqual(verdict.maxAgeSeconds, lib.STALENESS_SECONDS, label);
+        }
+    });
+});
+
+test('a cache whose recognized kinds are gone is refused, and one with them is served', async () => {
+    await withUsageEnv(async ({ config }) => {
+        writeCredentials(config, TOKEN);
+        // Recognized kinds present but every percent unknown: the wire door
+        // accepts this, so the cache door must too, or the staleness budget is
+        // defeated on every call (a 200 clears the lock, so nothing throttles
+        // the refetch).
+        const unknown = { percent: null, severity: null, resetsAt: null, isActive: null };
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        fs.writeFileSync(lib.usageFilePath(), JSON.stringify({
+            fetchedAt: NOW.toISOString(),
+            kinds: ['session'],
+            windows: { session: unknown, weeklyAll: unknown, fableWeekly: unknown },
+            spend: { amountMinor: 500, exponent: 2, currency: 'USD' },
+        }) + '\n');
+        const served = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        assert.strictEqual((await read(served, { maxAgeSeconds: 600 })).fromCache, true);
+        assert.strictEqual(served.calls.length, 0);
+
+        // No recognized kinds: the wire door refuses this shape, so the cache
+        // door must refuse it too.
+        fs.writeFileSync(lib.usageFilePath(), JSON.stringify({
+            fetchedAt: NOW.toISOString(),
+            kinds: [],
+            windows: { session: unknown, weeklyAll: unknown, fableWeekly: unknown },
+            spend: { amountMinor: 500, exponent: 2, currency: 'USD' },
+        }) + '\n');
+        const refetch = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        assert.strictEqual((await read(refetch, { maxAgeSeconds: 600 })).fromCache, false);
+        assert.strictEqual(refetch.calls.length, 1);
+    });
+});
+
+test('the store write probe refuses a planted symlink rather than truncating its target', async (t) => {
+    if (typeof process.getuid === 'function' && process.getuid() === 0) {
+        t.skip('root ignores the mode bits this case relies on');
+        return;
+    }
+    await withUsageEnv(async ({ config, home }) => {
+        writeCredentials(config, TOKEN);
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        const victim = path.join(home, 'victim.txt');
+        fs.writeFileSync(victim, 'important contents');
+        // The probe path is predictable, so a symlink can be planted at it.
+        fs.symlinkSync(victim, path.join(lib.storeRoot(), '.writable-' + process.pid));
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        await read(fake);
+        // 'w' would follow the link and truncate the target while reporting the
+        // store writable; 'wx' refuses an existing path.
+        assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'important contents');
     });
 });

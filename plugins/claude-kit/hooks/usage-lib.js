@@ -1,11 +1,14 @@
-// Shared library for the kit's usage awareness: the reader half.
+// Shared library for the kit's usage awareness: the reader and the threshold
+// policy it feeds.
 //
 // Reads Anthropic's OAuth usage endpoint (GET api.anthropic.com/api/oauth/usage
 // with the harness's own OAuth bearer, probed live 2026-08-27) and normalizes
 // the answer to the three windows the kit acts on (session, weeklyAll,
-// fableWeekly) plus overage spend. Threshold policy and evaluation land in this
-// same file in S2 of the kit-usage-awareness spec; this half only reads, caches
-// and records.
+// fableWeekly) plus overage spend. The second half is the threshold policy:
+// the operator's config, the verdict S3's wind-down text and S4's dispatch
+// barrier act on, and the per-session spend baseline that verdict needs. It
+// makes no request and calls nothing in the first half; it answers about a
+// read the caller already holds.
 //
 // Token discipline. The token is resolved from the credentials directory (see
 // credentialsDir for the resolution rule) at every call, never cached in
@@ -72,7 +75,13 @@
 // the window rolls. Files: usage.json (the cached normalized read),
 // usage.lock (the backoff),
 // readings.log (one JSON line per successful FETCH, never a cache hit, bounded and
-// self-truncating, each line carrying the profile key as its discriminator).
+// self-truncating, each line carrying the profile key as its discriminator),
+// baseline-<session-id>.json (the spend delta's baseline, the only per-SESSION
+// file here and so the only one needing a reap, at eight days).
+// One file deliberately sits OUTSIDE the profile directory, in its shared
+// parent: ~/.claude-kit-usage/config.json holds the operator's thresholds,
+// which are a policy preference rather than an account fact, so a profile
+// switch must not switch the policy with it.
 // Directories are created 0700 and files 0600; as docs/security-model.md
 // records for the sibling memory store, those are creation-time properties
 // rather than invariants, since mkdir does not tighten an existing directory
@@ -181,14 +190,25 @@ function ensureStore() {
     // creatability is not writability and only a write proves the store can
     // hold a backoff. The probe is paid only on the paths that are about to
     // write anyway.
+    // 'wx' and not 'w': the store's 0700 is a creation-time property rather
+    // than an invariant (see the header), and 'w' follows a symlink and
+    // truncates whatever it points at. publishText uses 'wx' for exactly this
+    // reason. An EEXIST is our own orphaned probe, so clear it and retry once.
     const probe = path.join(storeRoot(), '.writable-' + process.pid);
-    try {
-        fs.writeFileSync(probe, '', { mode: 0o600, flag: 'w' });
-    } catch (err) {
-        return { ok: false, reason: 'store not writable: ' + sanitize(err && err.message, 120) };
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            fs.writeFileSync(probe, '', { mode: 0o600, flag: 'wx' });
+            try { fs.unlinkSync(probe); } catch { /* the write is what mattered */ }
+            return { ok: true };
+        } catch (err) {
+            if (err && err.code === 'EEXIST' && attempt === 0) {
+                try { fs.unlinkSync(probe); } catch { /* refuted below */ }
+                continue;
+            }
+            return { ok: false, reason: 'store not writable: ' + sanitize(err && err.message, 120) };
+        }
     }
-    try { fs.unlinkSync(probe); } catch { /* the write is what mattered */ }
-    return { ok: true };
+    return { ok: false, reason: 'store not writable: probe could not be placed' };
 }
 
 // The clock, memory-lib's resolveNow seam under this feature's own variable so
@@ -507,8 +527,12 @@ function normalizeBody(text) {
     } catch {
         return { ok: false };
     }
+    // All three shapes are the same event, a server-side change to the payload,
+    // and none of them self-heals. Splitting them across backoff classes would
+    // leave two of the three re-polling a rate-limited endpoint forever, which
+    // is the mistake the 4xx class already exists to avoid.
     if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.limits) || parsed.limits.length === 0) {
-        return { ok: false };
+        return { ok: false, persistent: true };
     }
     const windows = { session: emptyWindow(), weeklyAll: emptyWindow(), fableWeekly: emptyWindow() };
     const seen = new Set();
@@ -530,6 +554,7 @@ function normalizeBody(text) {
     // reads to S2's unknown-never-barriers rule as a clear account when the
     // account may be saturated. Treated as a parse failure for that reason.
     if (seen.size === 0) return { ok: false, persistent: true };
+    const kinds = Array.from(seen);
     const spendObj = parsed.spend && typeof parsed.spend === 'object' ? parsed.spend : {};
     const used = spendObj.used && typeof spendObj.used === 'object' ? spendObj.used : {};
     const spend = {
@@ -537,7 +562,7 @@ function normalizeBody(text) {
         exponent: normExponent(used.exponent),
         currency: normToken(used.currency, 10),
     };
-    return { ok: true, windows, spend };
+    return { ok: true, windows, spend, kinds };
 }
 
 // ---------------------------------------------------------------------------
@@ -571,11 +596,13 @@ function readCache() {
         exponent: normExponent(rawSpend.exponent),
         currency: normToken(rawSpend.currency, 10),
     };
-    // The same refusal the wire door applies, because the header promises both
-    // doors hold the same shape: an all-unknown cache reads to the evaluator as
-    // a clear account when the account may be saturated, and one is reachable
-    // without tampering from any usage.json a pre-change build wrote.
-    if (WINDOW_KEYS.every((key) => windows[key].percent === null)) return null;
+    // The SAME question the wire door asks, not a similar one. Refusing on
+    // "every percent is null" instead would discard a cache the wire door had
+    // just accepted (recognized kinds whose percents are genuinely unknown),
+    // and since a 200 clears the lock nothing would stop the refetch: the
+    // staleness budget would be defeated on every call rather than honored.
+    const kinds = Array.isArray(parsed.kinds) ? parsed.kinds.filter((k) => WINDOW_KEYS.includes(k)) : [];
+    if (kinds.length === 0) return null;
     return { fetchedAt: parsed.fetchedAt, windows, spend };
 }
 
@@ -783,7 +810,8 @@ function fetchUsage(token, transport) {
             });
         } catch {
             // No destroy here: req is assigned by the very expression that
-            // throws, so on this path it does not exist yet.
+            // throws, so on this path it does not exist yet. The trailing catch
+            // below is the opposite case and does destroy.
             return done({ kind: 'transport' });
         }
         if (!settled) {
@@ -961,10 +989,338 @@ async function readUsageInner(opts) {
     // All three writes are best effort: the fetched data is good, and a
     // disk hiccup in the bookkeeping must not turn a successful read into
     // a failure.
-    publishText(usageFilePath(), JSON.stringify({ fetchedAt, windows: normalized.windows, spend: normalized.spend }) + '\n');
+    publishText(usageFilePath(), JSON.stringify({ fetchedAt, kinds: normalized.kinds, windows: normalized.windows, spend: normalized.spend }) + '\n');
     clearLock();
     appendReading(fetchedAt, normalized.windows, normalized.spend);
     return { ok: true, fetchedAt, fromCache: false, windows: normalized.windows, spend: normalized.spend };
+}
+
+// ---------------------------------------------------------------------------
+// Threshold policy and evaluation (S2). This half issues no request and calls
+// nothing above it: it takes a read the caller already holds and answers what
+// the kit should do about it. Its verdict is what S3's wind-down text and S4's
+// dispatch barrier act on, so every uncertain input resolves to `clear`, which
+// both consumers treat as allow.
+// ---------------------------------------------------------------------------
+
+// The operator's policy, and every default in it is deliberate. The
+// percentages sit well below 100 because on an overage seat 100 is not a
+// barrier at all (the request is served and the account spends), and because
+// winding down is itself work that costs window. `enabled` is false because a
+// component that can deny a tool dispatch must not arm itself at install: the
+// operator opts in.
+const DEFAULT_CONFIG = {
+    enabled: false,
+    session: { warn: 80, barrier: 95 },
+    weeklyAll: { warn: 85, barrier: 95 },
+    fableRatchet: 85,
+    spendDeltaMinor: 1,
+};
+
+const CONFIG_READ_CAP = 16 * 1024;
+const BASELINE_READ_CAP = 4 * 1024;
+
+// The staleness budget the verdict hands back to the caller for its next
+// readUsage. 600s is deliberate under-sampling (a third-party tool already
+// polls this endpoint every 180s and a spend control does not need
+// three-minute resolution), tightening near a barrier so a fast burn is not
+// discovered ten minutes late.
+const STALENESS_SECONDS = 600;
+const STALENESS_NEAR_BARRIER_SECONDS = 120;
+const NEAR_BARRIER_POINTS = 10;
+
+// Precedence, fixed: any barrier outranks any warn, and weeklyAll outranks
+// session at the SAME level because its horizon is days rather than hours and
+// the consumers handle the two differently (a session barrier arms a resume at
+// the reset instant, a weekly one deliberately does not). One ordering applied
+// at both levels is what makes the table over two windows and three states
+// total, rather than leaving warn-versus-warn to whichever branch ran first.
+const WINDOW_PRECEDENCE = ['weeklyAll', 'session'];
+
+// A session id arrives in the harness payload and lands in a FILENAME, so it
+// is held to a path-safe shape at the door rather than escaped afterwards. An
+// id that fails this reports no delta rather than being sanitized into some
+// other session's baseline.
+const SESSION_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+// Anchored at BOTH ends, which is the whole point: unanchored it would also
+// match baseline-<id>.json.tmp.<pid>, the file a concurrent session's
+// publishText holds for the instant before its rename.
+const BASELINE_FILE_RE = /^baseline-[A-Za-z0-9_-]{1,64}\.json$/;
+
+// Eight days: the longest window this feature tracks, so a baseline older than
+// one cannot belong to a live session. Baselines are the only per-SESSION file
+// in the store and nothing else in this effort owns cleanup, so without the
+// sweep the store grows one file per session forever.
+const BASELINE_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+// The sweep is opportunistic housekeeping on a hook's critical path, so it
+// considers a bounded slice of the store per pass rather than all of it. A
+// store somehow holding more than this drains a sweep at a time instead of
+// stalling one session start.
+const BASELINE_REAP_MAX_ENTRIES = 500;
+
+// The threshold config is MACHINE-GLOBAL: the shared parent of the per-profile
+// stores, never inside one. Thresholds are an operator policy preference
+// rather than an account fact, so switching config profiles must not silently
+// switch the policy with it, while the cache, the lock, the log and the spend
+// baseline all stay per profile because each of those IS an account fact.
+function configFilePath() {
+    return path.join(path.dirname(storeRoot()), 'config.json');
+}
+
+// Per profile, because spend is an account fact.
+function baselineFilePath(sessionId) {
+    return path.join(storeRoot(), 'baseline-' + sessionId + '.json');
+}
+
+// A threshold percent, or the default. Bounded [0, 100] rather than
+// normPercent's [0, 1000]: a percent READ off the wire can legitimately run
+// past 100 on an overage seat, but a threshold set past 100 is one the kit
+// could never act on, so it is an operator typo rather than a policy.
+function normThreshold(value, fallback) {
+    const n = normNumber(value);
+    return n === null || n < 0 || n > 100 ? fallback : n;
+}
+
+function normWindowThresholds(raw, fallback) {
+    const source = raw && typeof raw === 'object' ? raw : {};
+    return {
+        warn: normThreshold(source.warn, fallback.warn),
+        barrier: normThreshold(source.barrier, fallback.barrier),
+    };
+}
+
+// Defaults applied FIELD BY FIELD rather than all-or-nothing: one garbage
+// value must not silently disable the fields beside it, and a half-edited config
+// should still hold the policy it does state. `enabled` is the exception in
+// spirit only: anything that is not literally true is false, because every
+// other value there is an operator who did not opt in.
+function normConfig(raw) {
+    const source = raw && typeof raw === 'object' ? raw : {};
+    // Minor units, not a percent, so this takes normAmountMinor's bound rather
+    // than [0, 100]: no overage cap is exposed to this seat, so there is no
+    // denominator and a threshold of $5 (500) is as legitimate as the first cent.
+    const spendDeltaMinor = normAmountMinor(source.spendDeltaMinor);
+    return {
+        enabled: source.enabled === true,
+        session: normWindowThresholds(source.session, DEFAULT_CONFIG.session),
+        weeklyAll: normWindowThresholds(source.weeklyAll, DEFAULT_CONFIG.weeklyAll),
+        fableRatchet: normThreshold(source.fableRatchet, DEFAULT_CONFIG.fableRatchet),
+        spendDeltaMinor: spendDeltaMinor === null ? DEFAULT_CONFIG.spendDeltaMinor : spendDeltaMinor,
+    };
+}
+
+// The operator's policy from disk, always a complete config. Absent,
+// unreadable, over-cap, unparseable and misshapen all resolve to the defaults,
+// and the defaults are disabled, so every one of those states leaves the
+// feature off rather than half-armed. Never throws.
+function readConfig() {
+    const read = readCapped(configFilePath(), CONFIG_READ_CAP);
+    if (read === null || read.truncated) return normConfig(null);
+    let parsed;
+    try {
+        parsed = JSON.parse(read.text);
+    } catch {
+        return normConfig(null);
+    }
+    return normConfig(parsed);
+}
+
+// This session's spend baseline in minor units, or null when there is none
+// worth using. A baseline that is missing, unparseable or misshapen is
+// treated as absent so the next read re-establishes it, exactly like the
+// usage cache: a corrupt bookkeeping file must never become a failure.
+function readBaseline(file) {
+    const read = readCapped(file, BASELINE_READ_CAP);
+    if (read === null || read.truncated) return null;
+    let parsed;
+    try {
+        parsed = JSON.parse(read.text);
+    } catch {
+        return null;
+    }
+    if (!parsed || typeof parsed !== 'object') return null;
+    return normAmountMinor(parsed.amountMinor);
+}
+
+// Drop baseline files past the horizon. Opportunistic, bounded, and silent on
+// every error: this is housekeeping and must not fail the verdict that
+// triggered it.
+//
+// Age is file mtime against the WALL clock rather than this module's pinned
+// clock seam, because an mtime IS wall-clock: pairing the two is what makes
+// the comparison mean anything, and branch-reaper-nudge.js takes the same
+// pairing. Scope is by name and by regular-file-ness, so usage.json,
+// usage.lock, readings.log, config.json (which is not even in this directory)
+// and any symlink are all outside the sweep by construction rather than by an
+// exclusion list that would go short the next time a store file is added.
+function reapBaselines() {
+    const root = storeRoot();
+    let entries;
+    try {
+        entries = fs.readdirSync(root, { withFileTypes: true });
+    } catch {
+        return;
+    }
+    const cutoff = Date.now() - BASELINE_MAX_AGE_MS;
+    for (const entry of entries.slice(0, BASELINE_REAP_MAX_ENTRIES)) {
+        // A symlink is not a file under withFileTypes but unlinkSync would
+        // happily take the name, so the check is on the type rather than on
+        // the absence of a directory.
+        if (!entry.isFile() || !BASELINE_FILE_RE.test(entry.name)) continue;
+        const file = path.join(root, entry.name);
+        try {
+            if (fs.statSync(file).mtimeMs < cutoff) fs.unlinkSync(file);
+        } catch { /* one unreadable entry must not abort the sweep */ }
+    }
+}
+
+// The generic trigger's measurement: how much this account has spent since
+// this session's first successful read. Lagging rather than leading, and it
+// does not care which window caused the spend, which is what lets it catch
+// overage from a window this feature never modeled.
+//
+// Every uncertain case reports null rather than a number: no session id
+// (nothing to key a baseline on), an id that is not path-safe, an unknown
+// spend, a store that cannot be written, or the read that ESTABLISHES the
+// baseline, which has nothing to compare itself against yet.
+//
+// A negative delta is reported as it stands, never clamped and never a
+// failure: whether this counter is monthly or all-time is not established, so
+// a rollover presents exactly this way, and flattening it to zero would hide
+// the one observation that would settle the question.
+function spendDeltaFor(usage, sessionId) {
+    if (typeof sessionId !== 'string' || !SESSION_ID_RE.test(sessionId)) return null;
+    const spend = usage.spend && typeof usage.spend === 'object' ? usage.spend : {};
+    const amountMinor = normAmountMinor(spend.amountMinor);
+    if (amountMinor === null) return null;
+    const file = baselineFilePath(sessionId);
+    const baseline = readBaseline(file);
+    if (baseline === null) {
+        // publishText carries ensureStore's write probe, 0600 and the atomic
+        // tmp-and-rename; the sweep rides the one write per session rather
+        // than every evaluation.
+        if (publishText(file, JSON.stringify({ amountMinor }) + '\n').ok) reapBaselines();
+        return null;
+    }
+    return amountMinor - baseline;
+}
+
+// One window's state. An UNKNOWN percent is clear and can never be anything
+// else: unknown is neither zero nor saturated, and a barrier is a positive
+// determination on data the kit actually has. The null check is explicit
+// rather than left to JavaScript's coercion because the coercion agrees only
+// by luck: null >= 95 is false, but null >= 0 is TRUE, so a threshold at zero
+// would turn every unknown window into a barrier.
+function windowState(percent, thresholds) {
+    if (percent === null) return 'clear';
+    if (percent >= thresholds.barrier) return 'barrier';
+    if (percent >= thresholds.warn) return 'warn';
+    return 'clear';
+}
+
+// The verdict every doubtful path returns. Named rather than inlined so the
+// allow-everything shape is one thing that cannot drift between its callers.
+function clearVerdict() {
+    return {
+        state: 'clear',
+        window: null,
+        percent: null,
+        resetsAt: null,
+        fableRatchet: false,
+        fablePercent: null,
+        fableResetsAt: null,
+        spendDelta: null,
+        maxAgeSeconds: STALENESS_SECONDS,
+    };
+}
+
+// What the kit should do about a usage read. Arguments:
+//   usage   a readUsage result, either shape
+//   config  a config object (readConfig's, or a literal); defaults are applied
+//           per field here too, so a partial or absent one is safe
+//   opts    { sessionId } for the spend baseline; anything else is ignored
+//
+// Returns { state, window, percent, resetsAt, fableRatchet, fablePercent,
+// fableResetsAt, spendDelta, maxAgeSeconds }. Never throws.
+//
+// The Fable ratchet is evaluated SEPARATELY and never contributes to `state`,
+// because its response is a routing cap rather than a pause: at or above the
+// ratchet the kit stops sending work to Fable and continues at the session
+// model, and nothing stops.
+function evaluate(usage, config, opts) {
+    try {
+        return evaluateInner(usage, config, opts || {});
+    } catch {
+        // Unreachable by design, like readUsage's outer catch, but the
+        // never-throws contract is what lets a hook call this on every tool
+        // call. A verdict that threw would take the session with it, so the
+        // failure degrades to the verdict that allows everything.
+        return clearVerdict();
+    }
+}
+
+function evaluateInner(usage, rawConfig, opts) {
+    const config = normConfig(rawConfig);
+    // The two doors that keep every reader failure allowing: the feature is
+    // off unless the operator armed it, and a failed read is not a positive
+    // determination about anything. A disabled evaluation also writes no file,
+    // so an unarmed kit leaves nothing behind.
+    if (!config.enabled || !usage || usage.ok !== true) return clearVerdict();
+
+    // The two windows that feed the state, in precedence order. Both are held
+    // to the same doors the wire and cache readers use, because this object
+    // may also arrive hand-built from a consumer hook: a garbage percent reads
+    // as unknown, which can never barrier, and resetsAt is what S3 puts in
+    // front of the model.
+    const rawWindows = usage.windows || {};
+    const percents = {};
+    const resets = {};
+    for (const key of WINDOW_PRECEDENCE) {
+        const w = rawWindows[key] && typeof rawWindows[key] === 'object' ? rawWindows[key] : {};
+        percents[key] = normPercent(w.percent);
+        resets[key] = normTimestamp(w.resetsAt);
+    }
+
+    const states = {};
+    for (const key of WINDOW_PRECEDENCE) states[key] = windowState(percents[key], config[key]);
+
+    let state = 'clear';
+    let windowKey = null;
+    for (const level of ['barrier', 'warn']) {
+        for (const key of WINDOW_PRECEDENCE) {
+            if (states[key] === level) {
+                state = level;
+                windowKey = key;
+                break;
+            }
+        }
+        if (windowKey !== null) break;
+    }
+
+    // Tightened by proximity to a BARRIER rather than to a warn: the warn is
+    // the wind-down and the barrier is the deadline, so the resolution that
+    // matters is the one approaching the deadline. Only the two windows that
+    // have a barrier are consulted; the Fable window has a ratchet, which
+    // pauses nothing and so has no deadline to sample faster for.
+    const nearBarrier = WINDOW_PRECEDENCE.some(
+        (key) => percents[key] !== null && percents[key] >= config[key].barrier - NEAR_BARRIER_POINTS,
+    );
+
+    const fable = rawWindows.fableWeekly && typeof rawWindows.fableWeekly === 'object' ? rawWindows.fableWeekly : {};
+    const fablePercent = normPercent(fable.percent);
+
+    return {
+        state,
+        window: windowKey,
+        percent: windowKey === null ? null : percents[windowKey],
+        resetsAt: windowKey === null ? null : resets[windowKey],
+        fableRatchet: fablePercent !== null && fablePercent >= config.fableRatchet,
+        fablePercent,
+        fableResetsAt: normTimestamp(fable.resetsAt),
+        spendDelta: spendDeltaFor(usage, opts.sessionId),
+        maxAgeSeconds: nearBarrier ? STALENESS_NEAR_BARRIER_SECONDS : STALENESS_SECONDS,
+    };
 }
 
 module.exports = {
@@ -981,4 +1337,14 @@ module.exports = {
     PERSISTENT_BACKOFF_SECONDS,
     RATE_LIMIT_DEFAULT_SECONDS,
     TRANSIENT_BACKOFF_SECONDS,
+    evaluate,
+    readConfig,
+    configFilePath,
+    baselineFilePath,
+    reapBaselines,
+    DEFAULT_CONFIG,
+    STALENESS_SECONDS,
+    STALENESS_NEAR_BARRIER_SECONDS,
+    NEAR_BARRIER_POINTS,
+    BASELINE_MAX_AGE_MS,
 };

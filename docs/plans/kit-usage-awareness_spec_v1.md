@@ -765,5 +765,46 @@ the new hooks without the documents describing them. Superseded by this Chapter'
 because the history now carries a message that misstates what it did.
 
 Next: S2 (threshold policy and evaluation), which edits this same file.
+Commit Model: Commit-and-Push, honored.
+
+### Chapter 3 - 2026-08-27
+Completed: S2 (Threshold policy and evaluation), plus repair of two Criticals that Chapter 2's own
+fixes introduced.
+Implemented By: S2 `implementer-opus`; the Critical repair in the main session.
+Metrics: S2 one dispatch, DONE_WITH_CONCERNS, no review round of its own yet. NEEDS_CONTEXT 0.
+Escalations 0. Advisor on (opus), not consulted. Gate: 409 pass, 0 fail.
+
+Decisions / Surprises:
+- **Round 4's full report landed after Chapter 2 was already committed, and it found that two of
+  my own main-thread fixes had introduced Criticals.** This is the finding of the Chapter and it
+  is about process rather than about the code. Fixing quickly in the main thread, under a
+  reviewer that was still running, produced defects at close to the rate it removed them.
+- **The cache door I added asked a different question from the wire door.** The wire refuses when
+  no `limits[].kind` is recognized; my cache refusal tested whether every percent was null. A
+  payload with recognized kinds and unknown percents therefore passed the wire, was cached, and
+  was then discarded on every subsequent read, and because a 200 clears the lock nothing
+  throttled the refetch: ten reads inside a 600-second budget made ten requests. That is worse
+  than the bug it replaced. Both doors now ask the same question, by persisting the recognized
+  kinds into the cache.
+- **My `ensureStore` write probe used `flag: 'w'`, which follows a symlink and truncates its
+  target**, twenty lines from a `publishText` that uses `'wx'` for precisely that reason. A
+  planted symlink left an unrelated file at zero bytes while the probe reported the store
+  writable. Now `'wx'` with a bounded EEXIST retry, and pinned by a test.
+- Two doors to the same non-self-healing condition were still on the transient class (an empty
+  `limits[]`, and a renamed top-level `limits` key). All three now take the long backoff, which
+  changed an existing test's expectation rather than breaking it.
+- S2's own decisions, taken at dispatch and worth recording: operator config is machine-global
+  (thresholds are a policy preference, one set per operator) while the spend baseline is
+  per-profile (spend is an account fact), and a session id is refused as a path component unless
+  it matches a strict character class, since it arrives from the harness payload.
+
+Review Findings: S2 has had NO review round yet, which is the open item this Chapter carries
+forward. The round-4 findings against S1 are addressed apart from the Minors already listed in
+Chapter 2, plus three more noted and not fixed: `trimLog`'s concurrency comment, written when the
+lease made concurrent successful fetches impossible; `ensureStore` now writing on the read path
+including where it is about to report `locked`; and the `res.complete` branch shipping with no
+coverage because the test fake cannot produce it.
+
+Next: S2 review, then S3 and S4.
 Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
 land together, because the docs describe hooks that are now on `main`.
