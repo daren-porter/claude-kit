@@ -324,8 +324,8 @@ first of these red before fixing.
 
 Adds threshold evaluation to `usage-lib.js`, reading
 `~/.claude-kit-usage/config.json` with a `warn` and `barrier` percent for each of the
-session and weekly-all windows, a single `ratchet` percent for the Fable weekly window, an
-and an `enabled` flag.
+session and weekly-all windows, a single `fableRatchet` percent for the Fable weekly window, and
+an `enabled` flag.
 
 Evaluation returns a verdict naming the state (`clear`, `warn` or `barrier`), the window
 that produced it, its `resets_at` and its percent. Precedence is fixed: any barrier
@@ -339,16 +339,21 @@ its own boolean plus the percent and reset instant, and an unknown Fable percent
 it.
 
 Evaluation also computes the staleness budget the callers pass to the reader: 600s at
-`clear`, 120s when any window is within ten points of its barrier.
+`clear`, 120s when any window is within ten points of its barrier. It reports `ageSeconds`
+alongside it, the age of the data it actually judged, because the budget is advice for the NEXT
+read: a hook that read at 600 and is then handed 120 is holding data that may be older than the
+budget it was just given, which is precisely what S4's positive-determination criterion forbids.
+Without the age in the verdict S4 would have to re-parse the reader's timestamp itself.
 
 Acceptance criteria:
 - An absent config file, an unparseable one, or `enabled: false` all return `clear`.
 - The precedence table holds for every combination of two windows and three states.
 - An unknown window percent cannot produce `barrier` at any threshold.
 - The staleness budget tightens to 120s at ten points below a barrier and not before.
-- S3's dedupe marker is the only session-keyed file in the store, and it is reaped when older
-  than the longest window this spec tracks (eight days). Nothing else in the effort owns
-  cleanup, so without this the store grows one file per session forever.
+(Store cleanup is NOT S2's. The reaper the first draft put here existed to sweep the spend
+delta's baseline and went with it; S3's dedupe marker is now the only session-keyed file the
+effort creates, so S3 owns reaping it. Recorded because the review found this answered one way
+in prose and the other in code, leaving nothing owning cleanup.)
 
 Execution mode: delegate-capable.
 Tests: the precedence table, since a weekly barrier mishandled as a session barrier would
@@ -370,6 +375,13 @@ carries the resume instruction for the window's horizon.
 section boundary: a wind-down that lands mid-section strands half-built work.
 
 Acceptance criteria:
+- The dedupe marker is the only session-keyed file this effort creates, so this section owns
+  reaping it: a marker older than eight days (the longest window tracked) is removed, bounded
+  and silently, touching no other store file.
+- The marker's key tolerates a null reset instant. `evaluate` reports `resetsAt: null` on a
+  non-clear verdict whenever the producing window's timestamp failed validation, which is
+  reachable off the wire from a valid percent with a malformed `resets_at`, so a key that
+  assumes non-null would collide across windows instead of deduping within one.
 - Emits nothing at `clear`, nothing when the signal is stale or unavailable, and nothing
   when the config is absent or disabled.
 - Emits once per window per session, and re-emits after the reset instant changes.
@@ -409,7 +421,10 @@ so. The hook cannot see an inherited Fable model on a Fable-led session, only an
 override, and its reason text says so rather than implying full coverage.
 
 Acceptance criteria:
-- Denies only at `barrier` on data inside the staleness budget. Watch this red first.
+- Denies only at `barrier` on data whose reported `ageSeconds` is within the verdict's own
+  `maxAgeSeconds`. Where the budget tightened below the age of the data in hand, the hook
+  re-reads before deciding rather than denying on data older than the budget it was handed.
+  Watch this red first.
 - The ratchet denies a dispatch with `model: "fable"` at or above the Fable threshold, and
   allows the identical dispatch without that override. Watch the first of these red.
 - A session-or-weekly barrier outranks the ratchet, so at a barrier every `Agent` dispatch
@@ -472,7 +487,18 @@ behavior, the harness's process environment) is untested until S1 runs live behi
 `severity` and `is_active` exist and are the parse surface; the three-profile stakes; and
 the 401-versus-429 discrimination. The `Last pass:` line is not touched.
 
-`docs/README.md` registers this plan.
+`docs/README.md` registers this plan, and its existing entry is corrected: it still describes
+three triggers including the removed spend delta, which is a false claim rather than a short
+list, and S6's own Audience names the reader it misleads.
+
+It also ships the **operator-facing documentation of the config file**, which no section owned
+until the review pointed it out. The Goal promises a policy the operator configures, `enabled`
+defaults to false, and the only way to arm the feature is to hand-author
+`~/.claude-kit-usage/config.json`, whose path and schema existed only in a code comment. The
+document states the path, every field with its default, that the file is operator-written and
+never kit-written, and the two things that will otherwise bite: a threshold outside `[0, 100]`
+or written as a string falls back to its default with no signal anywhere, and `warn` above
+`barrier` silently makes the wind-down unreachable.
 
 Audience: the `security-reviewer` agent, which holds this repository and reads
 `security-model.md` first; and a future kit session with no memory of this effort, which
@@ -567,7 +593,8 @@ Execution mode: main.
   is a working state rather than a barrier.
 - Interrupting, killing or reverting work already in flight, on any window.
 - A threshold on **cumulative** overage spend. No cap is exposed to this seat, so there is
-  no denominator; only the per-session delta described in S2 is used.
+  no denominator, and the per-session delta that once stood here was removed on 2026-08-28 (see
+  "Two triggers, both usage windows"). Spend is reported and logged as observation only.
 - Any attempt to refresh the OAuth token. The kit reads a credential it does not own.
 - Denying any tool other than `Agent` and `Task`.
 - Acting on `severity`. Every read records it so a later effort can replace hand-picked
@@ -594,8 +621,9 @@ Execution mode: main.
 - Whether `severity` ever leaves `normal`, and at what percent. With `spend.limit` null and
   `spend.percent` 0 it may never move on the spend object. Owner: observation, recorded by
   S1 on every read.
-- Whether `spend.used.amount_minor` is a monthly or an all-time counter. S2 handles a
-  negative delta either way. Owner: observation.
+- Whether `spend.used.amount_minor` is a monthly or an all-time counter. Nothing branches on it
+  now that the spend trigger is gone, so this is purely a question the reading log can answer for
+  a later effort. Owner: observation.
 
 ## Standing Brief Amendments
 
@@ -816,5 +844,62 @@ provenance. The machinery is gone, spend remains as observation, and the verdict
 build against is now settled.
 
 Next: S2 review (it has had none), then S3 and S4.
+
+### Chapter 4 - 2026-08-28
+Completed: S1 and S2 both reviewed and repaired. **S1 and S2 are closed.**
+Implemented By: `implementer-opus` for the code and test fixes; main session for the docs half
+(the write guard denies a subagent any `docs/` write) and for the two ownership decisions.
+Metrics: S2's first review round (adversarial plus blind over the whole changeset), then one fix
+round. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), not consulted. Gate: 412 pass, 0 fail,
+from a 324 baseline.
+
+Decisions / Surprises:
+- **The trigger count came back to two, and the provenance is the finding.** Asked where the
+  spend delta came from, the answer was that it was scope this session added: an overage-dollar
+  trigger had already been declined in the window choice, and the question that produced the
+  third trigger asked whether one generic marker could SIMPLIFY two conditions. A third condition
+  was the opposite of the answer. Removing it also deleted the per-session baseline file, the
+  session-id path-safety door and the eight-day reaping obligation, each of which had generated
+  review findings of its own.
+- **This round found no Criticals, and the review says the evaluation logic is correct on every
+  axis it tested**: all nine precedence cells, the unknown-percent rule including the
+  zero-threshold cell where `null >= 0` hides, the Fable ratchet's independence, the staleness
+  boundary in both directions, and per-field config degradation. After five rounds this is the
+  first with no Critical, which is what convergence looks like here.
+- **Two tests passed for the wrong reason and were mutation-proven vacuous.** The Fable ratchet's
+  unknown-percent guard could be deleted with the suite green, because every assertion used the
+  default 85 where the null coercion agrees by luck; and "a failed read never barriers" passed
+  vicariously, because every failure shape fed to it lacked `windows` entirely. Both now
+  discriminate. This is the more useful lesson than any single defect: a green suite said nothing
+  about either rule.
+- **An implementer corrected the brief twice, and was right both times.** I specified `>` for the
+  retry-after cap; `>=` was needed, because a header of exactly 86400 still lands one second
+  outside the read guard and gets discarded as corruption. And I specified folding short-read
+  detection into `truncated`, which would have entered `trimLog`'s fragment-dropping branch and
+  published a bare newline over the log, worse than the asymmetry it fixed. Recorded because the
+  same thing happened in Chapter 2 with the percent bound: the briefs have been the weak link
+  more often than the implementations.
+- **The enumeration class recurred a third time.** `config.json` is a new store file and three
+  enumerations of the store went short: `architecture.md`, `security-model.md` and the spec's own
+  S1 paragraph. Standing Brief Amendment 1 exists for exactly this and still did not prevent it,
+  which is evidence for `plans/enumerations-stop-short_spec_v1.md`'s thesis that review detects
+  this class reliably and does not prevent it.
+- **Two acceptance criteria had no owner and now do.** Store cleanup moved to S3, which creates
+  the only session-keyed file the effort still has. Operator-facing documentation of
+  `config.json` moved to S6: `enabled` defaults false, so the only way to arm the feature was to
+  hand-author a file whose path and schema existed solely in a code comment.
+- The verdict now reports `ageSeconds`, because `maxAgeSeconds` is advice for the next read and
+  S4's positive-determination criterion had no single-pass way to tell whether the data in hand
+  was inside the budget it had just been handed.
+
+Review Findings: adversarial 7 Major and 16 Minor; blind 2 Major and 8 Minor. All Majors fixed.
+Fixed Minors included the dead `opts` parameter, an invented filename ("the spend log"), the
+reason enum omitting `no-store`, five unpinned guards, an unfrozen exported `DEFAULT_CONFIG`, a
+non-positive near-barrier window for a barrier at or below 10, an unvalidated `warn > barrier`
+that silently made the wind-down unreachable, and roughly a dozen comments left mid-sentence by
+the removal.
+
+Next: S3 and S4. Both were blocked on the verdict shape, which is now settled.
+Commit Model: Commit-and-Push, honored.
 Commit Model: Commit-and-Push, honored. S1 and S7 code, both living docs, and this plan doc
 land together, because the docs describe hooks that are now on `main`.

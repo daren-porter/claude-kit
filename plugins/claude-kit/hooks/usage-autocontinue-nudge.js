@@ -31,8 +31,10 @@
 //   2. $CLAUDE_CONFIG_DIR/settings.local.json
 //   3. ~/.claude/settings.json
 //   4. ~/.claude/settings.local.json
-// 1 and 2 are absent from that list entirely when CLAUDE_CONFIG_DIR is unset or
-// blank, which is the ordinary case and leaves two rather than four. A false in
+// 1 and 2 are absent from that list entirely when CLAUDE_CONFIG_DIR is unset,
+// blank or RELATIVE (candidateFiles carries why a relative value is refused
+// rather than resolved); unset is the ordinary case, and any of the three
+// leaves two rather than four. A false in
 // one of them is a real and winning configuration (the kit's own
 // settings.recommended.json merge is a hand-edit path into exactly that file),
 // and it is reported without resolving precedence between the files: a false in

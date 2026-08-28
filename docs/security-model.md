@@ -157,10 +157,15 @@ Five properties, each verified against the code rather than intended:
   `plans/kit-usage-awareness_spec_v1.md` register their hooks, and that is the point at which a
   review should re-verify the first three properties above rather than trusting this paragraph.
 
-`~/.claude-kit-usage/` is its store: a cache of the normalized response, a backoff lock, and an
-append-only reading log bounded at 5000 lines. The log accumulates this account's usage
-percentages and overage spend over time, which is why it is 0600 and why it is named in the
-same-uid store list, but it holds no credential and no third-party data.
+`~/.claude-kit-usage/` is its store, and it has two levels. A per-profile subdirectory keyed by
+the resolved credentials directory holds a cache of the normalized response, a backoff lock, and
+an append-only reading log bounded at 5000 lines; the log accumulates this account's usage
+percentages and overage spend over time, which is why it is 0600 and why the store is named in
+the same-uid store list, but it holds no credential and no third-party data. The shared parent
+holds one more file, `config.json`, carrying the operator's thresholds. That one sits outside the
+profile subdirectory deliberately, because thresholds are a policy preference rather than an
+account fact, and it is the only file in this store **no kit code ever writes**: the operator
+hand-authors it, and the kit reads it through the same capped reader it uses for everything else.
 
 ## Every hook fails open. There is no fail-closed hook in this kit.
 

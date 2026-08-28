@@ -6,9 +6,9 @@
 // the answer to the three windows the kit acts on (session, weeklyAll,
 // fableWeekly) plus overage spend. The second half is the threshold policy:
 // the operator's config, the verdict S3's wind-down text and S4's dispatch
-// barrier act on. It
-// makes no request and calls nothing in the first half; it answers about a
-// read the caller already holds.
+// barrier act on. It issues no request and calls no reader entry point (it does
+// share this file's normalizers and its clock seam); it answers about a read
+// the caller already holds.
 //
 // Token discipline. The token is resolved from the credentials directory (see
 // credentialsDir for the resolution rule) at every call, never cached in
@@ -32,9 +32,10 @@
 // barrier there.
 //
 // Failure discipline. The reason set is a contract with the consumer hooks:
-// no-token, expired, rate-limited, timeout, parse, locked, bad-call. Every
-// failure is typed by what actually happened, because the classes back off
-// differently and conflating them poisons the wrong thing: 401 is `expired`
+// no-token, expired, rate-limited, timeout, parse, locked, no-store and
+// bad-call. Every failure is typed by what actually happened, because the
+// classes back off differently and conflating them poisons the wrong thing:
+// 401 is `expired`
 // (900s quiet, never a rate-limit lock, so a stale token cannot poison
 // backoff), 429 is `rate-limited` (retry-after honored, 300s default),
 // transport trouble and 5xx are `timeout` (60s), an unusable 200 is `parse`
@@ -46,6 +47,10 @@
 // backoff lock is in force. `no-store` reports that the store could not be
 // created or written, so no backoff could be held and no request was made:
 // fetching without a place to record the result is what earns the 429.
+// `bad-call` is the one reason outside the operational set: kit-internal
+// misuse (no usable maxAgeSeconds, an unparsable clock) or an unmodeled
+// internal error, returned typed rather than folded into a class that would
+// blame the endpoint or the credential for a kit bug.
 //
 // NOT guarded, and deliberately: concurrent readers. Request coalescing was
 // built here and removed, because a lease that makes the loser wait or go
@@ -55,11 +60,6 @@
 // That cost is accepted rather than overlooked: the sequential amplification
 // `no-store` prevents is unbounded, while this one is bounded by the number of
 // simultaneous session starts.
-// `bad-call`
-// is the one reason outside the operational set: kit-internal misuse (no
-// usable maxAgeSeconds, an unparsable clock) or an unmodeled internal error,
-// returned typed rather than folded into a class that would blame the
-// endpoint or the credential for a kit bug.
 //
 // Store. ~/.claude-kit-usage/<profile>/, where <profile> is a legible key
 // derived from the RESOLVED credentials directory: its sanitized basename
@@ -72,20 +72,22 @@
 // and never the token or a hash of it, which keeps "no token material reaches
 // any file" literally true; the accepted residual is that re-authenticating
 // one directory as a different account mixes that directory's readings until
-// the window rolls. Files: usage.json (the cached normalized read),
-// usage.lock (the backoff),
-// readings.log (one JSON line per successful FETCH, never a cache hit, bounded and
-// self-truncating, each line carrying the profile key as its discriminator),
-// One file deliberately sits OUTSIDE the profile directory, in its shared
-// parent: ~/.claude-kit-usage/config.json holds the operator's thresholds,
-// which are a policy preference rather than an account fact, so a profile
-// switch must not switch the policy with it.
-// Directories are created 0700 and files 0600; as docs/security-model.md
-// records for the sibling memory store, those are creation-time properties
-// rather than invariants, since mkdir does not tighten an existing directory
-// and open's mode is ignored for an existing file. The log exists for the
-// operator and a later burn-rate projection; nothing emits it to the model,
-// and it holds no token material.
+// the window rolls. Files, and the module writes exactly these three:
+// usage.json (the cached normalized read), usage.lock (the backoff) and
+// readings.log (one JSON line per successful FETCH, never a cache hit, bounded
+// and self-truncating, each line carrying the profile key as its
+// discriminator). A fourth file deliberately sits OUTSIDE the profile
+// directory, in its shared parent: ~/.claude-kit-usage/config.json holds the
+// operator's thresholds, which are a policy preference rather than an account
+// fact, so a profile switch must not switch the policy with it. That one the
+// OPERATOR writes by hand and the kit only ever reads, so its mode is not this
+// module's to set. The three the module does write are created 0600 inside
+// directories created 0700; as docs/security-model.md records for the sibling
+// memory store, those are creation-time properties rather than invariants,
+// since mkdir does not tighten an existing directory and open's mode is
+// ignored for an existing file. The log exists for the operator and a later
+// burn-rate projection; nothing emits it to the model, and it holds no token
+// material.
 //
 // Node core modules only, CommonJS, zero dependencies. memory-lib.js's
 // never-throws contract: every exported function degrades to a typed
@@ -136,9 +138,15 @@ const EXPIRED_BACKOFF_SECONDS = 900;
 const PERSISTENT_BACKOFF_SECONDS = 900;
 const RATE_LIMIT_DEFAULT_SECONDS = 300;
 const TRANSIENT_BACKOFF_SECONDS = 60;
-// A retry-after beyond a day is treated as a broken header rather than honored:
-// a day already exceeds every window this feature watches, and an absurd value
-// must not brick the reader for longer.
+// A retry-after AT or beyond a day is treated as a broken header rather than
+// honored: a day already exceeds every window this feature watches, and an
+// absurd value must not brick the reader for longer. This same constant is
+// readLock's corruption horizon, which is why the absurd class is REFUSED here
+// rather than clamped to the cap: clamping wrote a horizon sitting exactly on
+// the guard, where a one-second backward clock step makes the next read
+// discard the lock as corruption and immediately re-request the endpoint that
+// just rate-limited us. Refusing keeps every horizon this module writes well
+// inside the horizon it will later read.
 const RATE_LIMIT_CAP_SECONDS = 86400;
 
 
@@ -290,7 +298,20 @@ function readTailCapped(file, cap) {
             const got = fs.readSync(fd, probe, 0, 1, start - 1);
             startedOnBoundary = got === 1 && probe[0] === 0x0a;
         }
-        return { text: buf.toString('utf8', 0, bytes), truncated: start > 0, startedOnBoundary };
+        // shortRead is reported apart from `truncated`, which means "the
+        // window skipped older bytes": a read that came up short is an
+        // incomplete tail instead, and trimLog writes this text back over the
+        // log, so collapsing the two would let an incomplete tail become the
+        // log. readCapped reports the same condition through its own truncated
+        // flag, where nothing rewrites the file. Unreachable for a pread of a
+        // local regular file, so this arm is reported for symmetry rather than
+        // pinned by a test.
+        return {
+            text: buf.toString('utf8', 0, bytes),
+            truncated: start > 0,
+            shortRead: bytes < buf.length,
+            startedOnBoundary,
+        };
     } catch {
         return null;
     } finally {
@@ -424,9 +445,10 @@ function normPercent(value) {
     return n;
 }
 
-// Spend in minor units, or null. Negative spend is not a number this feature
-// can act on (S2 reads a negative DELTA as no overage, but a negative level
-// is nonsense at the source).
+// Spend in minor units, or null. This is a cumulative LEVEL rather than a
+// delta, so a value below zero is a malformed payload rather than a credit
+// anything here could act on, and it rides into the cache and the reading log
+// where every later reader would have to defend against it again.
 function normAmountMinor(value) {
     const n = normNumber(value);
     // A ceiling as well as a floor: finite is not the same as plausible, and
@@ -738,7 +760,11 @@ function appendReading(fetchedAt, windows, spend) {
 // trade is taken knowingly.
 function trimLog() {
     const read = readTailCapped(logFilePath(), LOG_READ_CAP);
-    if (read === null) return;
+    // The only thing done with this text is write it back, so an incomplete
+    // tail is refused rather than absorbed: rewriting the log from bytes that
+    // came up short would drop the newest record. Leaving the log unbounded
+    // for one append is the safe direction.
+    if (read === null || read.shortRead) return;
     let lines = read.text.split('\n');
     if (read.truncated) {
         // Split BEFORE filtering: a window opening exactly on a record's
@@ -837,15 +863,19 @@ function fetchUsage(token, transport) {
     });
 }
 
-// retry-after in whole seconds, defaulted when absent or unparseable and
-// capped at a day. A zero or negative value takes the default too: "retry
-// immediately" from a 429 is a header this module does not believe.
+// retry-after in whole seconds, or the default. Absent, unparseable, zero or
+// negative, and a day or longer all take the default: "retry immediately" from
+// a 429 is a header this module does not believe, and neither is "come back
+// tomorrow" (RATE_LIMIT_CAP_SECONDS carries why that class is refused rather
+// than clamped to the cap).
 function parseRetryAfter(headers) {
     const raw = headers && headers['retry-after'];
     if (typeof raw !== 'string' || !/^\d+$/.test(raw.trim())) return RATE_LIMIT_DEFAULT_SECONDS;
     const seconds = Number(raw.trim());
-    if (!Number.isFinite(seconds) || seconds <= 0) return RATE_LIMIT_DEFAULT_SECONDS;
-    return Math.min(seconds, RATE_LIMIT_CAP_SECONDS);
+    if (!Number.isFinite(seconds) || seconds <= 0 || seconds >= RATE_LIMIT_CAP_SECONDS) {
+        return RATE_LIMIT_DEFAULT_SECONDS;
+    }
+    return seconds;
 }
 
 // ---------------------------------------------------------------------------
@@ -995,10 +1025,11 @@ async function readUsageInner(opts) {
 
 // ---------------------------------------------------------------------------
 // Threshold policy and evaluation (S2). This half issues no request and calls
-// nothing above it: it takes a read the caller already holds and answers what
-// the kit should do about it. Its verdict is what S3's wind-down text and S4's
-// dispatch barrier act on, so every uncertain input resolves to `clear`, which
-// both consumers treat as allow.
+// no reader entry point: it shares this file's normalizers and its clock seam,
+// and otherwise takes a read the caller already holds and answers what the kit
+// should do about it. Its verdict is what S3's wind-down text and S4's dispatch
+// barrier act on, so every uncertain input resolves to `clear`, which both
+// consumers treat as allow.
 // ---------------------------------------------------------------------------
 
 // The operator's policy, and every default in it is deliberate. The
@@ -1007,12 +1038,18 @@ async function readUsageInner(opts) {
 // winding down is itself work that costs window. `enabled` is false because a
 // component that can deny a tool dispatch must not arm itself at install: the
 // operator opts in.
-const DEFAULT_CONFIG = {
+//
+// Frozen, children included, because it is exported: normConfig hands out
+// fresh objects, but a consumer or a test assigning to
+// lib.DEFAULT_CONFIG.session.warn would rewrite the policy for every later
+// readConfig in the process, and freezing the outer object alone would leave
+// the thresholds that actually decide a barrier writable.
+const DEFAULT_CONFIG = Object.freeze({
     enabled: false,
-    session: { warn: 80, barrier: 95 },
-    weeklyAll: { warn: 85, barrier: 95 },
+    session: Object.freeze({ warn: 80, barrier: 95 }),
+    weeklyAll: Object.freeze({ warn: 85, barrier: 95 }),
     fableRatchet: 85,
-};
+});
 
 const CONFIG_READ_CAP = 16 * 1024;
 
@@ -1036,8 +1073,8 @@ const WINDOW_PRECEDENCE = ['weeklyAll', 'session'];
 // The threshold config is MACHINE-GLOBAL: the shared parent of the per-profile
 // stores, never inside one. Thresholds are an operator policy preference
 // rather than an account fact, so switching config profiles must not silently
-// switch the policy with it, while the cache, the lock, the log and the spend
-// log all stay per profile because each of those IS an account fact.
+// switch the policy with it, while the cache, the lock and the log all stay
+// per profile because each of those IS an account fact.
 function configFilePath() {
     return path.join(path.dirname(storeRoot()), 'config.json');
 }
@@ -1053,10 +1090,17 @@ function normThreshold(value, fallback) {
 
 function normWindowThresholds(raw, fallback) {
     const source = raw && typeof raw === 'object' ? raw : {};
-    return {
-        warn: normThreshold(source.warn, fallback.warn),
-        barrier: normThreshold(source.barrier, fallback.barrier),
-    };
+    const barrier = normThreshold(source.barrier, fallback.barrier);
+    const statedWarn = normThreshold(source.warn, fallback.warn);
+    // A warn above its own barrier inverts the design: the wind-down exists to
+    // PRECEDE the deadline, and windowState tests the barrier first, so a warn
+    // past it can never be reached and the operator's wind-down would silently
+    // never happen. The barrier is the safety-bearing half and is kept as
+    // stated; only the warn that could not fire falls back. This does not
+    // guarantee warn <= barrier (a barrier of 60 leaves the default warn of 80
+    // unreachable too), and inventing a value under someone's barrier would be
+    // policy the operator did not write.
+    return { warn: statedWarn > barrier ? fallback.warn : statedWarn, barrier };
 }
 
 // Defaults applied FIELD BY FIELD rather than all-or-nothing: one garbage
@@ -1066,9 +1110,6 @@ function normWindowThresholds(raw, fallback) {
 // other value there is an operator who did not opt in.
 function normConfig(raw) {
     const source = raw && typeof raw === 'object' ? raw : {};
-    // Minor units, not a percent, so this takes normAmountMinor's bound rather
-    // than [0, 100]: no overage cap is exposed to this seat, so there is no
-    // denominator and a threshold of $5 (500) is as legitimate as the first cent.
     return {
         enabled: source.enabled === true,
         session: normWindowThresholds(source.session, DEFAULT_CONFIG.session),
@@ -1080,8 +1121,22 @@ function normConfig(raw) {
 // The operator's policy from disk, always a complete config. Absent,
 // unreadable, over-cap, unparseable and misshapen all resolve to the defaults,
 // and the defaults are disabled, so every one of those states leaves the
-// feature off rather than half-armed. Never throws.
+// feature off rather than half-armed. Never throws: readCapped swallows its
+// own I/O errors, but configFilePath reaches os.homedir(), which can raise, so
+// the wrapper is what makes the stated contract true (readUsage wraps for the
+// same reason).
 function readConfig() {
+    try {
+        return readConfigInner();
+    } catch {
+        // The one reachable raiser is configFilePath's os.homedir(). The safe
+        // degradation is the same as every other unreadable config state: the
+        // defaults, which are disabled.
+        return normConfig(null);
+    }
+}
+
+function readConfigInner() {
     const read = readCapped(configFilePath(), CONFIG_READ_CAP);
     if (read === null || read.truncated) return normConfig(null);
     let parsed;
@@ -1118,7 +1173,25 @@ function clearVerdict() {
         fablePercent: null,
         fableResetsAt: null,
         maxAgeSeconds: STALENESS_SECONDS,
+        ageSeconds: null,
     };
+}
+
+// How old the data being judged is, in whole seconds, or null when that cannot
+// be established. Null covers three states and they are all the same answer to
+// a consumer: no usable fetchedAt, an unusable clock seam, and a fetchedAt in
+// the FUTURE, which is a clock disagreement rather than data fresher than any
+// budget (readUsageInner treats a future-dated cache as a miss for the same
+// reason). Null must never read as fresh: S4 denies only when the age is
+// within the budget, so an unknown age has to fall outside it.
+function ageOf(fetchedAt) {
+    const stamp = normTimestamp(fetchedAt);
+    if (stamp === null) return null;
+    const clock = resolveNow();
+    if (!clock.ok) return null;
+    const ageMs = clock.now.getTime() - Date.parse(stamp);
+    if (!Number.isFinite(ageMs) || ageMs < 0) return null;
+    return Math.floor(ageMs / 1000);
 }
 
 // What the kit should do about a usage read. Arguments:
@@ -1127,15 +1200,31 @@ function clearVerdict() {
 //           per field here too, so a partial or absent one is safe
 //
 // Returns { state, window, percent, resetsAt, fableRatchet, fablePercent,
-// fableResetsAt, maxAgeSeconds }. Never throws.
+// fableResetsAt, maxAgeSeconds, ageSeconds }. Never throws.
+//
+// maxAgeSeconds and ageSeconds are a TWO-PASS protocol, and holding both is
+// the point. maxAgeSeconds is advice for the caller's NEXT read; ageSeconds is
+// the age of the data THIS verdict judged. A hook that read at 600 and is
+// handed 120 back is holding data that may be older than the budget it was
+// just given, so a consumer that denies on this verdict compares the two and
+// re-reads at the tighter budget before deciding, rather than denying on data
+// older than the budget it was handed. ageSeconds is null when the age cannot
+// be established, and a null age is never within a budget, which is the
+// fail-open direction (see ageOf).
+//
+// resetsAt is null on a NON-CLEAR verdict whenever the producing window's
+// timestamp failed validation, which is reachable straight off the wire from a
+// window carrying a valid percent and a malformed resets_at. There is no reset
+// instant to invent, so S3's dedupe key and S4's deny text both have to
+// tolerate a null rather than assume one is present.
 //
 // The Fable ratchet is evaluated SEPARATELY and never contributes to `state`,
 // because its response is a routing cap rather than a pause: at or above the
 // ratchet the kit stops sending work to Fable and continues at the session
 // model, and nothing stops.
-function evaluate(usage, config, opts) {
+function evaluate(usage, config) {
     try {
-        return evaluateInner(usage, config, opts || {});
+        return evaluateInner(usage, config);
     } catch {
         // Unreachable by design, like readUsage's outer catch, but the
         // never-throws contract is what lets a hook call this on every tool
@@ -1145,12 +1234,12 @@ function evaluate(usage, config, opts) {
     }
 }
 
-function evaluateInner(usage, rawConfig, opts) {
+function evaluateInner(usage, rawConfig) {
     const config = normConfig(rawConfig);
     // The two doors that keep every reader failure allowing: the feature is
     // off unless the operator armed it, and a failed read is not a positive
-    // determination about anything. A disabled evaluation also writes no file,
-    // so an unarmed kit leaves nothing behind.
+    // determination about anything, whatever it may carry alongside its
+    // reason.
     if (!config.enabled || !usage || usage.ok !== true) return clearVerdict();
 
     // The two windows that feed the state, in precedence order. Both are held
@@ -1188,9 +1277,13 @@ function evaluateInner(usage, rawConfig, opts) {
     // matters is the one approaching the deadline. Only the two windows that
     // have a barrier are consulted; the Fable window has a ratchet, which
     // pauses nothing and so has no deadline to sample faster for.
-    const nearBarrier = WINDOW_PRECEDENCE.some(
-        (key) => percents[key] !== null && percents[key] >= config[key].barrier - NEAR_BARRIER_POINTS,
-    );
+    const nearBarrier = WINDOW_PRECEDENCE.some((key) => {
+        // Floored at 1: a barrier set at or below ten points would otherwise
+        // put every known percent on the fast poll, zero included, and a
+        // window reading 0 is not near anything.
+        const nearPoint = Math.max(1, config[key].barrier - NEAR_BARRIER_POINTS);
+        return percents[key] !== null && percents[key] >= nearPoint;
+    });
 
     const fable = rawWindows.fableWeekly && typeof rawWindows.fableWeekly === 'object' ? rawWindows.fableWeekly : {};
     const fablePercent = normPercent(fable.percent);
@@ -1204,6 +1297,7 @@ function evaluateInner(usage, rawConfig, opts) {
         fablePercent,
         fableResetsAt: normTimestamp(fable.resetsAt),
         maxAgeSeconds: nearBarrier ? STALENESS_NEAR_BARRIER_SECONDS : STALENESS_SECONDS,
+        ageSeconds: ageOf(usage.fetchedAt),
     };
 }
 
