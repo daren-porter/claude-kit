@@ -1,20 +1,31 @@
 #!/usr/bin/env node
 // PreToolUse guard on subagent dispatch (matcher Agent|Task): the kit usage
-// barrier, with the Fable ratchet riding in the same file.
+// wind-down and barrier, with the Fable ratchet riding in the same file.
 //
-// Two predicates in one hook because both are the same event and matcher and
-// differ only in predicate and scope, so one cache read serves both and the
-// precedence is explicit rather than two guards racing:
-//   1. The barrier. When the operator's threshold policy says the session or
-//      weekly-all-models window is at `barrier`, every subagent dispatch is
-//      denied, with a reason that is by itself a sufficient instruction for an
-//      unattended run to stop gracefully.
-//   2. The Fable ratchet. Failing that, when the Fable-scoped weekly window is
-//      at or above the ratchet, only a dispatch carrying an explicit
-//      `model: "fable"` override is denied, telling the caller to re-dispatch
-//      without it. An inherited Fable model on a Fable-led session carries no
-//      override and is invisible here; the executing-work prose is the only
-//      control there, and the reason text does not imply otherwise.
+// THREE predicates in one hook because all three are the same event and the
+// same matcher and differ only in predicate and scope, so one cache read serves
+// them all and the precedence is explicit rather than three guards racing.
+// Listed in the order a burning run MEETS them, which is the reverse of the
+// order in which they outrank each other:
+//   1. The wind-down, at the LOWEST of the three thresholds and therefore the
+//      one a run reaches first. When the operator's threshold policy says the
+//      session or weekly-all-models window is at `warn`, every subagent
+//      dispatch is denied, with a reason that instructs main-thread
+//      continuation rather than a stop: a warn means "not through a subagent",
+//      where the barrier means "not at all".
+//   2. The barrier, which OUTRANKS the wind-down. When either of those windows
+//      is at `barrier`, every subagent dispatch is denied, with a reason that
+//      is by itself a sufficient instruction for an unattended run to stop
+//      gracefully. One verdict is never both states, and the barrier is tested
+//      first regardless, so a rising percent can never be answered with the
+//      milder instruction.
+//   3. The Fable ratchet, which both of the above outrank. Failing both, when
+//      the Fable-scoped weekly window is at or above the ratchet, only a
+//      dispatch carrying an explicit `model: "fable"` override is denied,
+//      telling the caller to re-dispatch without it. An inherited Fable model
+//      on a Fable-led session carries no override and is invisible here; the
+//      executing-work prose is the only control there, and the reason text does
+//      not imply otherwise.
 //
 // PreToolUse also fires for tool calls made INSIDE subagents, and some agent
 // types carry the Agent tool, so a nested dispatch can reach this hook. The
@@ -36,16 +47,27 @@
 // on purpose. Whether additionalContext renders to the model on a DENIED tool
 // call is chain-confirmed but not live-verified, so the load-bearing
 // instruction belongs in the one channel a deny is guaranteed to deliver; and
-// for the BARRIER the sibling wind-down hook already owns the
-// additionalContext channel for the same state, so emitting it here would put
-// the same instruction into one turn twice. The ratchet has no sibling
-// channel at all (the nudge emits only on warn and barrier, and fableRatchet
-// is never a verdict state), so its justification is self-sufficiency alone.
-// permissionDecisionReason is therefore written self-sufficient,
-// and kept short on purpose: the stop instruction sits at its END, so anything
-// that truncates the field costs exactly the part the model needs. The longest
-// branch measures 1297 characters over 11 lines with a typical reset instant
-// (session barrier, reset known), and the kit budgets
+// for BOTH the wind-down and the barrier the sibling nudge already owns the
+// additionalContext channel for the same state (it emits on warn and on
+// barrier alike), so emitting it here would put an instruction about one state
+// into one turn twice. That is an argument against DUPLICATING a channel and
+// never an argument that the sibling has already spoken: a PreToolUse deny
+// suppresses the PostToolUse chain for that call, so a session whose first tool
+// call after crossing a threshold is the dispatch has heard nothing, and the
+// nudge is silent besides on an unusable session id, an unwritable store or an
+// unreadable marker. A reason that pointed at that channel could be pointing at
+// nothing. The ratchet has no sibling channel at all (fableRatchet is never a
+// verdict state), so its justification is self-sufficiency alone.
+// permissionDecisionReason is therefore written self-sufficient in every
+// branch, and kept short on purpose: the instruction that matters sits at its
+// END, so anything that truncates the field costs exactly the part the model
+// needs. The longest branch measures 1764 characters over 12 lines (session
+// WIND-DOWN, orchestrator form, a typical reset instant known), re-measured
+// across all twenty renderings by spawning this hook rather than estimated.
+// The wind-down overtook the barrier (1414 over 11) when it stopped
+// hand-copying the resume and BLOCKED steps and began interpolating the same
+// two the barrier uses, which is a length worth paying for correctness that
+// three of its four orchestrator renderings did not have. The kit budgets
 // itself 2000 characters and 20 lines as prudence, not as an established
 // harness bound: an earlier claim that the binary enforces those numbers was
 // retracted on review (the constants are real but sit in a hook-output
@@ -56,14 +78,16 @@
 // SAFETY: this is the only hook in the kit that can deny a tool call on a
 // network-derived signal, and it runs unattended with nobody present to clear
 // a wrong deny, so it fails OPEN everywhere. A deny requires a positive
-// determination on data no older than the verdict's own staleness budget; a
-// tool that is not Agent or Task, an absent or disabled config, every reader
-// failure (`expired` included), stale data after the one permitted re-read,
-// an unknown percent and any internal error all allow. Allowing means exit 0
-// with empty stdout: an explicit permissionDecision "allow" is a positive
-// approval that shortcuts the permission system (one normalizer in the binary
-// drops it outright), which is not what this hook is for, so silence is how it
-// allows, like every other kit guard.
+// determination on data no older than the DENY budget, which is the tight
+// near-barrier one whatever polling cadence the verdict advised (usage-lib's
+// withinDenyBudget, which the sibling nudge asks too); a tool that is not
+// Agent or Task, an absent or disabled config, every reader failure
+// (`expired` included), stale data after the one permitted re-read, an
+// unknown percent and any internal error all allow.
+// Allowing means exit 0 with empty stdout: an explicit permissionDecision
+// "allow" is a positive approval that shortcuts the permission system (one
+// normalizer in the binary drops it outright), which is not what this hook is
+// for, so silence is how it allows, like every other kit guard.
 //
 // Nothing from the endpoint payload and nothing from tool_input crosses into
 // the reason text. The only interpolated values are numbers the library
@@ -129,16 +153,41 @@ function isBackgroundMain(t) {
     return /^claude$/i.test(t);
 }
 
-// The verdict's ageSeconds against its own maxAgeSeconds: the two-pass
-// staleness protocol. maxAgeSeconds is advice for the caller's NEXT read and
-// ageSeconds is the age of the data THIS verdict judged, so a hook that read
-// at the 600-second budget can be handed back 120 while holding older data.
-// Strict less-than mirrors readUsageInner's own freshness door at whole-second
-// resolution, erring stale on the boundary. A null age is never within any
-// budget (evaluate's ageOf states why), which is the fail-open direction.
-function withinBudget(verdict) {
-    return verdict.ageSeconds !== null && verdict.ageSeconds < verdict.maxAgeSeconds;
-}
+// The freshness a DENY requires is usage-lib's withinDenyBudget, asked here
+// and asked identically by usage-nudge.js before it says dispatch is being
+// refused: ONE standard for every claim of a refusal, so the guard and the
+// text about the guard cannot disagree. It is the bare
+// STALENESS_NEAR_BARRIER_SECONDS rather than a clamp on what the verdict
+// advised. A clamp stood here first, and `Math.min(verdict.maxAgeSeconds,
+// STALENESS_NEAR_BARRIER_SECONDS)` was invariant anyway (maxAgeSeconds is only
+// ever 600 or 120) while reading as though the advice were consulted, directly
+// above a paragraph that said it never was.
+//
+// Requiring it of the REFUSAL rather than widening evaluate's budget is the S9
+// fix round's second attempt, and the reason recorded for abandoning the first
+// was itself wrong: see evaluate's comment for the measurement, which is that
+// the weekly warn band already polls at 120s on the defaults and on the
+// operator's live thresholds alike, so the widening would have changed only
+// the session [80, 85) band. What holds is that a poll cadence and a refusal
+// answer different questions.
+//
+// It also covers two deny predicates no proximity arm reaches, without either
+// being special-cased. The Fable ratchet is scored against a window that has
+// no barrier at all, so its verdict is handed the wide cadence at every
+// percent (measured: fable 92 against a ratchet of 85 returns maxAgeSeconds
+// 600). And a barrier below 1 escapes through the near point's floor: that
+// floor is Math.max(1, barrier - 10), so a percent under 1 can be a barrier
+// state that no arm ever tightens for (measured: barrier 0.5, percent 0.6,
+// maxAgeSeconds 600). A barrier anywhere in [1, 11) is NOT such a case, since
+// the same floor puts the near point at 1 and any percent reaching that
+// barrier is already past it.
+//
+// The cost is bounded rather than nil, which an earlier draft here claimed. In
+// the warn band a dispatch attempt made against a cache older than 120 seconds
+// forces a live fetch, so it is not free. What bounds it is that the dispatch
+// is then REFUSED: the fan-out that would drive the fetch rate up is the very
+// thing being prevented, and every attempt inside one 120-second window is
+// served from the cache.
 
 // The emission door for every number in the reason text: usage-lib's shared
 // formatOneDecimal, which renders faithfully at one decimal (each rounding
@@ -165,13 +214,18 @@ function resetClause(resetsAt) {
 // immediately if that instant has already passed", because a barrier can fire
 // on data minutes old and normTimestamp validates shape, not futurity); the
 // weekly window resets days out, so it never arms one regardless.
+//
+// Shared by BOTH deny texts since the wind-down stopped hand-copying it, which
+// is why the weekly arm names the window rather than the barrier: "held on the
+// weekly usage barrier" inside a wind-down would contradict that text's own
+// lead sentence, "This is not a stop and it is not the barrier".
 function resumeStep(windowKey, resetsAt) {
     if (windowKey === 'session') {
         return resetsAt === null
             ? "Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand."
             : 'Arm a one-shot resume: create a single scheduled job at ' + resetsAt + ", or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.";
     }
-    return 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.';
+    return 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.';
 }
 
 // Step 4 of the orchestrator sequence, the single home of its wording. Two
@@ -183,15 +237,36 @@ function blockedStep(resetsAt) {
         : 'Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.';
 }
 
-// The canonical barrier deny texts, authored in the main thread as a
-// cross-hook contract; reproduce, never paraphrase. Returns null when the
-// window label is outside the fixed map or the percent is not finite, both of
-// which mean emit nothing at all.
+// The canonical deny texts, authored in the main thread as a cross-hook
+// contract; reproduce, never paraphrase. Three of them, one per predicate, and
+// each returns null rather than a string when a value it would interpolate
+// cannot be trusted, which means emit nothing at all.
+
 // The deny reason at the WARN threshold, which is a different instruction from
 // the barrier's rather than a softer wording of it. A warn means "not through a
 // subagent", where a barrier means "not at all", so this text tells the caller
 // to keep working in the main thread and the barrier's tells it to stop. Same
 // guards as barrierReason for the same reasons; see its comments.
+//
+// The orchestrator form STATES the bookkeeping of the eventual stop rather than
+// pointing at the sibling wind-down channel for it, and the difference is not
+// stylistic: this branch is the one that could not assume that channel had
+// spoken. A PreToolUse deny suppresses the PostToolUse chain for that call, so
+// a session whose first tool call after crossing the warn is the dispatch has
+// never seen the nudge; and the nudge is silent on an unusable session id, an
+// unwritable store or an unreadable marker file, none of which silence this
+// deny. Its three steps are the nudge's own steps 6, 7 and 8 in that order,
+// and they are explicitly scoped to the STOP rather than to now, because the
+// whole instruction here is to keep working until the boundary.
+//
+// The last two are resumeStep and blockedStep verbatim rather than a summary
+// of them, and that is a correctness property rather than tidiness. Hand-copied
+// prose stood here first and lost two of resumeStep's three arms: it told a
+// session whose reset instant had FAILED validation to arm a resume at that
+// instant, one sentence after saying the instant could not be read, and it left
+// a weekly wind-down with no notify instruction at all. Chapter 5 fixed the
+// same class once already by making the step a single interpolant; this is
+// where the second copy had grown back.
 function windDownReason(verdict, config, nested) {
     if (typeof verdict.window !== 'string' || !Object.prototype.hasOwnProperty.call(WINDOW_LABELS, verdict.window)) return null;
     const label = WINDOW_LABELS[verdict.window];
@@ -219,10 +294,18 @@ function windDownReason(verdict, config, nested) {
         '',
         "Do not retry this dispatch, and do not do this subagent's work in the main thread instead: that costs more than the dispatch saved and it lands unreviewed, because review is dispatched here too and is equally unavailable.",
         '',
-        'Do not CLOSE a section that would normally take review. Finish the one in flight, stop at that boundary rather than opening another, and follow the wind-down instruction already in your context.',
+        'Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work: completion is what needs the review you cannot dispatch for. Finish the one in flight, stage it, and stop at that boundary rather than opening another.',
+        '',
+        'At that stop, in this order:',
+        '1. Write the Chapter in the plan doc naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.',
+        '2. ' + resumeStep(verdict.window, verdict.resetsAt),
+        '3. ' + blockedStep(verdict.resetsAt),
     ].join('\n');
 }
 
+// The deny reason AT THE BARRIER: the same refusal with the opposite
+// instruction, since here there is no cheaper way to keep working. Its
+// numbering is its own and does not track the wind-down's.
 function barrierReason(verdict, config, nested) {
     // Own-property lookup, not a plain read: a window key like "constructor"
     // would otherwise resolve through Object.prototype and interpolate a
@@ -334,17 +417,17 @@ async function main() {
     const wouldDeny = (v) => v.state === 'barrier' || v.state === 'warn' || (v.fableRatchet === true && fable);
     if (!wouldDeny(verdict)) return;
 
-    // The verdict would deny but judged data older than its own budget: one
-    // re-read at the tighter budget, then re-decide. Exactly one, never a
+    // The verdict would deny but judged data older than a deny may stand on:
+    // one re-read at the deny budget, then re-decide. Exactly one, never a
     // loop; a loop here is a hook that can spin on every tool call. The bound
-    // holds structurally too: a read at the tighter budget can only return
-    // data younger than it, so a third pass could never learn more.
-    if (!withinBudget(verdict)) {
-        usage = await lib.readUsage({ maxAgeSeconds: verdict.maxAgeSeconds });
+    // holds structurally too: a read at that budget can only return data
+    // younger than it, so a third pass could never learn more.
+    if (!lib.withinDenyBudget(verdict)) {
+        usage = await lib.readUsage({ maxAgeSeconds: lib.STALENESS_NEAR_BARRIER_SECONDS });
         if (!usage || usage.ok !== true) return;
         verdict = lib.evaluate(usage, config);
         if (!wouldDeny(verdict)) return;
-        if (!withinBudget(verdict)) return;
+        if (!lib.withinDenyBudget(verdict)) return;
     }
 
     // Which instruction form the deny carries. The deny itself never varies

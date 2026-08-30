@@ -1125,6 +1125,12 @@ const CONFIG_READ_CAP = 16 * 1024;
 // polls this endpoint every 180s and a spend control does not need
 // three-minute resolution), tightening near a barrier so a fast burn is not
 // discovered ten minutes late.
+//
+// This is polling CADENCE and never a licence to refuse on what it served.
+// The freshness a REFUSAL requires is enforced at the refusal itself, by
+// withinDenyBudget below, which holds to STALENESS_NEAR_BARRIER_SECONDS
+// whatever this budget advised and which both consumer hooks ask. See
+// evaluate for why that rule sits on the decision rather than here.
 const STALENESS_SECONDS = 600;
 const STALENESS_NEAR_BARRIER_SECONDS = 120;
 const NEAR_BARRIER_POINTS = 10;
@@ -1158,9 +1164,14 @@ function configFilePath() {
 // denied, quoting a number the operator never wrote. Only a non-number, NaN,
 // a non-finite value or a negative falls back, and those are the ABSENCE of a
 // policy rather than an unreachable one. What an out-of-reach barrier
-// actually does: it disables the DENY and leaves the wind-down armed at
-// whatever the warn is, so disabling a window outright means putting both
-// thresholds out of reach.
+// actually does, since S9 made the warn deny: it changes which instruction a
+// deny carries, not whether there is one. `{warn: 80, barrier: 999999}` at 82%
+// still refuses every subagent dispatch, carrying the wind-down text rather
+// than the barrier's. It deliberately does NOT stand the warn down with it: the
+// two thresholds are independent, and letting one silently disable the other is
+// how a policy the operator did write stops being enforced. Disabling a window
+// means putting BOTH of its thresholds out of reach, and disabling the feature
+// means `enabled: false`.
 function normThreshold(value, fallback) {
     const n = normNumber(value);
     return n === null || n < 0 ? fallback : n;
@@ -1176,8 +1187,15 @@ function normWindowThresholds(raw, fallback) {
     // the DEFAULT on the second pass, and the inversion the stand-down exists
     // to prevent would return through re-entry. A barrier can never be
     // Infinity (normThreshold returns the finite input or the finite
-    // default), so nearBarrier's `barrier - NEAR_BARRIER_POINTS` arithmetic
-    // never sees it, and no consumer interpolates a warn threshold.
+    // default), so evaluate's `barrier - NEAR_BARRIER_POINTS` arithmetic never
+    // sees one, and nothing else in evaluate reads a warn threshold. A consumer
+    // DOES interpolate the warn threshold since S9, because the wind-down deny
+    // names it, but a stood-down warn can never reach that text: windowState
+    // reports `warn` only on `percent >= warn`, and no percent satisfies that
+    // against Infinity. usage-barrier.js's own door says the same in place
+    // ("Unreachable through main") and exists because the rule that only a
+    // finite number is ever interpolated is absolute, not because the value
+    // gets there.
     const statedWarn = source.warn === Infinity ? Infinity : normThreshold(source.warn, fallback.warn);
     // A warn above its own barrier cannot fire as written: the wind-down
     // exists to PRECEDE the deadline, and windowState tests the barrier
@@ -1399,11 +1417,32 @@ function evaluateInner(usage, rawConfig) {
         if (windowKey !== null) break;
     }
 
-    // Tightened by proximity to a BARRIER rather than to a warn: the warn is
-    // the wind-down and the barrier is the deadline, so the resolution that
-    // matters is the one approaching the deadline. Only the two windows that
-    // have a barrier are consulted; the Fable window has a ratchet, which
-    // pauses nothing and so has no deadline to sample faster for.
+    // Tightened by proximity to a BARRIER rather than to a warn, and this is
+    // the poll CADENCE rather than a statement about what may be refused.
+    //
+    // S9 made the warn refuse dispatch too, and the first fix for that widened
+    // this arm across the whole warn band. The widening was reverted, and the
+    // reason given for reverting it was wrong: it is recorded here because a
+    // later effort would otherwise build on it. That reason was poll volume,
+    // that a warn band S9 makes long-lived would sit on a two-minute poll for
+    // days. Measured against this function, it would not: on the weekly
+    // defaults the warn threshold and the near point are the SAME number
+    // (85 = 95 - 10), so the entire weekly warn band already polls at
+    // STALENESS_NEAR_BARRIER_SECONDS, as does the operator's live 92/95. The
+    // only band the widening would have changed is session [80, 85), on a
+    // window that resets in under five hours.
+    //
+    // What holds instead is the separation of concerns. This number answers
+    // "how often should a consumer poll"; a refusal is a positive
+    // determination and carries its own freshness requirement whatever the
+    // cadence. That requirement is withinDenyBudget, and both consumer hooks
+    // ask it, so the two cannot disagree about what a refusal may stand on.
+    //
+    // Only the two windows that have a barrier are consulted here, because only
+    // they have a deadline to sample faster ahead of. The Fable window has a
+    // ratchet, which pauses nothing but does REFUSE a dispatch carrying a fable
+    // override; no arm of this rule ever tightens for it, and its freshness
+    // comes from withinDenyBudget like every other refusal.
     const nearBarrier = WINDOW_PRECEDENCE.some((key) => {
         // Floored at 1: a barrier set at or below ten points would otherwise
         // put every known percent on the fast poll, zero included, and a
@@ -1428,6 +1467,33 @@ function evaluateInner(usage, rawConfig) {
     };
 }
 
+// The freshness a claim about REFUSAL requires, which is stricter than the
+// cadence a verdict carries and deliberately independent of it. maxAgeSeconds
+// answers "how often should you poll"; refusing a dispatch, or telling the
+// model that dispatch is being refused, is a positive determination and may
+// never rest on data older than STALENESS_NEAR_BARRIER_SECONDS, whichever
+// window produced the verdict and whichever predicate is about to fire.
+//
+// It lives in the library rather than in either hook because BOTH of them make
+// that claim and they have to make it on one standard. They did not: the
+// barrier held its deny to 120s while the nudge still gated its emission on
+// the verdict's own budget, so at a session 82% (a warn ten points clear of
+// its barrier, hence the wide cadence) on data 300 seconds old the nudge
+// emitted "Subagent dispatch is now being refused" while the barrier allowed
+// the very next dispatch. Two hand copies of one rule drifting apart is the
+// class of defect this effort has already repaired twice in the deny texts.
+//
+// Strict less-than mirrors readUsageInner's own freshness door at whole-second
+// resolution, erring stale on the boundary. A null age is never within any
+// budget (see ageOf), which is the fail-open direction, and a missing verdict
+// is refused rather than dereferenced so this module's never-throws contract
+// stays literally true: no caller reaches that arm today, since both hooks
+// pass what evaluate returned.
+function withinDenyBudget(verdict) {
+    if (!verdict || typeof verdict !== 'object') return false;
+    return verdict.ageSeconds !== null && verdict.ageSeconds < STALENESS_NEAR_BARRIER_SECONDS;
+}
+
 module.exports = {
     readUsage,
     storeRoot,
@@ -1443,6 +1509,7 @@ module.exports = {
     RATE_LIMIT_DEFAULT_SECONDS,
     TRANSIENT_BACKOFF_SECONDS,
     evaluate,
+    withinDenyBudget,
     formatOneDecimal,
     readConfig,
     configFileIssue,

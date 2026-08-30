@@ -1545,10 +1545,31 @@ test('the Fable ratchet trips independently of the state and never on an unknown
 
 test('the staleness budget tightens ten points below a barrier and not eleven', async () => {
     await withUsageEnv(async () => {
+        // This budget is polling CADENCE and says nothing about what may be
+        // refused. S9's first fix round widened it to cover the whole warn
+        // band, on the reasoning that a warn deny must not ride data a barrier
+        // deny could not, and the assertions here were flipped to match. Both
+        // were reverted, and the reason recorded for reverting was afterwards
+        // measured false against this very function: it said the widening would
+        // put a long-lived warn band on a two-minute poll for days, but warn
+        // and the near point are the SAME number on the weekly defaults
+        // (85 = 95 - 10), so that band already polls at 120, as does the
+        // operator's live 92/95. The only band the widening would have changed
+        // is session [80, 85), which the 84 case below sits just under.
+        //
+        // What holds is the separation of concerns: the freshness a REFUSAL
+        // needs is a property of the refusal, so it lives in
+        // lib.withinDenyBudget, which holds to STALENESS_NEAR_BARRIER_SECONDS
+        // whatever this returns and which both consumer hooks ask. The case
+        // above pins that rule, the barrier and nudge suites pin it end to end,
+        // and this case is back to pinning the cadence alone.
+
         // Ten points below the default 95 barrier.
         assert.strictEqual(lib.evaluate(usageOf({ session: 85 }), on()).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
         // Eleven points below: the 600s floor, so high burn is discovered at
-        // the boundary rather than one poll too late.
+        // the boundary rather than one poll too late. This percent is a WARN on
+        // the defaults, and its deny is held fresh by lib.withinDenyBudget
+        // rather than by this number.
         assert.strictEqual(lib.evaluate(usageOf({ session: 84 }), on()).maxAgeSeconds, lib.STALENESS_SECONDS);
         // Either window arms it, and past the barrier certainly does.
         assert.strictEqual(lib.evaluate(usageOf({ weeklyAll: 85 }), on()).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
@@ -1566,8 +1587,12 @@ test('the staleness budget tightens ten points below a barrier and not eleven', 
         assert.strictEqual(lib.evaluate(usageOf({ session: 0 }), tiny).maxAgeSeconds, lib.STALENESS_SECONDS);
         assert.strictEqual(lib.evaluate(usageOf({ session: 1 }), tiny).maxAgeSeconds, lib.STALENESS_NEAR_BARRIER_SECONDS);
 
-        // The Fable window has a ratchet rather than a barrier, so nothing
-        // pauses on it and there is no deadline to sample faster for.
+        // The Fable window has a ratchet rather than a barrier, so there is no
+        // deadline to sample faster ahead of. That is NOT a claim that the
+        // ratchet refuses nothing, which is what the comment here used to say
+        // and what usage-lib's own comment said beside it: the ratchet does
+        // deny a fable-override dispatch. Its freshness comes from the deny
+        // clamp, on the same terms as every other refusal.
         assert.strictEqual(lib.evaluate(usageOf({ fable: 99 }), on()).maxAgeSeconds, lib.STALENESS_SECONDS);
     });
 });
@@ -1659,6 +1684,31 @@ test('the verdict reports the age of the data it judged, and null when it cannot
             else process.env.CLAUDE_KIT_USAGE_NOW = prior;
         }
     });
+});
+
+// The freshness a REFUSAL requires, which is a different question from the poll
+// cadence beside it and which now lives here rather than in either consumer. It
+// was hand-held in usage-barrier.js while usage-nudge.js gated its emission on
+// the verdict's own maxAgeSeconds, and the two disagreed: at a session 82% (a
+// warn ten points clear of its barrier, so the wide cadence) on 300-second-old
+// data, the nudge emitted "Subagent dispatch is now being refused" while the
+// barrier allowed the very next dispatch. Both hooks ask this one predicate now,
+// and the case below is what reddens if it starts consulting the cadence again.
+test('the deny budget is the tight one whatever cadence the verdict advised', () => {
+    // The whole point: this verdict advises 600 and this rule says no anyway.
+    assert.strictEqual(lib.withinDenyBudget({ ageSeconds: 300, maxAgeSeconds: 600 }), false);
+    assert.strictEqual(lib.withinDenyBudget({ ageSeconds: 119, maxAgeSeconds: 600 }), true);
+    // Strict less-than, mirroring readUsageInner's own freshness door at
+    // whole-second resolution, so the boundary errs stale.
+    assert.strictEqual(lib.withinDenyBudget({ ageSeconds: lib.STALENESS_NEAR_BARRIER_SECONDS, maxAgeSeconds: 120 }), false);
+    // An unknown age is never within any budget, which is the fail-open
+    // direction: reading null as fresh would refuse on data whose age could not
+    // be established at all.
+    assert.strictEqual(lib.withinDenyBudget({ ageSeconds: null, maxAgeSeconds: 120 }), false);
+    // The module's never-throws contract holds at this door too, though no
+    // consumer reaches the arm: both hooks pass what evaluate returned.
+    assert.strictEqual(lib.withinDenyBudget(null), false);
+    assert.strictEqual(lib.withinDenyBudget(undefined), false);
 });
 
 test('a misshapen usage object degrades to clear rather than throwing', async () => {

@@ -1,5 +1,5 @@
 // Tests for plugins/claude-kit/hooks/usage-barrier.js (the PreToolUse usage
-// barrier and the Fable ratchet it carries).
+// wind-down and barrier, and the Fable ratchet they carry alongside them).
 //
 // Node's built-in test runner, no framework, the usage-autocontinue-nudge
 // harness: the hook is spawned as a real child process, fed a PreToolUse
@@ -31,10 +31,25 @@
 // already passed vacuously on exactly this shape at the default threshold.)
 //
 // Mutation targets verified by hand against this suite (delete or invert,
-// watch red, restore): the hook's tool-name guard, the age-within-budget deny
-// guard, the strict-< staleness boundary operator, the barrier-only state
-// comparison (a warn must allow), and the wouldDeny re-check after the
-// re-read. usage-lib's two unknown-never-trips guarantees are pinned red-able
+// watch red, restore): the hook's tool-name guard, the age-within-deny-budget
+// guard, the strict-< staleness boundary operator, the state comparison that
+// picks WHICH reason a deny carries (a warn must deny with the wind-down text
+// and never with the barrier's), and the wouldDeny re-check after the re-read.
+// The freshness rule itself moved into usage-lib.js, and its surviving
+// discriminator is the constant inside lib.withinDenyBudget: swapping
+// STALENESS_NEAR_BARRIER_SECONDS for the verdict's own maxAgeSeconds, which is
+// exactly the desync this hook and the nudge were fixed for, reddens four cases
+// here (the warn deny, the ratchet, the sub-1 barrier and the 429 trade), one
+// in the nudge suite and the direct case in usage-lib's own. Measured by
+// running it rather than reasoned about;
+// the earlier note here named a Math.min clamp inside a local denyBudget, whose
+// two inputs were 120 and either 120 or 600, so the minimum never varied and
+// the note pointed at nothing a mutation could move.
+// That fourth target used to read "the barrier-only state comparison (a warn
+// must allow)", and S9 inverted it deliberately: the warn band stopped being a
+// stop with no enforcement and became a cheaper working state WITH
+// enforcement, so a warn that allowed is now the regression rather than the
+// contract. usage-lib's two unknown-never-trips guarantees are pinned red-able
 // by that library's own suite; this hook ALSO refuses to emit a non-finite
 // number at the door (the canonical interpolation rules require checking
 // finiteness where the text is emitted, not trusting the door that decided),
@@ -138,6 +153,14 @@ function writeConfig(cfg) {
 
 function writeCredentials(configDir) {
     fs.writeFileSync(path.join(configDir, '.credentials.json'), JSON.stringify({ claudeAiOauth: { accessToken: TOKEN } }));
+}
+
+// Every reader failure that reaches the transport writes a backoff lock behind
+// it, and a lock in force is a DIFFERENT reader failure (`locked`). Without
+// clearing it between the two percents each case runs at, the second run would
+// allow for the wrong reason and the door the case names would go unexercised.
+function clearLock() {
+    try { fs.rmSync(lib.lockFilePath(), { force: true }); } catch { /* nothing to clear */ }
 }
 
 function writeLockFixture() {
@@ -250,8 +273,10 @@ function assertAllow(res) {
 }
 
 // The deny envelope, pinned whole: exactly one hookSpecificOutput object,
-// exactly the three PreToolUse deny fields (no additionalContext: a sibling
-// hook owns that channel for this state), inside the kit's own 2000-character
+// exactly the three PreToolUse deny fields (no additionalContext: the sibling
+// nudge owns that channel at a warn and at a barrier alike, so a second copy
+// here would put one instruction into one turn twice), inside the kit's own
+// 2000-character
 // and 20-line budget (prudence; an earlier claim that the binary enforces
 // those numbers was retracted on review), echoing nothing from tool_input.
 function denyReason(res) {
@@ -302,7 +327,55 @@ function resumeArm(reset) {
 
 const RESUME_SESSION_UNKNOWN = "Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.";
 
-const RESUME_WEEKLY = 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.';
+// Names the WINDOW where it used to name the barrier, and the change is not
+// cosmetic: this step is now shared with the wind-down text, whose own lead
+// says "This is not a stop and it is not the barrier". The nudge's copy of the
+// step moved with it, so the two hooks still render the same sentence.
+const RESUME_WEEKLY = 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.';
+
+// The wind-down deny, orchestrator form. Its instruction is not a softer
+// wording of the barrier's: it says keep working in the main thread, and it
+// states the bookkeeping of the eventual stop inline rather than deferring to
+// the sibling nudge, which may never have spoken (a PreToolUse deny suppresses
+// the PostToolUse chain for that call).
+//
+// This helper used to end in ONE hand-written sentence covering that
+// bookkeeping, which it asserted whole and which was wrong in two of the four
+// renderings it covered. It told a session whose reset instant had failed
+// validation to "arm a one-shot resume at the reset instant", one sentence
+// after the same text said that instant could not be read; and on a weekly
+// window it carried no notify instruction at all, so the acceptance criterion
+// "a session window arms one, a weekly window notifies" failed in the channel
+// this hook's header calls the only guaranteed delivery. The hook now
+// interpolates resumeStep and blockedStep, the same two the barrier text and
+// the nudge use, so this helper takes them as parameters and the four
+// renderings are exercised below rather than collapsed into one string.
+function expectedWindDownReason(v) {
+    return [
+        'Held by the kit usage wind-down: the ' + v.label + ' usage window is at ' + v.percent + '%, at or past the wind-down threshold of ' + v.warn + '%. ' + v.resetClause + ' Subagent dispatch is refused until this window resets.',
+        '',
+        'This is not a stop and it is not the barrier. Continue in the main thread on work that needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+        '',
+        "Do not retry this dispatch, and do not do this subagent's work in the main thread instead: that costs more than the dispatch saved and it lands unreviewed, because review is dispatched here too and is equally unavailable.",
+        '',
+        'Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work: completion is what needs the review you cannot dispatch for. Finish the one in flight, stage it, and stop at that boundary rather than opening another.',
+        '',
+        'At that stop, in this order:',
+        '1. Write the Chapter in the plan doc naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.',
+        '2. ' + v.resumeStep,
+        '3. ' + v.blockedStep,
+    ].join('\n');
+}
+
+function expectedSubagentWindDown(v) {
+    return [
+        'Held by the kit usage wind-down: the ' + v.label + ' usage window is at ' + v.percent + '%, at or past the wind-down threshold of ' + v.warn + '%. ' + v.resetClause + ' Subagent dispatch is refused until this window resets.',
+        '',
+        'Do not retry this dispatch and do not reshape it. Carry on with your own work if you can do it without dispatching, and otherwise stop and return to whoever dispatched you, reporting that you stopped on the kit usage wind-down and naming this window and its percent.',
+        '',
+        'Do not write a Chapter, do not arm a resume, and do not surface a `BLOCKED:` line. Those belong to the session that dispatched you.',
+    ].join('\n');
+}
 
 function expectedRatchetReason(v) {
     return [
@@ -342,6 +415,20 @@ function armSessionBarrier() {
     writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, weeklyAll: { warn: 85, barrier: 95 }, fableRatchet: 85 });
     writeCache({
         session: { percent: 97.4, resetsAt: RESET_SESSION },
+        weeklyAll: { percent: 17, resetsAt: RESET_WEEKLY },
+        fableWeekly: { percent: 5, resetsAt: RESET_WEEKLY },
+    });
+}
+
+// The wind-down twin: the same config with a percent inside the warn band,
+// where dispatch is refused with the wind-down instruction rather than the
+// barrier's. A separate helper rather than a parameter on the one above,
+// because the exact-canonical barrier cases assert 97.4 and an eleven-line
+// reason off that fixture.
+function armSessionWarn() {
+    writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, weeklyAll: { warn: 85, barrier: 95 }, fableRatchet: 85 });
+    writeCache({
+        session: { percent: 82, resetsAt: RESET_SESSION },
         weeklyAll: { percent: 17, resetsAt: RESET_WEEKLY },
         fableWeekly: { percent: 5, resetsAt: RESET_WEEKLY },
     });
@@ -443,9 +530,8 @@ test('Task dispatches are guarded like Agent dispatches', () => {
     });
 });
 
-test('a warn state denies dispatch, and says wind-down rather than barrier', () => {
+test('a warn state denies dispatch with the exact canonical wind-down reason, not the barrier one', () => {
     withEnv((env) => {
-        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, fableRatchet: 85 });
         // Until S9 this case asserted the opposite, that only a barrier denies,
         // and it caught the change when the behavior was inverted deliberately.
         // That is the test working: the warn band used to be a stop with no
@@ -453,25 +539,156 @@ test('a warn state denies dispatch, and says wind-down rather than barrier', () 
         // because dispatches are the expensive thing and prose alone left the
         // saving to compliance.
         //
-        // The Fable percent stays finite on purpose, as it did before: a
-        // regression collapsing warn and ratchet into one branch would render
-        // the ratchet's text here, and a finite percent is what makes that
-        // visible rather than swallowed by the finite-at-the-door guard.
-        writeCache({
-            session: { percent: 85, resetsAt: RESET_SESSION },
-            weeklyAll: { percent: 10, resetsAt: RESET_WEEKLY },
-            fableWeekly: { percent: 5, resetsAt: RESET_WEEKLY },
+        // Asserted WHOLE rather than by substring, like the barrier's and the
+        // ratchet's: this text is a cross-hook contract with the sibling nudge,
+        // and four substring checks were what let a paraphrase pass.
+        armSessionWarn();
+        const expected = expectedWindDownReason({
+            label: 'session (5-hour)',
+            percent: 82,
+            warn: 80,
+            resetClause: 'Resetting at ' + RESET_SESSION + '.',
+            resumeStep: resumeArm(RESET_SESSION),
+            blockedStep: BLOCKED_KNOWN,
         });
+        // The Fable percent stays finite in the fixture on purpose, as it did
+        // before: a regression collapsing warn and ratchet into one branch
+        // would render the ratchet's text here, and a finite percent is what
+        // makes that visible rather than swallowed by the finite-at-the-door
+        // guard. Both payload shapes deny, override or not.
         for (const payload of [agentPayload(), agentPayload('fable')]) {
             const reason = denyReason(runHook(env, payload));
-            assert.ok(reason.startsWith('Held by the kit usage wind-down'),
-                'a warn denies with the wind-down reason, not the barrier one');
-            assert.ok(reason.includes('at or past the wind-down threshold of 80%'));
+            assert.strictEqual(reason, expected);
+            assert.strictEqual(reason.split('\n').length, 12);
             assert.ok(!reason.includes('at or past the barrier'),
                 'and must not claim the barrier, which carries a different instruction');
-            assert.ok(reason.includes('Continue in the main thread'),
-                'the whole point of the band: keep working, just not through a subagent');
         }
+    });
+});
+
+test('a session wind-down whose reset instant failed validation must not tell anyone to arm a resume at it', () => {
+    withEnv((env) => {
+        // The rendering the hand-written bookkeeping sentence got WRONG, and
+        // the reason a whole-string assertion did not catch it: this case did
+        // not exist. A session warn beside a malformed resets_at is reachable
+        // straight off the wire (evaluate's contract says so), and the text
+        // used to say the instant could not be read and then, three sentences
+        // later, "arm a one-shot resume at the reset instant". resumeStep's
+        // null arm says the opposite, which is what the hook now renders.
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, weeklyAll: { warn: 85, barrier: 95 } });
+        writeCache({
+            session: { percent: 82, resetsAt: 'sometime this afternoon' },
+            weeklyAll: { percent: 17, resetsAt: RESET_WEEKLY },
+        });
+        const reason = denyReason(runHook(env, agentPayload()));
+        assert.strictEqual(reason, expectedWindDownReason({
+            label: 'session (5-hour)',
+            percent: 82,
+            warn: 80,
+            resetClause: 'Its reset instant could not be read.',
+            resumeStep: RESUME_SESSION_UNKNOWN,
+            blockedStep: BLOCKED_UNKNOWN,
+        }));
+        assert.ok(!reason.includes('create a single scheduled job'),
+            'a resume cannot be armed at an instant this same text says it could not read');
+    });
+});
+
+test('a weekly all-models warn names its own window and threshold', () => {
+    withEnv((env) => {
+        // The window is the only thing that varies in this text, and the weekly
+        // warn is a different threshold from the session one, so the pair is
+        // what pins that neither is hardcoded. Session sits below its own warn
+        // so precedence cannot pick it.
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, weeklyAll: { warn: 85, barrier: 95 } });
+        writeCache({
+            session: { percent: 10, resetsAt: RESET_SESSION },
+            weeklyAll: { percent: 88, resetsAt: RESET_WEEKLY },
+        });
+        // And the weekly window NOTIFIES rather than arming anything, which the
+        // hand-written sentence this replaced dropped entirely: it named only
+        // the session arm, so a weekly wind-down carried no resume instruction
+        // of any kind. S9's criterion is that a session window arms one and a
+        // weekly window notifies, in this channel above all.
+        const weekly = denyReason(runHook(env, agentPayload()));
+        assert.strictEqual(weekly, expectedWindDownReason({
+            label: 'weekly all-models',
+            percent: 88,
+            warn: 85,
+            resetClause: 'Resetting at ' + RESET_WEEKLY + '.',
+            resumeStep: RESUME_WEEKLY,
+            blockedStep: BLOCKED_KNOWN,
+        }));
+        assert.ok(weekly.includes('Notify the operator'), 'the weekly horizon notifies');
+        assert.ok(!weekly.includes('create a single scheduled job'), 'and never arms a resume');
+
+        // And a reset instant that failed validation renders the same
+        // could-not-be-read clause the barrier text uses, reachable straight
+        // off the wire from a valid percent beside a malformed resets_at.
+        writeCache({
+            session: { percent: 10, resetsAt: RESET_SESSION },
+            weeklyAll: { percent: 88, resetsAt: 'sometime next week' },
+        });
+        assert.strictEqual(denyReason(runHook(env, agentPayload())), expectedWindDownReason({
+            label: 'weekly all-models',
+            percent: 88,
+            warn: 85,
+            resetClause: 'Its reset instant could not be read.',
+            resumeStep: RESUME_WEEKLY,
+            blockedStep: BLOCKED_UNKNOWN,
+        }));
+    });
+});
+
+test('a wind-down deny inside a subagent gets the subagent form: no Chapter, no resume, no BLOCKED', () => {
+    withEnv((env) => {
+        // The NESTED wind-down form, which had no test at all: a subagent must
+        // not do the orchestrator's bookkeeping, and the deny still stands.
+        armSessionWarn();
+        const expected = expectedSubagentWindDown({
+            label: 'session (5-hour)',
+            percent: 82,
+            warn: 80,
+            resetClause: 'Resetting at ' + RESET_SESSION + '.',
+        });
+        const reason = denyReason(runHook(env, agentPayload(undefined, { agent_type: 'implementer-opus' })));
+        assert.strictEqual(reason, expected);
+        assert.strictEqual(reason.split('\n').length, 5);
+        assert.ok(!reason.includes('write the Chapter'), 'no orchestrator bookkeeping for a subagent');
+        assert.ok(!reason.includes('arm a one-shot resume at the reset instant'), 'a subagent never arms a resume');
+
+        // The identity spellings docs-write-guard reads, one alternate each
+        // way, plus a namespaced id: all get the subagent form.
+        assert.strictEqual(denyReason(runHook(env, agentPayload(undefined, { subagentType: 'qa-verifier' }))), expected);
+        assert.strictEqual(denyReason(runHook(env, agentPayload(undefined, { agentType: 'claude-kit:adversarial-reviewer' }))), expected);
+
+        // And the background-main exemption applies here as it does at the
+        // barrier: a bare `claude` is the main session of its job, so it gets
+        // the twelve-line orchestrator form rather than this five-line one.
+        const background = denyReason(runHook(env, agentPayload(undefined, { agent_type: 'claude' })));
+        assert.strictEqual(background.split('\n').length, 12);
+        assert.ok(background.includes('Continue in the main thread'));
+    });
+});
+
+test('wind-down: an unknown window percent never denies at a threshold a zero percent would trip', () => {
+    withEnv((env) => {
+        // The warn twin of the barrier case above, and the one place S9's
+        // decision about an out-of-reach barrier is pinned live: a barrier at
+        // 999999 can never be reached, and it deliberately does NOT stand the
+        // warn down with it, so this config still refuses every dispatch, with
+        // the wind-down instruction rather than the barrier's. Threshold 0 for
+        // the same reason as the barrier case: `null >= 0` is TRUE, so this is
+        // the one threshold where broken unknown-percent handling becomes a
+        // visible deny.
+        writeConfig({ enabled: true, session: { warn: 0, barrier: 999999 }, weeklyAll: { warn: 0, barrier: 999999 } });
+        writeCache({ session: { percent: 0, resetsAt: RESET_SESSION } });
+        const reason = denyReason(runHook(env, agentPayload()));
+        assert.ok(reason.includes('at 0%, at or past the wind-down threshold of 0%'), 'the zero threshold is live');
+        assert.ok(!reason.includes('at or past the barrier'), 'an out-of-reach barrier is not what denied here');
+
+        writeCache({ session: { resetsAt: RESET_SESSION }, weeklyAll: { resetsAt: RESET_WEEKLY } }); // percents unknown
+        assertAllow(runHook(env, agentPayload()));
     });
 });
 
@@ -638,30 +855,50 @@ test('a background-main "claude" caller is the main session of its job and gets 
 // Allow on doubt: every branch its own case.
 // ---------------------------------------------------------------------------
 
+// Every case in this block runs at BOTH percents that can deny. Until S9 only
+// a barrier could deny at all, so every fixture here was a barrier percent and
+// the whole warn branch went unexercised: the case literally named "no tool
+// other than Agent or Task is ever denied, at any threshold" only ever ran at
+// one threshold. Widening the deny widened the blast radius of getting an
+// allow-on-doubt door wrong, so each door is now pinned on both branches.
+//
+// 97.4 is past the session barrier of 95. 82 is at or past the session warn of
+// 80 and eleven points below that barrier, so evaluate hands it the WIDE 600s
+// polling budget while the hook still refuses to deny on anything older than
+// 120s: the two numbers disagree there, which is what makes it the useful
+// second percent rather than merely a different one.
+const DENY_PERCENTS = [97.4, 82];
+
 test('no tool other than Agent or Task is ever denied, at any threshold', () => {
     withEnv((env) => {
-        armSessionBarrier();
-        assertAllow(runHook(env, { tool_name: 'Bash', hook_event_name: 'PreToolUse', tool_input: { command: 'echo hi' } }));
-        assertAllow(runHook(env, { hook_event_name: 'PreToolUse', tool_input: { prompt: PROMPT_MARKER } }));
-        assertAllow(runHook(env, agentPayload(undefined, { tool_name: 'agent' })));
-        assertAllow(runHook(env, agentPayload(undefined, { tool_name: 'AgentX' })));
+        for (const arm of [armSessionBarrier, armSessionWarn]) {
+            arm();
+            assertAllow(runHook(env, { tool_name: 'Bash', hook_event_name: 'PreToolUse', tool_input: { command: 'echo hi' } }));
+            assertAllow(runHook(env, { hook_event_name: 'PreToolUse', tool_input: { prompt: PROMPT_MARKER } }));
+            assertAllow(runHook(env, agentPayload(undefined, { tool_name: 'agent' })));
+            assertAllow(runHook(env, agentPayload(undefined, { tool_name: 'AgentX' })));
+        }
     });
 });
 
 test('absent config allows at any percent', () => {
     withEnv((env) => {
-        writeCache({ session: { percent: 99, resetsAt: RESET_SESSION } });
-        assertAllow(runHook(env, agentPayload()));
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload()));
+        }
     });
 });
 
 test('a config that does not say enabled true allows', () => {
     withEnv((env) => {
-        writeCache({ session: { percent: 99, resetsAt: RESET_SESSION } });
-        writeConfig({ enabled: false, session: { warn: 80, barrier: 95 } });
-        assertAllow(runHook(env, agentPayload()));
-        writeConfig({ enabled: 'true', session: { warn: 80, barrier: 95 } });
-        assertAllow(runHook(env, agentPayload()));
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ session: { percent, resetsAt: RESET_SESSION } });
+            writeConfig({ enabled: false, session: { warn: 80, barrier: 95 } });
+            assertAllow(runHook(env, agentPayload()));
+            writeConfig({ enabled: 'true', session: { warn: 80, barrier: 95 } });
+            assertAllow(runHook(env, agentPayload()));
+        }
     });
 });
 
@@ -676,65 +913,86 @@ test('reader failure no-token (no credentials, no cache) allows', () => {
 test('reader failure no-token with a stale hot cache allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
-        assertAllow(runHook(env, agentPayload()));
-        assert.strictEqual(transportCalls(env.home), 0);
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload()));
+            assert.strictEqual(transportCalls(env.home), 0);
+        }
     });
 });
 
 test('reader failure locked allows without touching the transport', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        writeLockFixture();
-        assertAllow(runHook(env, agentPayload()));
-        assert.strictEqual(transportCalls(env.home), 0, 'a lock in force means no request');
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            writeLockFixture();
+            assertAllow(runHook(env, agentPayload()));
+            assert.strictEqual(transportCalls(env.home), 0, 'a lock in force means no request');
+        }
     });
 });
 
 test('reader failure expired (401) allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        assertAllow(runHook(env, agentPayload(), { mode: '401' }));
-        assert.strictEqual(transportCalls(env.home), 1);
+        DENY_PERCENTS.forEach((percent, i) => {
+            clearLock();
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload(), { mode: '401' }));
+            // One request per run, and the count is cumulative across the two
+            // percents: an expired token is refused at the reader rather than
+            // retried, at a warn exactly as at a barrier.
+            assert.strictEqual(transportCalls(env.home), i + 1);
+        });
     });
 });
 
 test('reader failure rate-limited (429) allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        assertAllow(runHook(env, agentPayload(), { mode: '429' }));
+        for (const percent of DENY_PERCENTS) {
+            clearLock();
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload(), { mode: '429' }));
+        }
     });
 });
 
 test('reader failure timeout allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        assertAllow(runHook(env, agentPayload(), { mode: 'timeout' }));
+        for (const percent of DENY_PERCENTS) {
+            clearLock();
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload(), { mode: 'timeout' }));
+        }
     });
 });
 
 test('reader failure parse (unusable 200) allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        assertAllow(runHook(env, agentPayload(), { mode: '200', body: 'not json at all' }));
+        for (const percent of DENY_PERCENTS) {
+            clearLock();
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload(), { mode: '200', body: 'not json at all' }));
+        }
     });
 });
 
 test('reader failure bad-call (unparsable clock seam) allows', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ session: { percent: 97.4, resetsAt: RESET_SESSION } });
-        assertAllow(runHook(env, agentPayload(), { now: 'not-a-date' }));
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ session: { percent, resetsAt: RESET_SESSION } });
+            assertAllow(runHook(env, agentPayload(), { now: 'not-a-date' }));
+        }
     });
 });
 
@@ -745,15 +1003,17 @@ test('reader failure no-store (unwritable store) allows', (t) => {
     }
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
-        writeCache({ ageSeconds: 3000, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         writeCredentials(env.config);
-        const store = path.dirname(lib.usageFilePath());
-        fs.chmodSync(store, 0o555);
-        try {
-            assertAllow(runHook(env, agentPayload()));
-            assert.strictEqual(transportCalls(env.home), 0, 'no store, no request');
-        } finally {
-            fs.chmodSync(store, 0o700);
+        for (const percent of DENY_PERCENTS) {
+            writeCache({ ageSeconds: 3000, session: { percent, resetsAt: RESET_SESSION } });
+            const store = path.dirname(lib.usageFilePath());
+            fs.chmodSync(store, 0o555);
+            try {
+                assertAllow(runHook(env, agentPayload()));
+                assert.strictEqual(transportCalls(env.home), 0, 'no store, no request');
+            } finally {
+                fs.chmodSync(store, 0o700);
+            }
         }
     });
 });
@@ -772,6 +1032,39 @@ test('two-pass staleness: data older than the tightened budget allows when the r
         writeCache({ ageSeconds: 300, session: { percent: 97.4, resetsAt: RESET_SESSION } });
         assertAllow(runHook(env, agentPayload()));
         assert.strictEqual(transportCalls(env.home), 0);
+    });
+});
+
+test('two-pass staleness: a WARN deny on data older than the deny budget allows, exactly as a barrier deny does', () => {
+    withEnv((env) => {
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
+        // The defect S9's fix round closed, reproduced. A warn at 82 sits more
+        // than ten points below the barrier, so this deny used to stand on data
+        // up to ten minutes old: the window resets, the real percent falls to
+        // near zero, and the hook keeps refusing every dispatch off the stale
+        // cache while quoting a reset instant that has already passed.
+        //
+        // What refuses it is lib.withinDenyBudget and NOT the verdict, which
+        // still hands this percent the wide 600s cadence. The first fix moved
+        // the tightening into evaluate instead and was reverted; the reason
+        // given for reverting (poll volume across the warn band) was measured
+        // false afterwards, and what actually holds is that a poll cadence and
+        // a refusal answer different questions. Age 300 is fresh under 600 and
+        // stale under the 120s the refusal is held to, and with no credentials
+        // the one permitted re-read cannot produce fresher.
+        //
+        // Its other half is in the nudge suite, 'a warn far below its barrier
+        // stays silent on data no refusal could stand on': the same fixture,
+        // the same store, and the hook that TALKS about the refusal held to the
+        // same freshness as the hook that performs it. They ran apart once, so
+        // the nudge said dispatch was being refused while this hook allowed it.
+        writeCache({ ageSeconds: 300, session: { percent: 82, resetsAt: RESET_SESSION } });
+        assertAllow(runHook(env, agentPayload()));
+        assert.strictEqual(transportCalls(env.home), 0);
+        // The same fixture dated at the pinned now denies, which is what makes
+        // the allow above the staleness door rather than the warn not denying.
+        writeCache({ session: { percent: 82, resetsAt: RESET_SESSION } });
+        assert.ok(denyReason(runHook(env, agentPayload())).startsWith('Held by the kit usage wind-down'));
     });
 });
 
@@ -814,6 +1107,81 @@ test('two-pass staleness: a re-read that clears the deny allows', () => {
         writeCredentials(env.config);
         assertAllow(runHook(env, agentPayload(), { mode: '200', body: apiBody(50) }));
         assert.strictEqual(transportCalls(env.home), 1, 'the allow came from the re-read, not from skipping it');
+    });
+});
+
+test('two-pass staleness: the Fable ratchet is held to the deny budget its own verdict never asks for', () => {
+    withEnv((env) => {
+        // One of the two holes the clamp closes without special-casing either.
+        // evaluate tightens its budget by proximity to a BARRIER and the Fable
+        // window has none, so a ratchet verdict is handed the wide 600s cadence
+        // at any percent whatever. This deny therefore used to stand on data up
+        // to ten minutes old, which is the one thing usage-lib's own comment
+        // claimed of it: that it "refuses nothing that a fresher reading would
+        // allow". It does refuse, so that claim was false and is now true.
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, fableRatchet: 85 });
+        const hot = { session: { percent: 10, resetsAt: RESET_SESSION }, fableWeekly: { percent: 92.6, resetsAt: RESET_WEEKLY } };
+        writeCache(Object.assign({ ageSeconds: 300 }, hot));
+        assertAllow(runHook(env, agentPayload('fable')));
+        assert.strictEqual(transportCalls(env.home), 0, 'no credential, so the one permitted re-read produces nothing fresher');
+
+        // The same fixture at the pinned now denies, which is what makes the
+        // allow above the staleness door rather than the ratchet not firing.
+        writeCache(hot);
+        assert.ok(denyReason(runHook(env, agentPayload('fable'))).startsWith('Held by the kit Fable ratchet'));
+    });
+});
+
+test('two-pass staleness: a barrier below the near-barrier margin still cannot deny on stale data', () => {
+    withEnv((env) => {
+        // The other hole, and the reason the clamp ignores the verdict's advice
+        // rather than tightening it. A barrier of 0.5 with a warn written above
+        // it stands the warn down to Infinity, and evaluate's near point floors
+        // at 1, so a percent of 0.6 is a BARRIER state that no arm of that rule
+        // can ever tighten for: it denied on 121s, 500s and 599s-old data.
+        writeConfig({ enabled: true, session: { warn: 999, barrier: 0.5 }, weeklyAll: { warn: 85, barrier: 95 } });
+        writeCache({ ageSeconds: 300, session: { percent: 0.6, resetsAt: RESET_SESSION } });
+        assertAllow(runHook(env, agentPayload()));
+        assert.strictEqual(transportCalls(env.home), 0);
+
+        // Fresh, the same policy denies, so the allow above is the clamp and
+        // not the policy failing to arm.
+        writeCache({ session: { percent: 0.6, resetsAt: RESET_SESSION } });
+        assert.ok(denyReason(runHook(env, agentPayload())).startsWith('Denied by the kit usage barrier'));
+    });
+});
+
+test('a 429 taken during a warn leaves the barrier ALLOWING, which is the trade this hook makes', () => {
+    withEnv((env) => {
+        // Deliberate fail-open, pinned so the cost is visible rather than
+        // discovered later. The deny budget forces a re-read the moment a warn
+        // deny would otherwise stand on data older than 120s; that re-read can
+        // take a 429; readUsage writes a backoff lock behind it (this endpoint
+        // was observed answering with a retry-after of roughly 54 minutes); a
+        // held lock reads as `locked`; and this hook allows on every reader
+        // failure. So the spend control goes dark for as long as the lock
+        // holds, which is exactly the window in which spend is highest.
+        //
+        // It is pinned rather than fixed because the alternative is denying on
+        // a signal the hook cannot currently read, unattended, with nobody
+        // present to clear a wrong deny. That is the wedge every other door in
+        // this file exists to avoid. What bounds the exposure is that the deny
+        // budget only fetches when a dispatch is about to be refused: refusing
+        // one is what stops the fan-out that would drive the poll rate up.
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 } });
+        writeCredentials(env.config);
+        const stale = { ageSeconds: 300, session: { percent: 82, resetsAt: RESET_SESSION } };
+
+        writeCache(stale);
+        assertAllow(runHook(env, agentPayload(), { mode: '429' }));
+        assert.strictEqual(transportCalls(env.home), 1, 'the clamp forced the re-read, and the re-read took the 429');
+
+        // The lock is deliberately NOT cleared between the runs: it is the
+        // point. Every later dispatch allows without reaching the wire at all,
+        // even with a healthy endpoint answering behind it.
+        writeCache(stale);
+        assertAllow(runHook(env, agentPayload(), { mode: '200', body: apiBody(82) }));
+        assert.strictEqual(transportCalls(env.home), 1, 'a held lock allows without a request, so the usable endpoint is never consulted');
     });
 });
 

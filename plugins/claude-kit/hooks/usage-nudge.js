@@ -4,12 +4,18 @@
 //
 // Reads the usage cache through usage-lib.js and, when the operator's own
 // threshold policy puts this session at `warn` or `barrier`, emits one
-// `additionalContext` block instructing the model to wind the effort down,
-// write the section's Chapter and stop the turn on a `BLOCKED:` lead. That
-// prefix is what kit-goal-stop.js's leash already releases on, so a wind-down
-// ends the run through an existing tested path rather than a new one. The hook
-// denies nothing and blocks nothing: the kit has no lever that stops a session,
-// so this channel permits and encourages a stop, and cannot force one.
+// `additionalContext` block. The two states carry DIFFERENT instructions and
+// the difference is the point. A barrier says stop now, write the section's
+// Chapter and end the turn on a `BLOCKED:` lead. A warn says keep working in
+// the main thread and dispatch nothing, finish the section in flight, stop at
+// that boundary rather than opening another, and do that same bookkeeping only
+// once the run has actually stopped. That prefix is what kit-goal-stop.js's
+// leash already releases on, so a stop from either state ends the run through
+// an existing tested path rather than a new one. The hook denies nothing and
+// blocks nothing: the kit has no lever that stops a session, so this channel
+// permits and encourages a stop, and cannot force one. The mechanical refusal
+// of dispatch that rides with a warn belongs to the sibling PreToolUse barrier,
+// not to this hook.
 //
 // Registered on PostToolUse ONLY, and deliberately not on SubagentStop, which
 // accepts `additionalContext` too. The 2.1.248 binary's own schema description
@@ -43,8 +49,8 @@
 // ordinary run costs one capped config read and nothing else, which matters
 // here more than in any other kit hook: this one fires after every tool call.
 // Nothing at `clear`; nothing when the read failed for any reason (evaluate
-// resolves all of those to `clear`); nothing when the data is older than the
-// budget the verdict itself hands back AND one re-read at that tighter budget
+// resolves all of those to `clear`); nothing when the data is older than a
+// claim about a REFUSAL may stand on AND one re-read at that tighter budget
 // could not produce fresher (see the two-pass protocol in main); nothing
 // without a session id to dedupe on, because a nudge that cannot dedupe fires
 // on every tool call for the rest of the run; nothing when the store cannot
@@ -97,13 +103,32 @@
 // cost.
 //
 // Two: the dedupe check sits AFTER both reads, so a session parked in an
-// already-nudged barrier state runs the two-pass protocol on every tool call
-// and can pay a live fetch every 120 seconds for a nudge that can never speak
-// again for that key. Moving the check earlier is not available: the re-read is
-// what can change the deciding window or the reset instant, and therefore the
-// key itself, so there is no point before the second verdict at which the key
-// is known. The cost is bounded by the staleness budget and by the feature
-// being off unless the operator armed it.
+// already-nudged WARN OR BARRIER state runs the two-pass protocol on every tool
+// call and can pay a live fetch every 120 seconds for a nudge that can never
+// speak again for that key. Moving the check earlier is not available: the
+// re-read is what can change the deciding window or the reset instant, and
+// therefore the key itself, so there is no point before the second verdict at
+// which the key is known.
+//
+// The rate that cost runs at, measured rather than asserted, because the warn
+// band is where this hook now expects a run to SIT. A parked warn or barrier
+// pays a fetch every 120 seconds rather than every 600, because BOTH texts
+// assert that subagent dispatch is being refused and a claim about a refusal
+// is held to the same freshness as the refusal itself: lib.withinDenyBudget,
+// which usage-barrier.js asks in the same shape and at the same point. Gating
+// on the verdict's own polling cadence instead is what had this hook emitting
+// "Subagent dispatch is now being refused" on 300-second-old data while the
+// barrier beside it allowed the very next dispatch.
+//
+// What that costs is smaller than it reads, measured against evaluate. On the
+// weekly defaults the warn threshold and the near point are the same number
+// (85 = 95 - 10), so the whole weekly warn band already polled at 120, as does
+// the operator's live 92/95. The bands whose cadence this changes are session
+// [80, 85), on a window that resets in under five hours, and the sub-1 barrier
+// case main's own comment names. The ordinary crossing pays nothing extra at
+// all besides, because a verdict only BECOMES a warn when a fresh read moved
+// the percent, so the emission normally rides data zero seconds old. The
+// re-read is paid by a session that did not do the refresh itself.
 //
 // Node core modules only, CommonJS, zero dependencies. Fail-open like every
 // other kit hook: any internal error exits 0 with no output.
@@ -252,9 +277,12 @@ function markerLines(text) {
 }
 
 // Every key on record. Held as a set rather than probed one key at a time
-// because the emission asks two questions of it (this verdict's own key, and
-// the barrier key that suppresses a warn), and both must be answered from one
-// read rather than from two.
+// because the emission asks up to two questions of it (this verdict's own key,
+// and, for a warn only, the barrier key that suppresses one), each across three
+// adjacent buckets, and all of them have to be answered from ONE read of the
+// file rather than from one read apiece. So a barrier verdict asks three
+// lookups and a warn six, and a null reset instant collapses either triple to a
+// single key, since every offset renders '-'.
 function markerKeySet(text) {
     const keys = new Set();
     for (const line of markerLines(text)) {
@@ -342,26 +370,37 @@ function normSessionId(value) {
     return trimmed.slice(0, SESSION_ID_MAX);
 }
 
-// The dedupe key: session id, window key, reset instant and verdict state,
-// bar-separated. A null reset instant contributes a literal '-' rather than an
-// empty segment, because an empty one would let two windows with unreadable
-// resets produce the same key and dedupe across each other instead of within
-// one. The bar stays safe as the delimiter even for a session id that contains
-// one: the last THREE segments are drawn from bar-free fixed sets (two window
-// literals; either a timestamp normTimestamp has already anchored or '-'; and
-// 'warn' or 'barrier'), so the key still reads unambiguously from the right and
-// no two distinct tuples collide.
-// How coarsely the reset instant is bucketed for KEYING. Five minutes, chosen
-// against the drift rather than against the calendar: the closest two
-// successive resets of one window can ever be is the session window's five
-// hours, so any bucket under that cannot collide, and the observed reset
-// instants (:00 and :30 of the hour) sit far from a 2.5-minute rounding
-// boundary, which is where a bucket this size could still be straddled.
+// How coarsely the reset instant is bucketed for KEYING. FIVE minutes, and
+// what the width buys is drift tolerance and nothing else. The straddle, which
+// is the one hazard a rounding bucket has, is covered at ANY width by the
+// neighbouring-bucket probe at the check (see markerSeen), so narrowing this
+// costs tolerance one for one and buys no safety. A narrowing to one minute
+// shipped once, reasoning that a whole-minute nominal can never sit on a
+// half-bucket boundary. That is true and beside the point: the probe had
+// already made the boundary harmless.
+//
+// What the drift actually measures. Two lines from the operator's own live
+// store carry one nominal reset a second apart (17:00:00 and 16:59:59), so it
+// is about a second either side of a whole-minute nominal, which any width
+// from a minute up absorbs. And the instants observed live (22:50:00 on the
+// session window, 17:00:00 and 2026-09-06T17:00:00 on the weekly ones) all sit
+// ON the five-minute grid, which is the FURTHEST a value can be from a
+// half-bucket boundary rather than the closest. An earlier comment defended
+// this width by claiming reset instants sit at :00 and :30 of the hour; that
+// wording was wrong and its conclusion was right.
+//
+// The upper bound is the five hours that separate two occurrences of the
+// shortest window the kit tracks, which a five-minute bucket and its two
+// neighbours come nowhere near, so a rolled window still keys apart. Behaviour
+// does not otherwise pin this number (a sweep at 1s, 30s and 15min left the
+// entire suite green), so the suite now pins the rendered key of two instants
+// that each of those three widths gets wrong.
 const RESET_BUCKET_MS = 5 * 60 * 1000;
 
 // The reset instant reduced to something stable enough to identify one window
-// occurrence by. Two live defects sit behind this and the second is why
-// rounding rather than truncation is needed.
+// occurrence by, offset by whole buckets for the neighbour probe (see
+// markerSeen). Two live defects sit behind this and the second is why rounding
+// rather than truncation is needed.
 //
 // The endpoint returns resets_at at microsecond precision that VARIES between
 // reads of one window (.171560, .211728, .100701 for a single 17:00:00
@@ -376,21 +415,77 @@ const RESET_BUCKET_MS = 5 * 60 * 1000;
 // and only real data drifts.
 //
 // Rounding to the nearest bucket rather than flooring is the point: flooring
-// puts the danger zone exactly on the hour, which is exactly where these
-// instants sit.
-function resetBucket(resetsAt) {
+// puts the danger zone exactly on the whole minute, which is exactly where
+// these instants sit.
+function resetBucket(resetsAt, bucketOffset) {
     if (resetsAt === null) return '-';
     const ms = Date.parse(resetsAt);
     if (!Number.isFinite(ms)) return '-';
-    // Rendered without milliseconds so the key segment reads as the instant it
-    // buckets to rather than as a machine number, and so it matches the shape
-    // the markers already on disk use.
-    return new Date(Math.round(ms / RESET_BUCKET_MS) * RESET_BUCKET_MS)
-        .toISOString().replace(/\.\d{3}Z$/, 'Z');
+    const bucket = (Math.round(ms / RESET_BUCKET_MS) + (bucketOffset || 0)) * RESET_BUCKET_MS;
+    // Rendered in the `+00:00` form the endpoint publishes and normTimestamp
+    // preserves, and without milliseconds, so a bucket-aligned instant renders
+    // the exact string an existing marker line already holds. The render was
+    // `Z` between f36e586 and this fix, and it was self-consistent: those
+    // markers were written and checked in the same form, so they matched each
+    // other. What they could not match is the `+00:00` form every key already
+    // on the operator's disk carries (`weeklyAll|2026-08-30T17:00:00+00:00|warn`),
+    // written before f36e586 introduced the `Z` render.
+    //
+    // So the invisibility is scoped to a boundary in each direction rather than
+    // running across the whole history, and BOTH directions are worth stating.
+    // Backwards it is closed: a wind-down already delivered against a
+    // pre-f36e586 key would otherwise have been delivered again, and a barrier
+    // recorded that way would have stopped suppressing the warn behind it.
+    // Checked against the live store on 2026-08-30, its five keys are all the
+    // `+00:00` form and none is a `Z` form, and the one whose instant is
+    // BUCKET-ALIGNED (`...T17:00:00+00:00`) is the exact string this render
+    // produces for every one of the five instants recorded there, so that
+    // window stays suppressed.
+    //
+    // Forwards it is open, and that is a property of the deployment rather than
+    // of this machine. The build the plugin cache holds at user scope
+    // (a0a6d3d4f4cb, read there on 2026-08-30) ships f36e586's `Z` render
+    // beside this same five-minute bucket, so a marker IT writes is invisible
+    // to this render exactly as a `+00:00` marker was invisible to it. No such
+    // key exists here, which is why the live check above is clean; on any
+    // adopter whose store was written by that build, the first run behind a
+    // `/plugin update` can repeat one already-delivered nudge per key. One
+    // repeat and not a flood: the new key is written and dedupes from there.
+    return new Date(bucket).toISOString().replace(/\.\d{3}Z$/, '+00:00');
 }
 
-function markerKey(sessionId, windowKey, resetsAt, state) {
-    return [sessionId, windowKey, resetBucket(resetsAt), state].join('|');
+// The dedupe key: session id, window key, reset instant and verdict state,
+// bar-separated. A null reset instant contributes a literal '-' rather than an
+// empty segment, because an empty one would let two windows with unreadable
+// resets produce the same key and dedupe across each other instead of within
+// one. The bar stays safe as the delimiter even for a session id that contains
+// one: the last THREE segments are drawn from bar-free fixed sets (two window
+// literals; either a timestamp normTimestamp has already anchored or '-'; and
+// 'warn' or 'barrier'), so the key still reads unambiguously from the right and
+// no two distinct tuples collide.
+function markerKey(sessionId, windowKey, resetsAt, state, bucketOffset) {
+    return [sessionId, windowKey, resetBucket(resetsAt, bucketOffset), state].join('|');
+}
+
+// Is a marker for this tuple already on record? The bucket either side counts,
+// which is what makes the rounding safe rather than merely narrow: an instant
+// that happens to sit on the half-bucket boundary rounds one way on one reading
+// and the other way on the next, and without the probe that re-arms the nudge
+// exactly as the raw string did. It is only ever asked at the CHECK; the line
+// written is the exact bucket, never a neighbour, so the file gains no extra
+// keys and an offset probe can only ever add silence.
+//
+// Safe because two distinct occurrences of one window are at least five hours
+// apart (the session window is the shortest the kit tracks) while these buckets
+// are five minutes wide, so a probe reaches at most a bucket and a half either
+// side of the instant and no neighbour of one occurrence can come near the
+// next. A null reset instant renders '-' at every offset, so the three probes
+// collapse to the one key there.
+function markerSeen(seen, sessionId, windowKey, resetsAt, state) {
+    for (const offset of [-1, 0, 1]) {
+        if (seen.has(markerKey(sessionId, windowKey, resetsAt, state, offset))) return true;
+    }
+    return false;
 }
 
 // Would this verdict speak at all? The two states that emit, and every reader
@@ -399,18 +494,6 @@ function markerKey(sessionId, windowKey, resetsAt, state) {
 // the fail-open direction this whole feature is built on.
 function wouldEmit(verdict) {
     return verdict.state === 'warn' || verdict.state === 'barrier';
-}
-
-// The verdict's ageSeconds against its own maxAgeSeconds: the two-pass
-// staleness protocol, the same shape usage-barrier.js holds. maxAgeSeconds is
-// advice for the caller's NEXT read and ageSeconds is the age of the data THIS
-// verdict judged, so a hook that read at the 600-second budget can be handed
-// back 120 while holding older data. Strict less-than mirrors readUsageInner's
-// own freshness door at whole-second resolution, erring stale on the boundary.
-// A null age is never within any budget (evaluate's ageOf states why), which is
-// the fail-open direction.
-function withinBudget(verdict) {
-    return verdict.ageSeconds !== null && verdict.ageSeconds < verdict.maxAgeSeconds;
 }
 
 // One of exactly two literals. evaluate returns a null resetsAt on a non-clear
@@ -422,11 +505,11 @@ function resetClause(resetsAt) {
     return resetsAt === null ? 'Its reset instant could not be read.' : `Resetting at ${resetsAt}.`;
 }
 
-// Step 4 of both numbered sequences, and the ONE place its wording lives. It
-// had been hand-copied into each text, which is how two copies of it drifted
-// apart under a contract saying never to paraphrase. Two forms, by whether the
-// reset instant validated: the null form must not demand an instant the first
-// line has just said could not be read.
+// Step 4 of the barrier's sequence and step 8 of the wind-down's stop block,
+// and the ONE place its wording lives. It had been hand-copied into each text,
+// which is how two copies of it drifted apart under a contract saying never to
+// paraphrase. Two forms, by whether the reset instant validated: the null form
+// must not demand an instant the first line has just said could not be read.
 function blockedStep(resetsAt) {
     if (resetsAt === null) {
         return 'Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.';
@@ -438,38 +521,51 @@ function blockedStep(resetsAt) {
 // just crossed, on purpose: the warn exists to precede the deadline, so the
 // number worth stating is the deadline being wound down ahead of.
 //
-// The warn ARMS THE RESUME, exactly as the barrier does, and the first draft's
-// omission was a defect rather than a milder response. Step 5 tells the model to
-// lead with `BLOCKED:` and stop the turn, and kit-goal-stop.js releases its
-// leash on exactly that prefix, so a warn without a resume step halts an
-// unattended run at the warn threshold and leaves it halted: the barrier that
-// would have armed one is then never reached, because the run is no longer
-// spending. The wind-down IS the pause this feature promises, so the resume
-// belongs to it. What separates this text from the barrier's is step 1 and
-// nothing else: the warn gets to finish the section in flight.
+// TWO EXPLICITLY SCOPED BLOCKS, and the scoping is this text's correctness
+// rather than its presentation. The lead says this is not a stop; the first
+// block is what to do WHILE THE RUN CONTINUES; the second is the bookkeeping OF
+// A STOP, and it applies only once the run has actually reached the boundary
+// the first block sends it to. One unconditioned numbered list is what this
+// replaced, and a model executing that list halted the run at the warn
+// threshold and armed a resume for a window that was never exhausted, which is
+// the exact behavior the warn band exists to remove. The other way round was no
+// better: a run that honored the keep-working step instead left an armed job
+// firing into a session that never stopped.
 //
-// One consequence worth stating for the next reader: this text now branches on
-// the WINDOW as well as on the reset instant, because resumeStep does, so warn
-// and barrier have the same four reachable renderings each.
+// The resume and the BLOCKED lead therefore belong to the STOP rather than to
+// the threshold, and they are still carried here rather than left to the
+// barrier text because the stop a wind-down leads to may never reach a barrier.
+// The run stops spending at the boundary, so the barrier that would have
+// carried them is never crossed, and kit-goal-stop.js releases its leash only
+// on the `BLOCKED:` lead this block asks for.
+//
+// One consequence worth stating for the next reader: this text branches on the
+// WINDOW as well as on the reset instant, because resumeStep does, so warn and
+// barrier have the same four reachable renderings each.
 function warnText(windowKey, label, percent, barrier, resetsAt) {
     return [
         `Kit usage wind-down: the ${label} usage window is at ${percent}% and the barrier the operator set for it is ${barrier}%. ${resetClause(resetsAt)}`,
         '',
         'Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, which costs a fraction of what a dispatch does.',
+        '',
+        'While you keep working:',
         '1. Finish the section in flight and stage it.',
         '2. Do not dispatch subagents. The kit is refusing them until this window resets, so one would come back denied rather than running.',
         '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging, answering the operator.',
-        '4. Do not CLOSE a section that would normally take review. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
-        "5. Stop at the next clean boundary rather than opening another section. When you stop, write the Chapter in the plan doc naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
-        '6. ' + resumeStep(windowKey, resetsAt),
-        '7. ' + blockedStep(resetsAt),
+        '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
+        '5. Do not open another section. Stop when the one in flight reaches a clean boundary.',
+        '',
+        'Then, and only once you have actually stopped:',
+        '6. Write the Chapter in the plan doc naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.',
+        '7. ' + resumeStep(windowKey, resetsAt),
+        '8. ' + blockedStep(resetsAt),
         '',
         'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
     ].join('\n');
 }
 
-// The resume step, step 3 of the barrier text and step 4 of the warn's, and the
-// one line that splits by horizon. The
+// The resume step, step 3 of the barrier text and step 7 of the wind-down's
+// stop block, and the one line that splits by horizon. The
 // session window resets in under five hours, so a paused session arms a
 // one-shot job at the reset instant, and such a job fires only while the REPL
 // is idle, which is precisely the paused state. The weekly window resets days
@@ -484,9 +580,14 @@ function warnText(windowKey, label, percent, barrier, resetsAt) {
 // barrier can fire on data up to 119 seconds old, and normTimestamp validates
 // an ISO-8601 shape with a zone rather than futurity. Without the clause a
 // scheduler handed a past instant is left to guess.
+//
+// The weekly arm names the WINDOW and not the barrier, because this step is
+// shared with the wind-down text and with usage-barrier.js's deny, where a
+// wind-down saying the effort is held on the weekly usage BARRIER would
+// contradict the lead sentence three lines above it.
 function resumeStep(windowKey, resetsAt) {
     if (windowKey !== 'session') {
-        return 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.';
+        return 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.';
     }
     if (resetsAt === null) {
         return "Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.";
@@ -592,23 +693,31 @@ async function main() {
     // budget can only return data younger than it, so a third pass could never
     // learn more.
     //
-    // Re-reading rather than falling silent is what keeps the wind-down timely,
-    // and the arithmetic is why. evaluate tightens the budget to 120s for any
-    // percent within ten points of its barrier, which is every barrier verdict
-    // by construction, while this hook's first read serves a cache up to 600s
-    // old. Silence on the gap would leave the hook able to speak during only
-    // about 120 of every 600 seconds, so a crossed barrier could keep the main
-    // thread spending for minutes before the instruction landed. That delay is
-    // the cost this section exists to prevent.
+    // Re-reading rather than falling silent is what keeps the wind-down timely.
+    // The first read serves a cache up to 600s old while anything this hook
+    // SAYS is held to 120s, so silence on the gap would leave it able to speak
+    // during only about 120 of every 600 seconds, and a crossed threshold could
+    // keep the main thread spending for minutes before the instruction landed.
+    // That delay is the cost S9 exists to prevent.
+    //
+    // The budget is lib.withinDenyBudget rather than the verdict's own number,
+    // which is what makes this hook's claim about a refusal and the barrier's
+    // actual refusal rest on the same data. It also covers a case an earlier
+    // comment here got wrong by calling the tightened cadence "every barrier
+    // verdict by construction": evaluate floors its near point at
+    // Math.max(1, barrier - 10), so a barrier below 1 leaves a barrier-state
+    // percent under 1 on the wide 600s cadence (measured: barrier 0.5, percent
+    // 0.6). A barrier in [1, 11) is not such a case, since the floor puts the
+    // near point at 1 and any percent reaching that barrier is already past it.
     //
     // Every failure of the second pass stays silent: a re-read that fails lands
-    // as `clear` and fails wouldEmit, and a second verdict still outside its
-    // own budget is refused outright.
-    if (!withinBudget(verdict)) {
-        usage = await lib.readUsage({ maxAgeSeconds: verdict.maxAgeSeconds });
+    // as `clear` and fails wouldEmit, and a second verdict still outside the
+    // deny budget is refused outright.
+    if (!lib.withinDenyBudget(verdict)) {
+        usage = await lib.readUsage({ maxAgeSeconds: lib.STALENESS_NEAR_BARRIER_SECONDS });
         verdict = lib.evaluate(usage, config);
         if (!wouldEmit(verdict)) return;
-        if (!withinBudget(verdict)) return;
+        if (!lib.withinDenyBudget(verdict)) return;
     }
 
     // The window gate, and the only place a window key becomes prose.
@@ -638,8 +747,9 @@ async function main() {
     const percent = lib.formatOneDecimal(verdict.percent);
     const barrier = lib.formatOneDecimal(rawBarrier);
 
-    // The dedupe, and both questions are answered from the one read. The
-    // verdict's own key is the ordinary one. The second is what keeps adding
+    // The dedupe, and both questions are answered from the one read, each of
+    // them across the bucket either side (see markerSeen). The verdict's own
+    // key is the ordinary one. The second is what keeps adding
     // the state to the key from introducing warn-after-barrier: a percent
     // falling back from 96 to 82 on the same reset instant would otherwise emit
     // the milder instruction after the stronger one, which tells a
@@ -650,9 +760,9 @@ async function main() {
     if (!marker.ok) return;
     const seen = markerKeySet(marker.text);
     const key = markerKey(sessionId, verdict.window, verdict.resetsAt, verdict.state);
-    if (seen.has(key)) return;
+    if (markerSeen(seen, sessionId, verdict.window, verdict.resetsAt, verdict.state)) return;
     if (verdict.state === 'warn'
-        && seen.has(markerKey(sessionId, verdict.window, verdict.resetsAt, 'barrier'))) return;
+        && markerSeen(seen, sessionId, verdict.window, verdict.resetsAt, 'barrier')) return;
 
     // The store is created only here, on the path about to write it: a disabled
     // or clear run never touches it. A store that cannot hold the marker takes

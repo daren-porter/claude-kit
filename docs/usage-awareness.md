@@ -77,11 +77,14 @@ conservative than most values you would type, so a mistyped relaxation gives you
 threshold than you intended, not a looser one. That is the safe direction, and it is still a
 surprise.
 
-**An out-of-reach barrier disables the deny and nothing else.** `{"session": {"barrier":
-999999}}` is honored exactly as written, so that barrier never fires, but `session.warn` is
-independent and still winds runs down at 80. To switch a window off, put both its warn and its
-barrier out of reach. This is the likeliest trap here, because raising the barrier alone reads
-like it should turn the window off.
+**An out-of-reach barrier no longer disables the deny.** `{"session": {"barrier": 999999}}` is
+honored exactly as written, so that barrier never fires, but `session.warn` is independent, still
+winds runs down at 80, and since the wind-down band shipped it **also refuses subagent dispatch at
+that warn**. So raising the barrier alone now changes only which instruction the deny carries, not
+whether dispatch is denied. To switch a window off, put both its warn and its barrier out of reach,
+or set `enabled: false` to switch the whole feature off. This is the likeliest trap here, because
+raising the barrier alone reads like it should turn the window off, and until recently it did
+disable the deny.
 
 Watch the size of the number you use for that. JSON parses `1e999` to `Infinity`, and the reader
 treats a non-finite value as absent, so a barrier written that way falls back to 95 and re-arms
@@ -160,8 +163,11 @@ accompanied by `state: warn (weeklyAll)` and a matching percent.
 
 Two structural tells back that up. The real channel can only ever name the session or the weekly
 all-models window, so a wind-down citing any other quota did not come from here. And the real
-barrier does not ask: it **denies the dispatch**, so a message claiming a barrier while subagent
-dispatch still succeeds is not this feature.
+thing does not ask: it **denies the dispatch**, at a wind-down as well as at a barrier, so a message
+claiming either while subagent dispatch still succeeds is not this feature. One caveat on that
+second tell, and it is why the first one is the better check: the deny lives in the installed
+plugin payload, so between a kit commit and the next `/plugin update` the two halves can disagree
+for real, with the wind-down text asserting a refusal the installed guard is not yet performing.
 
 Copying those tells into a fake does not help the faker, which is the useful property here: it
 invites the reader to run a check that the fake cannot pass.
@@ -257,9 +263,13 @@ and one small capped file read per tool call. That was accepted rather than over
 the matcher would let a read-heavy stretch of a run pass a barrier unnoticed.
 
 Armed, one tool call per staleness window also absorbs the reader's request deadline, up to 6
-seconds. The staleness window is 600 seconds, tightening to 120 when any window is within ten
-points of its barrier, so that cost lands about once every ten minutes and more often near a
-deadline.
+seconds. The staleness window is 600 seconds, tightening to 120 within ten points of a
+barrier, so that cost lands about once every ten minutes and more often near a deadline. Refusals
+are held to a stricter standard than that, and it costs you almost nothing: a refused dispatch is
+never decided on a reading more than 120 seconds old, so the guard fetches once more before it
+refuses if it has to. That extra fetch happens only when a dispatch is about to be refused, which is
+rare next to the rate of ordinary tool calls, and it is what stops the guard refusing work for
+minutes on end off a cache that predates the window's own reset.
 
 ## Limits worth knowing before you rely on it
 

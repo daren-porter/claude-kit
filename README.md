@@ -61,7 +61,7 @@ claude-kit/                          (repo = the marketplace)
         memory.js / memory-lib.js / memory-index.js The cross-project memory tier: authoring CLI, shared library (the record schema lives in its header), generated index sidecar and the [body revised] marker
         usage-lib.js                 Usage awareness, shared half: never-throws reader of Anthropic's OAuth usage endpoint plus the operator's threshold policy, per-profile store under ~/.claude-kit-usage/ (the credential path is documented in docs/security-model.md)
         usage.js                     Usage awareness, operator CLI: `usage.js status` prints the current windows, thresholds and verdict (wraps usage-lib.js the way memory.js wraps memory-lib.js)
-        usage-nudge.js / usage-barrier.js Usage awareness, consumers: PostToolUse wind-down instruction at a warn or barrier, and the PreToolUse guard that denies subagent dispatch at a barrier and caps model routing at the session model once the Fable weekly window passes its ratchet
+        usage-nudge.js / usage-barrier.js Usage awareness, consumers: PostToolUse wind-down instruction at a warn or barrier, and the PreToolUse guard that denies subagent dispatch from a warn upward, with a different instruction at each of the two, and caps model routing at the session model once the Fable weekly window passes its ratchet
         usage-autocontinue-nudge.js  SessionStart posture check: names a settings file that turns autoContinueAtUsageLimit off, and stays silent on the default-on case
       assets/
         CLAUDE.md                    Recommended global rules, shipped in the plugin; reconcile-claude-md folds them into the user's live ~/.claude/CLAUDE.md
