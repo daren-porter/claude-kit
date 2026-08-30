@@ -322,7 +322,7 @@ function expectedBarrierReason(v) {
 }
 
 function resumeArm(reset) {
-    return 'Arm a one-shot resume: create a single scheduled job at ' + reset + ', or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session\'s memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.';
+    return 'Arm a one-shot resume: create a single scheduled job for a couple of minutes past ' + reset + ' rather than at it, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session\'s memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.';
 }
 
 const RESUME_SESSION_UNKNOWN = "Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.";
@@ -1110,25 +1110,56 @@ test('two-pass staleness: a re-read that clears the deny allows', () => {
     });
 });
 
-test('two-pass staleness: the Fable ratchet is held to the deny budget its own verdict never asks for', () => {
+test('the Fable ratchet rides the budget its own verdict advises, and spends no fetch to deny', () => {
     withEnv((env) => {
-        // One of the two holes the clamp closes without special-casing either.
-        // evaluate tightens its budget by proximity to a BARRIER and the Fable
+        // REVERSED on purpose: this case asserted the opposite one fix round
+        // ago, and the reversal is the decision rather than a weakened
+        // assertion. evaluate tightens by proximity to a BARRIER and the Fable
         // window has none, so a ratchet verdict is handed the wide 600s cadence
-        // at any percent whatever. This deny therefore used to stand on data up
-        // to ten minutes old, which is the one thing usage-lib's own comment
-        // claimed of it: that it "refuses nothing that a fresher reading would
-        // allow". It does refuse, so that claim was false and is now true.
+        // at any percent whatever. Clamping this deny to 120s therefore forced
+        // a LIVE FETCH on every override dispatch whose cache was older than
+        // two minutes, and that traffic is the hazard rather than the cost: a
+        // 429 earned there writes a backoff lock for whatever its retry-after
+        // says (3242 seconds, observed), a held lock reads as `locked`, and
+        // every reader failure in this hook allows, which the 429 case below
+        // pins end to end. The cheapest
+        // predicate must not be able to blind the two expensive ones.
+        //
+        // The asymmetry is owed on its own terms too: a wrong ratchet deny
+        // costs a model downgrade and says "re-dispatch without the override",
+        // while a wrong barrier or wind-down deny wedges an unattended run.
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, fableRatchet: 85 });
         const hot = { session: { percent: 10, resetsAt: RESET_SESSION }, fableWeekly: { percent: 92.6, resetsAt: RESET_WEEKLY } };
         writeCache(Object.assign({ ageSeconds: 300 }, hot));
-        assertAllow(runHook(env, agentPayload('fable')));
-        assert.strictEqual(transportCalls(env.home), 0, 'no credential, so the one permitted re-read produces nothing fresher');
-
-        // The same fixture at the pinned now denies, which is what makes the
-        // allow above the staleness door rather than the ratchet not firing.
-        writeCache(hot);
         assert.ok(denyReason(runHook(env, agentPayload('fable'))).startsWith('Held by the kit Fable ratchet'));
+        assert.strictEqual(transportCalls(env.home), 0, 'and it cost no network to say so');
+
+        // Riding that budget is not ignoring freshness: past 600s the reader
+        // will not serve the cache at all, and with no credential there is
+        // nothing behind it, so the ratchet allows like every other failure.
+        writeCache(Object.assign({ ageSeconds: 900 }, hot));
+        assertAllow(runHook(env, agentPayload('fable')));
+    });
+});
+
+test('a state deny is still clamped when the same dispatch carries a fable override', () => {
+    withEnv((env) => {
+        // The exclusion is scoped to the predicate that fires, not to the
+        // payload: a dispatch carrying the override while the session window is
+        // at a warn is denied by the WIND-DOWN, which outranks the ratchet and
+        // answers to the tight budget like every other state deny. Without the
+        // scoping, "carries a fable override" would have become a way to buy a
+        // state deny on ten-minute-old data.
+        writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, fableRatchet: 85 });
+        const hot = { session: { percent: 82, resetsAt: RESET_SESSION }, fableWeekly: { percent: 92.6, resetsAt: RESET_WEEKLY } };
+        writeCache(Object.assign({ ageSeconds: 300 }, hot));
+        assertAllow(runHook(env, agentPayload('fable')));
+
+        // The same fixture at the pinned now denies with the wind-down text,
+        // which is what makes the allow above the staleness door rather than
+        // the percent.
+        writeCache(hot);
+        assert.ok(denyReason(runHook(env, agentPayload('fable'))).startsWith('Held by the kit usage wind-down'));
     });
 });
 

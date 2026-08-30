@@ -1127,10 +1127,12 @@ const CONFIG_READ_CAP = 16 * 1024;
 // discovered ten minutes late.
 //
 // This is polling CADENCE and never a licence to refuse on what it served.
-// The freshness a REFUSAL requires is enforced at the refusal itself, by
-// withinDenyBudget below, which holds to STALENESS_NEAR_BARRIER_SECONDS
-// whatever this budget advised and which both consumer hooks ask. See
-// evaluate for why that rule sits on the decision rather than here.
+// The freshness a refusal on a window STATE requires is enforced at the
+// refusal itself, by withinDenyBudget below, which holds to
+// STALENESS_NEAR_BARRIER_SECONDS whatever this budget advised and which every
+// consumer asks. The Fable ratchet is the one refusal left riding this number
+// instead; usage-barrier.js's freshness note carries why. See evaluate for why
+// the rule sits on the decision rather than here.
 const STALENESS_SECONDS = 600;
 const STALENESS_NEAR_BARRIER_SECONDS = 120;
 const NEAR_BARRIER_POINTS = 10;
@@ -1441,8 +1443,10 @@ function evaluateInner(usage, rawConfig) {
     // Only the two windows that have a barrier are consulted here, because only
     // they have a deadline to sample faster ahead of. The Fable window has a
     // ratchet, which pauses nothing but does REFUSE a dispatch carrying a fable
-    // override; no arm of this rule ever tightens for it, and its freshness
-    // comes from withinDenyBudget like every other refusal.
+    // override; no arm of this rule ever tightens for it, and that refusal is
+    // the one held to THIS number rather than to withinDenyBudget, which is a
+    // decision taken deliberately (usage-barrier.js's freshness note carries
+    // it) rather than a consequence of the arms below.
     const nearBarrier = WINDOW_PRECEDENCE.some((key) => {
         // Floored at 1: a barrier set at or below ten points would otherwise
         // put every known percent on the fast poll, zero included, and a
@@ -1467,28 +1471,41 @@ function evaluateInner(usage, rawConfig) {
     };
 }
 
-// The freshness a claim about REFUSAL requires, which is stricter than the
-// cadence a verdict carries and deliberately independent of it. maxAgeSeconds
-// answers "how often should you poll"; refusing a dispatch, or telling the
-// model that dispatch is being refused, is a positive determination and may
-// never rest on data older than STALENESS_NEAR_BARRIER_SECONDS, whichever
-// window produced the verdict and whichever predicate is about to fire.
+// The freshness a claim about REFUSAL ON A WINDOW STATE requires, which is
+// stricter than the cadence a verdict carries and deliberately independent of
+// it. maxAgeSeconds answers "how often should you poll"; refusing a dispatch on
+// a barrier or a wind-down, or telling the model that dispatch is being
+// refused, is a positive determination and may never rest on data older than
+// STALENESS_NEAR_BARRIER_SECONDS, whichever of the two windows produced the
+// verdict.
 //
-// It lives in the library rather than in either hook because BOTH of them make
-// that claim and they have to make it on one standard. They did not: the
-// barrier held its deny to 120s while the nudge still gated its emission on
-// the verdict's own budget, so at a session 82% (a warn ten points clear of
-// its barrier, hence the wide cadence) on data 300 seconds old the nudge
-// emitted "Subagent dispatch is now being refused" while the barrier allowed
-// the very next dispatch. Two hand copies of one rule drifting apart is the
-// class of defect this effort has already repaired twice in the deny texts.
+// The Fable ratchet is the one refusal deliberately outside this rule, and it
+// is stated here because the exception is invisible from the call sites that
+// do ask: that window has no barrier, so no proximity arm ever tightens its
+// cadence, and holding it here forced a live fetch on every override dispatch
+// against a cache over two minutes old. usage-barrier.js's freshness note
+// carries the full reasoning, of which the load-bearing half is that a 429
+// earned by the cheap predicate writes a lock that reads as `locked` and so
+// blinds the expensive ones.
+//
+// It lives in the library rather than in a hook because THREE consumers make
+// that claim and they have to make it on one standard: both hooks and the
+// status CLI. They did not: the barrier held its deny to 120s while the nudge
+// still gated its emission on the verdict's own budget, so at a session 82% (a
+// warn ten points clear of its barrier, hence the wide cadence) on data 300
+// seconds old the nudge emitted "Subagent dispatch is now being refused" while
+// the barrier allowed the very next dispatch. The CLI then kept a third copy of
+// the old rule and reported `state: warn` on the same store both hooks were
+// silent about. Hand copies of one rule drifting apart is the class of defect
+// this effort had already repaired twice in the deny texts, and this is its
+// second repair here.
 //
 // Strict less-than mirrors readUsageInner's own freshness door at whole-second
 // resolution, erring stale on the boundary. A null age is never within any
 // budget (see ageOf), which is the fail-open direction, and a missing verdict
 // is refused rather than dereferenced so this module's never-throws contract
-// stays literally true: no caller reaches that arm today, since both hooks
-// pass what evaluate returned.
+// stays literally true: no caller reaches that arm today, since all three
+// consumers pass what evaluate returned.
 function withinDenyBudget(verdict) {
     if (!verdict || typeof verdict !== 'object') return false;
     return verdict.ageSeconds !== null && verdict.ageSeconds < STALENESS_NEAR_BARRIER_SECONDS;

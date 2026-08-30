@@ -172,6 +172,13 @@ function textOrUnknown(value) {
     return rendered === '' ? 'unknown' : rendered;
 }
 
+// A whole-second duration, or `unknown`. Same rule as percentText and for the
+// same reason: a non-finite value must never print as a measurement, and the
+// age line now carries three of these.
+function secondsText(value) {
+    return Number.isFinite(value) ? Math.floor(value) + 's' : 'unknown';
+}
+
 function reasonText(result) {
     const reason = result && result.reason;
     return REASONS.includes(reason) ? reason : 'unknown';
@@ -230,7 +237,7 @@ function usage() {
 
 // The block a model reads. Field order follows the decision: is anything
 // armed (and whether the operator's config file actually took), how old is
-// this reading and what staleness budget it is judged against, what do the
+// this reading and which two budgets that age is judged against, what do the
 // three windows say, what is being judged against, and what does the policy
 // conclude.
 //
@@ -262,16 +269,29 @@ function statusBlock(reading, verdict, config, opts) {
         lines.push('config: config.json exists but was rejected (' + render(o.configIssue, VALUE_CAP)
             + '); the enabled flag and thresholds shown are the shipped defaults');
     }
-    // The staleness budget prints beside the age because the block's reader is
-    // an actor: both hooks refuse to act on data older than the verdict's own
-    // maxAgeSeconds, and without the budget the reader holding this block
-    // cannot apply the same protocol to the age it was handed.
+    // THREE numbers rather than two, and each is told what it governs, because
+    // one label over two of them conflated exactly the pair a reader acts on.
+    // The age is what this block stands on. The poll CADENCE is the verdict's
+    // advice for the next read, and it is also the freshness the Fable ratchet
+    // rides, which is the predicate a reader running this before a fable
+    // dispatch is reading against. The DENY BUDGET is the freshness both hooks
+    // require of a refusal on a window state (usage-lib's withinDenyBudget).
+    //
+    // Which number governs which predicate has to be IN THE LINE and not only
+    // in this comment, or the block reopens the same desync from the other
+    // side: at fable 92% on a 300-second-old cache the barrier hook denies an
+    // override dispatch, while a reader comparing that age against a bare "deny
+    // budget 120s" would conclude nothing would be refused. This block's reader
+    // is an actor, and it can only apply the right rule to the age it was
+    // handed if the block says which rule that is.
     const sourceLabel = typeof o.staleReason === 'string'
         ? 'stale cache (fresh read failed: ' + render(o.staleReason, VALUE_CAP) + ')'
         : (reading.fromCache === true ? 'from cache' : 'freshly fetched');
-    lines.push('age: ' + (Number.isFinite(verdict.ageSeconds) ? Math.floor(verdict.ageSeconds) + 's' : 'unknown')
+    lines.push('age: ' + secondsText(verdict.ageSeconds)
         + ', ' + sourceLabel
-        + ', staleness budget ' + (Number.isFinite(verdict.maxAgeSeconds) ? Math.floor(verdict.maxAgeSeconds) + 's' : 'unknown'));
+        + ', poll cadence ' + secondsText(verdict.maxAgeSeconds)
+        + ', deny budget ' + secondsText(lib.STALENESS_NEAR_BARRIER_SECONDS)
+        + ' (window states only; the Fable ratchet rides the cadence)');
     for (const key of WINDOW_KEYS) {
         const w = windows[key] && typeof windows[key] === 'object' ? windows[key] : {};
         lines.push(key + ': ' + percentText(w.percent)
@@ -292,13 +312,6 @@ function statusBlock(reading, verdict, config, opts) {
     lines.push('state: ' + textOrUnknown(verdict.state) + window + advisory);
     lines.push('fableRatchet: ' + (verdict.fableRatchet === true ? 'true' : 'false') + advisory);
     return lines.join('\n');
-}
-
-// The verdict's ageSeconds against its own maxAgeSeconds, both hooks' door:
-// strict less-than at whole-second resolution, and a null age is never within
-// any budget, which is the fail-open direction.
-function withinBudget(verdict) {
-    return verdict.ageSeconds !== null && verdict.ageSeconds < verdict.maxAgeSeconds;
 }
 
 // Evaluated with the config the operator wrote, `enabled` forced on. See the
@@ -347,15 +360,23 @@ async function cmdStatus() {
         return;
     }
     let verdict = evaluateAsArmed(reading, config);
-    // The two-pass staleness protocol both hooks implement, because this
-    // block's reader is an actor too: a non-clear verdict may be judging data
-    // older than the tightened budget it hands back, so it earns one re-read
-    // at that budget before it is reported. Exactly one, never a loop, and a
-    // re-read that fails keeps the first reading: this command reports rather
-    // than denies, so the honest move is to print what it holds with the age
-    // and budget beside it, not to withhold the block.
-    if (verdict.state !== 'clear' && !withinBudget(verdict)) {
-        const reread = await lib.readUsage({ maxAgeSeconds: verdict.maxAgeSeconds });
+    // The two-pass staleness protocol both hooks run on a window state, on the
+    // one standard they run it on: lib.withinDenyBudget, never a rule written
+    // here. A third hand copy stood here and had already gone wrong, comparing
+    // ageSeconds against the verdict's own maxAgeSeconds, so a session at 82%
+    // on a five-minute-old cache reported `state: warn` while both hooks would
+    // have allowed the very next dispatch and said nothing on the same store.
+    // That is the surface docs/usage-awareness.md teaches an operator to use as
+    // the anti-imitation check, so it has to agree with the hooks by
+    // construction rather than by inspection.
+    //
+    // A non-clear verdict outside that budget therefore earns one re-read at
+    // it. Exactly one, never a loop, and a re-read that fails keeps the first
+    // reading: this command reports rather than denies, so the honest move is
+    // to print what it holds with the age, the cadence and the budget beside
+    // it, not to withhold the block.
+    if (verdict.state !== 'clear' && !lib.withinDenyBudget(verdict)) {
+        const reread = await lib.readUsage({ maxAgeSeconds: lib.STALENESS_NEAR_BARRIER_SECONDS });
         if (reread && reread.ok === true) {
             reading = reread;
             verdict = evaluateAsArmed(reading, config);

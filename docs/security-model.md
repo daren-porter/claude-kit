@@ -53,7 +53,7 @@ so a reader who has internalized "kit text arrives at session start" is now wron
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
-| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (1764 characters over 12 lines at its longest branch, the session wind-down's orchestrator form, measured by spawning the hook across all twenty renderings rather than estimated; the barrier's own longest is 1414 over 11) rather than merely bounded |
+| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (1810 characters over 12 lines at its longest branch, the session wind-down's orchestrator form at a one-decimal percent, measured across all twenty renderings rather than estimated; the barrier's own longest is 1297 over 9) rather than merely bounded |
 
 `take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
 reviewer looking for a sixth sanitizer idiom will not find one. Nothing repo-controlled reaches its
@@ -295,8 +295,13 @@ backwards.
   rather than as more of the same. It allows on a stale reading, on every one of the reader's eight
   failure reasons including `expired`, on an absent or disabled config, on a window whose percent
   the endpoint did not report, and on any tool that is not `Agent` or `Task`. It denies only from a
-  positive determination on data inside the staleness budget the evaluator handed it, and it
-  re-reads once rather than deciding on data older than the budget it was given. A wrong deny here
+  positive determination on **fresh** data, and freshness for a refusal is a stricter standard than
+  the evaluator's polling advice: `lib.withinDenyBudget` holds a wind-down or barrier deny to a
+  fixed 120 seconds whatever the verdict advised, and the hook re-reads once at that budget rather
+  than deciding on older data. The Fable ratchet is deliberately outside that clamp and keeps the
+  evaluator's budget, because a wrong ratchet deny costs a model downgrade while a wrong barrier
+  deny wedges an unattended run, and forcing a fetch on the cheaper predicate is what would put the
+  expensive ones behind a rate-limit lock. A wrong deny here
   wedges an unattended run with nobody present to clear it, which is why every branch points the
   allowing way.
 - `usage-nudge` is the kit's first `PostToolUse` hook and its first mid-turn channel. It blocks

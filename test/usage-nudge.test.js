@@ -146,33 +146,33 @@ const MARKER_MAX_LINES = 5000;
 const WARN_SESSION_TEXT = [
     'Kit usage wind-down: the session (5-hour) usage window is at 82% and the barrier the operator set for it is 95%. Resetting at 2026-08-27T15:30:00Z.',
     '',
-    'Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, which costs a fraction of what a dispatch does.',
+    "Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, at a fraction of a dispatch's cost.",
     '',
     'While you keep working:',
     '1. Finish the section in flight and stage it.',
-    '2. Do not dispatch subagents. The kit is refusing them until this window resets, so one would come back denied rather than running.',
-    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging, answering the operator.',
-    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
+    '2. Do not dispatch subagents. The kit refuses them until this window resets, so one comes back denied.',
+    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so landing that work unreviewed and unattended is what this threshold exists to avoid.',
     '5. Do not open another section. Stop when the one in flight reaches a clean boundary.',
     '',
     'Then, and only once you have actually stopped:',
     '6. Write the Chapter in the plan doc naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.',
-    "7. Arm a one-shot resume: create a single scheduled job at 2026-08-27T15:30:00Z, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
+    "7. Arm a one-shot resume: create a single scheduled job for a couple of minutes past 2026-08-27T15:30:00Z rather than at it, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
     '8. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const WARN_SESSION_NO_RESET_TEXT = [
     'Kit usage wind-down: the session (5-hour) usage window is at 82% and the barrier the operator set for it is 95%. Its reset instant could not be read.',
     '',
-    'Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, which costs a fraction of what a dispatch does.',
+    "Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, at a fraction of a dispatch's cost.",
     '',
     'While you keep working:',
     '1. Finish the section in flight and stage it.',
-    '2. Do not dispatch subagents. The kit is refusing them until this window resets, so one would come back denied rather than running.',
-    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging, answering the operator.',
-    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
+    '2. Do not dispatch subagents. The kit refuses them until this window resets, so one comes back denied.',
+    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so landing that work unreviewed and unattended is what this threshold exists to avoid.',
     '5. Do not open another section. Stop when the one in flight reaches a clean boundary.',
     '',
     'Then, and only once you have actually stopped:',
@@ -180,19 +180,19 @@ const WARN_SESSION_NO_RESET_TEXT = [
     "7. Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.",
     '8. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const WARN_WEEKLY_TEXT = [
     'Kit usage wind-down: the weekly all-models usage window is at 88% and the barrier the operator set for it is 95%. Resetting at 2026-09-01T00:00:00Z.',
     '',
-    'Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, which costs a fraction of what a dispatch does.',
+    "Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, at a fraction of a dispatch's cost.",
     '',
     'While you keep working:',
     '1. Finish the section in flight and stage it.',
-    '2. Do not dispatch subagents. The kit is refusing them until this window resets, so one would come back denied rather than running.',
-    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging, answering the operator.',
-    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
+    '2. Do not dispatch subagents. The kit refuses them until this window resets, so one comes back denied.',
+    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so landing that work unreviewed and unattended is what this threshold exists to avoid.',
     '5. Do not open another section. Stop when the one in flight reaches a clean boundary.',
     '',
     'Then, and only once you have actually stopped:',
@@ -200,19 +200,19 @@ const WARN_WEEKLY_TEXT = [
     '7. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.',
     '8. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const WARN_WEEKLY_NO_RESET_TEXT = [
     'Kit usage wind-down: the weekly all-models usage window is at 88% and the barrier the operator set for it is 95%. Its reset instant could not be read.',
     '',
-    'Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, which costs a fraction of what a dispatch does.',
+    "Subagent dispatch is now being refused. This is not a stop: the effort continues in the main thread, at a fraction of a dispatch's cost.",
     '',
     'While you keep working:',
     '1. Finish the section in flight and stage it.',
-    '2. Do not dispatch subagents. The kit is refusing them until this window resets, so one would come back denied rather than running.',
-    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging, answering the operator.',
-    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so it is unavailable, and landing unreviewed work while nobody is watching is the trade this threshold exists to avoid.',
+    '2. Do not dispatch subagents. The kit refuses them until this window resets, so one comes back denied.',
+    '3. Keep working on what needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+    '4. Do not CLOSE a section that would normally take review, where closing means marking it complete rather than merely finishing the work of step 1. Review is dispatched here too, so landing that work unreviewed and unattended is what this threshold exists to avoid.',
     '5. Do not open another section. Stop when the one in flight reaches a clean boundary.',
     '',
     'Then, and only once you have actually stopped:',
@@ -220,7 +220,7 @@ const WARN_WEEKLY_NO_RESET_TEXT = [
     '7. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.',
     '8. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const BARRIER_SESSION_TEXT = [
@@ -229,10 +229,10 @@ const BARRIER_SESSION_TEXT = [
     'Stop now, in this order:',
     '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
     "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
-    "3. Arm a one-shot resume: create a single scheduled job at 2026-08-27T15:30:00Z, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
+    "3. Arm a one-shot resume: create a single scheduled job for a couple of minutes past 2026-08-27T15:30:00Z rather than at it, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const BARRIER_SESSION_NO_RESET_TEXT = [
@@ -244,7 +244,7 @@ const BARRIER_SESSION_NO_RESET_TEXT = [
     "3. Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.",
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const BARRIER_WEEKLY_TEXT = [
@@ -256,7 +256,7 @@ const BARRIER_WEEKLY_TEXT = [
     '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.',
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 const BARRIER_WEEKLY_NO_RESET_TEXT = [
@@ -268,7 +268,7 @@ const BARRIER_WEEKLY_NO_RESET_TEXT = [
     '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.',
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
-    'This is a spend control the operator armed, not an error and not a rate limit. Nothing is broken and no work is lost.',
+    'This is a spend control the operator armed, not an error and not a rate limit.',
 ].join('\n');
 
 // Temp HOME (plus USERPROFILE) and CLAUDE_CONFIG_DIR around one case body, set
@@ -443,7 +443,17 @@ function block(result) {
     assert.deepStrictEqual(Object.keys(parsed), ['hookSpecificOutput']);
     assert.deepStrictEqual(Object.keys(parsed.hookSpecificOutput), ['hookEventName', 'additionalContext']);
     assert.strictEqual(parsed.hookSpecificOutput.hookEventName, 'PostToolUse');
-    return parsed.hookSpecificOutput.additionalContext;
+    const text = parsed.hookSpecificOutput.additionalContext;
+    // The kit's own prudence budget for anything it says to a model: the same
+    // 2000 characters and 20 lines usage-barrier.js holds its deny reason to,
+    // asserted the same way, and asserted on EVERY emission this file makes
+    // rather than in one case. Nothing is known to bound `additionalContext`,
+    // which is why the ceiling has to be the kit's own, and this text crossed
+    // 2000 unnoticed once. The steps that end the run sit at its END, which is
+    // the half any truncation would take.
+    assert.ok(text.length <= 2000, 'the kit budgets the emitted block at 2000 characters, got ' + text.length);
+    assert.ok(text.split('\n').length <= 20, 'the kit budgets the emitted block at 20 lines');
+    return text;
 }
 
 function markerKeys() {
@@ -556,6 +566,35 @@ test('a fractional percent and a fractional threshold render faithfully at one d
     });
 });
 
+test('the longest wind-down rendering is the one the length budget is pinned against', () => {
+    withEnv(() => {
+        enable();
+        // block() asserts the ceiling on every emission in this file. This case
+        // is what keeps that assertion honest, by pinning WHICH of the four
+        // renderings is the longest, so the ceiling is being measured against
+        // the worst case rather than an incidental one. The four differ by
+        // window (the session resume step names an instant, the weekly one
+        // never does) and by whether that instant validated, and a one-decimal
+        // percent is two characters wider than a whole one.
+        const renderings = [
+            ['session, instant known', { session: { percent: 82.4 } }],
+            ['session, instant unreadable', { session: { percent: 82.4, resetsAt: NO_ZONE } }],
+            ['weekly, instant known', { weeklyAll: { percent: 88.4 } }],
+            ['weekly, instant unreadable', { weeklyAll: { percent: 88.4, resetsAt: WEEKLY_NO_ZONE } }],
+        ];
+        const lengths = {};
+        for (const [name, windows] of renderings) {
+            writeCache(windows);
+            const text = block(runHook());
+            assert.ok(text, name + ' must emit for its length to mean anything');
+            lengths[name] = text.length;
+        }
+        const longest = Object.keys(lengths).reduce((a, b) => (lengths[a] >= lengths[b] ? a : b));
+        assert.strictEqual(longest, 'session, instant known',
+            'the ceiling must be pinned against the longest rendering: ' + JSON.stringify(lengths));
+    });
+});
+
 test('a warn just under its barrier cannot print numbers that assert a barrier', () => {
     withEnv(() => {
         // The original reproduced defect. At the default barrier of 95, a
@@ -650,6 +689,33 @@ test('a marker already on disk in the endpoint own +00:00 form suppresses the nu
         // suppressing a warn that falls back onto the same instant.
         writeCache({ session: { percent: 82, resetsAt: reset } });
         assert.strictEqual(block(runHook()), null, 'no warn after a recorded barrier on the same instant');
+    });
+});
+
+test('a marker already on disk in the Z form suppresses the nudge for that instant too', () => {
+    withEnv(() => {
+        enable();
+        // The FORWARD half of the same render mismatch, and it is a live state
+        // rather than a hypothetical one: the build sitting in the plugin cache
+        // renders the key in `Z` form, so any store written by a run that
+        // predates a `/plugin update` holds `Z` keys this render would not
+        // match. Invisible in this direction costs the same two things it costs
+        // in the other: an already-delivered wind-down delivered again, and a
+        // recorded BARRIER that stops suppressing the warn behind it, which
+        // emits the milder instruction after the stronger one.
+        //
+        // The instant is BUCKET-ALIGNED on purpose (15:30:00 sits on the
+        // five-minute grid). The two renders must differ only in their suffix,
+        // or a failure here would be the rounding moving the instant rather
+        // than the suffix going unmatched.
+        const zKey = `${SESSION}|session|${SESSION_RESET}|barrier`;
+        fs.mkdirSync(lib.storeRoot(), { recursive: true, mode: 0o700 });
+        fs.writeFileSync(markerPath(), JSON.stringify({ key: zKey, at: NOW }) + '\n', { mode: 0o600 });
+        writeCache({ session: { percent: 96 } });
+        assert.strictEqual(block(runHook()), null, 'the Z-form marker IS this verdict own key');
+        writeCache({ session: { percent: 82 } });
+        assert.strictEqual(block(runHook()), null, 'and it goes on suppressing the warn behind it');
+        assert.deepStrictEqual(markerKeys(), [zKey], 'and no second key is minted beside it');
     });
 });
 
@@ -993,6 +1059,30 @@ test('two-pass staleness: the hook re-reads once at the tighter budget and speak
         assert.strictEqual(transportCalls(), 1, 'exactly one re-read, never a loop');
         assert.deepStrictEqual(markerKeys(), [`${SESSION}|session|${SESSION_RESET_KEY}|barrier`],
             'the marker is keyed on the re-read verdict, so the first pass cannot suppress the next window');
+    });
+});
+
+test('a parked nudge spends no fetch on the re-read it can never speak on', () => {
+    withEnv(() => {
+        enable();
+        writeCredentials();
+        // This hook has no matcher, so nothing refuses it: it runs after every
+        // tool call, and S9 makes the warn band a state a run SITS in for
+        // hours. With the cache in the 120-600s gap every one of those calls
+        // used to buy a live fetch for a nudge already on record and therefore
+        // unable to speak again, and that traffic is not merely waste: a 429
+        // there writes a backoff lock the barrier hook reads as `locked`, and
+        // `locked` allows.
+        //
+        // The fixture is a genuinely parked session: the nudge delivered, then
+        // the same key on a cache aged into the gap. The only thing the fix
+        // moves is the fetch count.
+        writeCache({ session: { percent: 82 } });
+        assert.strictEqual(block(runHook()), WARN_SESSION_TEXT);
+        writeCache({ session: { percent: 82 } }, new Date(NOW_MS - 300 * 1000).toISOString());
+        assert.strictEqual(block(runHook(undefined, { mode: '200', body: wireBody(82, '2026-08-27T15:30:00+00:00') })),
+            null, 'the key is on record, so there was never anything to say');
+        assert.strictEqual(transportCalls(), 0, 'and nothing was spent finding that out');
     });
 });
 

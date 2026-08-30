@@ -604,12 +604,13 @@ Acceptance criteria:
   an unattended run invites a dispatch loop, which spends more than the barrier saves. Both
   clauses describe the ORCHESTRATOR form; the nested form below carries neither, because a
   subagent has no main thread to route the work into and no turn of the effort's to end.
-- The deny reason stays short by budget rather than to a discovered limit: 1764 characters over
-  12 lines at its longest branch, re-measured across all twenty renderings after S9's second fix
+- The deny reason stays short by budget rather than to a discovered limit: 1810 characters over
+  12 lines at its longest branch, re-measured across all twenty renderings after S9's fourth fix
   round. **The longest branch is no longer the barrier**: it is the session wind-down's orchestrator
-  form, which grew about 490 characters when a hand-written summary was replaced by the real
-  `resumeStep` and `blockedStep`. The barrier's longest is unchanged at 1414 over 11 lines, and all
-  twenty renderings sit inside the 2000-character, 20-line budget. A deny whose instruction was truncated away is
+  form at a one-decimal percent, which grew when a hand-written summary was replaced by the real
+  `resumeStep` and `blockedStep` and again when the resume pad was folded in. All twenty renderings
+  sit inside the 2000-character, 20-line budget, and the `additionalContext` wind-down text is now
+  pinned by a test at 1934 over 17 lines after being tightened back under the same ceiling. A deny whose instruction was truncated away is
   a wedge with no instruction, and since the instruction is at the end of the text, that is the
   half any truncation would take.
 - No tool other than `Agent` or `Task` is ever denied.
@@ -1725,10 +1726,10 @@ Completed: **S8 in full, and S5 in part with one of its items cut on evidence.**
 also closed here. The plan is not complete: `finishing-work` has not run.
 Implemented By: main session for every document, the spec, and both skills; `implementer-opus` for
 the two S9 fix rounds.
-Metrics: six reviewer dispatches (adversarial and blind over `123684a..HEAD`, adversarial and blind
-over the first fix, blind over the second, blind over the third), three implementer dispatches, and
-**eighteen arm reps across four arms**. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), consulted once at the top of
-the session and it changed the approach materially. Gate at close: 531 pass, 0 fail, from 517.
+Metrics: eight reviewer dispatches (adversarial and blind over `123684a..HEAD`, adversarial and
+blind over the first fix, blind over the second, blind over the third, adversarial and blind over
+the fourth), four implementer dispatches, and **eighteen arm reps across four arms**. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), consulted once at the top of
+the session and it changed the approach materially. Gate at close: 536 pass, 0 fail, from 517.
 
 Decisions / Surprises:
 - **The arms ran at last, and the structural bind that killed them on 2026-08-29 was gone rather
@@ -1851,7 +1852,46 @@ the `barrier: 0` staleness edge is closed by the deny clamp rather than by the b
   followed in order they end the turn at the warn. The fix for that is in this changeset and is not
   yet installed.
 
-Next: **review fix round 3**, which is the first thing a resuming session owes. Then `finishing-work`
+- **The resume fired and the whole cycle closed, which is the first time this feature has run end
+  to end.** Armed at 18:52 EDT against a 22:49:59Z reset, it fired at 22:52:20Z with the window at
+  3% and `state: clear`, and its prompt made the resuming session verify the reset before acting
+  rather than trusting the wake-up. Two of the four documented `CronCreate` facts were load-bearing
+  in practice: the expression is local time, and the two-minute pad is what kept a one-shot off an
+  instant ending in `:59` where it could have fired up to 90 seconds early and woken into the same
+  refusal.
+- **Fix round 3's review found a Critical in my own S8 prose, and it was wrong in the expensive
+  direction.** I had listed "the feature is disabled" among the conditions that downgrade a Fable
+  dispatch to the session model. `enabled: false` is the shipped default, so the rule I had just
+  persisted would have downgraded EVERY Fable dispatch on EVERY default install, including
+  `finishing-work`'s two reviews, which this kit calls its highest-leverage Fable spend. It also
+  contradicted S8's own Approach and disagreed with the copy in `finishing-work`, which happened to
+  omit the clause. A disabled install now does not run the command at all.
+- **That Critical had also silently changed the kit's egress story**, which the same review caught:
+  the prose sends an orchestrator to `usage.js status` before a fable dispatch, so on an armed
+  install the credential path is exercised during an ordinary run while `usage-awareness.md` still
+  said it was "reached only by someone typing it" and `docs/README.md` still called it "the one
+  operator-initiated egress path". Both corrected, and the arming-versus-disabled distinction is now
+  stated where an operator reads it.
+- **Two findings existed only because the feature had fired on this session.** The live store now
+  carries a `Z`-form marker key written by the installed build during the 22:50 wind-down, so a
+  comment asserting no such key existed was true when written and false by the time it was reviewed;
+  both reviewers found it independently and the fix probes both render forms. And `resumeStep` told
+  the model to arm "at" the reset instant while the skill prose shipped in the same commit says to
+  pad past it: I had lived that mismatch an hour earlier, padding only because I held the prose. The
+  pad is folded into the shared interpolant now.
+- **The enumeration guard failed inside the commit that broadened it.** `security-model.md`'s
+  description of the deny budget went stale by content while every count in it stayed correct, which
+  is exactly the case Standing Brief Amendment 1 was widened for, missed by the sweep that widened
+  it.
+- **Fix round 4 accepted one trade rather than executing it**, and it is the implementer's call
+  recorded as such: short-circuiting the nudge's parked path on the dedupe marker removes a live
+  fetch every 120 seconds for a nudge that can never speak again, at the cost of a parked warn
+  discovering a barrier on the 600-second cadence instead of the 120-second one. The mechanical
+  protection is unaffected, since the barrier hook still re-reads before any deny; what is delayed
+  is the advisory text.
+
+Next: **`finishing-work` over the whole effort**, whose own security and final adversarial passes
+are what will review fix round 4. Then `finishing-work`
 over the whole effort, which has still never run. S5 and S8 are done to the
 extent this Chapter records, and the plan stays In Progress until that pass. **None of this is live
 until a `/plugin update`**: the installed payload is at `123684a`, so the running hooks predate S9,

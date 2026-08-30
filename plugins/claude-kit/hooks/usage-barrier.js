@@ -61,9 +61,12 @@
 // permissionDecisionReason is therefore written self-sufficient in every
 // branch, and kept short on purpose: the instruction that matters sits at its
 // END, so anything that truncates the field costs exactly the part the model
-// needs. The longest branch measures 1764 characters over 12 lines (session
-// WIND-DOWN, orchestrator form, a typical reset instant known), re-measured
-// across all twenty renderings by spawning this hook rather than estimated.
+// needs. The longest branch measures 1810 characters over 12 lines (session
+// WIND-DOWN, orchestrator form, a reset instant known, a percent carrying a
+// decimal), re-measured across all twenty renderings rather than estimated. The
+// percent is part of the maximum and was missed once: 1764 was the same branch
+// at a two-character percent, and 82.4 rather than 82 is what makes it the
+// reachable one.
 // The wind-down overtook the barrier (1414 over 11) when it stopped
 // hand-copying the resume and BLOCKED steps and began interpolating the same
 // two the barrier uses, which is a length worth paying for correctness that
@@ -78,11 +81,13 @@
 // SAFETY: this is the only hook in the kit that can deny a tool call on a
 // network-derived signal, and it runs unattended with nobody present to clear
 // a wrong deny, so it fails OPEN everywhere. A deny requires a positive
-// determination on data no older than the DENY budget, which is the tight
-// near-barrier one whatever polling cadence the verdict advised (usage-lib's
-// withinDenyBudget, which the sibling nudge asks too); a tool that is not
-// Agent or Task, an absent or disabled config, every reader failure
-// (`expired` included), stale data after the one permitted re-read, an
+// determination on data no older than the freshness ITS OWN predicate answers
+// to: the tight near-barrier budget for the two that act on a window state
+// (usage-lib's withinDenyBudget, which the sibling nudge asks too), and the
+// evaluator's own polling budget for the Fable ratchet, which is held out of
+// that clamp on purpose (the freshness note above renderedOrNull carries why).
+// A tool that is not Agent or Task, an absent or disabled config, every reader
+// failure (`expired` included), stale data after the one permitted re-read, an
 // unknown percent and any internal error all allow.
 // Allowing means exit 0 with empty stdout: an explicit permissionDecision
 // "allow" is a positive approval that shortcuts the permission system (one
@@ -153,10 +158,14 @@ function isBackgroundMain(t) {
     return /^claude$/i.test(t);
 }
 
-// The freshness a DENY requires is usage-lib's withinDenyBudget, asked here
-// and asked identically by usage-nudge.js before it says dispatch is being
-// refused: ONE standard for every claim of a refusal, so the guard and the
-// text about the guard cannot disagree. It is the bare
+// The freshness a deny requires, and it is deliberately NOT one number across
+// all three predicates.
+//
+// The two that act on a window STATE, the barrier and the wind-down, ask
+// usage-lib's withinDenyBudget, which usage-nudge.js asks identically before it
+// says dispatch is being refused and usage.js asks before it reports a
+// non-clear verdict: ONE standard for every claim of a refusal on a state, so
+// the guard and the text about the guard cannot disagree. It is the bare
 // STALENESS_NEAR_BARRIER_SECONDS rather than a clamp on what the verdict
 // advised. A clamp stood here first, and `Math.min(verdict.maxAgeSeconds,
 // STALENESS_NEAR_BARRIER_SECONDS)` was invariant anyway (maxAgeSeconds is only
@@ -171,16 +180,36 @@ function isBackgroundMain(t) {
 // the session [80, 85) band. What holds is that a poll cadence and a refusal
 // answer different questions.
 //
-// It also covers two deny predicates no proximity arm reaches, without either
-// being special-cased. The Fable ratchet is scored against a window that has
-// no barrier at all, so its verdict is handed the wide cadence at every
-// percent (measured: fable 92 against a ratchet of 85 returns maxAgeSeconds
-// 600). And a barrier below 1 escapes through the near point's floor: that
-// floor is Math.max(1, barrier - 10), so a percent under 1 can be a barrier
-// state that no arm ever tightens for (measured: barrier 0.5, percent 0.6,
-// maxAgeSeconds 600). A barrier anywhere in [1, 11) is NOT such a case, since
-// the same floor puts the near point at 1 and any percent reaching that
-// barrier is already past it.
+// THE FABLE RATCHET IS EXCLUDED from it, and this asymmetry is the decision
+// rather than an oversight. That window has no barrier at all, so no proximity
+// arm ever tightens its cadence (measured: fable 92 against a ratchet of 85
+// returns maxAgeSeconds 600), and holding it to the tight budget forced a live
+// fetch on EVERY override dispatch whose cache was over 120 seconds old. That
+// is the cheapest predicate buying precision at the expensive ones' cost: a 429
+// earned there writes a backoff lock for whatever its retry-after says, which
+// this endpoint was observed sending at 3242 seconds; a held lock reads as
+// `locked`, and every reader failure here allows. So the ratchet's own polling
+// can blind the barrier and the wind-down, and this hook's suite already pins
+// that sequence for a 429 taken on a warn. The two are not owed the same freshness in any
+// case, because being wrong costs differently: a wrong ratchet deny costs a
+// model downgrade and says "re-dispatch without the override", while a wrong
+// barrier or wind-down deny wedges an unattended run. So the ratchet rides the
+// evaluator's budget, which readUsage has already enforced at its own door (an
+// `ok` read is younger than the maxAgeSeconds it was asked for), and nothing
+// here mints a second freshness rule in order to say so.
+//
+// A sharper rule exists and is NAMED rather than built, for a later effort to
+// weigh with its own evidence: usage within one occurrence of a window is
+// monotonic, so a stale reading whose resetsAt is still in the future bounds
+// the percent from below, and a deny standing on it is sound however old it is.
+//
+// What the tight budget still covers without being special-cased is a barrier
+// below 1, which escapes through the near point's floor: that floor is
+// Math.max(1, barrier - 10), so a percent under 1 can be a barrier state that
+// no arm ever tightens for (measured: barrier 0.5, percent 0.6, maxAgeSeconds
+// 600). A barrier anywhere in [1, 11) is NOT such a case, since the same floor
+// puts the near point at 1 and any percent reaching that barrier is already
+// past it.
 //
 // The cost is bounded rather than nil, which an earlier draft here claimed. In
 // the warn band a dispatch attempt made against a cache older than 120 seconds
@@ -188,6 +217,13 @@ function isBackgroundMain(t) {
 // is then REFUSED: the fan-out that would drive the fetch rate up is the very
 // thing being prevented, and every attempt inside one 120-second window is
 // served from the cache.
+
+// Which kind of deny is in question, since the two kinds answer to different
+// freshness. A state deny is the barrier or the wind-down; anything else that
+// denies is the ratchet.
+function isStateDeny(verdict) {
+    return verdict.state === 'barrier' || verdict.state === 'warn';
+}
 
 // The emission door for every number in the reason text: usage-lib's shared
 // formatOneDecimal, which renders faithfully at one decimal (each rounding
@@ -215,6 +251,14 @@ function resetClause(resetsAt) {
 // on data minutes old and normTimestamp validates shape, not futurity); the
 // weekly window resets days out, so it never arms one regardless.
 //
+// The session arm PADS the instant by a couple of minutes rather than naming it
+// as the moment to fire, and the pad is correctness rather than caution: a
+// one-shot job scheduled on a whole-minute boundary can fire up to 90 seconds
+// early, and every reset instant observed live sits exactly on :00. Early means
+// waking into the very refusal that stopped the run, and a one-shot does not
+// come back. This deny reason is self-sufficient by this file's own contract,
+// so an unpadded instruction here is the one a model would act on.
+//
 // Shared by BOTH deny texts since the wind-down stopped hand-copying it, which
 // is why the weekly arm names the window rather than the barrier: "held on the
 // weekly usage barrier" inside a wind-down would contradict that text's own
@@ -223,7 +267,7 @@ function resumeStep(windowKey, resetsAt) {
     if (windowKey === 'session') {
         return resetsAt === null
             ? "Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand."
-            : 'Arm a one-shot resume: create a single scheduled job at ' + resetsAt + ", or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.";
+            : 'Arm a one-shot resume: create a single scheduled job for a couple of minutes past ' + resetsAt + " rather than at it, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.";
     }
     return 'Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage window, then stop.';
 }
@@ -414,20 +458,27 @@ async function main() {
     // answer, because dispatches are the expensive thing and prose alone left
     // the saving to compliance. S9 of the plan records why the warn band stopped
     // being a stop and became a cheaper working state.
-    const wouldDeny = (v) => v.state === 'barrier' || v.state === 'warn' || (v.fableRatchet === true && fable);
+    const wouldDeny = (v) => isStateDeny(v) || (v.fableRatchet === true && fable);
     if (!wouldDeny(verdict)) return;
 
-    // The verdict would deny but judged data older than a deny may stand on:
-    // one re-read at the deny budget, then re-decide. Exactly one, never a
+    // A STATE deny would fire but judged data older than such a deny may stand
+    // on: one re-read at the deny budget, then re-decide. Exactly one, never a
     // loop; a loop here is a hook that can spin on every tool call. The bound
     // holds structurally too: a read at that budget can only return data
     // younger than it, so a third pass could never learn more.
-    if (!lib.withinDenyBudget(verdict)) {
+    //
+    // The ratchet is not put through this, on purpose and by decision rather
+    // than by omission: it rides the budget the evaluator advised, which
+    // readUsage has already enforced at its own door. The freshness note above
+    // renderedOrNull carries the reasoning, and the second arm below repeats
+    // the test rather than assuming the re-read kept the same predicate, since
+    // a re-read can turn a state deny into a ratchet-only one.
+    if (isStateDeny(verdict) && !lib.withinDenyBudget(verdict)) {
         usage = await lib.readUsage({ maxAgeSeconds: lib.STALENESS_NEAR_BARRIER_SECONDS });
         if (!usage || usage.ok !== true) return;
         verdict = lib.evaluate(usage, config);
         if (!wouldDeny(verdict)) return;
-        if (!lib.withinDenyBudget(verdict)) return;
+        if (isStateDeny(verdict) && !lib.withinDenyBudget(verdict)) return;
     }
 
     // Which instruction form the deny carries. The deny itself never varies

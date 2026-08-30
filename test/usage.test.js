@@ -48,10 +48,14 @@
 //     it: under a rate-limit lock the horizon can run to a day, and
 //     discarding a good usage.json for that day defeats the ratchet in the
 //     case it exists for.
-//   - The age line carries the verdict's own staleness budget, and a
-//     non-clear verdict older than that budget re-reads exactly once at it,
-//     the two-pass protocol both hooks implement: this block's reader is an
-//     actor too.
+//   - The age line carries BOTH budgets and says which predicate each one
+//     governs: the verdict's polling cadence, which is what the Fable ratchet
+//     rides, and the deny budget a refusal on a window state answers to. Two
+//     numbers under one label was a reader's cue to apply the wrong rule in
+//     either direction. A non-clear verdict older than the deny budget re-reads
+//     exactly once at it, the two-pass protocol both hooks run, asked through
+//     the same lib.withinDenyBudget they ask: this block's reader is an actor
+//     too, and a hand-written rule here had already drifted off theirs.
 //   - A present config file that readConfig rejected whole is named in the
 //     block: `enabled: false` from a rejected file was indistinguishable from
 //     no config at all, in the one surface built to diagnose arming.
@@ -444,7 +448,7 @@ test('with no cache and the feature disabled, status still fetches and reports t
         const map = fields(runCli(['status'], { mode: '200', body: wireBody() }));
         assert.strictEqual(transportCalls(), 1);
         assert.strictEqual(map.enabled, 'false');
-        assert.strictEqual(map.age, '0s, freshly fetched, staleness budget 600s');
+        assert.strictEqual(map.age, '0s, freshly fetched, poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
         assert.strictEqual(map.session, '44%, severity normal, resets ' + SESSION_RESET);
         assert.strictEqual(map.fableWeekly, '66%, severity normal, resets ' + WEEKLY_RESET);
         assert.ok(fs.existsSync(lib.usageFilePath()), 'the reader caches what it fetched');
@@ -455,7 +459,7 @@ test('a cached reading reports its age in seconds and says it came from cache', 
     withUsageEnv(() => {
         writeCache({}, new Date(NOW_MS - 240 * 1000).toISOString());
         const map = fields(runCli(['status']));
-        assert.strictEqual(map.age, '240s, from cache, staleness budget 600s');
+        assert.strictEqual(map.age, '240s, from cache, poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
         assert.strictEqual(transportCalls(), 0, 'a cache inside the staleness budget serves without a request');
     });
 });
@@ -548,7 +552,7 @@ test('a failed fresh read serves the stale cache, labelled stale and carrying th
         writeCache({ session: { percent: 42 } }, new Date(NOW_MS - 700 * 1000).toISOString());
         const map = fields(runCli(['status'], { mode: 'transport-error' }));
         assert.strictEqual(transportCalls(), 1, 'one failed fetch; the fallback serves the cache without another');
-        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: timeout), staleness budget 600s');
+        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: timeout), poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
         assert.ok(map.session.startsWith('42%,'), 'the numbers still arrive: ' + map.session);
     });
 });
@@ -561,7 +565,7 @@ test('a backoff lock does not blind the reader: the cache is served with the loc
             JSON.stringify({ blockedUntil: NOW_SECONDS + 3000, reason: 'rate-limited' }) + '\n', { mode: 0o600 });
         const map = fields(runCli(['status']));
         assert.strictEqual(transportCalls(), 0, 'a lock in force means no request, fallback included');
-        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: locked), staleness budget 600s');
+        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: locked), poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
         assert.ok(map.session.startsWith('42%,'));
     });
 });
@@ -581,7 +585,7 @@ test('a rate-limited read names its backoff, with and without a cache to fall ba
         writeCredentials();
         writeCache({}, new Date(NOW_MS - 700 * 1000).toISOString());
         const map = fields(runCli(['status'], { mode: '429' }));
-        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: rate-limited, retry after 300s), staleness budget 600s');
+        assert.strictEqual(map.age, '700s, stale cache (fresh read failed: rate-limited, retry after 300s), poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
     });
 });
 
@@ -601,7 +605,7 @@ test('a non-clear verdict outside its budget re-reads once and reports the fresh
         const map = fields(runCli(['status'], { mode: '200', body: wireBody() }));
         assert.strictEqual(transportCalls(), 1, 'exactly one re-read, never a loop');
         assert.ok(map.session.startsWith('44%,'), 'the block reflects the re-read, not the stale barrier: ' + map.session);
-        assert.strictEqual(map.age, '0s, freshly fetched, staleness budget 600s');
+        assert.strictEqual(map.age, '0s, freshly fetched, poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
     });
 });
 
@@ -614,8 +618,29 @@ test('a failed re-read keeps the first reading, with age and budget beside it', 
         assert.ok(map.session.startsWith('96%,'), 'this command reports what it holds rather than withholding');
         // 300s against a printed budget of 120s is the reader's cue that the
         // basis is stale; the block does not present it as anything else.
-        assert.strictEqual(map.age, '300s, from cache, staleness budget 120s');
+        assert.strictEqual(map.age, '300s, from cache, poll cadence 120s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
         assert.ok(map.state.startsWith('barrier (session)'), 'the verdict is the first reading\'s: ' + map.state);
+    });
+});
+
+test('a warn far below its barrier re-reads too, on the budget a refusal answers to', () => {
+    withUsageEnv(() => {
+        writeCredentials();
+        // The reproduced defect, and the fixture is the one both hook suites
+        // use for their own half of it. 82 sits more than ten points below the
+        // barrier, so the verdict advises the WIDE 600s cadence; a rule written
+        // in this file compared the age against that number and printed
+        // `state: warn (session)` beside it on a five-minute-old cache, while
+        // both hooks, holding a refusal to 120s, allowed the very next dispatch
+        // and stayed silent on the identical store. This block is what
+        // docs/usage-awareness.md sends an operator to as the anti-imitation
+        // check, so it has to reach the hooks' answer.
+        writeCache({ session: { percent: 82 } }, new Date(NOW_MS - 300 * 1000).toISOString());
+        const map = fields(runCli(['status'], { mode: '200', body: wireBody() }));
+        assert.strictEqual(transportCalls(), 1, 'exactly one re-read, never a loop');
+        assert.ok(map.session.startsWith('44%,'), 'the block reflects the re-read: ' + map.session);
+        assert.ok(map.state.startsWith('clear'), 'and reports the verdict the hooks would reach: ' + map.state);
+        assert.strictEqual(map.age, '0s, freshly fetched, poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)');
     });
 });
 

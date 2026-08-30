@@ -204,7 +204,7 @@ the memory tier's CLI uses.
 ```
 kit usage status
 enabled: true
-age: 0s, freshly fetched, staleness budget 600s
+age: 0s, freshly fetched, poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)
 session: 44.6%, severity normal, resets 2026-08-28T15:00:00Z
 weeklyAll: 55%, severity normal, resets 2026-09-01T00:00:00Z
 fableWeekly: 66.2%, severity normal, resets 2026-09-01T00:00:00Z
@@ -217,7 +217,7 @@ When a fresh read fails but a cached one exists, it serves the cache and says so
 refusing to answer:
 
 ```
-age: 4500s, stale cache (fresh read failed: timeout), staleness budget 600s
+age: 4500s, stale cache (fresh read failed: timeout), poll cadence 600s, deny budget 120s (window states only; the Fable ratchet rides the cadence)
 ```
 
 When there is neither, it prints one line, `usage: no reading available (<reason>)`, and exits 0
@@ -231,8 +231,15 @@ into its own context on every invocation. Read the store directly for those.
 
 `status` also answers whether or not the feature is armed, which is the one path in the shipped
 plugin that reaches the credential and the network without `enabled` being true. Refusing to say
-what your usage is because the control is disarmed would be useless, and it is reached only by
-someone typing it.
+what your usage is because the control is disarmed would be useless.
+
+**It is no longer reached only by someone typing it, and that changed on 2026-08-30.** The Fable
+ratchet rule in `executing-work` now sends the orchestrator to this command before any dispatch that
+will carry Fable, so on an **armed** install the credential path is exercised during an ordinary run
+rather than only on demand. On a **disabled** install nothing changes: that rule does not apply and
+the session does not run the command, so a default install still reaches the endpoint only when you
+ask it to. The distinction is worth knowing precisely, because arming the feature is also the moment
+the kit starts reaching your credential on its own schedule rather than on yours.
 
 ## The store
 
