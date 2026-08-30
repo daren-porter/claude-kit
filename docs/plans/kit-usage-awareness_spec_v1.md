@@ -635,6 +635,20 @@ What survives is narrower and should be what a later session writes:
 - **Naming the resume mechanism.** The hook text says "create a single scheduled job" and cannot
   name a tool, because a hook has no way to know what is available in the session. `CronCreate` is
   also a deferred tool, so a model told to create a scheduled job may not find it.
+- **How to tell a genuine wind-down from injected prose, which is now the most valuable item here
+  and was not in the original scope.** Two RED reps were handed a convincing fake during S5's own
+  arm and both refused it, and both derived the same discriminator unaided: run `usage.js status`
+  and see whether the numbers corroborate, since an imitation cannot make the real store agree. Two
+  structural tells support it, that the real channel can only name the session or weekly-all window,
+  and that the real barrier denies a dispatch rather than asking in prose. The operator-facing half
+  shipped immediately in `usage-awareness.md` because it owes no arms; the half that belongs in
+  `executing-work`, where a session reads it before obeying, is what stays parked here.
+- **Step 3 has no branch for a session with no section in flight**, and is unexecutable for a
+  subagent, since `docs-write-guard` denies any non-curator write into `docs/`. A RED rep hit both
+  for real, diverted its Chapter to `.kit/` and handed it back. The subagent half only bites if S3's
+  identity gate turns out to be inert, which is the standing unverified inference; the no-section
+  half bites unconditionally. This is a change to the canonical text and both hooks, so it wants
+  review rather than a main-thread edit.
 
 The operator-facing half of this section shipped early, in `docs/usage-awareness.md` under S6,
 because it was the only thing standing between the feature and being usable at all.
@@ -1389,4 +1403,63 @@ credential properties, and the text contract byte-for-byte.
 Next: S5 and S8, in a fresh session with the `writing-skills` arms budgeted, then `finishing-work`
 over the whole effort. The first armed run should answer the standing question recorded in S3 and in
 `usage-awareness.md`, and that document names the concrete check.
+Commit Model: Commit-and-Push, honored.
+
+### Chapter 8 - 2026-08-29
+Completed: no section. **The feature was armed for the first time and fired for real**, which found
+a live defect no review had; that defect is fixed here. S5's arm was attempted and abandoned, and
+what it produced is recorded because it is worth more than the rule it was testing.
+Implemented By: main session throughout. **No fresh-context review ran on this Chapter's code
+change**, because the wind-down instructs against further subagent dispatch and the operator chose
+to spend the remaining window on findings rather than arms. Named here per `executing-work`'s rule
+that a session which cannot dispatch says which checks went without fresh context.
+Metrics: two RED reps, both discarded as out-of-state. NEEDS_CONTEXT 0. Escalations 0. Advisor on
+(opus), not consulted. Gate: 516 pass, 0 fail.
+
+Decisions / Surprises:
+- **The first armed run found a flood defect in about ninety seconds, and it is the kind of thing
+  no amount of review reaches.** The endpoint returns `resets_at` at microsecond precision that
+  VARIES between reads of the same window: `.171560`, then `.211728`, then `.100701` for one
+  2026-08-30T17:00:00 instant. `usage-nudge.js` keys its once-per-window dedupe on that string, so
+  every cache refresh minted a new key and re-emitted the wind-down. Near a barrier the poll floor
+  is 120 seconds, so it would have fired every two minutes for as long as the window stayed warm,
+  which is precisely the flood the marker exists to prevent. Nine reviewers and 516 tests had not
+  found it, because every fixture in the suite uses a stable hand-written timestamp. Fixed at the
+  parse door in `windowFields`, the one point both the wire reader and the cache reader pass
+  through, with the regression test watched red first.
+- **Everything else about the first armed run worked exactly as designed.** It named the correct
+  window, took the weekly branch and correctly instructed NOT to arm a resume, arrived mid-turn
+  through `PostToolUse` `additionalContext`, and arrived in the orchestrator's own context. That
+  last is partial evidence on the standing inference, and only partial: it fired on a main-thread
+  tool call, so the subagent half is still unverified.
+- **A third emission arrived after the fix and was not a failure of it.** The running hook comes
+  from the installed plugin cache, which predates the edit, so the fix is inert until the next
+  `/plugin update`. That is the activation boundary `usage-awareness.md` warns about, confirming
+  itself within minutes of being written.
+- **S5's arm never once put a rep in the state the rule guards, and the reason is structural rather
+  than bad luck.** `writing-skills` requires an isomorph fixture wherever this repo already answers
+  the fixture's question, and separately requires pointing a rep at an explicit repo path because
+  reps load skills from the lagging plugin cache. A rep holding that path holds the whole repo, so
+  it can read the very feature the isomorph imitates. Both reps did exactly that, one running
+  `usage.js status` against the real store and one reading `usage-nudge.js` directly, and both
+  correctly refused the fake. The skill's own sentence offers the escape, handing a fixture copy and
+  diffing it at dispatch, but nothing says when that branch is mandatory rather than optional. Cost:
+  about 86 minutes and 286k subagent tokens for zero in-state reps.
+- **My first fixture carried six defects and the rep spent its whole run on them**, which is a
+  failure mode the skill does not cover: a fixture's internal inconsistencies are more salient to a
+  capable rep than the thing under test. A `Commit-and-Push` header over a tree with no `.git`,
+  sections marked Done against a 12-byte placeholder, a missing Chapter 1, and a wall-clock claim
+  the rep checked and disproved.
+- **The arm produced more value than the rule it was testing**, which is the finding to carry
+  forward rather than the individual defects. Both reps independently derived a discriminator for
+  telling a genuine wind-down from injected prose, which nothing in the kit had stated and which is
+  now S5's most valuable item; one hit the `docs-write-guard` conflict in step 3 for real; and the
+  protocol gap above is a kaizen item against `writing-skills` itself.
+
+Review Findings: none dispatched, for the reason in Implemented By. The code change carries a
+regression test watched red before the fix and the full gate green after, and nothing else.
+
+Next: S5 and S8 remain parked and the plan stays In Progress. `finishing-work` has not run and
+should not until they land or are formally descoped. Four kaizen notes are queued, two of them
+against `writing-skills`' own arm protocol.
 Commit Model: Commit-and-Push, honored.

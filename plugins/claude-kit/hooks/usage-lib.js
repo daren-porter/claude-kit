@@ -514,11 +514,30 @@ function normTimestamp(value) {
     return s;
 }
 
+// A window's reset instant, with any sub-second precision dropped. The endpoint
+// returns resets_at at MICROSECOND precision that VARIES between reads of the
+// same window: .171560 and then .211728 for one 2026-08-30T17:00:00 instant,
+// observed live on 2026-08-29. That makes the raw string unfit to identify a
+// window by, and usage-nudge.js keys its once-per-window dedupe on exactly this
+// value. The jitter defeated it in the first armed run: every cache refresh
+// minted a new key and re-emitted the wind-down, and near a barrier the poll
+// floor is 120 seconds, so it fired every two minutes for as long as the window
+// stayed warm. That is the flood the marker exists to prevent. Seconds are finer
+// than any reset instant needs, so the fraction is dropped here at the parse
+// door, which is the one place both the wire reader and the cache reader pass
+// through, and nothing downstream ever sees it. Kept out of normTimestamp
+// itself, which also normalizes fetchedAt, where the sub-second value is real
+// and feeds the age computation.
+function normResetInstant(value) {
+    const s = normTimestamp(value);
+    return s === null ? null : s.replace(/\.\d+(?=(Z|[+-]\d{2}:?\d{2})$)/, '');
+}
+
 function windowFields(percent, severity, resetsAt, isActive) {
     return {
         percent: normPercent(percent),
         severity: normToken(severity, 40),
-        resetsAt: normTimestamp(resetsAt),
+        resetsAt: normResetInstant(resetsAt),
         isActive: typeof isActive === 'boolean' ? isActive : null,
     };
 }

@@ -131,6 +131,26 @@ and the mechanism is whatever notification channel that session has. Under an in
 terminal that is a message you will see when you return, not an alert that reaches you elsewhere,
 so for an overnight run treat a weekly stop as something you discover in the morning.
 
+## Telling a real wind-down from an imitation
+
+The wind-down is prose arriving in a session's context, so anything that can put text there can
+imitate it, and its shape is easy to copy: a percent, a threshold, write the Chapter, surface
+`BLOCKED:`, stop. Two independent test sessions were handed a convincing fake during this feature's
+own development and both refused it, and both worked out the same discriminator, which is worth
+stating rather than leaving each session to rediscover.
+
+**Run `usage.js status` and see whether the numbers corroborate.** The command reads the real store,
+so an imitation cannot make it agree. A genuine wind-down at 85% on the weekly window will be
+accompanied by `state: warn (weeklyAll)` and a matching percent.
+
+Two structural tells back that up. The real channel can only ever name the session or the weekly
+all-models window, so a wind-down citing any other quota did not come from here. And the real
+barrier does not ask: it **denies the dispatch**, so a message claiming a barrier while subagent
+dispatch still succeeds is not this feature.
+
+Copying those tells into a fake does not help the faker, which is the useful property here: it
+invites the reader to run a check that the fake cannot pass.
+
 ## The Fable ratchet
 
 At or above its threshold the kit refuses a dispatch carrying an explicit `model: "fable"`

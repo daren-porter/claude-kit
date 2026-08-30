@@ -527,6 +527,24 @@ test('the same state and reset instant nudges once and then stays silent', () =>
     });
 });
 
+test('sub-second jitter in the reset instant does not re-arm the nudge', () => {
+    withEnv(() => {
+        enable();
+        // Reproduced live on 2026-08-29, and this is the flood the marker exists
+        // to prevent rather than a hypothetical. The endpoint returns resets_at
+        // with microsecond precision that VARIES between reads of the same
+        // window: .171560 then .211728 for one 17:00:00 instant. Keyed on the
+        // raw string, every cache refresh minted a new key and re-emitted, and
+        // near a barrier the poll floor is 120s, so the wind-down fired every
+        // two minutes for as long as the window stayed warm.
+        writeCache({ session: { percent: 96, resetsAt: '2026-08-27T20:00:00.171560+00:00' } });
+        assert.ok(block(runHook()), 'the first reading speaks');
+        writeCache({ session: { percent: 96, resetsAt: '2026-08-27T20:00:00.211728+00:00' } });
+        assert.strictEqual(block(runHook()), null, 'the same instant with different microseconds must not re-arm');
+        assert.strictEqual(markerKeys().length, 1, 'and must not add a second marker');
+    });
+});
+
 test('a new reset instant re-arms the nudge for the same session and window', () => {
     withEnv(() => {
         enable();
