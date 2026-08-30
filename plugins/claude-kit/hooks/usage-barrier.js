@@ -187,6 +187,42 @@ function blockedStep(resetsAt) {
 // cross-hook contract; reproduce, never paraphrase. Returns null when the
 // window label is outside the fixed map or the percent is not finite, both of
 // which mean emit nothing at all.
+// The deny reason at the WARN threshold, which is a different instruction from
+// the barrier's rather than a softer wording of it. A warn means "not through a
+// subagent", where a barrier means "not at all", so this text tells the caller
+// to keep working in the main thread and the barrier's tells it to stop. Same
+// guards as barrierReason for the same reasons; see its comments.
+function windDownReason(verdict, config, nested) {
+    if (typeof verdict.window !== 'string' || !Object.prototype.hasOwnProperty.call(WINDOW_LABELS, verdict.window)) return null;
+    const label = WINDOW_LABELS[verdict.window];
+    const percent = renderedOrNull(verdict.percent);
+    if (percent === null) return null;
+    // A stood-down warn is Infinity and renderedOrNull refuses it. Unreachable
+    // through main, since windowState cannot report `warn` against a threshold
+    // no percent can reach, but the door costs nothing and the header claims it.
+    const warn = renderedOrNull(config[verdict.window].warn);
+    if (warn === null) return null;
+    const lead = 'Held by the kit usage wind-down: the ' + label + ' usage window is at ' + percent + '%, at or past the wind-down threshold of ' + warn + '%. ' + resetClause(verdict.resetsAt) + ' Subagent dispatch is refused until this window resets.';
+    if (nested) {
+        return [
+            lead,
+            '',
+            'Do not retry this dispatch and do not reshape it. Carry on with your own work if you can do it without dispatching, and otherwise stop and return to whoever dispatched you, reporting that you stopped on the kit usage wind-down and naming this window and its percent.',
+            '',
+            'Do not write a Chapter, do not arm a resume, and do not surface a `BLOCKED:` line. Those belong to the session that dispatched you.',
+        ].join('\n');
+    }
+    return [
+        lead,
+        '',
+        'This is not a stop and it is not the barrier. Continue in the main thread on work that needs no subagent: documentation, the plan doc and its Chapters, investigation, staging.',
+        '',
+        "Do not retry this dispatch, and do not do this subagent's work in the main thread instead: that costs more than the dispatch saved and it lands unreviewed, because review is dispatched here too and is equally unavailable.",
+        '',
+        'Do not CLOSE a section that would normally take review. Finish the one in flight, stop at that boundary rather than opening another, and follow the wind-down instruction already in your context.',
+    ].join('\n');
+}
+
 function barrierReason(verdict, config, nested) {
     // Own-property lookup, not a plain read: a window key like "constructor"
     // would otherwise resolve through Object.prototype and interpolate a
@@ -290,7 +326,12 @@ async function main() {
     let verdict = lib.evaluate(usage, config);
 
     const fable = carriesFableOverride(payload);
-    const wouldDeny = (v) => v.state === 'barrier' || (v.fableRatchet === true && fable);
+    // Denies from the WARN threshold upward, not just at the barrier. The two
+    // carry different instructions (see windDownReason) but the same mechanical
+    // answer, because dispatches are the expensive thing and prose alone left
+    // the saving to compliance. S9 of the plan records why the warn band stopped
+    // being a stop and became a cheaper working state.
+    const wouldDeny = (v) => v.state === 'barrier' || v.state === 'warn' || (v.fableRatchet === true && fable);
     if (!wouldDeny(verdict)) return;
 
     // The verdict would deny but judged data older than its own budget: one
@@ -313,9 +354,14 @@ async function main() {
 
     // A session-or-weekly barrier outranks the ratchet: at a barrier every
     // dispatch is denied regardless of model.
-    const reason = verdict.state === 'barrier'
-        ? barrierReason(verdict, config, nested)
-        : ratchetReason(verdict, config, nested);
+    let reason;
+    if (verdict.state === 'barrier') {
+        reason = barrierReason(verdict, config, nested);
+    } else if (verdict.state === 'warn') {
+        reason = windDownReason(verdict, config, nested);
+    } else {
+        reason = ratchetReason(verdict, config, nested);
+    }
     if (reason !== null) deny(reason);
 }
 

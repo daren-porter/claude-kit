@@ -443,21 +443,35 @@ test('Task dispatches are guarded like Agent dispatches', () => {
     });
 });
 
-test('a warn state allows dispatch: only a barrier denies', () => {
+test('a warn state denies dispatch, and says wind-down rather than barrier', () => {
     withEnv((env) => {
         writeConfig({ enabled: true, session: { warn: 80, barrier: 95 }, fableRatchet: 85 });
-        // Squarely in the warn band, with a FINITE Fable percent on purpose:
-        // a regression widening the barrier comparison to "not clear" would
-        // fall through to the ratchet renderer, and a finite percent is what
-        // makes that visible as a deny rather than swallowed by the
-        // finite-at-the-door guard.
+        // Until S9 this case asserted the opposite, that only a barrier denies,
+        // and it caught the change when the behavior was inverted deliberately.
+        // That is the test working: the warn band used to be a stop with no
+        // enforcement, and is now a cheaper working state WITH enforcement,
+        // because dispatches are the expensive thing and prose alone left the
+        // saving to compliance.
+        //
+        // The Fable percent stays finite on purpose, as it did before: a
+        // regression collapsing warn and ratchet into one branch would render
+        // the ratchet's text here, and a finite percent is what makes that
+        // visible rather than swallowed by the finite-at-the-door guard.
         writeCache({
             session: { percent: 85, resetsAt: RESET_SESSION },
             weeklyAll: { percent: 10, resetsAt: RESET_WEEKLY },
             fableWeekly: { percent: 5, resetsAt: RESET_WEEKLY },
         });
-        assertAllow(runHook(env, agentPayload()));
-        assertAllow(runHook(env, agentPayload('fable')));
+        for (const payload of [agentPayload(), agentPayload('fable')]) {
+            const reason = denyReason(runHook(env, payload));
+            assert.ok(reason.startsWith('Held by the kit usage wind-down'),
+                'a warn denies with the wind-down reason, not the barrier one');
+            assert.ok(reason.includes('at or past the wind-down threshold of 80%'));
+            assert.ok(!reason.includes('at or past the barrier'),
+                'and must not claim the barrier, which carries a different instruction');
+            assert.ok(reason.includes('Continue in the main thread'),
+                'the whole point of the band: keep working, just not through a subagent');
+        }
     });
 });
 

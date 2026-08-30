@@ -807,6 +807,74 @@ Acceptance criteria:
 
 Execution mode: main.
 
+### 9. The warn band becomes a working state
+
+Today a warn is a stop. `usage-nudge.js` tells the session to finish, write its Chapter, arm a
+resume and end the turn, and `usage-barrier.js` allows every dispatch until the barrier. So the
+whole span between the two thresholds is unused: the run ends at the warn and the remaining points
+sit idle until someone restarts by hand. On the weekly window that is expensive, because there is no
+auto-resume there and the window resets days out. At the operator's observed intensity the default
+ten-point gap is roughly a working day of allowance abandoned.
+
+The gap was specced as wind-down runway, room to reach a section boundary before the barrier makes
+dispatch impossible. That reasoning holds and it does not need ten points; three is comfortably more
+than a section.
+
+**What changes is what a warn means.** It stops being an instruction to stop and becomes an
+instruction to keep working more cheaply:
+
+- **Subagent dispatch is refused mechanically at the warn**, not merely discouraged. Dispatches are
+  the expensive thing by a wide margin (implementers ran 130k to 290k tokens each in this effort's
+  own Chapters, reviewers 100k to 230k), and prose alone leaves the saving to compliance. The deny
+  moves down from `barrier` to `warn` in `usage-barrier.js`.
+- **The main thread continues.** Documentation, plan and Chapter updates, investigation, staging,
+  answering the operator: all of it is far cheaper per unit of progress than a dispatch, and all of
+  it stays available.
+- **The session does not CLOSE work that would normally take review.** This is the constraint that
+  makes the rest safe, and it is not decoration. This kit delegates review as well as implementation,
+  so a session that cannot dispatch cannot review, and every Critical and Major in this effort was
+  found by a reviewer rather than by the orchestrator. Landing unreviewed sections across a wide band
+  while nobody is watching is the worst available trade. So the run may finish and stage the section
+  in flight, and must then stop at that boundary rather than opening another.
+- **The resume attaches to stopping, not to the threshold.** A warn no longer ends the turn, so there
+  is nothing to resume from when it fires. When the run does stop, at the boundary or at the barrier,
+  the session window arms a resume because it resets in hours, and the weekly window notifies instead
+  because it resets days out. The canonical text's existing "or immediately if that instant has
+  already passed" clause covers a run that worked on for hours before stopping.
+
+A barrier is unchanged: stop now, stage what exists, and do not finish the section in flight.
+
+Two consequences worth stating rather than discovering. The deny reason needs a warn-level variant,
+since the shipped one says "at or past the barrier" and carries a stop sequence, which is the wrong
+instruction here; that variant has an orchestrator and a subagent form like the barrier's. And this
+changes what `evaluate`'s `warn` state MEANS to a consumer rather than changing a wording, so it is
+a contract change: anything reading that state is reading something new.
+
+It also dissolves a loop this effort hit for real. Repairing the wind-down needs review, review needs
+dispatch, and the wind-down forbade dispatch, so two fixes on 2026-08-29 and 2026-08-30 shipped with
+no fresh-context review for exactly that reason.
+
+Acceptance criteria:
+- At `warn`, an `Agent` or `Task` dispatch is denied, with a reason that names the wind-down rather
+  than the barrier and instructs main-thread continuation rather than a stop. Watch this red first.
+- At `barrier`, behavior is unchanged, and the barrier reason still outranks the warn reason.
+- Both new reasons have a subagent form, on the same rule as the barrier's: the deny stands, and the
+  instruction says to report back rather than to write a Chapter or arm a resume.
+- The warn text tells the session to continue in the main thread, not to close work that would
+  normally take review, and to stop at the next clean boundary rather than immediately.
+- The resume instruction moves to the stop rather than the threshold, and still splits by horizon:
+  a session window arms one, a weekly window notifies.
+- Every fail-open door is unchanged. A stale reading, any reader failure, an absent or disabled
+  config and an unknown percent all still allow, and nothing outside `Agent` and `Task` is ever
+  denied.
+
+Execution mode: main. This changes the meaning of a state that three files and the canonical text
+contract all read, so it is design-entangled rather than briefable, which is what that mode is for.
+
+Tests: that a warn denies and names the wind-down rather than the barrier, watched red; that a
+barrier still outranks it; and that every allow-on-doubt branch is untouched, since widening the
+deny widens the blast radius of getting one wrong.
+
 ## Out of Scope
 
 - A kit-owned statusline, and any replacement of `ccstatusline`. Candidate 21 stays rejected.
@@ -1481,4 +1549,57 @@ contract rather than paraphrasing it.
 Next: S5 and S8 remain parked and the plan stays In Progress. `finishing-work` has not run and
 should not until they land or are formally descoped. Four kaizen notes are queued, two of them
 against `writing-skills`' own arm protocol.
+Commit Model: Commit-and-Push, honored.
+
+### Chapter 9 - 2026-08-30
+Completed: **S9 (the warn band becomes a working state)**, specced and built in one pass at the
+operator's request.
+Implemented By: main session. Execution mode `main` as specced, because this changes the MEANING of
+a state that three files and the text contract all read, which is design-entangled rather than
+briefable. **No review ran, at the operator's explicit instruction**, which is the second Chapter in
+a row to ship code that way and is named here rather than left to be inferred.
+Metrics: no dispatches. NEEDS_CONTEXT 0. Escalations 0. Advisor on (opus), not consulted. Gate at
+close: 517 pass, 0 fail.
+
+Decisions / Surprises:
+- **The design came from the operator, and it corrected a wrong turn of mine.** I had reached for
+  the Fable ratchet as the model, capping model tier. That conflates two different things: the Fable
+  window is about WHICH model, and this is about HOW MUCH work. The operator rejected that and
+  proposed the right shape instead, that a warn should let work continue on the main thread and only
+  refuse the expensive part.
+- **The deny moved down from `barrier` to `warn` mechanically, not just in prose.** Dispatches are
+  the expensive thing by a wide margin (this effort's own Chapters record implementers at 130k to
+  290k tokens and reviewers at 100k to 230k), so leaving the saving to compliance would have left
+  most of it on the table. A warn now denies `Agent` and `Task` with its own reason, and the barrier
+  still outranks it.
+- **The constraint that makes the band safe is the one worth remembering:** a session in the warn
+  band must not CLOSE work that would normally take review. Review is dispatched too, so it is
+  unavailable exactly then, and every Critical and Major in this effort was found by a reviewer
+  rather than by the orchestrator. Without that clause the change would trade tokens for unreviewed
+  work while nobody is watching.
+- **The resume attaches to stopping rather than to the threshold**, which is the operator's question
+  and the right answer. A warn no longer ends the turn, so there is nothing to resume from when it
+  fires; the run stops later, at a boundary, and arms then. The session window arms because it
+  resets in hours; the weekly window notifies because it does not. The "or immediately if that
+  instant has already passed" clause added earlier covers a run that worked on for hours first, and
+  it turned out to be load-bearing for this design rather than the edge case it was written for.
+- **A test the blind reviewer made me add in Chapter 6 caught this change**, which is the most
+  satisfying thing in this Chapter. "A warn state allows dispatch: only a barrier denies" failed the
+  moment the predicate widened. That is a pin doing its job on a deliberate change rather than a
+  regression, so it was rewritten to pin the new behavior with a comment saying what it used to
+  assert and why that inverted.
+- Nine warn fixtures reddened on the text change and were updated. The barrier fixtures use different
+  step numbers, so the renumbering could not reach them.
+
+Review Findings: none, per Implemented By. What stands in for it: the widened deny was watched red
+first, every allow-on-doubt branch still passes untouched, and the new deny reason was driven
+end-to-end through the real hook against a temp store rather than asserted from the source.
+
+**What this Chapter does not settle.** The warn band's whole value rests on a session actually
+continuing usefully in the main thread rather than treating the deny as a stop, and nothing here
+tests that: it is model behavior under an instruction, which is what `writing-skills` arms exist to
+measure and what S5's abandoned arm failed to stage. The first run that hits a warn with real work
+outstanding is the evidence, the same way the first armed run found two defects review had not.
+
+Next: S5 and S8 remain parked. The plan stays In Progress and `finishing-work` has not run.
 Commit Model: Commit-and-Push, honored.

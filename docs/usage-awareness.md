@@ -41,9 +41,9 @@ code ever writes that file.
 | Field | Default | What it does |
 |---|---|---|
 | `enabled` | `false` | Anything other than literal `true` is off, and off is the ordinary case. |
-| `session.warn` | `80` | Percent of the 5-hour window at which a run winds down and stops. |
+| `session.warn` | `80` | Percent of the 5-hour window at which subagent dispatch starts being refused. The run does not stop; it continues in the main thread. |
 | `session.barrier` | `95` | Percent at which subagent dispatch is denied outright. |
-| `weeklyAll.warn` | `85` | The same, for the weekly all-models window. |
+| `weeklyAll.warn` | `85` | The same, for the weekly all-models window. This is the threshold most worth tuning, because the weekly window is the one with no automatic resume. |
 | `weeklyAll.barrier` | `95` | The same. A weekly stop deliberately does not arm a resume. |
 | `fableRatchet` | `85` | Percent of the Fable-scoped weekly window above which the kit stops routing work to Fable. |
 
@@ -109,11 +109,26 @@ explanation as covering both.
 
 ## What happens when it fires
 
-At a warn the session is told to finish the section in flight and stage it, dispatch no further
-subagents, write that section's Chapter, arm a one-shot resume at the window's reset instant, and
-then surface a line beginning `BLOCKED:` and stop the turn. At a barrier the same sequence runs
-except that the section in flight is staged rather than finished, because by then every subagent
-dispatch is already being refused.
+**A warn is not a stop.** From the warn threshold upward the kit refuses subagent dispatch, and
+the run carries on in the main thread, which costs a fraction of what a dispatch does. The session
+is told to finish and stage the section in flight, keep working on what needs no subagent
+(documentation, the plan doc and its Chapters, investigation, staging), and then stop at that
+boundary rather than opening another section.
+
+One constraint makes the rest of that safe, and it is the reason the band is bounded rather than
+open-ended: **the session must not close work that would normally take review.** This kit dispatches
+review as well as implementation, so a session that cannot dispatch cannot review, and landing
+unreviewed work across a wide band while nobody is watching is the trade the threshold exists to
+avoid.
+
+**A barrier is a stop.** The section in flight is staged rather than finished, and the run ends
+there.
+
+Either way, when the run does stop it writes the Chapter and then splits by horizon: the 5-hour
+window arms a one-shot resume at its reset instant, and the weekly window notifies instead. The
+resume attaches to stopping rather than to the threshold, so a run that worked on for two hours
+under a warn arms its resume when it finally stops. If the reset instant has passed by then, the
+instruction says to resume immediately.
 
 That instruction is written for a planned effort running under `executing-work`, and it names
 sections, Chapters and a plan doc because that is the run it was designed to protect. A session
