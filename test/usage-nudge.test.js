@@ -123,7 +123,7 @@ const WARN_SESSION_TEXT = [
     'Wind down now rather than at the barrier:',
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
-    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     "4. Arm a one-shot resume: create a single scheduled job at 2026-08-27T15:30:00Z, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
     '5. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -136,7 +136,7 @@ const WARN_SESSION_NO_RESET_TEXT = [
     'Wind down now rather than at the barrier:',
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
-    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     "4. Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.",
     '5. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -149,7 +149,7 @@ const WARN_WEEKLY_TEXT = [
     'Wind down now rather than at the barrier:',
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
-    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     '4. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
     '5. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -162,7 +162,7 @@ const WARN_WEEKLY_NO_RESET_TEXT = [
     'Wind down now rather than at the barrier:',
     '1. Finish the section in flight and stage it. Start nothing new.',
     '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
-    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+    "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     '4. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
     '5. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -174,7 +174,7 @@ const BARRIER_SESSION_TEXT = [
     '',
     'Stop now, in this order:',
     '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
-    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     "3. Arm a one-shot resume: create a single scheduled job at 2026-08-27T15:30:00Z, or immediately if that instant has already passed, whose prompt resumes this effort from the plan doc. That job lives in this session's memory and dies with the session, so it resumes only if this session is still open at that instant. Say in the BLOCKED line whether you armed it.",
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -186,7 +186,7 @@ const BARRIER_SESSION_NO_RESET_TEXT = [
     '',
     'Stop now, in this order:',
     '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
-    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     "3. Do not arm a resume: this window's reset instant could not be read, and a resume needs one. Say so in the BLOCKED line so the operator knows to restart by hand.",
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -198,7 +198,7 @@ const BARRIER_WEEKLY_TEXT = [
     '',
     'Stop now, in this order:',
     '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
-    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window, its percent and its reset instant, and stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -210,7 +210,7 @@ const BARRIER_WEEKLY_NO_RESET_TEXT = [
     '',
     'Stop now, in this order:',
     '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
-    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+    "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
     '3. Do not arm a resume. This window resets days out, and auto-resuming unattended that far ahead is not a pause. Notify the operator that the effort is held on the weekly usage barrier, then stop.',
     '4. Surface a line whose very first characters are `BLOCKED:`, naming this window and its percent, and saying its reset instant could not be read, then stop the turn. `BLOCKED:` must lead the message; an armed kit-goal leash releases only on that exact leading prefix and ignores one sitting mid-message.',
     '',
@@ -527,6 +527,25 @@ test('the same state and reset instant nudges once and then stays silent', () =>
     });
 });
 
+test('a reset instant that drifts across a second boundary does not re-arm the nudge', () => {
+    withEnv(() => {
+        enable();
+        // The second half of the same live defect, and the reason truncating to
+        // the second was not enough. resets_at is COMPUTED per response rather
+        // than being a fixed boundary, so consecutive reads of one window
+        // returned 2026-08-30T17:00:00 and then 16:59:59 (observed three times
+        // running on 2026-08-30). Any key that carries the instant at second
+        // precision therefore still changes under it. Successive resets of one
+        // window are five hours apart at the closest, so the key buckets far
+        // coarser than the drift.
+        writeCache({ session: { percent: 96, resetsAt: '2026-08-27T20:00:00+00:00' } });
+        assert.ok(block(runHook()), 'the first reading speaks');
+        writeCache({ session: { percent: 96, resetsAt: '2026-08-27T19:59:59+00:00' } });
+        assert.strictEqual(block(runHook()), null, 'one second earlier is the same reset, not a new one');
+        assert.strictEqual(markerKeys().length, 1, 'and must not add a second marker');
+    });
+});
+
 test('sub-second jitter in the reset instant does not re-arm the nudge', () => {
     withEnv(() => {
         enable();
@@ -776,7 +795,7 @@ test('two-pass staleness: the hook re-reads once at the tighter budget and speak
         assert.strictEqual(text.split('\n')[0],
             'Kit usage barrier: the session (5-hour) usage window is at 96.4%, at or past the barrier of 95%. Resetting at 2026-08-27T15:30:00+00:00.');
         assert.strictEqual(transportCalls(), 1, 'exactly one re-read, never a loop');
-        assert.deepStrictEqual(markerKeys(), [`${SESSION}|session|2026-08-27T15:30:00+00:00|barrier`],
+        assert.deepStrictEqual(markerKeys(), [`${SESSION}|session|2026-08-27T15:30:00Z|barrier`],
             'the marker is keyed on the re-read verdict, so the first pass cannot suppress the next window');
     });
 });

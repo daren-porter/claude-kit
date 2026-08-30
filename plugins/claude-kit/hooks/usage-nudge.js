@@ -351,8 +351,46 @@ function normSessionId(value) {
 // literals; either a timestamp normTimestamp has already anchored or '-'; and
 // 'warn' or 'barrier'), so the key still reads unambiguously from the right and
 // no two distinct tuples collide.
+// How coarsely the reset instant is bucketed for KEYING. Five minutes, chosen
+// against the drift rather than against the calendar: the closest two
+// successive resets of one window can ever be is the session window's five
+// hours, so any bucket under that cannot collide, and the observed reset
+// instants (:00 and :30 of the hour) sit far from a 2.5-minute rounding
+// boundary, which is where a bucket this size could still be straddled.
+const RESET_BUCKET_MS = 5 * 60 * 1000;
+
+// The reset instant reduced to something stable enough to identify one window
+// occurrence by. Two live defects sit behind this and the second is why
+// rounding rather than truncation is needed.
+//
+// The endpoint returns resets_at at microsecond precision that VARIES between
+// reads of one window (.171560, .211728, .100701 for a single 17:00:00
+// instant), so the raw string re-keyed on every cache refresh and re-emitted
+// the wind-down every 120 seconds, which is the flood this marker exists to
+// prevent. Truncating the fraction fixed that and was still not enough: the
+// value is COMPUTED per response rather than read off a fixed boundary, so
+// consecutive reads then returned 17:00:00 and 16:59:59, straddling the second
+// and the minute at once. Both were found by the feature running for real, on
+// the account it protects, after 516 tests and nine reviewer dispatches had
+// missed them, because every fixture in the suite uses a hand-written timestamp
+// and only real data drifts.
+//
+// Rounding to the nearest bucket rather than flooring is the point: flooring
+// puts the danger zone exactly on the hour, which is exactly where these
+// instants sit.
+function resetBucket(resetsAt) {
+    if (resetsAt === null) return '-';
+    const ms = Date.parse(resetsAt);
+    if (!Number.isFinite(ms)) return '-';
+    // Rendered without milliseconds so the key segment reads as the instant it
+    // buckets to rather than as a machine number, and so it matches the shape
+    // the markers already on disk use.
+    return new Date(Math.round(ms / RESET_BUCKET_MS) * RESET_BUCKET_MS)
+        .toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
+
 function markerKey(sessionId, windowKey, resetsAt, state) {
-    return [sessionId, windowKey, resetsAt === null ? '-' : resetsAt, state].join('|');
+    return [sessionId, windowKey, resetBucket(resetsAt), state].join('|');
 }
 
 // Would this verdict speak at all? The two states that emit, and every reader
@@ -420,7 +458,7 @@ function warnText(windowKey, label, percent, barrier, resetsAt) {
         'Wind down now rather than at the barrier:',
         '1. Finish the section in flight and stage it. Start nothing new.',
         '2. Dispatch no further subagents. At the barrier the kit denies Agent dispatch outright.',
-        "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason.",
+        "3. Write the current section's Chapter in the plan doc, naming this wind-down as the reason. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
         '4. ' + resumeStep(windowKey, resetsAt),
         '5. ' + blockedStep(resetsAt),
         '',
@@ -460,7 +498,7 @@ function barrierText(windowKey, label, percent, barrier, resetsAt) {
         '',
         'Stop now, in this order:',
         '1. Stage whatever is already complete. Start nothing new, and dispatch no subagent: the kit is denying Agent dispatch until this window resets.',
-        "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+        "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
         '3. ' + resumeStep(windowKey, resetsAt),
         '4. ' + blockedStep(resetsAt),
         '',

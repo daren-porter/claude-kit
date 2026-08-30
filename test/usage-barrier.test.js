@@ -288,7 +288,7 @@ function expectedBarrierReason(v) {
         '',
         'Stop now, in this order:',
         '1. Stage whatever is already complete.',
-        "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped.",
+        "2. Write the current section's Chapter in the plan doc, naming this barrier as the reason the effort stopped. If no section is in flight, or you cannot write there, record where the effort stopped and hand that back instead.",
         '3. ' + v.resumeStep,
         '4. ' + v.blockedStep,
         '',

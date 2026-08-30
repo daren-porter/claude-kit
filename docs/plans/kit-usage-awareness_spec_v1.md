@@ -1456,8 +1456,27 @@ Decisions / Surprises:
   now S5's most valuable item; one hit the `docs-write-guard` conflict in step 3 for real; and the
   protocol gap above is a kaizen item against `writing-skills` itself.
 
-Review Findings: none dispatched, for the reason in Implemented By. The code change carries a
-regression test watched red before the fix and the full gate green after, and nothing else.
+**Addendum, same day: the first fix was insufficient and the live run caught that too.** Truncating
+the fraction stabilised the microseconds and the wind-down fired again within minutes, this time
+because consecutive reads returned `17:00:00` and then `16:59:59`. The reset instant is COMPUTED per
+response rather than read off a fixed boundary, so it drifts across the second and, at these
+particular instants, across the minute at once. No truncation absorbs that, because truncation puts
+its danger zone exactly on the boundary these values sit on. The key now buckets the instant by
+rounding to the nearest five minutes, which is chosen against the drift rather than the calendar:
+the closest two successive resets of one window can be is the session window's five hours, so no
+bucket under that can collide, while the observed instants sit far from a 2.5-minute rounding
+boundary. Display keeps second precision, because the resume is armed against the displayed value
+and a second is immaterial there. Second red-first test added.
+
+Also fixed here, from the same arm: step 3 of the wind-down and step 2 of the barrier deny now carry
+a branch for a session with no section in flight, or one that cannot write to `docs/`. A RED rep hit
+both for real. The deny reason measures 1412 characters over 11 lines afterwards, well inside its
+budget.
+
+Review Findings: none dispatched, for the reason in Implemented By. Both code changes carry
+regression tests watched red before the fix and the full gate green after, and nothing else. Nine
+text fixtures were reddened by the step-3 change and updated, which is what confirms they pin the
+contract rather than paraphrasing it.
 
 Next: S5 and S8 remain parked and the plan stays In Progress. `finishing-work` has not run and
 should not until they land or are formally descoped. Four kaizen notes are queued, two of them
