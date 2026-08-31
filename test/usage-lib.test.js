@@ -1788,6 +1788,25 @@ test('the store write probe refuses a planted symlink rather than truncating its
     });
 });
 
+test('the observation log refuses a planted symlink rather than appending through it', async () => {
+    await withUsageEnv(async ({ config, home }) => {
+        writeCredentials(config, TOKEN);
+        fs.mkdirSync(lib.storeRoot(), { recursive: true });
+        const victim = path.join(home, 'log-victim.txt');
+        fs.writeFileSync(victim, 'important contents');
+        // The log path is predictable inside a 0700 store, so planting needs the
+        // operator's own uid and sits inside the documented ceiling. O_NOFOLLOW
+        // is defense in depth, and it is pinned here because the sibling
+        // publishText door carries the same discipline and a later edit that
+        // dropped the flag would otherwise pass green.
+        fs.symlinkSync(victim, lib.logFilePath());
+        const fake = fakeTransport({ status: 200, body: JSON.stringify(syntheticPayload()) });
+        const result = await read(fake);
+        assert.strictEqual(result.ok, true, 'a refused log append must not fail the read');
+        assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'important contents');
+    });
+});
+
 // ---------------------------------------------------------------------------
 // The shared emission formatter (S6). One function, exported, used by both
 // hooks and the status CLI: three hand-copies of a numeric rule that must

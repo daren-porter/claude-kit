@@ -1,6 +1,7 @@
 # Kit usage awareness
 
-Status: In Progress
+Status: Complete
+Closed: 2026-08-31
 Commit Model: Commit-and-Push
 Fable Spend: S1 and S4, finishing reviews
 Created: 2026-08-27
@@ -186,7 +187,9 @@ at a 600s floor, because coupling to a third party's private normalized schema i
 trade (see the sixth fact above) and a spend control does not need three-minute
 resolution. The floor tightens to 120s within ten points of a barrier, so high burn is not discovered ten
 minutes late. **Freshness for a REFUSAL is a separate rule and lives in the barrier hook**, which
-holds any deny to 120s regardless of what the verdict advised, re-reading first where it has to. The
+holds any WINDOW-STATE deny to 120s regardless of what the verdict advised, re-reading first where it
+has to. The Fable ratchet is deliberately outside that clamp and keeps the evaluator's budget; S9's
+own section carries the reasoning. The
 split is deliberate: the polling floor is paid on every tool call, while the deny clamp is paid only
 when a dispatch is actually about to be refused, which is rare.
 
@@ -398,8 +401,9 @@ Acceptance criteria:
 - An unknown window percent cannot produce `barrier` at any threshold.
 - The staleness budget tightens to 120s at ten points below a barrier and not before. **Unchanged
   by S9 after a reversal**: see the S2 paragraph above. What S9 adds is a separate clamp in the
-  barrier hook, so no refusal of any kind rests on data older than 120s, which is a property of the
-  deny rather than of the budget.
+  barrier hook, so no refusal on a window state rests on data older than 120s, which is a property of
+  the deny rather than of the budget. The Fable ratchet is excluded by decision and keeps the
+  evaluator's budget, for the coupling reason S9 records.
 (Store cleanup is NOT S2's. The reaper the first draft put here existed to sweep the spend
 delta's baseline and went with it; S3's dedupe marker is now the only session-keyed file the
 effort creates, so S3 owns reaping it. Recorded because the review found this answered one way
@@ -586,7 +590,11 @@ was never available on this path and the choice is load-bearing rather than styl
 override, and its reason text says so rather than implying full coverage.
 
 Acceptance criteria:
-- Denies only at `barrier` on data whose reported `ageSeconds` is within the verdict's own
+- **Superseded in part by S9, which is the contract; read this criterion as the historical record.**
+  S9 moved the deny down to the warn threshold and replaced the verdict-advised budget with a fixed
+  120-second standard for any window-state deny, so auditing the code against the original wording
+  below reads two deliberate behaviors as defects. S3 carries the same marker for the same reason.
+  Denies only at `barrier` on data whose reported `ageSeconds` is within the verdict's own
   `maxAgeSeconds`. Where the budget tightened below the age of the data in hand, the hook
   re-reads before deciding rather than denying on data older than the budget it was handed.
   Watch this red first.
@@ -608,9 +616,13 @@ Acceptance criteria:
   12 lines at its longest branch, re-measured across all twenty renderings after S9's fourth fix
   round. **The longest branch is no longer the barrier**: it is the session wind-down's orchestrator
   form at a one-decimal percent, which grew when a hand-written summary was replaced by the real
-  `resumeStep` and `blockedStep` and again when the resume pad was folded in. All twenty renderings
-  sit inside the 2000-character, 20-line budget, and the `additionalContext` wind-down text is now
-  pinned by a test at 1934 over 17 lines after being tightened back under the same ceiling. A deny whose instruction was truncated away is
+  `resumeStep` and `blockedStep` and again when the resume pad was folded in. The barrier's own longest is 1458 over 11, which grew by the same
+  pad and which nobody re-measured until QA did. All twenty renderings sit inside the
+  2000-character, 20-line budget, and the `additionalContext` wind-down text is now measured at
+  1934 over 17 lines after being tightened back under the same ceiling. What the suite actually pins
+  is the ceiling (at or under 2000 characters and 20 lines on every emission) plus which rendering is
+  longest, not those two figures, and the distinction is worth keeping because a later growth inside
+  the ceiling would move the number without reddening anything. A deny whose instruction was truncated away is
   a wedge with no instruction, and since the instruction is at the end of the text, that is the
   half any truncation would take.
 - No tool other than `Agent` or `Task` is ever denied.
@@ -882,10 +894,22 @@ it is right is coverage rather than cost.** `evaluate`'s
 budget is unchanged at 600 seconds tightening to 120 near a barrier, and `usage-barrier.js` holds any
 refusal to 120 seconds itself, re-reading once where it must. The extra fetch is paid only when a
 dispatch is about to be refused, which is rare beside the rate of tool calls, so baseline polling
-returns to where it was. It also applies uniformly to every deny predicate, which closed two further
-findings without special-casing either: the Fable ratchet was refusing on 599-second-old data while a
-comment claimed that window "refuses nothing that a fresher reading would allow", and a `barrier`
-below 1 escaped tightening entirely through the proximity floor. Both were reproduced, not argued.
+returns to where it was. It closed two further findings that the budget could not reach: a `barrier`
+below 1 escaped tightening entirely through the proximity floor, and the Fable ratchet was refusing
+on 599-second-old data while a comment claimed that window "refuses nothing that a fresher reading
+would allow". Both were reproduced, not argued.
+
+**The ratchet was then deliberately put back OUTSIDE the clamp one round later, and this paragraph
+claimed uniform coverage until the close-out review caught it.** The reason is a coupling the
+uniform version created: the clamp forces a live fetch on every fable-override dispatch whose cache
+is over 120 seconds old, a 429 there writes the backoff lock, a held lock reads as `locked`, and
+every reader failure allows. So the cheapest predicate could blind the two expensive ones. A wrong
+ratchet deny costs a model downgrade and tells the caller to re-dispatch without the override; a
+wrong barrier deny wedges an unattended run with nobody present to clear it. Those are not owed the
+same freshness, so the ratchet keeps the evaluator's budget and the 599-second refusal above is now
+an accepted cost rather than a closed defect. A sharper rule exists and is not built here: usage
+within one window occurrence is monotonic, so a stale reading whose `resetsAt` is still in the future
+bounds the true percent from below and a deny on it is sound, which a later effort should weigh.
 
 **One interaction the first draft of this adjudication missed, named by the verification review
 rather than by me.** Comparing steady-state poll rates against `ccstatusline` is not the whole cost,
@@ -1897,4 +1921,101 @@ extent this Chapter records, and the plan stays In Progress until that pass. **N
 until a `/plugin update`**: the installed payload is at `123684a`, so the running hooks predate S9,
 the bucketing fix and both fix rounds, and in that state the shipped wind-down text asserts a refusal
 the installed guard does not perform, which `usage-awareness.md` teaches operators to read as a fake.
+Commit Model: Commit-and-Push, honored.
+
+### Chapter 11 - 2026-08-31 (close-out)
+Completed: **`finishing-work` over the whole effort.** The plan is Complete.
+Implemented By: main session for every document, the spec and both skills; `implementer-opus` for
+S9's fix rounds 3 and 4.
+Metrics: seven close-out passes (QA, security and final adversarial both at the `fable` override the
+`Fable Spend: S1 and S4, finishing reviews` header authorizes, the docs curator, the prose reviewer,
+and three `blind-reader` dispatches), plus two implementer fix rounds. Fable headroom was checked
+before taking the override, per the ratchet rule this effort had just written: `fableWeekly` 0%
+against an 85% ratchet. Gate at close: **540 pass, 0 fail**, from 324 at the effort's start and 517
+at Chapter 9.
+
+Outcomes, and none of the seven came back clean:
+- **QA: FAIL on two findings, both prose, both mine.** A length parenthetical attributed a
+  `usage-nudge.js` figure to `usage-barrier.js` and the right figure was stale too (1458, not 1414,
+  because the resume pad rides in the barrier reason and nobody had re-measured). And
+  `finishing-work` was missing the absent-reset-instant branch its sibling in `executing-work`
+  carries, which is the skill this very close-out was executing and would have bitten it had the
+  Fable window been hot.
+- **Security: CLEAR**, and it verified rather than trusted the three invariants: no path by which
+  token material reaches the cache, the logs, an emitted string or a subprocess argument list; no
+  path by which a payload or response string crosses either emission door, including from a tampered
+  cache; and no wrong deny constructible from any surface the model, a repo or the network controls.
+  Two Minors fixed: a document still arguing FOR flooring when flooring was itself one of three
+  reproduced rendering defects `formatOneDecimal` replaced, and both append doors missing
+  `O_NOFOLLOW` while `publishText` twenty lines away used `wx` for exactly that reason. Both pins
+  mutation-verified.
+- **Final adversarial: CHANGES_REQUIRED**, one Critical and seven more, all addressed. The Critical
+  was a three-site contradiction between the record and the code (see the ratchet note in S9), which
+  no Chapter had recorded. It also found the third live instance of one class: `ratchetReason`
+  rendered "Its reset instant could not be read" and then instructed the model to name it, on the
+  one window observed publishing a percent with no usable instant. Watched red, fixed, pinned.
+- **Prose: CHANGES_REQUIRED**, two Criticals in a single ledger sentence I had edited an hour
+  earlier to fix its hook count while leaving its core claim standing. It said the endpoint had never
+  been answered from hook context; the store held eight markers written by the hook itself across two
+  days. One half fixed, the neighbouring half missed, which is this effort's signature failure.
+- **Three blind readers, and the one the spec did not ask for found the most.** S6's `Audience:` line
+  names two personas; the operator who reads `usage-awareness.md` was not among them, because that
+  document was added to S6 mid-execution when a review found nobody owned it. Adding that pairing was
+  a judgment call against the letter of the brief and it returned the largest cluster, including the
+  finding that the operator document never named what arms a resume, and that its own first
+  instruction was unfollowable (a marketplace placeholder never filled, and three command names for
+  one action).
+- **Drift report: seven items, one needing adjudication.** D1 was the ratchet clamp reversal; the code
+  is right and the record was three revisions behind it. The other six were repair the curator made.
+
+Decisions / Surprises:
+- **The machine-prose tell measured this time, and it did not recur.** A prior pass flagged bolded
+  lead-ins on twelve of roughly twenty paragraphs in `usage-awareness.md` as a frequency tell. The
+  document has roughly tripled since and the prose reviewer measured 10 of 56, 18% against 60%, with
+  zero em dashes across all four documents. Worth recording because the fix held under growth rather
+  than being reverted by it.
+- **A close-out agent wrote into the operator's live store and disclosed it.** The QA verifier's own
+  scratch harness appended six synthetic rows to `readings.log`, stamped with a fixture clock
+  predating the store's creation. Removed, 44 real readings intact, backup kept. That log is the only
+  thing that will ever answer this spec's three observation-owned Open Questions, so synthetic rows in
+  it would have been read as real data by whatever effort does the burn-rate work.
+- **I edited the tree while the terminal reviews were out, and two reviewers said so.** Six files
+  changed mid-pass, three adversarial findings were invalidated in flight, the gate count moved twice,
+  and the prose reviewer closed by saying the set was "being rewritten faster than a reviewer can
+  verify it". `finishing-work` has no tree-freeze rule and I should have imposed one anyway. Filed to
+  kaizen.
+- **The anti-enumeration test file was itself one hook short.** `hooks-registration.test.js` exists so
+  a mis-evented hook cannot ship dead with a green suite, and it pinned two of the three usage hooks
+  by name while S7's `SessionStart` posture check had only the universal file-exists sweep. Now
+  pinned, mutation-verified after a first mutation attempt hit the wrong entry and passed, which is
+  worth recording: a mutation that does not redden is as likely to be a bad mutation as a bad pin.
+- **The sanitizer ledger's own tripwire could not be executed**, and this effort had made it worse. It
+  stated its baseline four ways (three idioms, six files, six sites, and a tripwire naming a sixth),
+  and this effort's own sanitizer was never added to it. Recounted from the code: five behaviors
+  across seven files and three caps, with the unit now stated. Two claims in it were also false, that
+  `memory-lib.js`'s sanitizer announces (only `session-start.js`'s does) and that no two are
+  identical (`usage-lib.js`'s is byte-identical to `memory-lib.js`'s).
+
+Review Findings: QA 2 (both fixed). Security CLEAR, 2 Minor (both fixed). Final adversarial 1 Critical
++ 6 Major + 2 Minor (all addressed; two were already closed by mid-review edits). Prose 2 Critical +
+6 Major + 3 Minor (effort-created items fixed; pre-existing documentation debt deferred, below).
+Blind readers: 3 dispatches, roughly forty items, triaged the same way. Drift 7 items, D1 adjudicated
+in favour of the code with the record corrected.
+
+**Deferred deliberately, with the boundary stated rather than blurred.** The two blind readers filed a
+large body of comprehension debt against `security-model.md` and `docs/kit-adoptions.md` that this
+effort did not create: an undefined threshold ladder and three senses of "barrier"; undefined
+vocabulary ("wind-down", "Fable ratchet", "resume pad"); eight failure reasons asserted and two named;
+a counting unit unstated on an exhaustive door list; file paths mixing two base directories; a door
+list omitting `accretion-lib.js`; whether `gh` and `az` ambient auth counts as touching a credential;
+and on the ledger side, no currency contract for an amended entry, a verdict cell reading both pending
+and superseded, a rejection resting on a withdrawn premise, and a table whose structure collapses
+candidates 2 through 21 into one paragraph. Two backlog items now carry all of it with the reports
+named as their input. Fixing it inside this close-out would have been a documentation effort wearing a
+close-out's clothes.
+
+Next: nothing. The plan is Complete and archived. Post-close increments go under it as Chapters per
+`finishing-work`'s increment path. **The standing unverified inference remains**: whether
+`PostToolUse` fires in subagent context. The armed runs settled the orchestrator half by observation;
+the subagent half wants one armed run that dispatches, and `usage-awareness.md` names the check.
 Commit Model: Commit-and-Push, honored.

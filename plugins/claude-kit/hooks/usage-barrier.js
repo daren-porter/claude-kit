@@ -64,10 +64,11 @@
 // needs. The longest branch measures 1810 characters over 12 lines (session
 // WIND-DOWN, orchestrator form, a reset instant known, a percent carrying a
 // decimal), re-measured across all twenty renderings rather than estimated. The
-// percent is part of the maximum and was missed once: 1764 was the same branch
+// percent is part of the maximum and was missed once: 1808 is the same branch
 // at a two-character percent, and 82.4 rather than 82 is what makes it the
 // reachable one.
-// The wind-down overtook the barrier (1414 over 11) when it stopped
+// The wind-down overtook the barrier (1458 over 11, re-measured after the
+// resume pad landed in resumeStep, which both texts interpolate) when it stopped
 // hand-copying the resume and BLOCKED steps and began interpolating the same
 // two the barrier uses, which is a length worth paying for correctness that
 // three of its four orchestrator renderings did not have. The kit budgets
@@ -406,12 +407,21 @@ function ratchetReason(verdict, config, nested) {
     // Same finite door as barrierReason's threshold, same reason.
     const ratchet = renderedOrNull(config.fableRatchet);
     if (ratchet === null) return null;
+    // The bookkeeping clause branches on whether the reset instant validated.
+    // Without this the text declares the instant unreadable in its own lead and
+    // then instructs the model to name it, which is the third instance of that
+    // class in this effort: resumeStep's hand copy in windDownReason was the
+    // second. The Fable window is the one observed publishing a percent with no
+    // usable resets_at, so this is a likely live rendering rather than an edge.
+    const instantClause = verdict.fableResetsAt === null
+        ? 'the percent and saying its reset instant could not be read'
+        : 'the percent and the reset instant';
     return [
         'Held by the kit Fable ratchet: the Fable weekly window is at ' + percent + '%, at or past the ratchet of ' + ratchet + '%. ' + resetClause(verdict.fableResetsAt),
         '',
         nested
-            ? 'Re-dispatch this agent without the `model: "fable"` override. It runs at the session model until that window resets, and nothing else is held: only a dispatch carrying that override is refused, and work already in flight is untouched. Report the downgrade to whoever dispatched you, naming the percent and the reset instant, rather than recording it yourself.'
-            : 'Re-dispatch this agent without the `model: "fable"` override. It runs at the session model until that window resets, and nothing else is held: only a dispatch carrying that override is refused, and work already in flight is untouched. Record the downgrade in the Chapter, naming the percent and the reset instant.',
+            ? 'Re-dispatch this agent without the `model: "fable"` override. It runs at the session model until that window resets, and nothing else is held: only a dispatch carrying that override is refused, and work already in flight is untouched. Report the downgrade to whoever dispatched you, naming ' + instantClause + ', rather than recording it yourself.'
+            : 'Re-dispatch this agent without the `model: "fable"` override. It runs at the session model until that window resets, and nothing else is held: only a dispatch carrying that override is refused, and work already in flight is untouched. Record the downgrade in the Chapter, naming ' + instantClause + '.',
         '',
         'Nothing is paused by this. The effort continues at the session model.',
     ].join('\n');

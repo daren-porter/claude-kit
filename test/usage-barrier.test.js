@@ -387,6 +387,19 @@ function expectedRatchetReason(v) {
     ].join('\n');
 }
 
+// The bookkeeping clause branches on whether the reset instant validated,
+// because the Fable window is the one observed publishing a percent with no
+// usable resets_at, so this is the likely live rendering rather than an edge.
+function expectedRatchetReasonNoInstant(v) {
+    return [
+        'Held by the kit Fable ratchet: the Fable weekly window is at ' + v.percent + '%, at or past the ratchet of ' + v.ratchet + '%. Its reset instant could not be read.',
+        '',
+        'Re-dispatch this agent without the `model: "fable"` override. It runs at the session model until that window resets, and nothing else is held: only a dispatch carrying that override is refused, and work already in flight is untouched. Record the downgrade in the Chapter, naming the percent and saying its reset instant could not be read.',
+        '',
+        'Nothing is paused by this. The effort continues at the session model.',
+    ].join('\n');
+}
+
 function expectedSubagentBarrier(v) {
     return [
         'Denied by the kit usage barrier: the ' + v.label + ' usage window is at ' + v.percent + '%, at or past the barrier of ' + v.barrier + '%. ' + v.resetClause + ' Subagent dispatch is held until this window resets.',
@@ -715,6 +728,25 @@ test('ratchet: a fable override at or above the Fable threshold is denied; the i
         }));
         assert.strictEqual(reason.split('\n').length, 5);
         assertAllow(runHook(env, agentPayload()));
+    });
+});
+
+test('ratchet: an unreadable Fable reset instant does not demand it back', () => {
+    withEnv((env) => {
+        writeConfig({ enabled: true, fableRatchet: 85 });
+        writeCache({
+            session: { percent: 10, resetsAt: RESET_SESSION },
+            weeklyAll: { percent: 10, resetsAt: RESET_WEEKLY },
+            fableWeekly: { percent: 92.6, resetsAt: 'not-a-timestamp' },
+        });
+        const reason = denyReason(runHook(env, agentPayload('fable')));
+        // The third instance of this class in one effort: a text that declares
+        // an instant unreadable and then instructs the model to name it. The
+        // other two were windDownReason's hand-copied resume clause and the
+        // resume step itself.
+        assert.strictEqual(reason, expectedRatchetReasonNoInstant({ percent: 92.6, ratchet: 85 }));
+        assert.ok(!reason.includes('naming the percent and the reset instant'),
+            'the clause must not demand an instant the lead says could not be read');
     });
 });
 

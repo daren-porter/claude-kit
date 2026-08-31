@@ -92,6 +92,18 @@ test('the usage-nudge.js registration carries NO matcher, and that is load-beari
     assert.strictEqual(rows[0].hasMatcher, false, 'a matcher on this registration can silence the barrier text');
 });
 
+test('usage-autocontinue-nudge.js is registered on SessionStart for startup|resume', () => {
+    // Section 7's posture check, and the only usage hook this file did not pin
+    // by name until the close-out review noticed. The universal file-exists
+    // sweep would pass with this hook mis-evented or dropped, which ships the
+    // check dead with the suite green: exactly the failure this file exists to
+    // catch, one hook short.
+    const rows = rowsFor('SessionStart', 'usage-autocontinue-nudge.js');
+    assert.strictEqual(rows.length, 1, 'the posture check must be registered exactly once on SessionStart');
+    assert.strictEqual(rows[0].matcher, 'startup|resume',
+        'a compact-only or missing matcher silences the check on the runs that start a session');
+});
+
 test('usage-barrier.js is registered on PreToolUse for Agent|Task', () => {
     // Both names on purpose: this session's subagent tool is Agent, and Task is
     // the name older harnesses used. A matcher naming only one of them leaves

@@ -303,7 +303,8 @@ function appendMarker(key, at) {
     try {
         fd = fs.openSync(
             markerPath(),
-            fs.constants.O_WRONLY | fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_NONBLOCK,
+            fs.constants.O_WRONLY | fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_NONBLOCK
+                | fs.constants.O_NOFOLLOW,
             0o600,
         );
     } catch {

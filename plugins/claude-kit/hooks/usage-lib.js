@@ -758,7 +758,8 @@ function appendReading(fetchedAt, windows, spend) {
     try {
         fd = fs.openSync(
             logFilePath(),
-            fs.constants.O_WRONLY | fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_NONBLOCK,
+            fs.constants.O_WRONLY | fs.constants.O_APPEND | fs.constants.O_CREAT | fs.constants.O_NONBLOCK
+                | fs.constants.O_NOFOLLOW,
             0o600,
         );
     } catch {

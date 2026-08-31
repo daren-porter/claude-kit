@@ -1283,6 +1283,27 @@ test('a marker file that cannot be read stays silent rather than nudging again',
     });
 });
 
+test('a marker path that is a planted symlink stays silent rather than appending through it', () => {
+    withEnv(() => {
+        enable();
+        writeCache({ session: { percent: 96 } });
+        const victim = path.join(os.tmpdir(), 'marker-victim-' + process.pid + '.txt');
+        fs.writeFileSync(victim, 'important contents');
+        try {
+            // Planting inside a 0700 store needs the operator's own uid, so this
+            // sits inside the documented ceiling and O_NOFOLLOW is defense in
+            // depth. Pinned because publishText carries the same discipline with
+            // 'wx' and a later edit dropping the flag would otherwise pass green.
+            fs.symlinkSync(victim, markerPath());
+            assert.strictEqual(block(runHook()), null,
+                'a marker append that cannot be honored must silence the nudge rather than emit unrecorded');
+            assert.strictEqual(fs.readFileSync(victim, 'utf8'), 'important contents');
+        } finally {
+            try { fs.unlinkSync(victim); } catch { /* best effort */ }
+        }
+    });
+});
+
 test('a marker path that is a directory stays silent and exits 0', () => {
     withEnv(() => {
         enable();

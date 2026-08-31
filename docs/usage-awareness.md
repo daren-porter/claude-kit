@@ -12,8 +12,13 @@ you pick, not a retry control.
 ## Before you arm it: two prerequisites
 
 **The hooks have to be in the installed plugin, not just in this repository.** A session loads
-the payload from the plugin cache, so a hook committed here is inert until `/plugin marketplace
-update <marketplace>` followed by `/reload-plugins`. Nothing warns you about the gap, and it is
+the payload from the plugin cache, so a hook committed here is inert until the installed plugin is
+updated. The kit's own instruction for that is `/plugin update claude-kit`, which is what `README.md`
+prescribes and what this document means everywhere it says "the next `/plugin update`". On this
+machine the marketplace is named `daren`, so `/plugin marketplace update daren` followed by
+`/reload-plugins` does the same job in two steps and is what you want if the marketplace itself has
+moved; a blind reader of an earlier draft could not follow that step at all, because it left the
+marketplace name as an unfilled placeholder and named three commands for one action. Nothing warns you about the gap, and it is
 wide enough to matter: a hook can be committed, tested and documented while every session on the
 machine still runs the previous payload. If the behaviour you are reading about here does not
 happen, check that before you check anything else.
@@ -42,7 +47,9 @@ code ever writes that file.
 |---|---|---|
 | `enabled` | `false` | Anything other than literal `true` is off, and off is the ordinary case. |
 | `session.warn` | `80` | Percent of the 5-hour window at which subagent dispatch starts being refused. The run does not stop; it continues in the main thread. |
-| `session.barrier` | `95` | Percent at which subagent dispatch is denied outright. |
+| `session.barrier` | `95` | Percent at which subagent dispatch is denied outright. **The refusal itself is identical at both**: what differs is the
+instruction the refusal carries, and whether the run is expected to continue. Nothing about the deny
+gets stronger at the barrier. |
 | `weeklyAll.warn` | `85` | The same, for the weekly all-models window. This is the threshold most worth tuning, because the weekly window is the one with no automatic resume. |
 | `weeklyAll.barrier` | `95` | The same. A weekly stop deliberately does not arm a resume. |
 | `fableRatchet` | `85` | Percent of the Fable-scoped weekly window above which the kit stops routing work to Fable. |
@@ -86,9 +93,14 @@ or set `enabled: false` to switch the whole feature off. This is the likeliest t
 raising the barrier alone reads like it should turn the window off, and until recently it did
 disable the deny.
 
-Watch the size of the number you use for that. JSON parses `1e999` to `Infinity`, and the reader
-treats a non-finite value as absent, so a barrier written that way falls back to 95 and re-arms
-while a warn written the same way stands down. Something like `999999` is large enough: no
+Watch the size of the number you use for that. JSON parses `1e999` to `Infinity`, and the two
+thresholds then take different paths, so write neither of them that way. A **barrier** of `Infinity`
+is treated as absent and falls back to 95, which re-arms the window you were trying to switch off. A
+**warn** of `Infinity` is admitted deliberately rather than treated as absent, by an explicit door in
+the reader, and then stands down because it sits above its barrier. Both outcomes are as described;
+what is worth knowing is that they come from two different rules, so you cannot reason from one to
+the other. An earlier draft of this paragraph derived the warn's outcome from the non-finite rule,
+which would have predicted the opposite (a fall back to the default 80, and an armed wind-down). Something like `999999` is large enough: no
 percent can exceed 1000, and `status` prints any threshold past that as `never fires`.
 
 **A warn above its own barrier stands down rather than firing.** The wind-down exists to precede
@@ -128,10 +140,32 @@ avoid.
 there.
 
 Either way, when the run does stop it writes the Chapter and then splits by horizon: the 5-hour
-window arms a one-shot resume at its reset instant, and the weekly window notifies instead. The
-resume attaches to stopping rather than to the threshold, so a run that worked on for two hours
-under a warn arms its resume when it finally stops. If the reset instant has passed by then, the
-instruction says to resume immediately.
+window arms a one-shot resume, and the weekly window notifies instead. The resume attaches to
+stopping rather than to the threshold, so a run that worked on for two hours under a warn arms its
+resume when it finally stops. If the reset instant has passed by then, the instruction says to
+resume immediately.
+
+**What actually does the arming, since a one-shot that does not fire does not come back.** The
+session creates a scheduled job with `CronCreate`, which is a session-scoped tool: the job lives in
+that session's memory, fires only while the session is idle (which is exactly the paused state), and
+dies with the session. The hooks cannot name that tool themselves, because a hook has no way to know
+what a given session holds, so the instruction says "a scheduled job" and `executing-work` carries
+the four details that decide whether it fires. Three of those matter to you as the operator. The cron
+expression is local time while a reset instant is UTC. A one-shot landing on `:00` or `:30` fires up
+to 90 seconds EARLY, and every reset instant observed on this account sits on a whole minute, so the
+job is armed a couple of minutes past the instant rather than on it. And where a session has no such
+tool, the instruction is to arm nothing and say so, because a shell `sleep` loop is not a resume and
+reporting one as armed is worse than reporting none: you would stop watching a run that is never
+coming back. **The practical consequence: a resume only ever fires if you leave the session open.**
+Closing the terminal is what ends it, not the window resetting.
+
+The instruction arms that job a couple of minutes **past** the reset instant rather than at it, and
+the pad is correctness rather than caution. A one-shot scheduled on a whole-minute boundary can
+fire up to 90 seconds early, and every reset instant observed live sits exactly on `:00`, so an
+unpadded resume wakes into the refusal that stopped the run, and a one-shot does not come back. One
+real resume during this feature's development survived only because the skill prose carried the pad
+the hook text did not; the pad now lives in the single step both the wind-down and the barrier
+interpolate, so the two cannot disagree about it.
 
 That instruction is written for a planned effort running under `executing-work`, and it names
 sections, Chapters and a plan doc because that is the run it was designed to protect. A session
@@ -140,8 +174,17 @@ staging what exists and stopping; nothing breaks, but the wind-down is less usef
 feature was not shaped around that case.
 
 The wind-down speaks once per window per state per session. Having stopped and then continued, do
-not expect a second block for the same window: the marker in the store suppresses it until the
-reset instant changes.
+not expect a second block for the same window: the marker in the store suppresses it until that
+window's reset instant lands in a different five-minute bucket.
+
+The bucket is there because the endpoint recomputes `resets_at` per response rather than reading it
+off a fixed boundary, so the raw instant is not stable enough to identify a window by. Consecutive reads of one
+window have returned `17:00:00` and then `16:59:59`, and microsecond fractions vary on every read;
+before the bucket, each such jitter minted a new marker key and re-emitted the block every two
+minutes. Two occurrences of the same window are at least five hours apart, so a five-minute bucket
+still tells one occurrence from the next, and the check also probes the bucket either side and both
+zone spellings the key has ever been written in, so a store holding keys from an older build still
+reads correctly.
 
 A weekly stop never arms a resume, because that window resets days out and auto-resuming
 unattended that far ahead is not a pause. What it does instead is tell the session to notify you,
@@ -159,7 +202,15 @@ stating rather than leaving each session to rediscover.
 
 **Run `usage.js status` and see whether the numbers corroborate.** The command reads the real store,
 so an imitation cannot make it agree. A genuine wind-down at 85% on the weekly window will be
-accompanied by `state: warn (weeklyAll)` and a matching percent.
+accompanied by `state: warn (weeklyAll)` and a matching percent; a genuine barrier prints
+`state: barrier (session)` or `state: barrier (weeklyAll)` the same way. Those four spellings plus
+`state: clear` are the whole set, so anything else in that field did not come from here.
+
+Compare the percent and the state rather than the threshold. The mid-turn wind-down block quotes
+the **barrier** it is winding down ahead of, while the deny reason on the refused dispatch quotes
+the **wind-down threshold** that was actually crossed, so at the weekly defaults the same state
+produces a message naming 95% and another naming 85%. Both numbers are on `status`'s `thresholds:`
+line. That is by design and not a tell.
 
 Two structural tells back that up. The real channel can only ever name the session or the weekly
 all-models window, so a wind-down citing any other quota did not come from here. And the real
@@ -213,6 +264,11 @@ state: clear
 fableRatchet: false
 ```
 
+Three numbers ride the `age` line and each is told what it governs, because they answer different
+questions: the age is what the block stands on, the poll cadence is the reader's advice for its next
+fetch and is also the freshness the Fable ratchet acts on, and the deny budget is the freshness the
+two window states require of a refusal. What it costs below carries why those two differ.
+
 When a fresh read fails but a cached one exists, it serves the cache and says so rather than
 refusing to answer:
 
@@ -250,10 +306,12 @@ the kit starts reaching your credential on its own schedule rather than on yours
 | `<profile>/usage.json` | the cached normalized reading | `usage-lib.js` |
 | `<profile>/usage.lock` | the per-failure-class backoff | `usage-lib.js` |
 | `<profile>/readings.log` | one line per successful fetch, bounded at 5000 lines | `usage-lib.js` |
-| `<profile>/nudged.log` | the wind-down dedupe marker | `usage-nudge.js` |
+| `<profile>/nudged.log` | the wind-down dedupe marker, reaped at 8 days and capped at 5000 lines | `usage-nudge.js` |
 | `config.json` | your thresholds, in the shared parent | you, by hand |
 
-`<profile>` is keyed on the resolved credentials directory, because usage is per-account and a
+`<profile>` is keyed on the resolved credentials directory (a sanitized directory
+basename plus the first eight characters of a sha256 of the resolved path, so it looks like
+`<config-dir-name>-<8 hex characters>`; list `~/.claude-kit-usage/` rather than trying to construct it), because usage is per-account and a
 machine running several `CLAUDE_CONFIG_DIR` profiles would otherwise serve one account's
 percentages as another's. Your `config.json` sits in the shared parent instead, since thresholds
 are a policy preference rather than an account fact and switching profiles should not switch your
@@ -263,20 +321,57 @@ policy with them.
 emits it to the model. That invariant matters most to the effort most likely to break it, a later
 burn-rate projection, which is exactly the work that would want to consume this file.
 
+`nudged.log` is the only file here keyed on anything the harness supplies, and it holds the session
+id as a JSON value rather than as a path component, so no session id ever reaches a filename. It is
+reaped only on the tool call that actually emits a block, which keeps the ordinary silent path down
+to one config read.
+
 ## What it costs
 
-Disarmed, the wind-down hook still runs after every tool call, so you pay one Node process start
-and one small capped file read per tool call. That was accepted rather than overlooked: narrowing
-the matcher would let a read-heavy stretch of a run pass a barrier unnoticed.
+One cost belongs at the top because this document introduced it and an earlier draft left it out.
+**On an armed install, `executing-work` sends the orchestrator to `usage.js status` before any
+dispatch that will carry Fable.** That is a process start, a credential read, a network round trip
+and about ten lines into the session's context, once per such dispatch. On a disabled install that
+rule does not apply and the command is not run. The barrier hook's own per-dispatch cost sits
+alongside it: at or above a wind-down threshold it re-reads before refusing, so a refused dispatch
+can carry one fetch of its own.
+
+Disarmed, the wind-down hook still runs after every tool call, so you pay one Node process start,
+one small capped file read, and the realpath plus hash that key the store, per tool call. That was
+accepted rather than overlooked: narrowing the matcher would let a read-heavy stretch of a run pass
+a barrier unnoticed. No cache read, no credential and no network on that path.
 
 Armed, one tool call per staleness window also absorbs the reader's request deadline, up to 6
 seconds. The staleness window is 600 seconds, tightening to 120 within ten points of a
-barrier, so that cost lands about once every ten minutes and more often near a deadline. Refusals
-are held to a stricter standard than that, and it costs you almost nothing: a refused dispatch is
-never decided on a reading more than 120 seconds old, so the guard fetches once more before it
-refuses if it has to. That extra fetch happens only when a dispatch is about to be refused, which is
-rare next to the rate of ordinary tool calls, and it is what stops the guard refusing work for
-minutes on end off a cache that predates the window's own reset.
+barrier, so that cost lands about once every ten minutes and more often near a deadline.
+**A refusal on a window state is held to a stricter standard than the poll cadence. The Fable
+ratchet is not, and the asymmetry is deliberate.** A dispatch refused by the wind-down or the
+barrier is never decided on a reading more than 120 seconds old: the guard fetches once more before
+it refuses if it has to, which costs almost nothing because it is paid only when a dispatch is
+about to be refused, and it is what stops the guard refusing work for minutes off a cache that
+predates the window's own reset. A ratchet refusal is held out of that clamp and rides the
+600-second poll cadence instead, so a dispatch carrying a fable override can be downgraded on a
+reading up to ten minutes old. The reason is that the Fable window has no barrier, so no proximity
+arm ever tightens its cadence, and holding the cheapest predicate to 120 seconds forced a live
+fetch on every override dispatch whose cache was over two minutes old: a 429 earned there locks the
+reader for its retry-after, a held lock reads as a reader failure, and every reader failure allows,
+so the cheap predicate's polling can blind the expensive ones. The trade is also weighed by what
+being wrong costs, since a wrong ratchet deny costs one model downgrade while a wrong barrier deny
+wedges an unattended run. `usage.js status` prints both numbers and says in the line which governs
+which. Worth knowing before you rely on it: the plan record for this effort still describes the
+120-second clamp as covering every refusal uniformly, and names the ratchet refusing on
+599-second-old data as a reproduced defect the clamp closed. As built it does not cover the ratchet,
+and the suite pins that on purpose: a ratchet refusal on a 300-second-old cache, with no network
+call made to reach it, and an allow only once the cache passes the reader's own 600-second budget
+and there is nothing left to serve.
+
+One more armed cost, and it is a delay rather than a fetch. Once the wind-down has spoken for a
+window and state, a session parked in that band stops paying the 120-second re-read for it, because
+the emission it would confirm is already on record and cannot be repeated. What that costs is
+timeliness of the stronger message: an escalation from wind-down to barrier is discovered when the
+600-second cadence refreshes rather than at 120 seconds. The mechanical protection is unaffected,
+since the barrier guard still re-reads before any refusal; only the advisory text is late, and it
+arrives at a run already told to wind down.
 
 ## Limits worth knowing before you rely on it
 
@@ -303,6 +398,12 @@ Nothing alerts you to a dark period. The evidence after the fact is a gap in `re
 records only successful fetches, and the presence of `usage.lock` while a backoff is in force.
 `status` reports the age of the reading it used, which helps only if someone is at the keyboard.
 
+Deleting `<profile>/usage.lock` clears a backoff, since the reader treats a missing or unreadable
+lock as absent by design rather than waiting for someone to repair it. That is the one manual
+recovery here, and it is worth using sparingly: the horizon a rate-limit lock holds is what the
+endpoint itself asked for, so clearing it early asks a throttled endpoint the same question again
+and can earn a longer one.
+
 The endpoint is an undocumented path and `anthropic-beta: oauth-2025-04-20` is a date-stamped beta
 header whose stability is not established. Its own rate limits are unknown. An empty bearer token
 answers 429 with a long retry-after rather than 401, so a reader pointed at a profile whose token
@@ -319,7 +420,9 @@ are not its to write. The deny itself stays correct either way; the instruction 
 evidence for the assumption covers `PreToolUse` only, in `docs-write-guard.js`; that `PostToolUse`
 behaves the same way is inference.
 
-To settle it on a first armed run: after a run that dispatched subagents, check whether
+The armed runs have now happened (2026-08-29 onward) and settled half of it: the wind-down fired in
+the orchestrator's own context on a main-thread tool call. The subagent half is what remains. To
+settle that: after a run that dispatched subagents, check whether
 `<profile>/nudged.log` gained a line whose key holds the session id you expect, and whether the
 wind-down text appeared in the orchestrator's own transcript rather than a subagent's. A line
 keyed to the session with the text in the orchestrator is the assumption holding.

@@ -49,11 +49,11 @@ so a reader who has internalized "kit text arrives at session start" is now wron
 | `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
-| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and the orchestrator's wherever the harness puts an agent identity on a subagent's payload, which is an inference rather than a verified fact: the hook returns before this channel on any payload carrying one, and if a subagent's payload omits those fields instead then this row's audience is wider than it says: a window label from a two-literal whitelist, two FLOORED integers, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
+| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and the orchestrator's wherever the harness puts an agent identity on a subagent's payload, which is an inference rather than a verified fact: the hook returns before this channel on any payload carrying one, and if a subagent's payload omits those fields instead then this row's audience is wider than it says: a window label from a two-literal whitelist, two numbers rendered by `usage-lib.js`'s shared `formatOneDecimal`, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
-| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (1810 characters over 12 lines at its longest branch, the session wind-down's orchestrator form at a one-decimal percent, measured across all twenty renderings rather than estimated; the barrier's own longest is 1297 over 9) rather than merely bounded |
+| `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (1810 characters over 12 lines at its longest branch, the session wind-down's orchestrator form at a one-decimal percent, measured across all twenty renderings rather than estimated; the barrier's own longest is 1458 over 11, which grew with the same resume pad) rather than merely bounded |
 
 `take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
 reviewer looking for a sixth sanitizer idiom will not find one. Nothing repo-controlled reaches its
@@ -64,12 +64,19 @@ block is a hardcoded literal plus a non-negative integer. Constrain-at-source is
 than the delete-and-truncate doors above, not a new instance of them.
 
 `usage-nudge.js` and `usage-barrier.js` answer it the same way, which is why the sanitizer ledger
-below still counts six sites after two channels were added. Both interpolate only a floored
-integer, a window label from a fixed two-literal map, and a timestamp `usage-lib.js` validated at
-its own parse door. Floored rather than rounded, and the difference was a defect rather than a
-detail: rounding the percent and its threshold independently let a WARN print a first line whose
-numbers assert a barrier (94.6 against a barrier of 95 rendered both as 95), above text telling the
-model to wind down before the barrier. Flooring cannot overstate usage. There is no scrubbing step in either hook because there is nothing arriving
+below gained a behavior and a file when this effort's two channels arrived, and now stands at five
+behaviors across seven files. Both interpolate only a number from
+`usage-lib.js`'s exported `formatOneDecimal`, a window label from a fixed two-literal map, and a
+timestamp `usage-lib.js` validated at its own parse door. **Faithful one-decimal rendering, and it
+took three tries to get there**: rounding the percent and its threshold independently let a warn
+print a first line whose numbers assert a barrier (94.6 against a barrier of 95 rendered both as
+95), above text telling the model to wind down before the barrier; flooring fixed that case and left
+the class open; and flooring the percent while ceiling the threshold repaired both and broke the
+opposite direction (95.95 against 95.9 IS a barrier and would have printed "at 95%, at or past the
+barrier of 96%"). No rounding direction survives, because two independently rounded numbers cannot
+be relied on to compare the way their originals do, and this text puts both in one sentence and
+invites exactly that comparison. It is one exported function rather than three hand copies, because
+a hand-copied contract in this same effort had already drifted. There is no scrubbing step in either hook because there is nothing arriving
 that could need one: a value that fails the library's door is `null`, and `null` makes the hook
 silent rather than sanitized. That is the property to re-check first if either hook ever grows a
 new interpolated value, because the design has no fallback door to catch one.
@@ -103,16 +110,32 @@ The marked-record note names records from validated filenames rather than from r
 is the fix for a real laundering path (a record could otherwise trigger a kit instruction by
 carrying its token).
 
-**Recorded divergence, three idioms across six FILES and three cap values** (files rather than
-call sites, since two of those files carry the idiom at more than one door).** Delete-and-truncate-silently at 120
-(`session-start.js` three filename doors, `kit-goal-stop.js`'s plan path); delete-and-truncate-
-silently at 160 (`stop-docs-hygiene.js`, two sites); delete-and-truncate-silently at 300
-(`usage-autocontinue-nudge.js`'s `safePath`, one site, the wider cap because a `CLAUDE_CONFIG_DIR`
-path has a plausible claim on more room than a filename); and substitute-a-space-collapse-and-announce
-(`session-start.js`'s `safeContext`, `memory-lib.js`'s `sanitize`, `memory-index.js`). All are safe
-and none is identical to another. Unifying them would mean editing doors no effort has had reason
-to touch, so the divergence is a recorded choice rather than a new oversight. A SIXTH idiom, or an
-unsanitized site, is worth reporting.
+**Recorded divergence: five BEHAVIORS across seven files and three cap values.** The unit counted
+here is the behavior, not the file and not the call site, because two files carry more than one door
+and three more only call a helper defined elsewhere; an earlier version of this paragraph gave the
+count three ways at once and a blind reader reported that its tripwire could not be executed.
+
+- Delete-and-truncate-silently at 120: `session-start.js`'s three filename doors, `kit-goal-stop.js`'s plan path.
+- Delete-and-truncate-silently at 160: `stop-docs-hygiene.js`, two sites.
+- Delete-and-truncate-silently at 300: `usage-autocontinue-nudge.js`'s `safePath`, one site. The wider
+  cap because a `CLAUDE_CONFIG_DIR` path has a plausible claim on more room than a filename.
+- Substitute-a-space, collapse, and ANNOUNCE: `session-start.js`'s `safeContext` alone. It is the only
+  door in the kit that appends ` [truncated]`, so a reader of its output can tell a bounded value from
+  a complete one.
+- Substitute-a-space, collapse, and truncate silently: `memory-lib.js`'s `sanitize` (called also by
+  `memory-index.js` and `memory.js`) and `usage-lib.js`'s `sanitize`.
+
+**Two corrections to what this paragraph used to claim, both found by the close-out review.** It
+grouped `memory-lib.js`'s `sanitize` with `safeContext` as announcing, which only `safeContext` does.
+And it said "none is identical to another", which is false: `usage-lib.js`'s `sanitize` is
+byte-identical to `memory-lib.js`'s, duplicated rather than imported for the reason its neighbouring
+`readCapped` comment gives, that the memory tier does not export it and coupling a usage reader to
+that tier's internals would rot with them. The file count was also six until this effort's own
+`usage-lib.js` was added to it, which is the enumeration class Standing Brief Amendment 1 exists for.
+
+All five are safe. Unifying them would mean editing doors no effort has had reason to touch, so the
+divergence is a recorded choice rather than a new oversight. **A SIXTH behavior, or an unsanitized
+site, is worth reporting.**
 
 **A record body passes no emission door at all.** Bodies are plain files read directly at their
 absolute path, which is deliberate (the CLI must not become a gate on reading). The guards against
@@ -184,18 +207,35 @@ Six properties, each verified against the code rather than intended:
   does exist on this machine now, created a few minutes later by `usage.js status` run by hand,
   which is the exception below behaving exactly as documented rather than a counter-example to the
   sentence above. The
-  payload carries one deliberate exception, `hooks/usage.js status`, an operator-invoked read-only
-  command that answers whether or not the feature is armed, because refusing to say what the usage
+  payload carries one deliberate exception, `hooks/usage.js status`, a read-only command that
+  answers whether or not the feature is armed, because refusing to say what the usage
   is while the control is disarmed would be useless. It is the only path here that reaches the
-  credential and the network without `enabled` being true, and it is reached only by someone typing
-  it. And
+  credential and the network without `enabled` being true. **It is no longer reached only by
+  someone typing it, and that changed on 2026-08-30**, which matters because it moves an egress
+  from operator-initiated to run-initiated. `executing-work`'s Fable ratchet rule sends the
+  orchestrator to this command before any dispatch that will carry a fable model override, and
+  `finishing-work` inherits that rule for its two reviews, so on an **armed** install a session
+  reaches the credential and the endpoint through a Bash tool call during an ordinary run. On a
+  **disabled** install nothing changes: that rule explicitly does not apply and the session does not
+  run the command, so a default install still reaches the endpoint only on request. Arming the
+  feature is therefore also the moment the kit begins reaching the credential on its own schedule,
+  and a reviewer rating this path should read the armed case rather than the shipped default. And
   `usage-nudge.js` runs on **every tool call**, so when disarmed it costs one capped read of a
   small JSON file plus a Node process start, per tool call, and when armed it additionally pays the
   reader's 6-second request deadline in-turn on the one tool call per staleness window that misses
   cache. Both were accepted rather than overlooked.
-Three more properties belong to the two consumers rather than to the credential, and they are
+Four more properties belong to the two consumers rather than to the credential, and they are
 kept in this section because they are what a reviewer arriving at the credential path next needs:
 
+
+  **Superseded as a statement about the present, 2026-08-31, and kept as dated history because the
+  reasoning still holds.** The operator armed the feature on 2026-08-29, so hook context is no longer
+  untested here: that profile's `nudged.log` carries eight dedupe markers written by `usage-nudge.js`
+  across 2026-08-29 and 2026-08-30, each requiring a successful hook-context read, and `readings.log`
+  holds forty-four real readings. A reviewer reading only the sentences above would take away that no
+  hook has ever exercised this credential path on this machine, which was true when written and is
+  now false. What the armed runs found is the argument for arming rather than reasoning: two live
+  defects no review had reached, both in the dedupe key's handling of a reset instant.
 - **`usage-nudge.js`'s `PostToolUse` registration carries no matcher, and that is load-bearing
   rather than lazy.** Confirmed against the 2.1.248 binary: in the tool-call path a `PreToolUse`
   chain that yields a stop returns immediately with the deny message, before the tool is called, so
@@ -301,7 +341,12 @@ backwards.
   than deciding on older data. The Fable ratchet is deliberately outside that clamp and keeps the
   evaluator's budget, because a wrong ratchet deny costs a model downgrade while a wrong barrier
   deny wedges an unattended run, and forcing a fetch on the cheaper predicate is what would put the
-  expensive ones behind a rate-limit lock. A wrong deny here
+  expensive ones behind a rate-limit lock. So a ratchet refusal can stand on a reading up to the
+  600-second cadence old, pinned in the suite at 300 seconds with no network call made to reach it,
+  and allowing only once the cache passes 600 and there is nothing left to serve. The plan record for
+  that effort still describes the clamp as uniform across every deny predicate and names a
+  599-second ratchet refusal as a defect it closed, so this asymmetry is the one place the shipped
+  guard and its own plan disagree. A wrong deny here
   wedges an unattended run with nobody present to clear it, which is why every branch points the
   allowing way.
 - `usage-nudge` is the kit's first `PostToolUse` hook and its first mid-turn channel. It blocks
