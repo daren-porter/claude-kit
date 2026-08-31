@@ -16,13 +16,24 @@ is the kit's own writing-skills loop, pointed at the kit.
 Captured friction and the briefs made from it live in one home-level inbox, the
 same across every project and both config profiles:
 
-- `~/.claude-kaizen/notes.md` - append-only; one line per note carrying the date, the friction, and where it surfaced, e.g. `2026-06-17  finishing-work close-out is silent on X  (repo: acme-api)`.
+- `~/.claude-kaizen/notes.md` - append-only for capture, rewritten only by a triage pass
+  clearing what it triaged (step 3). One note is one or more lines: the first opens at
+  column zero with the capture date, bare or behind a `- `, and any continuation line is indented,
+  e.g. `2026-06-17  finishing-work close-out is silent on X  (repo: acme-api)`. Most notes are one
+  line; a long one wraps, and the indent is what keeps it one note.
 - `~/.claude-kaizen/briefs/` - one file per brief a reflect pass produces.
+- `~/.claude-kaizen/applied/` - briefs already executed, moved here by Phase 2 below. Nothing counts it and no pass reads it; it is history, listed here so the inbox is not
+  described as two directories when it is three.
 
-**Pending items** means `notes.md` has any note lines (clearing a note means
-removing its line) or `briefs/` holds a file. That predicate gates the friction offer
-and `session-start.js`'s kaizen count: nothing pending means no captured friction to
-triage, by construction.
+**Pending items** means `notes.md` holds any note or `briefs/` holds a file. A note is one
+or more lines in the form above, so **clearing one means removing all of its lines**. That
+predicate gates the friction offer and `session-start.js`'s kaizen count, which is **one per
+note rather than one per line**, and which **floors a non-empty file it cannot parse at one**
+rather than reporting zero, so a file holding nothing parseable is visible as something instead of
+invisible as nothing. The floor fires only when NOTHING in the file parses, so a count of
+one you cannot account for means open the file, and a plausible count is not proof that
+every note in it parsed. Nothing pending means
+no captured friction to triage, by construction.
 
 **Take stock is a second entry, and it does not read the inbox at all.** A separate
 SessionStart hook, `take-stock-nudge.js`, reports how many of the kit's prose sections
@@ -32,7 +43,7 @@ is not a reason to decline a pass.
 
 ## Capturing (the cheap half)
 
-A one-line note is jotted to `notes.md` the moment friction surfaces. You do not
+A note is jotted to `notes.md` the moment friction surfaces, one line where one line does it. You do not
 load this skill to do it - the global posture rule in CLAUDE.md carries an
 abbreviated bar so capture costs nothing. The bar in full:
 
@@ -131,13 +142,18 @@ has changed since the last entry.
      that cuts less than it hoped: measured on the kit's two most accreted sections
      (2026-08-16), 143 claims at about 172 characters each, where a hard compression
      bought 6.5% against the 18.5% wanted.
-3. **Clear every triaged item from `notes.md`.** Triage always empties the line:
-   an apply-now item becomes a brief (format below), a promote becomes a spec or a
-   Proposed-status stub in `docs/plans/`, a route-elsewhere lands at its
-   destination, and a take-stock item empties its line by becoming an entry in step
-   4. `notes.md` holds only untriaged friction; nothing triaged-but-parked
-   lingers there. That invariant is what lets the SessionStart nudge and the next
-   pass read a note line as "not yet looked at", never "looked at, parked here".
+3. **Clear every triaged item from `notes.md`, all of its lines.** Triage always
+   removes the whole note: an apply-now item becomes a brief (format below), a promote
+   becomes a spec or a Proposed-status stub in `docs/plans/`, a route-elsewhere lands at
+   its destination, and a take-stock item clears by becoming an entry in step 4.
+   **Removing a multi-line note's first line and leaving its continuations is the failure
+   to avoid**, and it is worse than leaving the note whole: the orphans carry no date, so
+   nothing counts them and no later pass can recognize them as anything. Where other dated
+   notes survive they are simply invisible; where they are all that is left, the file reports
+   the floor below rather than the nothing it looks like. Rewrite the file from the notes
+   that survive rather than deleting lines in place. `notes.md` holds only untriaged friction; nothing
+   triaged-but-parked lingers there. That invariant is what lets the SessionStart nudge and
+   the next pass read a note as "not yet looked at", never "looked at, parked here".
 4. **Record every take-stock verdict in `docs/take-stock.md`**, spared, declined and
    unverdicted entries included, newest first. The heading is literally
    `## YYYY-MM-DD - <40-hex sha>`. An abbreviated sha does not parse, and the failure is
@@ -188,7 +204,7 @@ Discipline: follow writing-skills; baseline-test any behavior-shaping wording.
 **Applying (Phase 2)** happens in a fresh session in the kit repo: read the brief,
 make the change per writing-skills (baseline-test behavior-shaping wording before
 trusting it), take the paired review above for any corpus prose, commit it (the kit repo is Commit-and-Push; a promoted spec follows
-its own recorded commit model), then archive the brief out of `briefs/`. When the pass already runs inside the kit repo, Phase 1 and Phase 2
+its own recorded commit model), then archive the brief out of `briefs/` into `applied/`. When the pass already runs inside the kit repo, Phase 1 and Phase 2
 collapse into one session.
 
 **When the change took writing-skills' borrowed-evidence path, that commit message is

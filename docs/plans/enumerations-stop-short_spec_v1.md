@@ -14,13 +14,20 @@ Created: 2026-08-20
 
 ## Why this exists
 
-**At least five times** now, an enumeration in the kit's own prose has been found listing every
-member of a set except one, and the missing member has been the newest one every time. **Five is a
-floor rather than a total**, and the reason is itself evidence: a sixth surfaced during the close-out
-of the very effort that opened this stub, when QA found a six-item list of bars in
-`arm-boundaries_spec_v1.md` described as five, after four QA rounds had read past it. Any count here
-should be read as "what has been walked so far". Two were caught by review,
-two by an author who had just recorded a prior instance, and one shipped and was hit live.
+**At least eight times** now, an enumeration in the kit's own prose has been found stopping short of
+its set. In instances 1 to 5 the missing member was the newest one every time; instance 6 is the
+variant where nothing is missing and the description has gone false instead; instances 7 and 8 were
+committed by the kaizen pass that was writing this file, one of them while repairing the other.
+**Eight is a floor rather than a total**, and the reason is itself evidence: a further one surfaced
+during the close-out of the very effort that opened this stub, when QA found a six-item list of bars
+in `arm-boundaries_spec_v1.md` described as five, after four QA rounds had read past it. It is
+deliberately unnumbered because it was never walked against this file's own test. Any count here
+should be read as "what has been walked so far", and there is a known backlog behind it:
+`docs/archive/kit-usage-awareness_spec_v1.md` records at least four more (`:1051-1057`,
+`:1060-1067`, `:1311-1315`, `:1580-1583`), deliberately left unwalked rather than numbered, since a
+numbered entry is one more statement every later edit has to keep consistent. Of the eight, **five were caught by review** (one of
+them a review of the round repairing the instance before it), two by an author who had just recorded
+a prior instance, and one shipped and was hit live.
 `executing-work:79` says two instances means the workflow generates the bug and the fix belongs at
 the generator.
 
@@ -64,6 +71,34 @@ separate times, committed here in the one document whose entire substance is an 
    pointer. **Three rounds, three sites, one class** - which is what makes this the instance showing
    the class survives a first repair.
 
+6. **`docs/architecture.md:44` at `a0a6d3d`, the count-held-but-content-stale variant, caught by review inside
+   the usage-awareness effort.** `a0a6d3d` (2026-08-30) widened `usage-barrier.js` from denying at
+   the barrier to denying from the wind-down threshold upward, and updated only
+   `docs/usage-awareness.md` and its plan doc, leaving `README.md`, `docs/README.md` and
+   `docs/architecture.md` all stale; `244662c` (same day) repaired all three together. **What makes
+   this one the instance rather than the other two is the arithmetic**: `README.md` and
+   `docs/README.md` name the behavior in a sentence, so their staleness is readable, while
+   `architecture.md` said "Four PreToolUse guards" and still had four, with only the parenthetical
+   `(subagent dispatch at a usage barrier)` gone false. **This is the instance that widens the
+   class**: nothing is one short, so nothing is countable, and a sweep keyed on member counts
+   cannot reach it. See The shared shape below, which instances 1 to 5 stated in terms of a missing
+   member.
+
+7. **`docs/security-model.md:134` at `44df066`.** "Five properties, each verified against the code
+   rather than intended:" stood above six bullets; repaired to "Six properties" at `f39b1e0`
+   (2026-08-28). The plain countable variant in a non-skill file, and it was named in the kaizen
+   note this stub's mechanism bullet quotes below, which took that note's uncorroborated figure and
+   left this, its corroborated one, on the floor until a review walked it.
+
+8. **This file and `docs/kit-adoptions.md`, both by the kaizen pass of 2026-08-31.** Adding
+   instance 6 left six dependent statements short of it, `docs/README.md`'s index entry among them;
+   separately, `kit-adoptions.md`'s "Two conventions belong to the file itself" was left at two when
+   the same pass added a third. Both were caught by review and neither by the author. **Counted as
+   one instance rather than two, deliberately**: three review rounds over an uncommitted changeset
+   produced repeated false claims about which round committed and caught what, because nothing can
+   separate uncommitted rounds after the fact. What is checkable is that the class was committed
+   twice in one pass, in the file specifying it, by an author who had it open.
+
 ## Examined and rejected, which is what keeps the pattern from licensing bad edits
 
 A rule predicting "any short-looking list is missing an item" would authorize edits to
@@ -90,16 +125,52 @@ enumeration is not revisited, because nothing points from the new member back to
 list the old ones. The missing item is therefore always the newest, which is also the one a reader
 is least likely to supply from memory.
 
+**Instance 6 is the same shape with the count intact.** Where an entry *describes* the set rather
+than counting it, a later change can falsify the description while every count in the file stays
+correct. The enumeration still stopped short of the current state; what it stopped short of is the
+behavior rather than the membership. Any fix keyed on arithmetic covers instances 1 to 5 and none of
+instance 6. So a question this stub cannot settle on its own: **is the class the design pass must
+serve "an enumeration that no longer describes its set", of which "one member short" is the countable
+half?** Instances 1 to 5, 7 and 8 do not distinguish the two framings, because in every one of them
+the description and the count went stale together. Instance 6 is the only case that separates them,
+and one case is thin ground for widening a class.
+
 ## What a design pass has to settle
 
-- **Whether review is sufficient, and instance 5 says no.** Instances 1 and 5 were caught by review;
-  2 shipped; 3 and 4 were caught by an author primed by a prior instance. But in instance 5 review
-  caught the class three times in one section while the author's repairs missed it twice. **Review
-  detects this reliably and does not prevent it**, so `arm-boundaries` S4's review mandate is not
-  the whole fix, which is what closing this stub on those grounds would have assumed.
+- **Whether review is sufficient, and instances 5 and 8 both say no.** Instances 1, 5, 6, 7 and 8
+  were caught by review; 2 shipped; 3 and 4 were caught by an author primed by a prior instance. But
+  in instance 5 review caught the class three times in one section while the author's repairs missed
+  it twice, and instance 8 was committed twice over by the pass writing this file, in this file,
+  by an author who had the class open in front of them. **Review detects this reliably and does not
+  prevent it**, so `arm-boundaries` S4's review mandate is not the whole fix, which is what closing
+  this stub on those grounds would have assumed. Instance 8 is the sharpest evidence in the file:
+  knowing the class, naming it, numbering its instances and writing its spec prevented nothing.
 - **What a mechanism could key on.** A grep cannot tell a complete three-item list from an
   incomplete one, per the rejected candidates above. Anything that works keys on the act of adding a
   member to a named set, which is a human judgment rather than a detector.
+- **A reporting obligation may reach what a fix obligation cannot.** This repo's Standing Brief
+  Amendment idiom asks the implementer to FIX every enumeration its change invalidates, and on the
+  delegated path that obligation lands nowhere: `docs-write-guard` denies a non-curator subagent any
+  write into `docs/`, which is where most of the kit's enumerations live. So the obligation has to be
+  converted by hand into a reporting one, "list every enumeration your change invalidates that you
+  could not reach", and the claim worth testing is that this works better than asking for the fix.
+
+  **The evidence is a kaizen note and is not corroborated by the effort's own record, which is why it
+  is stated as a candidate rather than a measurement.** The note, `~/.claude-kaizen/notes.md` as of
+  2026-08-28, cleared into this stub by the kaizen pass of 2026-08-31, said: "adding 'list every
+  enumeration your change invalidates that you could not reach' to the dispatch ... made two
+  implementers hand back ten and twelve items each, including three the orchestrator had missed and
+  one that flipped a true claim false in the document the security-reviewer reads first."
+  `docs/archive/kit-usage-awareness_spec_v1.md` records something smaller: `:1598` says "one of them
+  found an enumeration defect the orchestrator had missed", and `:1580` says "The enumeration class
+  landed twice more, both caught by others". Neither states a ten-or-twelve-item handback, and one
+  does not reconcile to three without an inference the archive never makes. **Treat the numbers as
+  recalled rather than recorded**, and if the mechanism is designed, reproduce the handback before
+  leaning on them.
+
+  What survives either way: the ask keys on the implementer's own knowledge of what it touched,
+  which is the human judgment the bullet above says any working mechanism has to key on, sited where
+  that judgment actually exists. **The ask is in no skill.**
 - **Whether the real defect is that vocabularies have no single home.** Every instance involves a
   set (dispositions, verdicts, exits, steps) defined in one place and enumerated in others.
   `take-stock.md` declined pointer-plus-restatement as a deliberate house pattern on 2026-08-18, so
@@ -109,7 +180,11 @@ is least likely to supply from memory.
 
 ## Open Questions
 
-- Are there instances outside `kaizen` and `writing-skills`? All five are in the two most accreted
-  skills, which may mean the pattern is real everywhere and visible only where prose is dense, or
-  may mean it is a property of those two files. Answering it means walking the class over a skill
-  the accretion ranking does not surface.
+- Are there instances outside the kit's skills? **Partly answered, against the earlier framing.**
+  Instances 1 to 5 all sat in `kaizen` and `writing-skills`, the two most accreted skills, which
+  supported reading the pattern as a property of dense prose. Instance 6 is in
+  `docs/architecture.md`, instance 7 in this file and `docs/README.md`, and instance 8 in
+  `docs/kit-adoptions.md`: none is a skill, and none is covered by the accretion ranking, which
+  measures the four corpus globs only. So the class is not confined to skills. What is still open is whether it is *denser* in accreted
+  prose or merely easier to see there, and that still means walking the class somewhere the ranking
+  does not reach.

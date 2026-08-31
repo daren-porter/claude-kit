@@ -52,7 +52,7 @@ Two of the kit's seven state locations sit under a project root and five are hom
 | Plans, Chapters, docs library | `docs/` in each project | Sessions, via the workflow skills |
 | Kit working state | `.kit/` per repo | `kit-goal.js` writes `goal-state.json` (read by `kit-goal-stop.js`); a brainstorming session writes `visuals/` |
 | Cross-project memory tier | `~/.claude-kit-memory/` | `hooks/memory.js` only |
-| Kaizen inbox | `~/.claude-kaizen/notes.md` | Any session, one line at a time |
+| Kaizen inbox | `~/.claude-kaizen/` - `notes.md`, `briefs/`, `applied/` | Any session appends a note to `notes.md` (one line, or several with the continuations indented); a kaizen pass writes `briefs/` and moves executed briefs to `applied/` |
 | CLAUDE.md reconcile state | `~/.claude/.claude-kit-md-version` and `.claude-kit-md-base.md` | `reconcile-claude-md` |
 | Usage cache, lock, reading log and nudge marker | `~/.claude-kit-usage/<profile>/` | `hooks/usage-lib.js`, plus `hooks/usage-nudge.js` for `nudged.log` alone |
 | Usage threshold config | `~/.claude-kit-usage/config.json` | the OPERATOR by hand; no kit code ever writes it |
@@ -69,7 +69,7 @@ Two directions, and they meet only through files on disk.
 
 Reading happens at session start. `session-start.js` scans the cwd's `docs/plans/`, the kit-repo markers, home-rooted state, and the memory store, reduces everything it found to bounded text, and hands one context block to the harness. The two nudge hooks read git instead of files, each under its own timeouts: `branch-reaper-nudge.js` fetches and inspects branch state, and `take-stock-nudge.js` reads one sha out of `docs/take-stock.md` and then asks git which corpus sections differ between that sha and HEAD. No hook holds a process open past its event, so there is no daemon, no cache in memory, and no ordering dependency between hooks beyond the harness's own.
 
-Writing happens during a turn, from a session following a skill. Plans and Chapters are written by the model with the Write and Edit tools. The kit goal is armed by `kit-goal.js`. Memory records go through `memory.js` and nothing else, which is what makes the field validation, the generated stamps, and the append-only apply journal hold. The kaizen inbox takes a plain appended line.
+Writing happens during a turn, from a session following a skill. Plans and Chapters are written by the model with the Write and Edit tools. The kit goal is armed by `kit-goal.js`. Memory records go through `memory.js` and nothing else, which is what makes the field validation, the generated stamps, and the append-only apply journal hold. The kaizen inbox takes a plain appended note. Its first line starts at column zero, optionally behind a `- `, and leads with the capture date; continuations are indented, because that unindented opening line is what the SessionStart count keys on.
 
 The one derived artifact is the memory tier's `.index.json`, refreshed best-effort by the CLI after a successful `add` or `stamp`. The reading hook deliberately does not refresh it: a read-shaped hook that wrote would create the store root as a side effect of starting a session, and syncing after an emission would clear a `[body revised]` marker before the session that could act on it ever saw it.
 

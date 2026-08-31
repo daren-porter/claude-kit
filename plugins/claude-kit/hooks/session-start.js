@@ -25,21 +25,62 @@ function readStdin() {
 // Count pending kaizen items (raw notes + briefs) in the home-level inbox.
 // Only nudges inside the kit repo itself: friction is captured from anywhere,
 // but the reminder to act belongs where the user can act. Injects only a count,
-// never inbox text. Any failure returns 0 (silent).
+// never inbox text. Returns { count, truncated }; any failure yields a zero count
+// and stays silent. `truncated` says the count is a floor rather than exact.
 function countPendingKaizen(cwd) {
     const kitMarker = path.join(cwd, 'plugins', 'claude-kit', '.claude-plugin', 'plugin.json');
-    if (!fs.existsSync(kitMarker)) return 0;
+    if (!fs.existsSync(kitMarker)) return { count: 0, truncated: false };
 
     const inbox = path.join(os.homedir(), '.claude-kaizen');
     let count = 0;
+    let truncated = false;
     try {
         // Bounded read (the plan-scan idiom): never pull a huge file into
-        // memory just to count lines.
-        const fd = fs.openSync(path.join(inbox, 'notes.md'), 'r');
+        // memory just to count what is in it.
+        const notes = path.join(inbox, 'notes.md');
+        // Stat BEFORE opening: openSync on a FIFO blocks forever, so a check on an
+        // already-open descriptor never runs and the header's "never blocks" would
+        // be false. Same guard and same reason as adoptionPassElapsedDays below.
+        const st = fs.statSync(notes);
+        if (!st.isFile()) throw new Error('notes.md is not a regular file');
+        const size = st.size;
         const buf = Buffer.alloc(65536);
-        const bytes = fs.readSync(fd, buf, 0, 65536, 0);
-        fs.closeSync(fd);
-        count += buf.toString('utf8', 0, bytes).split('\n').filter((l) => l.trim().length > 0).length;
+        const fd = fs.openSync(notes, 'r');
+        let bytes;
+        try {
+            bytes = fs.readSync(fd, buf, 0, 65536, 0);
+        } finally {
+            fs.closeSync(fd);
+        }
+        // A bounded read past the buffer counts only what it saw, and an undercount
+        // that says nothing is the same failure this counter was fixed for. The
+        // count becomes a floor and the caller says so, rather than a number that
+        // looks exact. At the observed 727 bytes per note (18,898 bytes over the
+        // 26 notes of 2026-08-31) 64KB holds about 90, so this is a guard rather
+        // than an expected path.
+        truncated = size > bytes;
+        // Count ENTRIES, never lines. A note is one or more lines opening at
+        // column zero with its capture date, optionally bulleted, and a long note
+        // runs to several lines: on 2026-08-31 the inbox held 26 notes across 49
+        // non-blank lines, so the line count reported 49 and the operator planned
+        // a pass around a number nearly double the real one.
+        let text = buf.toString('utf8', 0, bytes);
+        // Strip a BOM as the file's three other bounded readers do. Without it the
+        // first note's line reads `\uFEFF2026-...`, the anchor fails, and a
+        // single-note inbox falls to the floor below: an undercount the old
+        // per-line count was immune to.
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        // A note's first line opens at column zero with the capture date, bare or
+        // behind a bullet; continuations are indented, which is what keeps the
+        // anchor unambiguous. The bullet set is wider than the capture rule's `- `
+        // on purpose: a `*` or `+` inbox is a formatting slip, not an empty one,
+        // and the failure to avoid is reporting nothing pending on a full file.
+        const entries = text.split('\n').filter((l) => /^(?:[-*+][ \t]*)?\d{4}-\d{2}-\d{2}/.test(l)).length;
+        // A note whose date prefix is malformed would otherwise make a non-empty
+        // inbox report zero, and an invisible inbox is worse than a wrong count:
+        // the skill's pending predicate, and this nudge with it, would go quiet on
+        // a file with friction still in it. Floor a non-empty file at one.
+        count += entries || (text.trim().length > 0 ? 1 : 0);
     } catch {
         // No notes file - nothing from there.
     }
@@ -48,11 +89,12 @@ function countPendingKaizen(cwd) {
         // cannot inflate the count past the skill's stated contract.
         const briefs = fs.readdirSync(path.join(inbox, 'briefs'), { withFileTypes: true })
             .filter((d) => d.isFile() && !d.name.startsWith('.'));
+        if (briefs.length > 500) truncated = true;
         count += briefs.slice(0, 500).length;
     } catch {
         // No briefs directory - nothing from there.
     }
-    return count;
+    return { count, truncated };
 }
 
 // Past this many days since the last recorded upstream-kit adoption pass, the nudge
@@ -422,8 +464,9 @@ function main() {
 
     // Kaizen check is additive and must never affect plan recovery.
     let kaizenCount = 0;
+    let kaizenTruncated = false;
     try {
-        kaizenCount = countPendingKaizen(cwd);
+        ({ count: kaizenCount, truncated: kaizenTruncated } = countPendingKaizen(cwd));
     } catch {
         // Never let the kaizen check break recovery or the session.
     }
@@ -520,7 +563,8 @@ function main() {
     }
 
     if (kaizenCount > 0) {
-        blocks.push(`This is the claude-kit repo and the kaizen inbox (~/.claude-kaizen) has ${kaizenCount} pending item(s). At a natural stopping point, consider running a kaizen pass (see the kaizen skill). Reminder, not a blocker.`);
+        const atLeast = kaizenTruncated ? 'at least ' : '';
+        blocks.push(`This is the claude-kit repo and the kaizen inbox (~/.claude-kaizen) has ${atLeast}${kaizenCount} pending item(s). At a natural stopping point, consider running a kaizen pass (see the kaizen skill). Reminder, not a blocker.`);
     }
 
     if (claudeMdOffer) {

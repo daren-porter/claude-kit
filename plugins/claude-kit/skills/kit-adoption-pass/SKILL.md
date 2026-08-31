@@ -180,6 +180,9 @@ this window reworked, and both headers.
   30-day staleness nudge, so advancing it on a half-finished pass buys 30 days of silence
   on work nobody did.
 
+The pass-section format lives in `docs/kit-adoptions.md`'s own `## Editing this file`, per
+section 5 above. Read it there.
+
 `Last pass:` is parsed by a hook and its form is exact: a bare line at column zero,
 `Last pass: YYYY-MM-DD`, nothing following the date. Not a heading, not a list item, not
 bold. That file states the rest of the contract.
