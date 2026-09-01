@@ -22,14 +22,14 @@ Created: 2026-08-17
 ## Why this exists
 
 `kaizen`'s take-stock step tells a pass to read a section whole and **ask what it would lose
-by being shorter**. Four independent measurements now suggest that question is aimed at a
-problem this corpus does not have, while the same four passes kept producing value on a
+by being shorter**. Five independent measurements now suggest that question is aimed at a
+problem this corpus does not have, while the same five passes kept producing value on a
 different question they were never asked.
 
 This stub is not the redesign. It parks the measurement and the shape of the decision so a
 design pass can start from evidence rather than re-derive it.
 
-## The four measurements
+## The five measurements
 
 Listed with where each is recorded, because the whole point is that no one of them would have
 been enough.
@@ -51,11 +51,25 @@ been enough.
    all behavior-shaping motivation, which `writing-skills` routes to the arms as retirements
    rather than compressions.
 
-**The consistent by-product, and one caution added 2026-08-18.** All four passes produced
+5. **`take-stock.md`, 2026-09-01 (`ce35c3d`).** Re-examined measurement 1's first section,
+   `writing-skills` "Know it works before you trust it", by a pass that had just executed it
+   end-to-end with nine reps for an unrelated change. Cut nothing. Twelve of its fifteen blocks
+   were used by those reps, the two paragraphs added since measurement 1 were both spared on
+   observed events, and the one line worth cutting was declined with a stated purchase. Adds
+   three things the earlier four did not have. **An asymmetry**: measurement 1 left the two
+   sections at 164 and 155 lines, and sixteen days later they read 182 and 155, so the
+   compression held completely on one and was more than undone on the other, which is a fact
+   about those two sections rather than about compression. **A located candidate**, the first
+   concrete one any of the five produced: `writing-skills:116-122` summarizes two of the four
+   answers and then points at `:382-417`, which states all four in full 260 lines later. **And
+   the pass's own error as the by-product**, below.
+
+**The consistent by-product, and one caution added 2026-08-18.** All five passes produced
 coherence defects, omissions and retirement candidates instead: a false scope statement at
 `writing-skills:468` (the ladder's only shipped output), an enumeration stopping one short of
 its own newest disposition (twice), a `Fable Spend` omission, and a pointer-plus-restatement
-pattern now at three instances across two files. Those are what the passes were actually good
+pattern now at four instances, measurement 5's `writing-skills:116-122` being the newest and
+taking the count recorded on 2026-08-18 from three. Those are what the passes were actually good
 at, and none of them is what the step asks for.
 
 **The caution: three of those by-products did not survive verification.** On 2026-08-17 a
@@ -82,11 +96,13 @@ shows the tax is per commit and that nothing in the kit says to batch. Daren was
 mandate question as a retirement decision on the same day and deferred it, so `backlog.md:31`
 stands unchanged.
 
+**Measurement 5's by-product is the sharpest of the five, because it is the pass's own mistake.** It read the inbox-hazard scoping at `writing-skills:236` as contradicted by three live arms, wrote a change removing its arm-type predicate, and the paired review defeated it on the file's own text: `:451` puts a followability probe outside the arms, so a claim quantified over arms was true as written, and `:462-465` already recorded twelve probe inbox notes on the same date, 226 lines from the sentence being altered. Nine reps had just exercised that section and none surfaced the conflict. That is a coherence defect found by review and invisible to arms, which is the by-product column again, and it is evidence for this stub's thesis from the opposite direction: the pass hunting length found none, and the defect it did produce was one the shorter-prose question cannot see.
+
 ## The decision this needs
 
 **Whether take-stock's question should change**, and if so to what. The obvious candidate is
 something in the shape of "what in this section is wrong, doubled, or unwatched", which
-describes what the four passes produced. That is not automatically right and should be
+describes what the five passes produced. That is not automatically right and should be
 designed rather than adopted.
 
 Four things a design pass has to settle. **The third bullet below was moved here by
@@ -125,7 +141,7 @@ enough:
   the spared bar it subtracts by is fed by exactly the attached content a compression is under
   the most pressure to thin. An instrument that succeeds hard enough disables the verdict that
   licenses it.
-- **Whether compression stays available for a section that genuinely wants it.** The four
+- **Whether compression stays available for a section that genuinely wants it.** The five
   measurements are all of `writing-skills`, `kaizen`, `brainstorming` and `executing-work`.
   186 sections are measured and 15 are ranked; nothing establishes that the tail behaves like
   the head, and the ranking selects for exactly the accreted sections most likely to be

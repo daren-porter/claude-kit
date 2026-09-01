@@ -112,8 +112,11 @@ agent-behavior rule change at the arms, which this pass has not run against any 
 what "When a local RED is not available" states in full and then points at it,
 pointer-plus-restatement across the two most accreted sections in the kit, 337 lines together. A
 compression is where an actual cut would come from and it takes its own bill: a stated claim
-unit, a two-directional inventory, and a probe. The 2026-08-16 attempt on these same two bought
-6.5% against 18.5% wanted, which is the cost to plan against.
+unit, a two-directional inventory, and a probe, all specified at `writing-skills:281-342`. The
+2026-08-16 attempt on these same two bought 6.5% against 18.5% wanted, which is the cost to plan
+against. **`plans/take-stock-instrument_spec_v1.md` owns the question and this pass is its fifth
+measurement**, recorded there with the located candidate above and the asymmetry that the other
+compressed section held at 155 lines while this one grew from 164 to 182.
 
 **Why zero, and it is not that nobody looked.** Twelve of fifteen blocks were used by this
 session's own nine reps. The two newest earned their place on events rather than motivation. The
