@@ -22,6 +22,105 @@ the kaizen loop is captured friction, and friction can only ever ask for more wo
 spared entry is not praise: it names a rule and what was observed to happen because of it,
 which is the closure event `docs/backlog.md` has always asked for and nothing collected.
 
+## 2026-09-01 - ce35c3d77404fc38b848c2ebeb85bca0b5d361d8
+
+Examined `writing-skills/SKILL.md`, "Know it works before you trust it", which
+`tools/accretion.js` ranks **first** in the kit. **Figures are of the text as examined**, at
+`ce35c3d`, which is also the state the pass left behind because it changed no prose: 182 lines
+and 14,768 characters over 20 commits, spanning 99-280.
+
+**It grew back past the last compression, which is the fact that chose it.** The 2026-08-16
+entry below compressed this section from 175 lines to 164. It read 182 here, so it added 18
+lines in the sixteen days since, more than that compression removed, over three commits:
+`680635b`, `166d89b`, and `210dad1` (de-naming, cosmetic, +3 characters).
+
+**The instrument, stated because it is also the bias.** This session had just executed the
+section end-to-end for an unrelated change, `006b472`: a RED arm, two followability probes, the
+gated borrowed-evidence path, nine reps in all. So the usage claims are first-person rather than
+inferred, and the risk is the obvious one, that a section you have just leaned on looks
+load-bearing. The section is **15 blank-line-separated blocks**, the RED/GREEN/REFACTOR loop
+being one of them rather than three. Twelve were used outright. One in part, the numbered loop,
+whose RED half carried the arm while GREEN and REFACTOR went untouched because that change took
+the gated path. One is arguable, the clause on a parked question priming a rep. One went unused,
+the transcript detection recipe.
+
+**Zero cut and zero addition. The most useful thing this pass produced is its own error, so
+that comes first.**
+
+**A counter-case this pass thought it had, built a change on, and did not have.** The
+inbox-hazard paragraph scopes serial isolation to RED "because the rep the wording fails is the
+rep with something to file", on five arms measured 2026-08-15. This pass ran three arms on
+2026-08-31 in which both followability-probe dispatches wrote to `~/.claude-kaizen/notes.md` and
+one probe rep opened "the findings-file-path leak was already captured earlier this session",
+having read another rep's note mid-arm. That was classified **Contradicted**, a change was
+written removing the arm-type predicate, and the paired review defeated it on the file's own
+text. Two reasons, either sufficient. `:451` puts a followability probe outside GREEN and the
+arms are RED/GREEN/REFACTOR, so a claim quantified over arms was **true as written** and probe
+writes are a case it never reached. And `:462-465` already records "Three probes phrased that
+way on 2026-08-15 returned twelve inbox notes against wording all three of them had applied
+correctly", so the file already held the datum the pass presented as new, 226 lines from the
+sentence it was altering. The change also deleted an unfalsified clause ("Scoped any wider the
+exception swallows the parallel default") and left a bare prohibition with no replacement
+predicate, which is the form this file's own table at `:82` flags as backfiring.
+
+**So the scoping is spared, and the evidence is an observed event.** It was exercised in live
+work: probes ran in parallel on its licence, the cross-read it declines to guard against
+happened, and all three probe artifacts were graded clean, so the cross-read changed nothing the
+arm measured. That is the rule working, not failing.
+
+**"An arm cannot test whether new wording conflicts with what the skill file already says"
+(`680635b`) is spared, and this pass is its instance.** Nine reps had just exercised this
+section, and not one of them could surface that the change above contradicted `:462-465`. The
+paired review found it in a single round, as a Critical, exactly as the paragraph says. The same
+thing happened to `006b472` an hour earlier: a three-rep probe passed on wording whose Critical
+was a conflict with `f29f674`'s behavioral-contract clause. **Recorded from this session's
+transcript rather than from `006b472`'s message, which carries only the final probe**, so a
+later reader should treat the earlier probe's ordering as this entry's claim and not the
+commit's.
+
+**"A rep that disagrees with your premise is a result, not a fixture defect" (`166d89b`) is
+spared on an averted action, and the locator is weak.** This session built a restaged fixture
+after RED rep 1 and did not use it, because the reps came back clean rather than confounded. The
+artifact is the unused fixture in a session scratchpad, which does not survive; stated as a
+first-person sighting rather than an admitting incident.
+
+**One retirement candidate, examined and declined.** The parenthetical recording a superseded
+detection approach: "a first draft sent you joining `tool_use` to `tool_result` in your own
+transcript, which works and is two steps longer". What keeping it buys is the answer to "why not
+the obvious thing": joining tool_use to tool_result in your own transcript is what a session
+reaches for first, it does work, and without the note the session pays two extra steps and
+cannot tell whether it has the sanctioned route. Thin, and recorded as thin.
+
+**One unverdicted, which is the honest label rather than a hedge.** The transcript detection
+recipe: recovering a rep's agentId by grepping `toolUseId` across the `.meta.json` sidecars,
+`spawnDepth`, and nested reps landing in the root session's `subagents/`. Nine reps ran here and
+none of it was needed, because detection went by reading each rep's artifact on disk. Its path
+facts are spared on an admitting incident, the path having been two levels too shallow until
+2026-08-15. Whether the recipe earns its lines nobody has watched, and one pass that did not
+need it settles nothing.
+
+**One claim left narrower-than-written, recorded and not acted on.** `:462-465` attributes probe
+inbox notes to prompt phrasing, a prompt asking whether an ambiguity can be named getting "a
+list however good the wording is". This pass's probes were phrased the sanctioned way, asking
+reps to run a section's review step rather than to name ambiguities, and they filed anyway,
+about other gaps a realistic task surfaced rather than about the wording under test. So phrasing
+is one cause and not the only one. Not acted on: the increment is small, it would add lines to
+the kit's top-ranked section in a pass that came looking for cuts, and `:546-548` bills an
+agent-behavior rule change at the arms, which this pass has not run against any new wording.
+
+**One compression candidate, named and not taken.** This section's four-answers summary restates
+what "When a local RED is not available" states in full and then points at it,
+pointer-plus-restatement across the two most accreted sections in the kit, 337 lines together. A
+compression is where an actual cut would come from and it takes its own bill: a stated claim
+unit, a two-directional inventory, and a probe. The 2026-08-16 attempt on these same two bought
+6.5% against 18.5% wanted, which is the cost to plan against.
+
+**Why zero, and it is not that nobody looked.** Twelve of fifteen blocks were used by this
+session's own nine reps. The two newest earned their place on events rather than motivation. The
+one line worth cutting was declined on a stated purchase. The only real fat is a cross-section
+duplication a compression owns. And the one change this pass did write was wrong and was
+reverted. Per "the step asks the question; it does not promise a cut".
+
 ## 2026-08-18 - 60addb93948b8fe54b2a03b2551f4b893dfb0202
 
 Examined no section. This pass read the **four retirement candidates** the 2026-08-16
