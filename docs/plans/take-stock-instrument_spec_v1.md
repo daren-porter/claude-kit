@@ -18,6 +18,10 @@ Created: 2026-08-17
   distinguish a rename from growth, so the count a later pass reads is noise; that effort ruled
   re-baselining out of scope as a `kaizen` act and pointed here.
 - `plans/enumerations-stop-short_spec_v1.md` - a sibling defect-class stub from the same effort.
+- `plans/kaizen-pass-economics_spec_v1.md` - opened 2026-09-02, and it asks the adjacent
+  question about the friction half of this same skill: whether a pass's capture measures the kit or
+  measures the pass. This file asks what take-stock should measure; that one asks whether the
+  inbox arithmetic ever closes.
 
 ## Why this exists
 
