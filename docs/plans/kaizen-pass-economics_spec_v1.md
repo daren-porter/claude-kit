@@ -51,8 +51,9 @@ prompt." That is the same confusion at the capture step rather than the probe st
 inflated. The four notes that survived the prune include a live defect nothing else would have
 found: `docs-write-guard` denies a dispatched agent every write under `docs/` while
 `finishing-work` step 5 is nothing but `docs/` writes, so a close-out cannot be dispatched at all
-and no skill says so. Four of five reps hit it cold. Adversarial reading of the kit is how that
-surfaced, so the answer is unlikely to be "capture less".
+and no skill says so. Four of five reps hit it cold, and it shipped as `5ad24dd` the next day,
+so the counter-case is a closed one rather than a standing claim. Adversarial reading of the kit
+is how that surfaced, so the answer is unlikely to be "capture less".
 
 ## What a pass on this would have to decide
 
@@ -68,6 +69,14 @@ surfaced, so the answer is unlikely to be "capture less".
   of the arms discipline rather than of capture. The 41-dispatch figure above belongs to
   `writing-skills`' RED/GREEN bar, not to the kaizen skill, and a pass cannot cut it without
   weakening the evidence rule that keeps unevidenced prose out.
+- **Whether a pass should be dispatchable at all.** The 41-dispatch figure above is the pass
+  spending subagents; the pass itself is never one. If it were, `docs-write-guard` denies a
+  dispatched non-curator agent every write under `docs/`, which is step 2's promote path and
+  step 4's take-stock record, so making a pass dispatchable is a guard change and not a prose
+  one. Declined as a standalone rule on 2026-09-02 for having no located instance
+  (`~/.claude-kaizen/declined.md`), and live here because the answer decides whether a pass can
+  run anywhere but in the main session's own context - which is part of what "hard lately"
+  measures.
 - **Where a declined brief's evidence lives.** `applied/` is explicitly unread by any pass, so a
   four-rep decline is invisible to the next session that notices the same friction. Dropped as a
   note during the opening pass for lack of an instance; it belongs here as a design question.
