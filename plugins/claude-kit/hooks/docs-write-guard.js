@@ -16,12 +16,36 @@
 // Covers Write/Edit/MultiEdit (exact, by file_path) and shell commands
 // (heuristic): a Bash write-redirect/tee into docs/, and a PowerShell Out-File /
 // Set-Content / Add-Content / Tee-Object cmdlet targeting docs/. An interpreter
-// that opens the file itself (python, sed -i, Copy-Item, a path passed through a
-// variable) is out of reach here, and the stop-docs-hygiene Stop-scan backs that
-// up only partway: it catches a LEAKED SCRATCH FILE by name or directory, and it
-// exempts anything carrying the plan-header contract, so an edit to an existing
-// curated doc passes both. Live-fired 2026-08-27, three arms: Write blocked,
-// Bash redirect blocked, `python3 - <<EOF` allowed and the file landed.
+// that opens the file itself (python, sed -i, Copy-Item) is out of reach here, and
+// the stop-docs-hygiene Stop-scan backs that up only partway: it catches a LEAKED
+// SCRATCH FILE by name or directory, and it exempts anything carrying the
+// plan-header contract, so an edit to an existing curated doc passes both.
+// Live-fired 2026-08-27, three arms: Write blocked, Bash redirect blocked,
+// `python3 - <<EOF` allowed and the file landed.
+//
+// A command whose docs/-shaped targets are ALL unlocatable is allowed by design:
+// where such a target resolves is not knowable from the command text, and the
+// containment rule below must not deny what it cannot locate. Unlocatable means the
+// target's FIRST path segment carries an expansion, and it is a deliberate
+// conservative cut rather than a fact about resolution - `sub/$X/docs/` with $X
+// holding a climb does resolve outside the project, and this still denies it. All
+// rather than any, because a command carrying one locatable in-project target must
+// be denied whatever else it also writes.
+//
+// `~/`, $PWD, ${PWD}, $(pwd) and `pwd` are resolved instead of screened, since the
+// payload carries cwd and the runtime knows homedir. That keeps the spelling a
+// subagent reaches by habit governed (`echo x > $PWD/docs/README.md` is denied) and
+// judges a tilde path correctly in both directions, including a repo rooted at
+// $HOME. Exotic spellings that also resolve to cwd (`~+`, `${PWD%/*}`, `${PWD:?}`)
+// are NOT resolved: the first is read as relative and stays denied, the others screen
+// as unlocatable and pass. So the bypass is narrowed at its reachable spellings
+// rather than closed, and what stays open is any first-segment variable a subagent
+// points at its own docs/ tree - narrower than the python3 and sed -i routes above,
+// and open for the same reason: the teeth are the role rule, not path spelunking.
+//
+// A target carrying whitespace (`$(mktemp -d)/docs/a.md`) is out of reach rather
+// than allowed by design: the write patterns' path class cannot cross a space, so
+// nothing matches and no screen is consulted.
 //
 // SAFETY: this hook can BLOCK a tool call, so it fails OPEN. Any parse error,
 // unrecognized payload, or inability to positively identify a non-curator
@@ -31,6 +55,7 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 function readStdin() {
@@ -85,12 +110,17 @@ function repoRoot(dir) {
 // Whether a docs/ target is the curated tree of the repo this session is working
 // in. The invariant is about THIS project's docs/, so an absolute path resolving
 // outside the project is somebody else's: a fixture under /tmp, a vendored package,
-// a sibling checkout. A relative path always resolves under cwd, so this only ever
-// narrows and never opens a path that used to be blocked. A Windows-style path seen
-// by a POSIX runtime reads as relative here and stays blocked, which is the safe
-// direction. Added 2026-08-15 after the guard blocked a subagent building a test
-// fixture under /tmp, which is the "must never trap legitimate work" case in this
-// file's own header.
+// a sibling checkout. A path this predicate reads as relative resolves under cwd and
+// stays blocked, which is why the shell caller screens an all-unlocatable command out
+// before it reaches here: `$M/fixture/docs/a.md` is not a relative path, and reading
+// it as one blocked the very out-of-project fixture write this rule was added to
+// allow (live-fired 2026-09-02, exit 2 through the variable against exit 0 for the
+// identical literal path). A Windows-style path seen by a POSIX runtime reads as
+// relative here and stays blocked, which is the safe direction and is not what that
+// screen covers: `%TEMP%\docs\a.md` from a cmd.exe session is a standing false
+// block. Added 2026-08-15 after the guard blocked a subagent
+// building a test fixture under /tmp, which is the "must never trap legitimate work"
+// case in this file's own header.
 //
 // Containment is judged against the PROJECT ROOT above cwd, not against cwd. A
 // subagent routinely runs with cwd at a subdirectory, and judging against cwd let
@@ -102,7 +132,67 @@ function insideProject(target, cwd) {
     if (!path.isAbsolute(t)) return true;
     try {
         return (path.resolve(t) + path.sep).startsWith(path.resolve(repoRoot(cwd)) + path.sep);
-    } catch { return true; }   // cannot resolve: block, the safe direction
+    } catch { return false; }  // cannot resolve: allow, per this file's fail-open doctrine
+}
+
+// The expansions this runtime can resolve, so they are judged rather than screened:
+// a leading `~/` against homedir, and the four plain spellings of cwd, which the
+// payload carries. `${PWD}/../elsewhere/docs/` needs no special case - it substitutes
+// and then resolves outside the project on its own, correctly.
+//
+// FUNCTION REPLACEMENTS, not strings: a string replacement interprets `$&`, ``$` ``,
+// `$'` and `$$` in the REPLACEMENT, so a project path holding any of them produced a
+// path that was not cwd and silently resolved out of the project. Measured: cwd
+// `/tmp/we$&rd` yielded `/tmp/we$PWDrd/docs/`, and cwd `/tmp/a$'b` yielded
+// `/tmp/a/docs/b/docs/`, each turning a deny into an allow.
+function resolveKnownExpansions(s, cwd) {
+    return String(s || '')
+        .replace(/^~(?=[\\/])/, () => os.homedir())
+        .replace(/\$\{PWD\}|\$PWD\b|\$\(pwd\)|`pwd`/g, () => String(cwd || ''));
+}
+
+// A target whose destination cannot be located, because its FIRST path segment
+// carries an expansion this runtime did not resolve. `insideProject` would read such
+// a word as relative and so as in-project, which denies it; this file's header
+// forbids exactly that, and the containment rule exists to let such a write through.
+//
+// The first-segment anchor is a conservative cut, not a claim about resolution. A
+// later-segment expansion CAN change where a word resolves (`sub/$X/docs/` with $X
+// holding a climb), and this denies it anyway, because what precedes the expansion is
+// enough to judge it in every case anyone has hit. An unanchored screen, by contrast,
+// gave away the in-project half of the class while changing nothing about the
+// out-of-project half (live-fired 2026-09-02: `sub/$X/docs/a.md` and
+// `<repo>/$X/docs/a.md` went 2 to 0, `/tmp/$X/docs/a.md` was already 0 because it is
+// absolute and outside the project whatever $X holds).
+//
+// A literal that only looks like an expansion is misread as one and allowed: a
+// directory really named `a$` or `~nosuchuser`, or a single-quoted `'$M/docs/a.md'`
+// that the shell does not expand either. All three resolve under cwd and are this
+// project's tree, and all three require someone to have created a directory with that
+// name. Accepted, and the quoting-aware matcher the inbox carries subsumes the third.
+function unlocatableTarget(s) {
+    return /^[^\\/]*[$`]/.test(String(s || ''));
+}
+
+// Every docs/-shaped word in a command, split on whitespace and commas with quotes
+// stripped. Deliberately coarser than the two write patterns below, and used ONLY to
+// decide whether the screen above may speak - never to deny anything. A docs/ word
+// that is not a write target at all (a path named in a commit message, a comment)
+// therefore silences the screen rather than causing a denial, which is the
+// conservative direction.
+//
+// This is what keeps the screen from widening the write patterns' own multi-target
+// gap. They find one target per operator, so `tee $M/docs/a.md docs/b.md` never
+// judges the second word: skipping the first INSIDE the loop turned that command from
+// deny into allow on this project's own docs/ root. Screening the whole command
+// instead cannot, because one locatable target anywhere in it silences the screen.
+// The underlying gap predates this rule (`tee /tmp/x/docs/a.md docs/b.md` was already
+// allowed) and the inbox carries it.
+function docsTargets(c) {
+    return String(c || '')
+        .split(/[\s,]+/)
+        .map((w) => w.replace(/^["']+|["']+$/g, ''))
+        .filter(targetsDocs);
 }
 
 // A shell command that writes into a docs/ path. Two heuristics, either a hit:
@@ -113,9 +203,16 @@ function insideProject(target, cwd) {
 //   joined by a space or a colon (-Path docs/x or -FilePath:docs/x).
 // Both require a separator before docs (so "mydocs/" does not match). Known misses,
 // all backstopped by the Stop-scan: non-redirect writers (python, sed -i,
-// Copy-Item, a path passed through a variable), and, in the other direction, a
-// residual false hit on a cmdlet name sitting in command position inside a quoted
-// string (a docs path merely named in prose, e.g. a commit message). The
+// Copy-Item), and ONE TARGET PER OPERATOR, so a second word sharing a `tee` or a
+// `-Path` list is never judged. In the other direction BOTH branches carry a false hit
+// on text that only mentions a write rather than performing one, because neither reads
+// quoting or heredoc bodies: `git commit -m 'wrote > docs/a.md today'` is denied, and
+// so is a heredoc whose body happens to contain a redirect into docs/ (observed
+// 2026-09-02 blocking a reviewer's own harness file). A project path holding a space,
+// a quote, or one of `&;|` blinds both patterns outright, since the path class
+// excludes those. The false hits trip this file's cardinal rule and are not fixed here
+// - a quoting-aware matcher is its own change, and the inbox carries it with the
+// multi-target gap. The
 // command-position anchor keeps an embedded name (Reset-Content) from matching.
 //
 // EVERY writer in the command is judged, not just the first. A non-global match
@@ -126,10 +223,12 @@ function commandWritesDocs(cmd, cwd) {
     const c = String(cmd || '');
     const redirect = /(?:>>?|tee(?:\s+-a)?\s)\s*["']?((?:[^\s"'|;&><]*[\\/])?docs[\\/])/gi;
     const cmdlet = /(?:^|[\s;|&(])(?:Out-File|Set-Content|Add-Content|Tee-Object)\b\s+(?:-\w+(?::\S+)?(?:\s+(?!-)[^\s"';|&]+)?\s+){0,4}(?:-(?:FilePath|Path|LiteralPath)[:\s]\s*)?["']?((?:[^\s"']*[\\/])?docs[\\/])/gi;
+    const targets = docsTargets(c).map((t) => resolveKnownExpansions(t, cwd));
+    if (targets.length && targets.every(unlocatableTarget)) return false;   // nothing locatable: allow
     for (const re of [redirect, cmdlet]) {
         let m;
         while ((m = re.exec(c)) !== null) {
-            if (insideProject(m[1], cwd)) return true;
+            if (insideProject(resolveKnownExpansions(m[1], cwd), cwd)) return true;
         }
     }
     return false;
@@ -146,7 +245,7 @@ function main() {
 
     const input = p.tool_input || p.toolInput || (p.tool && p.tool.input) || {};
     const fp = input.file_path || input.path;
-    const cwd = p.cwd || process.cwd();
+    const cwd = (typeof p.cwd === 'string' && p.cwd) ? p.cwd : process.cwd();
 
     let hit = false;
     if (fp) hit = targetsDocs(fp) && insideProject(fp, cwd);

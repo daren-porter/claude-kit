@@ -16,10 +16,11 @@ const path = require('path');
 
 const GUARD = path.join(__dirname, '..', 'plugins', 'claude-kit', 'hooks', 'docs-write-guard.js');
 
-function runGuard(payload) {
+function runGuard(payload, opts = {}) {
     return spawnSync(process.execPath, [GUARD], {
         input: JSON.stringify(payload),
         encoding: 'utf8',
+        ...opts,
     });
 }
 
@@ -245,4 +246,194 @@ test('every writer in a command is judged, not just the first', () => {
             'an in-project writer after an out-of-project one must still deny'
         );
     } finally { rmrf(repo); rmrf(other); }
+});
+
+// A redirect target carrying a shell expansion is not a relative path, and the
+// guard read it as one: `$M/fixture/docs/a.md` resolved nowhere it could see, so
+// containment called it in-project and DENIED a fixture write under /tmp. That is
+// the case the 2026-08-15 containment change was added to stop, and the case the
+// hook's own header calls the one a guard bug must never cause. Live-fired
+// 2026-09-02: exit 2 through the variable against exit 0 for the identical literal
+// path. These pin the screen in both directions, because the deny half is the
+// whole invariant and the allow half is a documented bypass.
+test('a redirect through a shell variable is allowed, since its target cannot be located', () => {
+    const repo = mkRepo();
+    try {
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        // Control: the same destination spelled literally is allowed, which is what
+        // makes the variable form a false block rather than a policy choice.
+        assert.strictEqual(runGuard(cmd('echo x > /tmp/fixture/docs/a.md')).status, 0, 'control: literal out-of-project path allows');
+        assert.strictEqual(runGuard(cmd('echo x > $M/fixture/docs/a.md')).status, 0, '$VAR');
+        assert.strictEqual(runGuard(cmd('echo x > ${M}/fixture/docs/a.md')).status, 0, '${VAR}');
+        assert.strictEqual(runGuard(cmd('echo x > $(hostname)/docs/a.md')).status, 0, '$(cmd)');
+        assert.strictEqual(runGuard(cmd('echo x > `hostname`/docs/a.md')).status, 0, 'backtick substitution');
+        assert.strictEqual(runGuard(cmd('Out-File -FilePath $env:TEMP/docs/a.md')).status, 0, 'cmdlet path through $env:');
+        assert.strictEqual(runGuard(cmd('Set-Content $M/fixture/docs/a.md')).status, 0, 'cmdlet path through $VAR');
+        // NOT a case this screen handles: a substitution carrying whitespace never
+        // matches the redirect pattern at all, so asserting it here would pass with
+        // the screen deleted.
+    } finally { rmrf(repo); }
+});
+
+test('an unlocatable target does not mask a locatable in-project writer', () => {
+    const repo = mkRepo();
+    try {
+        const inProject = path.join(repo, 'docs', 'b.md');
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        assert.strictEqual(
+            runGuard(cmd('echo x > $M/docs/a.md && echo y > ' + inProject)).status, 2,
+            'unlocatable first must not allow the whole command'
+        );
+        assert.strictEqual(
+            runGuard(cmd('echo y > ' + inProject + ' && echo x > $M/docs/a.md')).status, 2,
+            'unlocatable last, the other operator order'
+        );
+        // The arms that matter, and the reason the screen judges the whole command
+        // rather than one match inside the loop: the write patterns find ONE TARGET PER
+        // OPERATOR, so the second word here is never matched at all. Skipping the first
+        // in-loop took each of these from deny to allow on the project's own docs/ root.
+        assert.strictEqual(runGuard(cmd('tee $M/docs/a.md docs/b.md')).status, 2, 'second tee target, relative');
+        assert.strictEqual(runGuard(cmd('tee -a $M/docs/a.md docs/b.md')).status, 2, 'tee -a, same shape');
+        assert.strictEqual(runGuard(cmd('tee $M/docs/a.md ' + inProject)).status, 2, 'second tee target, absolute');
+        assert.strictEqual(runGuard(cmd('Set-Content -Path $M/docs/a.md,docs/b.md')).status, 2, 'comma-separated -Path list');
+        // And the converse: with nothing locatable anywhere in it, the command passes.
+        assert.strictEqual(runGuard(cmd('echo x > $M/docs/a.md && echo y > $N/docs/b.md')).status, 0, 'all targets unlocatable');
+    } finally { rmrf(repo); }
+});
+
+test('a Write file_path holding a $VAR is still denied, since Write does not expand it', () => {
+    // The screen is the shell caller's, not the path predicate's: a Write/Edit
+    // file_path is taken literally, so `$M/docs/a.md` names a directory called
+    // "$M" under cwd and really is this project's docs/ tree.
+    const r = runGuard(writePayload('claude-kit:implementer-opus', '$M/fixture/docs/a.md', '/repo'));
+    assert.strictEqual(r.status, 2);
+});
+
+// The screen is anchored to the target's FIRST path segment, and the anchor is the
+// whole predicate. An expansion in a later segment leaves the word locatable enough
+// to judge. It is a conservative cut rather than a claim about resolution: an $X
+// holding a climb really would resolve elsewhere, and these still deny. What the
+// anchor buys is that an unanchored screen gave away the in-project side of the class
+// while changing nothing about the out-of-project side. Caught by blind review of the
+// first attempt at this fix, then live-fired:
+// `sub/$X/docs/a.md` and `<repo>/$X/docs/a.md` went from deny to allow while
+// `/tmp/$X/docs/a.md` was allowed either way. Every arm below passes against an
+// unanchored screen's ancestor too, which is why they exist.
+test('an expansion in a later path segment is still denied, since the word is locatable', () => {
+    const repo = mkRepo();
+    try {
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        assert.strictEqual(runGuard(cmd('echo x > sub/$X/docs/a.md')).status, 2, 'literal first segment, relative');
+        assert.strictEqual(runGuard(cmd('echo x > ./$X/docs/a.md')).status, 2, 'dot first segment');
+        assert.strictEqual(runGuard(cmd('echo x > ' + repo + '/$X/docs/a.md')).status, 2, 'absolute, rooted in the project');
+        assert.strictEqual(runGuard(cmd('tee ' + repo + '/$X/docs/a.md')).status, 2, 'tee, same shape');
+        assert.strictEqual(runGuard(cmd('Set-Content ' + repo + '/$X/docs/a.md')).status, 2, 'cmdlet, same shape');
+        // Tilde expands only in the first position, so a literal one later is governed.
+        assert.strictEqual(runGuard(cmd('echo x > sub~1/docs/a.md')).status, 2, 'tilde inside a segment is a literal name');
+        // Control: absolute and outside the project, allowed whatever the variable holds.
+        assert.strictEqual(runGuard(cmd('echo x > /tmp/$X/docs/a.md')).status, 0, 'control: out-of-project prefix');
+    } finally { rmrf(repo); }
+});
+
+// $PWD and $(pwd) are not unlocatable at all: the payload carries cwd. Leaving them
+// to the screen made `echo x > $PWD/docs/README.md` a two-character bypass of the
+// sole mechanical enforcer, reachable by habit rather than by evasion.
+test('$PWD and $(pwd) are resolved from the payload, so they stay denied', () => {
+    const repo = mkRepo();
+    try {
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        assert.strictEqual(runGuard(cmd('echo x > $PWD/docs/README.md')).status, 2, '$PWD');
+        assert.strictEqual(runGuard(cmd('echo x > ${PWD}/docs/README.md')).status, 2, '${PWD}');
+        assert.strictEqual(runGuard(cmd('echo x > $(pwd)/docs/README.md')).status, 2, '$(pwd)');
+        assert.strictEqual(runGuard(cmd('echo x > `pwd`/docs/README.md')).status, 2, '`pwd`');
+        // The substitution is word-bounded: $PWDX is a different variable and unlocatable.
+        assert.strictEqual(runGuard(cmd('echo x > $PWDX/docs/a.md')).status, 0, '$PWDX is not $PWD');
+        // And it substitutes rather than special-casing, so a climb out resolves out.
+        assert.strictEqual(runGuard(cmd('echo x > ${PWD}/../elsewhere/docs/a.md')).status, 0, '${PWD}/.. leaves the project');
+    } finally { rmrf(repo); }
+});
+
+// `~/` is resolved against homedir rather than screened, because the runtime knows
+// where it points. Screening it was wrong in a way no fixture caught: a repository
+// rooted at $HOME - a dotfiles checkout - makes `~/docs/a.md` this project's curated
+// tree, and a blanket allow hands it over. Both directions, one fixture, HOME the
+// only variable.
+test('a leading tilde is resolved, so it is judged rather than waved through', () => {
+    const repo = mkRepo();
+    try {
+        const cmd = (c) => ({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: c },
+        });
+        const withHome = (home) => ({ env: { ...process.env, HOME: home } });
+        assert.strictEqual(
+            runGuard(cmd('echo x > ~/scratch/docs/a.md'), withHome('/home/nobody-here')).status, 0,
+            'homedir outside the project: allowed'
+        );
+        assert.strictEqual(
+            runGuard(cmd('echo x > ~/docs/a.md'), withHome(repo)).status, 2,
+            'repo rooted at homedir: this IS the curated tree'
+        );
+        // `~+` is cwd, and stays denied by reading as relative rather than by resolution.
+        assert.strictEqual(runGuard(cmd('echo x > ~+/docs/README.md')).status, 2, '~+ is cwd');
+    } finally { rmrf(repo); }
+});
+
+// String.prototype.replace interprets `$&`, `` $` ``, `$'` and `$$` in the REPLACEMENT,
+// so resolving $PWD with a string replacement mangled any project path containing one,
+// and the mangled path resolved outside the repo - turning a deny into an allow.
+// Measured on the string version: cwd `/tmp/we$&rd` produced `/tmp/we$PWDrd/docs/`.
+test('a project path containing $& is still resolved correctly', () => {
+    const outer = fs.mkdtempSync(path.join(os.tmpdir(), 'guard-odd-'));
+    const repo = path.join(outer, 'x$&y');
+    fs.mkdirSync(path.join(repo, '.git'), { recursive: true });
+    fs.mkdirSync(path.join(repo, 'docs'), { recursive: true });
+    try {
+        assert.strictEqual(runGuard({
+            tool_name: 'Bash',
+            agent_type: 'claude-kit:implementer-opus',
+            cwd: repo,
+            tool_input: { command: 'echo x > $PWD/docs/a.md' },
+        }).status, 2);
+    } finally { rmrf(outer); }
+});
+
+// A non-string cwd made `repoRoot` and `path.resolve` throw, which reached the
+// fail-open catch in `insideProject` and disabled the guard for that call. cwd is
+// normalized at the entry point instead, taking the same fallback an absent cwd does.
+test('a non-string cwd does not disable the guard', () => {
+    const repo = mkRepo();
+    try {
+        for (const bad of [{}, 12345, null, []]) {
+            const r = runGuard({
+                tool_name: 'Write',
+                agent_type: 'claude-kit:implementer-opus',
+                cwd: bad,
+                tool_input: { file_path: path.join(repo, 'docs', 'x.md') },
+            }, { cwd: repo });
+            assert.strictEqual(r.status, 2, 'cwd ' + JSON.stringify(bad));
+        }
+    } finally { rmrf(repo); }
 });
