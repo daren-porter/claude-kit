@@ -205,8 +205,8 @@ two levels too shallow, which matters because the detection rule below sends you
 What you control is which paths a rep has reason to walk, and a rep working a fixture has every
 reason to open the skill file and none to open a transcript directory. Those three are where
 that bites in practice rather than an exhaustive list, since any other directory you point a
-fixture into inherits the same property; past them what is left is detection: read what each
-rep actually opened before you count it. That transcript is the instrument: recover a rep's
+fixture into inherits the same property; past them, for anything a rep has to open, what is left is
+detection: read what each rep actually opened before you count it. That transcript is the instrument: recover a rep's
 agentId by grepping its `toolUseId` across the `.meta.json` sidecars beside those transcripts,
 which carry the dispatch `description` and `spawnDepth` too, then read the paths its transcript
 records. Nested reps land in the **root** session's `subagents/` rather than their
@@ -216,6 +216,19 @@ two steps longer). Do not ask the rep: that is self-report, and a rep that read 
 not have is the one least likely to volunteer it. On the gated path below, where RED by
 construction never fails, the hold releases once that path's first two preconditions have been
 **done and their artifacts recorded**, never on the writing-up alone.
+
+**A fixture's path leaks with nothing walked, which is a surface the walk-surface rule above does
+not reach.** Every dispatch that points a rep at a fixture carries that fixture's path, every
+segment of it, and no rep can decline to read what arrives in its own prompt. A `blind-reviewer`
+dispatched at `scratchpad/red/r4/envdiff` reported, as its charter requires it to report
+contamination, that the path "signals a seeded defect" and "likely raised my hunt intensity",
+against a prompt carrying no spec, no section name and no pointer (2026-09-01). That is one rep in
+one seat giving its own account of its own reading, so it establishes the mechanism rather than the
+size of the effect: a second rep working the same path in an implementer seat recorded none. Note
+where the tell actually sat, because it is not where a reader looks: the fixture directory was
+`envdiff`, named for nothing this disk answers, and `red` and `r4` were ancestor segments the arm's
+author had added for bookkeeping. Detection by what a rep opened cannot see a path it never opened,
+so the rep's own contamination note is the only signal there is.
 
 **Reps that run in parallel need one fixture each.** The leak rules are about what a rep can
 read; this one is about what two reps can write. Three reps dispatched at once against a
