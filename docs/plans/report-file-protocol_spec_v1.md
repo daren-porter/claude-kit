@@ -64,6 +64,52 @@ nothing to poll.
 change dressed as one, and it re-made the roster miscount it meant to fix. Do not re-attempt it as
 a clause.
 
+## ANSWERED 2026-09-02, by probe, and it collapses most of this stub
+
+The stub said to check the framework-injection branch first because it was the cheapest and might
+dissolve the rest. It was checked, empirically, by dispatching an `implementer-sonnet` and having
+it attempt the write and report verbatim. **All three answers came back and they agree.**
+
+**1. The Write tool refuses, at the tool layer, with a scripted message:**
+
+> Subagents should return findings as text, not write report files. Include this content in your
+> final response instead.
+
+The file never reached disk, confirmed by `ls` in the same run.
+
+**2. The framework-injected instruction is REAL, and it is a standing system-prompt directive
+rather than anything the kit or the dispatch supplies:**
+
+> Do NOT Write report/summary/findings/analysis .md files. Return findings directly as your final
+> assistant message - the parent agent reads your text output, not files you create. (Files
+> written as input to another tool are fine; this note is about report files.)
+
+**3. Bash is not the enforcement point.** The identical write through a heredoc succeeded, exit 0,
+110 bytes on disk.
+
+### What this settles, and what it leaves
+
+- **The kit's convention is fighting the harness, not a quirk.** `executing-work:81` and `:169`
+  mandate a behavior the platform instructs every subagent not to perform and blocks at the tool
+  it would naturally use. The undocumented Bash workaround is the only reason it ever appears to
+  work, which is exactly why two implementers with identical instructions diverged.
+- **Problems 1 and 2 collapse into one decision: retire existence-as-readiness.** The
+  orchestrator materializes the file from the return value, which `executing-work:81` already does
+  for `security-reviewer` and which the harness's own directive describes as the intended shape
+  ("the parent agent reads your text output"). No sentinel is needed and no per-seat write clause
+  is needed.
+- **The reviewer single-write question below is very likely MOOT, and this is the surprise.**
+  `blind-reader.md:21` and `prose-reviewer.md:21` grant "the single write this rule permits" - a
+  permission the kit cannot actually grant, because the block is above the kit. So `970827b`'s
+  choice to refuse rather than sanction a write path was correct for reasons its author did not
+  have, and `3604f03` shipped two clauses that the harness overrides. **Do not put the roster
+  question to the operator as a policy choice; it is a factual correction to two agent
+  definitions.** Verify the block applies to those two agent types before acting, since this probe
+  used `implementer-sonnet`.
+- **Problems 3 and 4 survive intact** and are now the whole remaining design: a report path is
+  still needed for the orchestrator's own materialized files, and it still must be bounded,
+  round-distinct, and leak nothing to a blind seat.
+
 ## What a design pass has to settle
 
 - **Verify the refusal is still live, and for which agent types, before designing around it.** The
