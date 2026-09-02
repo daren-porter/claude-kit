@@ -75,7 +75,26 @@ function countPendingKaizen(cwd) {
         // anchor unambiguous. The bullet set is wider than the capture rule's `- `
         // on purpose: a `*` or `+` inbox is a formatting slip, not an empty one,
         // and the failure to avoid is reporting nothing pending on a full file.
-        const entries = text.split('\n').filter((l) => /^(?:[-*+][ \t]*)?\d{4}-\d{2}-\d{2}/.test(l)).length;
+        // A note triaged and DECLINED stays in the file rather than being deleted:
+        // the inbox is not version controlled, so a deletion destroys the reasoning
+        // with no trace, and a decline nobody can read is forgetting rather than a
+        // verdict. It is not pending, so drop each declined note and the indented
+        // continuations under it BEFORE counting. Doing it before also keeps the
+        // floor below honest: a file holding nothing but declines is an empty inbox,
+        // not an unparseable one, and flooring it at one would nudge forever.
+        const declinedNote = /^(?:[-*+][ \t]*)?DECLINED[ \t]+\d{4}-\d{2}-\d{2}/;
+        const opensNote = /^(?:[-*+][ \t]*)?\d{4}-\d{2}-\d{2}/;
+        let inDeclined = false;
+        text = text.split('\n').filter((l) => {
+            if (declinedNote.test(l)) { inDeclined = true; return false; }
+            if (opensNote.test(l)) { inDeclined = false; return true; }
+            // Only blank or indented lines continue a note; anything else at column
+            // zero is malformed, and malformed content must reach the floor.
+            if (inDeclined && (l.trim() === '' || /^[ \t]/.test(l))) return false;
+            inDeclined = false;
+            return true;
+        }).join('\n');
+        const entries = text.split('\n').filter((l) => opensNote.test(l)).length;
         // A note whose date prefix is malformed would otherwise make a non-empty
         // inbox report zero, and an invisible inbox is worse than a wrong count:
         // the skill's pending predicate, and this nudge with it, would go quiet on

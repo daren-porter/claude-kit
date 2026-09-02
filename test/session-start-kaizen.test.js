@@ -281,3 +281,57 @@ test('content with no parseable date floors at one rather than going invisible',
     // nudge, and the skill's pending predicate with it, report nothing waiting.
     assert.strictEqual(countFor('a note somebody wrote with no date on it\n'), 1);
 });
+
+// A note triaged and DECLINED stays in notes.md instead of being deleted, because
+// ~/.claude-kaizen is not a git repo and a deletion destroys the reasoning with no
+// trace. These four pin that such a note is no longer counted as pending, and that
+// the floor above does not resurrect it.
+
+test('a declined note is not pending', () => {
+    const notes = [
+        '2026-09-01 - a live note.',
+        'DECLINED 2026-09-02 - examined and not worth a change; the reasoning stays here so the',
+        '    next triage can see it was looked at rather than never reached.',
+        '2026-09-01 - a second live note.',
+        ''
+    ].join('\n');
+    assert.strictEqual(countFor(notes), 2);
+});
+
+test('a file holding nothing but declines reports an empty inbox, not the floor', () => {
+    // The floor exists for unparseable content. A decline is parsed and disposed of,
+    // so flooring it at one would nudge about an inbox with nothing pending in it,
+    // forever, which is the reason a decline could not previously live in this file.
+    const notes = [
+        'DECLINED 2026-09-02 - the only note in the file, and it is closed.',
+        '    Its continuation is indented, so it goes with it.',
+        ''
+    ].join('\n');
+    assert.strictEqual(countFor(notes, [], true), null);
+});
+
+test('a bulleted decline is skipped too, the capture rule allowing the bullet', () => {
+    const notes = ['- DECLINED 2026-09-02 - closed.', '2026-09-01 - live.', ''].join('\n');
+    assert.strictEqual(countFor(notes), 1);
+});
+
+test('malformed content after a decline still reaches the floor', () => {
+    // Dropping a declined note must not swallow whatever follows it at column zero:
+    // an undated line is unparseable friction and the floor is what keeps it visible.
+    const notes = [
+        'DECLINED 2026-09-02 - closed.',
+        '    indented continuation, dropped with it.',
+        'somebody wrote this with no date on it',
+        ''
+    ].join('\n');
+    assert.strictEqual(countFor(notes), 1);
+});
+
+test('orphaned continuation lines still floor, which is why the strip is stateful', () => {
+    // Only indented lines FOLLOWING a decline are dropped. Bare orphans are the
+    // failure the kaizen skill names: removing a multi-line note's first line and
+    // leaving its continuations leaves lines carrying no date, which nothing counts.
+    // Those must reach the floor, so a blanket "ignore indented lines" is wrong.
+    const notes = ['    an orphaned continuation nobody removed', '    and a second one', ''].join('\n');
+    assert.strictEqual(countFor(notes), 1);
+});
