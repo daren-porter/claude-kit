@@ -21,7 +21,9 @@ const {
     bindSession,
     clearGoal,
     composeCondition,
-    planHead
+    planHead,
+    classifyPlanStatus,
+    isClosedPlanStatus
 } = require('../plugins/claude-kit/hooks/kit-goal-lib.js');
 
 const CLI = path.join(__dirname, '..', 'plugins', 'claude-kit', 'hooks', 'kit-goal.js');
@@ -423,6 +425,105 @@ test('armGoal rejects a plan path carrying control characters', () => {
         const result = armGoal(repo, 'docs/plans/evil\n\nInjected instruction.md');
         assert.strictEqual(result.ok, false);
         assert.ok(!fs.existsSync(goalPath(repo)));
+    } finally {
+        rmRepo(repo);
+    }
+});
+
+// ---------------------------------------------------------------------------
+// classifyPlanStatus: the single source, extracted 2026-09-04.
+//
+// It lived in three copies (here and twice in session-start.js) kept in step by
+// comments asserting they were identical. docs/backlog.md named the trigger for
+// consolidating rather than editing three: "if the classifier gains nuance (an
+// Abandoned status, say)". It did, so these are the tests all three callers rest
+// on. Being pure, they need no fixtures.
+
+test('classifyPlanStatus recognizes each status the kit uses', () => {
+    assert.strictEqual(classifyPlanStatus('Status: In Progress\n'), 'in progress');
+    assert.strictEqual(classifyPlanStatus('Status: Complete\n'), 'complete');
+    assert.strictEqual(classifyPlanStatus('Status: Abandoned\n'), 'abandoned');
+    assert.strictEqual(classifyPlanStatus('Status: Proposed\n'), 'proposed');
+    assert.strictEqual(classifyPlanStatus('# Plan\n\nno header here\n'), 'unknown');
+    // Non-strings must not throw: planHead's catch path would mask a crash here.
+    for (const bad of [null, undefined, 0, {}, []]) {
+        assert.strictEqual(classifyPlanStatus(bad), 'unknown', JSON.stringify(bad));
+    }
+});
+
+// Preserves the original `complete && !inProgress` rule. A doc naming two
+// statuses is LIVE until its close-out says otherwise, which is the safe
+// direction: the alternative releases a goal leash on a plan still in progress.
+test('classifyPlanStatus lets In Progress win over every other value', () => {
+    assert.strictEqual(classifyPlanStatus('Status: Complete\nStatus: In Progress\n'), 'in progress');
+    assert.strictEqual(classifyPlanStatus('Status: In Progress\nStatus: Complete\n'), 'in progress');
+    assert.strictEqual(classifyPlanStatus('Status: Abandoned\nStatus: In Progress\n'), 'in progress');
+});
+
+// The anchoring rules, which are the whole reason this is a regex and not an
+// indexOf. Body prose must not classify a plan, and the value must share the
+// header's line.
+test('classifyPlanStatus ignores body prose and a value on the next line', () => {
+    assert.strictEqual(classifyPlanStatus('Status: In Progress\n\nThis plan is Complete in spirit.\n'), 'in progress');
+    assert.strictEqual(classifyPlanStatus('The status: Complete was reached.\n'), 'unknown',
+        'a mid-line "status:" is not a header');
+    assert.strictEqual(classifyPlanStatus('Status:\nComplete\n'), 'unknown',
+        'a bare Status: line above a line beginning Complete must not classify');
+    assert.strictEqual(classifyPlanStatus('status:\tcomplete\n'), 'complete',
+        'horizontal whitespace and case are both tolerated');
+});
+
+// Proposed is the value this must NOT treat as closed. docs/plans/ holds
+// Proposed stubs by design (14 of them at the time of writing), so a predicate
+// that swept them would nudge to archive every parked design and, through
+// armGoal, refuse to arm a leash on a stub someone just decided to build.
+test('isClosedPlanStatus covers the two close-outs and nothing else', () => {
+    assert.strictEqual(isClosedPlanStatus('complete'), true);
+    assert.strictEqual(isClosedPlanStatus('abandoned'), true);
+    assert.strictEqual(isClosedPlanStatus('proposed'), false);
+    assert.strictEqual(isClosedPlanStatus('in progress'), false);
+    assert.strictEqual(isClosedPlanStatus('unknown'), false);
+});
+
+// planHead is now a thin read around the classifier, so this pins the seam
+// rather than the classification: the status it reports is the classifier's.
+test('planHead reports the classifier value, Abandoned included', () => {
+    const repo = makeRepo();
+    try {
+        writePlan(repo, 'docs/plans/gone.md', 'Status: Abandoned\nClosed: 2026-09-04\n');
+        assert.deepStrictEqual(planHead(repo, 'docs/plans/gone.md'), { exists: true, status: 'abandoned' });
+        writePlan(repo, 'docs/plans/stub.md', 'Status: Proposed\n');
+        assert.deepStrictEqual(planHead(repo, 'docs/plans/stub.md'), { exists: true, status: 'proposed' });
+    } finally {
+        rmRepo(repo);
+    }
+});
+
+// Before the classifier knew `abandoned`, this fell through to 'unknown' and
+// armGoal succeeded: a completion leash armed on a plan whose close-out had
+// already happened.
+test('armGoal rejects a plan whose header is Status: Abandoned', () => {
+    const repo = makeRepo();
+    try {
+        writePlan(repo, 'docs/plans/gone.md', 'Status: Abandoned\nClosed: 2026-09-04\n');
+        const result = armGoal(repo, 'docs/plans/gone.md');
+        assert.strictEqual(result.ok, false);
+        assert.match(result.reason, /Abandoned/);
+        assert.ok(!fs.existsSync(goalPath(repo)), 'no state file should be written on rejection');
+    } finally {
+        rmRepo(repo);
+    }
+});
+
+// The pin against over-broadening the refusal: a Proposed stub is exactly what a
+// user arms a leash on when they decide to build it, so it must still arm.
+test('armGoal still arms on a Proposed stub', () => {
+    const repo = makeRepo();
+    try {
+        writePlan(repo, 'docs/plans/stub.md', 'Status: Proposed\nCommit Model: Commit-and-Push\n');
+        const result = armGoal(repo, 'docs/plans/stub.md');
+        assert.strictEqual(result.ok, true, result.reason);
+        assert.ok(fs.existsSync(goalPath(repo)));
     } finally {
         rmRepo(repo);
     }

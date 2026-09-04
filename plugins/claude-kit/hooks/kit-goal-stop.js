@@ -54,7 +54,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { readGoal, planHead, clearGoal, bindSession } = require('./kit-goal-lib.js');
+const { readGoal, planHead, clearGoal, bindSession, isClosedPlanStatus } = require('./kit-goal-lib.js');
 
 function readStdin() {
     try { return fs.readFileSync(0, 'utf8'); } catch { return ''; }
@@ -369,9 +369,14 @@ function main() {
         return;
     }
 
-    // Clause (a): the plan is done or archived.
+    // Clause (a): the plan is done or archived. "Done" means CLOSED rather than
+    // Complete: abandoning a plan is a close-out too (`docs/README.md`: a plan moves
+    // to archive/ "in the close-out that completes or abandons it"), so a leash must
+    // not keep holding a session to a plan that was abandoned. A correctly archived
+    // one already released here via the file-is-gone branch below; this covers the
+    // window where the status changed and the move has not happened yet.
     const head = planHead(cwd, planRel);
-    if (head.exists && head.status === 'complete') {
+    if (head.exists && isClosedPlanStatus(head.status)) {
         try { clearGoal(cwd); } catch { /* clearing is best-effort */ }
         return;
     }

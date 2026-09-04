@@ -770,3 +770,40 @@ test('bound goal, Stop payload missing session_id entirely: empty stdout (the do
         rmDir(repo);
     }
 });
+
+// Clause (a) reads CLOSED rather than Complete, from 2026-09-04. Abandoning a
+// plan is a close-out too (docs/README.md: a plan moves to archive/ "in the
+// close-out that completes or abandons it"), so a leash must not keep holding a
+// session to a plan somebody abandoned. A correctly archived plan already
+// released via the file-is-gone branch; this covers the window where the status
+// changed and the move has not happened yet, which is exactly the state
+// session-start.js now nudges about.
+test('goal armed, plan Status: Abandoned: empty stdout AND goal auto-cleared', () => {
+    const { repo, transcript } = armedRepo(['Abandoning this one.'], 'Status: Abandoned');
+    try {
+        assert.ok(fs.existsSync(path.join(repo, '.kit', 'goal-state.json')), 'setup: goal armed');
+        const res = runHook({ cwd: repo, transcript_path: transcript });
+        assert.strictEqual(res.stdout, '');
+        assert.strictEqual(res.status, 0);
+        assert.ok(!fs.existsSync(path.join(repo, '.kit', 'goal-state.json')), 'goal auto-cleared on Abandoned');
+    } finally {
+        rmDir(repo);
+    }
+});
+
+// The pin against widening clause (a) to "anything not In Progress". A Proposed
+// stub is what a user arms a leash on the moment they decide to build it, so the
+// leash must still HOLD there, and holding means the hook blocks the stop.
+test('goal armed, plan Status: Proposed: the leash still holds', () => {
+    const { repo, transcript } = armedRepo(['Still going.'], 'Status: Proposed');
+    try {
+        const res = runHook({ cwd: repo, transcript_path: transcript });
+        assert.strictEqual(res.status, 0);
+        assert.notStrictEqual(res.stdout, '',
+            'a Proposed plan is not closed out: the leash must not release');
+        assert.ok(fs.existsSync(path.join(repo, '.kit', 'goal-state.json')),
+            'goal must stay armed on a Proposed plan');
+    } finally {
+        rmDir(repo);
+    }
+});

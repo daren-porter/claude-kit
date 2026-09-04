@@ -1094,3 +1094,72 @@ test('a FIFO in place of the CLAUDE.md version marker does not hang session star
         assert.match((res.stdout || '').trim(), /^\{/, 'the hook must still emit its payload');
     } finally { rmDir(cwd); rmDir(home); }
 });
+
+// ---------------------------------------------------------------------------
+// The unarchived close-out nudge, which had NO direct coverage until 2026-09-04
+// and is why the Abandoned gap survived from the nudge's introduction.
+//
+// docs/README.md is the authority: docs/plans/ "holds active plans only", and a
+// plan moves to archive/ "in the close-out that completes or abandons it". The
+// scan only ever looked for Complete, so an Abandoned doc left in plans/ was a
+// silently-missed close-out. Measured before the fix: an Abandoned fixture raised
+// no nudge while a byte-identical Complete one did.
+
+const UNARCHIVED = /plan doc\(s\) in docs\/plans\/ are closed out but still sit there unarchived/;
+
+function runWithPlanStatus(prefix, status) {
+    const cwd = makeKitRepo(prefix, doc(`Last pass: ${daysAgo(3)}`));
+    fs.mkdirSync(path.join(cwd, 'docs', 'plans'), { recursive: true });
+    writeFile(path.join(cwd, 'docs', 'plans', 'thing_spec_v1.md'),
+        `# Fixture\n\nStatus: ${status}\nCommit Model: Commit-and-Push\n`);
+    try {
+        return { cwd, ...runHook(cwd) };
+    } finally { rmDir(cwd); }
+}
+
+test('a Status: Complete plan left in docs/plans/ raises the close-out nudge', () => {
+    const { status, context } = runWithPlanStatus('ssa-unarch-complete-', 'Complete');
+    assert.strictEqual(status, 0);
+    assert.match(context, UNARCHIVED);
+    assert.match(context, /thing_spec_v1\.md \(Status: Complete\)/,
+        'the nudge names which close-out it found, since Complete and Abandoned differ');
+});
+
+// The regression this whole change exists for.
+test('a Status: Abandoned plan left in docs/plans/ raises the close-out nudge', () => {
+    const { status, context } = runWithPlanStatus('ssa-unarch-abandoned-', 'Abandoned');
+    assert.strictEqual(status, 0);
+    assert.match(context, UNARCHIVED);
+    assert.match(context, /thing_spec_v1\.md \(Status: Abandoned\)/);
+});
+
+// THE PIN AGAINST THE WRONG FIX, and the one that matters most here. Widening the
+// predicate to "not In Progress" would sweep every Proposed stub, and this repo
+// keeps 14 of them in docs/plans/ on purpose. That fix passes the two tests above
+// and fails this one.
+test('a Status: Proposed stub in docs/plans/ raises nothing at all', () => {
+    const { status, context } = runWithPlanStatus('ssa-unarch-proposed-', 'Proposed');
+    assert.strictEqual(status, 0);
+    assert.doesNotMatch(context, UNARCHIVED,
+        'a Proposed stub lives in docs/plans/ by design and is not a missed close-out');
+    assert.doesNotMatch(context, /\(Commit Model/,
+        'nor is it an active plan to recover');
+});
+
+test('an In Progress plan is recovered and never called unarchived', () => {
+    const { status, context } = runWithPlanStatus('ssa-unarch-active-', 'In Progress');
+    assert.strictEqual(status, 0);
+    assert.doesNotMatch(context, UNARCHIVED);
+    assert.match(context, /- docs\/plans\/thing_spec_v1\.md \(Commit Model: Commit-and-Push\)/);
+});
+
+// A closed plan must not be recovered as active as well as nudged about: the two
+// blocks would contradict each other in the same injected context.
+test('a closed plan is nudged about but not recovered as active', () => {
+    for (const s of ['Complete', 'Abandoned']) {
+        const { context } = runWithPlanStatus('ssa-unarch-both-', s);
+        assert.match(context, UNARCHIVED, s);
+        assert.doesNotMatch(context, /\(Commit Model/,
+            `${s} must not also be recovered as an active plan`);
+    }
+});

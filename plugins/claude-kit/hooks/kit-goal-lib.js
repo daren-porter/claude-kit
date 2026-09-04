@@ -34,9 +34,45 @@ function readGoal(cwd) {
     }
 }
 
+// Classify a plan's Status header from text already read. Pure: no I/O, so it
+// is the one place the classification lives and the only thing that has to be
+// tested to trust all three callers.
+//
+// SINGLE SOURCE. This lived in three copies - here and twice in
+// `session-start.js` - kept in step by comments asserting they were identical.
+// Consolidated 2026-09-04 when the classifier gained `abandoned`, which is the
+// trigger `docs/backlog.md` named for doing it rather than editing three copies.
+//
+// Anchored to a line start (m flag) so body prose cannot match, and the value
+// must sit on the same line as the header (`[^\S\r\n]*` is horizontal
+// whitespace only, never a newline), so a bare "Status:" line above a line
+// beginning "Complete" does not misclassify the plan. Callers strip a leading
+// UTF-8 BOM (PowerShell Set-Content writes one) before the anchor sees it.
+//
+// IN PROGRESS WINS over every other value, preserving the original
+// `complete && !inProgress` rule: a plan doc that names two statuses is live
+// until its close-out says otherwise, which is the safe direction for a leash.
+function classifyPlanStatus(head) {
+    const text = String(head || '');
+    if (/^status:[^\S\r\n]*in[^\S\r\n]*progress/im.test(text)) return 'in progress';
+    if (/^status:[^\S\r\n]*complete/im.test(text)) return 'complete';
+    if (/^status:[^\S\r\n]*abandoned/im.test(text)) return 'abandoned';
+    if (/^status:[^\S\r\n]*proposed/im.test(text)) return 'proposed';
+    return 'unknown';
+}
+
+// Whether a status means the plan's close-out has happened, so the doc belongs in
+// docs/archive/ and nothing should still be holding a leash on it. `docs/README.md`
+// is the authority: plans/ "holds active plans only", and a plan moves to archive/
+// "in the close-out that completes OR ABANDONS it". Proposed is NOT closed - a
+// Proposed stub lives in plans/ by design.
+function isClosedPlanStatus(status) {
+    return status === 'complete' || status === 'abandoned';
+}
+
 // Read the first 2KB of a plan file and classify its Status header.
-// Returns { exists, status } where status is 'complete', 'in progress', or
-// 'unknown'. exists is false when the file cannot be opened at all.
+// Returns { exists, status } where status is any classifyPlanStatus value.
+// exists is false when the file cannot be opened at all.
 function planHead(cwd, planRel) {
     const full = path.join(cwd, planRel);
     let fd;
@@ -56,18 +92,7 @@ function planHead(cwd, planRel) {
         const bytes = fs.readSync(fd, buf, 0, 2048, 0);
         let head = buf.toString('utf8', 0, bytes);
         if (head.charCodeAt(0) === 0xFEFF) head = head.slice(1);
-        // Classify from the Status header only: anchored to a line start (m flag)
-        // so body prose cannot match, and the value must sit on the same line as
-        // the header ([^\S\r\n]* is horizontal whitespace only, never a newline),
-        // so a bare "Status:" line above a line beginning "Complete" or "in
-        // progress" does not misclassify the plan. A leading UTF-8 BOM (PowerShell
-        // Set-Content writes one) is stripped above so the anchor sees the header.
-        // The Status header sits on its own line near the top by convention.
-        const inProgress = /^status:[^\S\r\n]*in[^\S\r\n]*progress/im.test(head);
-        const complete = /^status:[^\S\r\n]*complete/im.test(head) && !inProgress;
-        let status = 'unknown';
-        if (complete) status = 'complete';
-        else if (inProgress) status = 'in progress';
+        const status = classifyPlanStatus(head);
         return { exists: true, status };
     } catch {
         return { exists: true, status: 'unknown' };
@@ -115,7 +140,8 @@ function normalizePlanArg(cwd, planArg) {
 
 // Validate the plan argument, then write the goal-state file atomically
 // (tmp file + rename). Returns { ok:true, plan } on success or
-// { ok:false, reason } on any failure: a bad path, a missing or Complete plan,
+// { ok:false, reason } on any failure: a bad path, a missing plan, a plan already
+// closed (Complete or Abandoned),
 // or an unexpected filesystem error, which is caught and reported rather than
 // thrown. This keeps the whole exported surface non-throwing.
 function armGoal(cwd, planArg) {
@@ -128,8 +154,11 @@ function armGoal(cwd, planArg) {
     if (!head.exists) {
         return { ok: false, reason: 'plan not found: ' + rel };
     }
-    if (head.status === 'complete') {
-        return { ok: false, reason: 'plan is already Complete: ' + rel };
+    // Refuse a closed plan, not just a Complete one: arming a completion leash on
+    // an abandoned plan cannot be what anyone meant, and before the classifier knew
+    // `abandoned` this fell through to 'unknown' and armed successfully.
+    if (isClosedPlanStatus(head.status)) {
+        return { ok: false, reason: `plan is already ${head.status === 'complete' ? 'Complete' : 'Abandoned'}: ` + rel };
     }
 
     const gp = goalPath(cwd);
@@ -220,4 +249,7 @@ function clearGoal(cwd) {
     }
 }
 
-module.exports = { goalPath, readGoal, armGoal, bindSession, clearGoal, composeCondition, planHead };
+module.exports = {
+    goalPath, readGoal, armGoal, bindSession, clearGoal, composeCondition, planHead,
+    classifyPlanStatus, isClosedPlanStatus
+};

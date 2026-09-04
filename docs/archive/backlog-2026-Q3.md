@@ -134,3 +134,47 @@ quarter rather than being written once.
   guard is broken. A docs-only commit skips it deliberately, since most commits here are docs and
   the suite costs about 4.5 seconds. It inherits the validation's known limitation, keying on
   staged paths while running against the working tree, accepted for the same reason.
+
+- **Extract a shared plan-status helper (opened 2026-07-24, closed 2026-09-04).** The anchored
+  Status-header classifier lived in three copies, `kit-goal-lib`'s `planHead` and `session-start.js`
+  twice, kept in step by comments asserting they were identical. The item was **conditional**, not
+  imperative: "if the classifier gains nuance (an Abandoned status, say), single-source those three
+  rather than editing three copies." Closed because the condition fired, and it fired on a real
+  defect rather than on a wish.
+
+  **The defect, measured before anything was touched.** `docs/README.md` says `docs/plans/` "holds
+  active plans only" and that a plan moves to `archive/` "in the close-out that completes **or
+  abandons** it". The unarchived-close-out nudge only ever looked for `Status: Complete`, so an
+  Abandoned doc left in `plans/` was a silently-missed close-out. A four-status probe against the
+  shipped hook: `Complete` nudged, `Abandoned` did not, `In Progress` was recovered as active, and
+  `Proposed` correctly raised nothing. That nudge had **no direct test coverage at all**, which is
+  why the gap survived from its introduction; it was mentioned in `test/stop-docs-hygiene.test.js`
+  only as a deliberate non-behavior of a different hook.
+
+  Now `classifyPlanStatus(head)` in `kit-goal-lib.js`, pure and I/O-free, returning
+  `in progress` | `complete` | `abandoned` | `proposed` | `unknown`, with `isClosedPlanStatus`
+  beside it. **In Progress still wins over every other value**, preserving the original
+  `complete && !inProgress` rule, because a doc naming two statuses is live until its close-out
+  says otherwise and the alternative releases a leash on work still running. `stop-docs-hygiene.js`
+  was deliberately NOT folded in, per this item's own instruction: its regex asks only whether a
+  Status header exists at all, a different and simpler question.
+
+  **Three consumers gained the nuance, and the leash half was the non-obvious part.** The nudge now
+  reports closed docs and names which close-out each one is, since Complete and Abandoned are not
+  interchangeable to a reader about to move a file. `armGoal` refuses a closed plan rather than only
+  a Complete one: before this, an Abandoned plan classified as `unknown` and a completion leash
+  armed on it successfully. And `kit-goal-stop`'s clause (a) releases on closed, so a leash cannot
+  hold a session to an abandoned plan; a correctly archived one already released through the
+  file-is-gone branch, and this covers the window where the status changed and the move has not
+  happened yet, which is precisely the state the nudge now flags.
+
+  **The over-broadening guard is the pin to keep.** The tempting fix is "anything not In Progress",
+  which sweeps every `Status: Proposed` stub, and this repo keeps 14 in `docs/plans/` on purpose.
+  Three pins fail that fix while passing the two Abandoned ones: a Proposed stub raises nothing, it
+  still arms a leash, and the leash still holds on it. Ten of the new pins were watched failing
+  against the pre-change code before being trusted.
+
+  Also fixed in passing: a comment added to `readCapped` earlier the same day claimed
+  `session-start.js` "stays dependency-free by design". False, and the change disproved it: that
+  hook already lazily requires three sibling libs, and the header's "no dependencies" means no npm
+  packages.
