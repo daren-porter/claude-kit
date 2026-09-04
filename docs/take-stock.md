@@ -131,9 +131,70 @@ instance", a file that exists nowhere on disk, so the merged framing was reached
 already.
 
 Not taken because it is a compression and owes the compression bill in full: a fixed claim
-unit, a two-directional inventory over roughly 28 lines, and a probe. That is the honest cost
-and it is the user's to authorize, not a thing to slip in at the end of a long pass. It is
-recorded here so the next pass starts from the mapping rather than the intention.
+unit, a two-directional inventory over roughly 28 lines, and a probe. **The unit and the
+inventory were then done in this same pass and are recorded below, so the next attempt starts
+from the mapping.** The probe was not run, for the reason the mapping itself produced.
+
+#### The unit, fixed before the mapping and not after
+
+Adopted verbatim from `:315-317` rather than invented: one claim is one thing the section
+asserts that a reader could act on differently if it were absent, being a directive, a bar, a
+permission, a named exception, or an assertion about how something behaves. An example and a
+restatement are not claims. Where it was unclear whether something was one claim or two, it was
+split, per the same rule.
+
+#### The inventory: 15 claims across `:233-260`
+
+| # | Claim | Trigger, verbatim | Attached content |
+|---|---|---|---|
+| I1 | Reps that run in parallel need one fixture each | "Reps that run in parallel" | 2026-08-14, three reps on one output path |
+| I2 | The leak rules govern what a rep can read; this one governs what two reps can write | unconditional | none |
+| I3 | Whether a rep took the action under test survives a collision; any judgment of what it produced does not | unconditional | none |
+| I4 | Copy the fixture once per rep and point each rep at its own copy | unconditional | none |
+| I5 | The failure is silent unless a rep mentions it, so do not rely on noticing | unconditional | 2026-08-14, the rep's "rewritten on disk by an outside process twice" |
+| J1 | The kaizen inbox is that same hazard with no fixture in it | unconditional | none |
+| J2 | The posture rule sends every rep to `notes.md`, so a rep files a note on the gap under test and a concurrent rep reads it as prior art | "a rep testing a kit skill" | 2026-08-15, "the kaizen notes for both frictions are already filed" |
+| J3 | Clear the inbox before an arm and read it after, counting what is in it as those reps' output | "before an arm" | none |
+| J4 | That buys attribution and not isolation | unconditional | 2026-08-15, rep 2 read rep 1's note mid-arm |
+| J5 | Isolation costs serial dispatch with a clear between reps | "if you want isolation" | none |
+| J6 | The arm that earns serial-dispatch-with-clear is RED | "RED-side arms" | 2026-08-15, five arms, only RED produced inbox writes |
+| J7 | Scoped any wider, the exception swallows the parallel default | unconditional | the posture rule points every rep at that file |
+| J8 | Nothing about this announces itself | unconditional | every rep followed a standing rule correctly; the file is kit-owned |
+| K1 | Reps' own outputs travel the same way | unconditional | 2026-08-15, a probe read an earlier rep's gate file and reported its pre-fix wording as a finding |
+| K2 | Sweep both directions: clear what a rep could find before an arm, attribute what you find after | unconditional | none |
+
+#### What the mapping found, including against the compression's own motive
+
+**One genuine duplicate.** I5 and J8 assert the same claim, that this class of failure is
+silent, with different attached content. In a merged form that is one claim carrying two
+instances. That is a real finding and it is the compression's strongest ground.
+
+**Three framing sentences collapse to one.** I2's second half, J1 and K1's opener each exist to
+say "the same as the one above", which a single mechanism statement replaces: reps share mutable
+state beyond their fixture, and the surfaces are the fixture, the kaizen inbox and the shared
+scratchpad.
+
+**The compression's stated motive does not survive its own disposal rules, and this is the
+finding that stopped it.** The take-stock above justified the candidate partly on a fourth
+instance this pass hit and failed to recognize, an orphaned child writing into the next rep's
+fixture. But recognizing that case requires a claim none of the 15 makes, and `:344-346` is
+explicit: a claim in the shorter text with nothing opposite it "is new wording, whatever it was
+meant to be. Cut it, or take it to the bar above and pay what a new rule owes." So the merged
+form cannot cover the fourth instance and still be a compression. The generalization is an
+addition and stays parked as one.
+
+That leaves the compression standing on the duplicate and the three framing sentences, which is
+roughly 4 to 6 lines out of 28, or 2 to 3 percent of the section. `:337-341` then requires a
+before-probe wherever the motive is that the current wording does not land, and the honest
+prediction is that it comes back clean: the current text is explicit about all 15 claims, so a
+rep asked what the rules require of shared state will produce them from either version. Under
+`:341` that "disproves the motive and the compression proceeds on length alone".
+
+**So it proceeds on length alone or not at all, and 4 to 6 lines does not buy six probe reps
+and a paired review.** Recorded as still open, with the mapping done, the unit fixed and the
+duplicate located, so a later pass can execute it cheaply or fold it into whichever change
+finally lands the two parked additions, which is when the restructure stops being cosmetic and
+starts preventing a fourth and fifth "same hazard" paragraph.
 
 ### Why nothing came down
 
