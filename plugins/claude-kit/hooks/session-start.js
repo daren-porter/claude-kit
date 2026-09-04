@@ -254,8 +254,12 @@ function claudeMdSyncOffer() {
     let markerHash = null;
     try {
         const read = readCapped(marker, 256);
-        // A BOM-prefixed marker used to compare unequal and offer forever, because
-        // this door was the one reader here that did not strip one. readCapped does.
+        // No behavior change from routing this door through readCapped: the .trim()
+        // below already handled a BOM, because U+FEFF is ECMAScript WhiteSpace and
+        // String.prototype.trim strips it. An earlier version of this comment
+        // claimed a BOM-prefixed marker "offered forever" before readCapped. That
+        // was false, disproved by writing the test for it and watching it pass
+        // against the pre-readCapped hook.
         if (read !== null) markerHash = read.text.trim();
     } catch {
         // No marker - never reconciled; offering is correct.

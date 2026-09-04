@@ -178,3 +178,39 @@ quarter rather than being written once.
   `session-start.js` "stays dependency-free by design". False, and the change disproved it: that
   hook already lazily requires three sibling libs, and the header's "no dependencies" means no npm
   packages.
+
+- **Pin the rest of the session-start surfacing with tests (opened 2026-07-24, updated 2026-08-10,
+  closed 2026-09-04).** The hook emits eight blocks and four lacked pins: armed-goal,
+  unarchived-Complete, the kaizen count, and the CLAUDE.md sync offer, with plan recovery
+  "exercised incidentally by the adoption fixtures rather than pinned on its own". Audited rather
+  than taken on trust, since the item's inventory was three weeks old: the kaizen count had since
+  gained `test/session-start-kaizen.test.js` (11 tests) and the unarchived block was pinned earlier
+  the same day by the plan-status work. **All eight now carry pins**, added to the existing harness
+  as the item instructed rather than in a new file.
+
+  **Armed-goal** had genuinely zero coverage in either session-start test file;
+  `test/kit-goal-stop.test.js` exercises the Stop hook, which is a different hook. Five pins, and
+  the one that matters is sanitization: the block interpolates a plan path read off disk into a
+  TRUSTED context channel, so a newline in `goal-state.json` could close the sentence and forge a
+  following instruction. Also pinned: the 120-character cap, and that unparseable goal state is
+  silence rather than a crash.
+
+  **The CLAUDE.md offer** was only ever kept QUIET - both harnesses write a matching version marker
+  on purpose - so nothing asserted it ever fires. Now pinned firing on an absent marker and on a
+  stale one, and quiet on a matching one, a BOM-prefixed one and one with trailing newlines.
+
+  **Plan recovery's real gap was the `source === 'compact'` branch, which had no coverage at all.**
+  That is the trigger the hook's own header calls critical ("Fires on startup, resume, and -
+  critically - after compaction"), so a silent regression there loses the plan on the one event the
+  hook exists for. Pinned both ways, plus the read-the-plan-in-full instruction that is the point
+  of the block, plus that an unrecognized Commit Model reports as `unknown` rather than echoing
+  repo text into the channel.
+
+  **One claim was disproved by writing its test, which is the useful part.** A comment shipped
+  earlier the same day said the version marker "used to compare unequal and offer forever" on a
+  BOM, because it was the one door here that did not strip one. False: `String.prototype.trim`
+  already stripped it, since U+FEFF is ECMAScript WhiteSpace. The test written to pin the fix
+  passed against the pre-change hook, which is what exposed it. Both live copies of the claim are
+  corrected; the commit message of `1042f68` still carries it and is immutable. The test is kept
+  as a guard rather than a fix pin, and now rests on two mechanisms, so it holds if either is
+  removed and fails only if both are.
