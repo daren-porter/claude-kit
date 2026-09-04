@@ -89,3 +89,48 @@ quarter rather than being written once.
   directory, and it vetoes any name match on a file carrying the plan-header contract, so an edit
   to an existing curated doc passes both. The comment was corrected in the same close-out. Whether
   the guard should reach interpreter writes at all is the open question and stays in `backlog.md`.
+
+- **Guard the remaining unbounded `openSync` calls in session-start.js (opened 2026-08-07, closed
+  2026-09-04).** A bounded read bounds bytes, not time: `openSync` on a FIFO blocks until a writer
+  appears, and the S4 security review hung the hook for 5 seconds this way before killing it,
+  against a file header promising "Never blocks". S4 had added its `statSync().isFile()` guard to
+  one helper only, leaving four readers opening blind: both plan scans, the CLAUDE.md version
+  marker, and the shipped asset (whose `statSync` checked size and not `isFile`, so its
+  `readFileSync` blocked just as an `openSync` would). Closed by routing **all six** file doors
+  through one local `readCapped`, the atomic form the backlog item itself prescribed and
+  `hooks/memory-lib.js` already carried: open with `O_RDONLY | O_NONBLOCK`, then check
+  `fstatSync(fd).isFile()` on the descriptor already held. That also closes the stat-then-open
+  TOCTOU window the finishing security review noted on the two doors that *were* guarded, so the
+  fix is strictly better than the item asked for rather than equal to it.
+
+  **Two things the change had to get right and nearly did not.** The CLAUDE.md offer hashes the
+  asset's raw bytes and compares against a marker written by the reconcile skill, so hashing the
+  helper's BOM-stripped string would have mismatched every existing marker and fired a spurious
+  reconcile offer for every user on their next session; the helper returns `raw` alongside `text`
+  for exactly that caller. And the adoptions reader compares its raw byte count against its cap to
+  refuse a match landing on a filled buffer's edge, so the helper returns `bytes` too rather than
+  only a `truncated` flag.
+
+  Three new FIFO pins, on the doors that had none, and **each was watched failing against the
+  unguarded hook before being trusted** (they fail as a killed child with a null status rather than
+  a bad assertion, since a regression re-introduces a block and not a wrong answer): a FIFO as the
+  only entry in `docs/plans/`, a FIFO beside a readable plan (the pin against wrapping the loop in
+  one try/catch and losing the good entry with the bad), and a FIFO at the version marker. The two
+  pre-existing FIFO pins covered only the two doors that were already guarded.
+
+- **Nothing runs the test gate automatically (opened 2026-08-07, closed 2026-09-04).** No CI, no
+  `package.json`, and no runner beyond a command in the README, so every guard the suite pins was
+  only as good as someone remembering. Surfaced by the S4 security review as change-management
+  hygiene. Closed by adding the gate to `.githooks/pre-commit`, which already existed and was
+  already wired, keyed on staged paths under `plugins/claude-kit/hooks/`, `tools/` or `test/` the
+  same way its plugin validation keys on `plugins/claude-kit/`. It runs BEFORE the validation
+  branch, because that branch exits early when no plugin path is staged and the suite also covers
+  `tools/` and `test/`.
+
+  **Chosen over a CI job** because this repo has no CI and adding one is a larger decision than
+  this item, **and over leaving it a documented runner** because that is precisely what existed
+  and had failed. Unlike the validation it is a HARD gate: node is always present since it runs
+  the hooks, so there is no absent-tool case to be soft about, and a red suite means a shipped
+  guard is broken. A docs-only commit skips it deliberately, since most commits here are docs and
+  the suite costs about 4.5 seconds. It inherits the validation's known limitation, keying on
+  staged paths while running against the working tree, accepted for the same reason.

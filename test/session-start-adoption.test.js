@@ -1023,3 +1023,74 @@ test('the decay nudge coexists with the other blocks and lands ahead of the memo
             'the nudge sits in the reminder stack, ahead of the reference block: ' + context);
     } finally { rmDir(cwd); rmDir(store); }
 });
+
+// ---------------------------------------------------------------------------
+// The remaining file doors, which were unguarded until 2026-09-04.
+//
+// The FIFO pin above covered the adoptions reader only, because S4 added its
+// statSync().isFile() guard to that one helper. Backlog item "Guard the
+// remaining unbounded openSync calls in session-start.js" named four readers
+// that still opened blind: both plan scans, the CLAUDE.md version marker, and
+// the shipped asset. All six doors now go through readCapped, which opens with
+// O_RDONLY | O_NONBLOCK and checks fstatSync(fd).isFile() on the descriptor it
+// already holds - atomic, so it also closes the stat-then-open TOCTOU window the
+// finishing security review noted.
+//
+// These pins are only as good as the spawn timeout: a regression re-introduces a
+// BLOCK, not a wrong answer, so the failure shows up as a killed child with a
+// null status rather than as a bad assertion.
+
+// Asserted directly rather than through assertNoNudge, which requires a readable
+// In Progress plan to be recovered: here the FIFO is the ONLY entry in plans/, so
+// there is correctly nothing to recover and the whole claim is that the hook still
+// answers. Both the active-plan recovery scan and findCompletedUnarchived walk this
+// directory, so one FIFO exercises both doors in a single spawn.
+test('a FIFO as the only entry in docs/plans/ does not hang either plan scan', () => {
+    const cwd = makeKitRepo('ssa-fifo-plan-', doc(`Last pass: ${daysAgo(3)}`));
+    try {
+        fs.mkdirSync(path.join(cwd, 'docs', 'plans'), { recursive: true });
+        const made = spawnSync('mkfifo', [path.join(cwd, 'docs', 'plans', 'blocked_spec_v1.md')], { encoding: 'utf8' });
+        if (made.error || made.status !== 0) return;   // no mkfifo: nothing to pin
+        const { status, context } = runHook(cwd);
+        assert.strictEqual(status, 0, 'a FIFO plan doc must be skipped, not blocked on');
+        assert.strictEqual(context, '',
+            'a FIFO is not a plan: it must yield no recovery and no unarchived-Complete nudge');
+    } finally { rmDir(cwd); }
+});
+
+// A real plan beside the FIFO: the scan must skip the unreadable entry and still
+// classify the readable one, rather than the FIFO aborting the whole sweep. This
+// is the pin against the lazy fix of wrapping the loop in one try/catch.
+test('a FIFO in docs/plans/ does not suppress a readable plan beside it', () => {
+    const cwd = makeKitRepo('ssa-fifo-mixed-', doc(`Last pass: ${daysAgo(3)}`), true);
+    try {
+        const made = spawnSync('mkfifo', [path.join(cwd, 'docs', 'plans', 'blocked_spec_v1.md')], { encoding: 'utf8' });
+        if (made.error || made.status !== 0) return;
+        const { status, context } = runHook(cwd);
+        assert.strictEqual(status, 0);
+        assert.match(context, /proj_thing_spec_v1\.md/,
+            'the readable In Progress plan must still be recovered past the FIFO');
+        assert.doesNotMatch(context, /blocked_spec_v1/,
+            'the FIFO itself is not a plan and must not be reported as one');
+    } finally { rmDir(cwd); }
+});
+
+test('a FIFO in place of the CLAUDE.md version marker does not hang session start', () => {
+    const home = makeDir('ssa-fifo-marker-home-');
+    const cwd = makeKitRepo('ssa-fifo-marker-', doc(`Last pass: ${daysAgo(3)}`));
+    try {
+        fs.mkdirSync(path.join(home, '.claude'), { recursive: true });
+        const made = spawnSync('mkfifo', [path.join(home, '.claude', '.claude-kit-md-version')], { encoding: 'utf8' });
+        if (made.error || made.status !== 0) return;
+        const res = spawnSync(process.execPath, [HOOK], {
+            input: JSON.stringify({ cwd, source: 'startup', hook_event_name: 'SessionStart' }),
+            env: { ...process.env, HOME: home, USERPROFILE: home, CLAUDE_KIT_MEMORY_DIR: NO_STORE },
+            encoding: 'utf8',
+            timeout: 15000
+        });
+        assert.strictEqual(res.status, 0, 'an unreadable marker must not hang or crash the hook');
+        // An unreadable marker reads as never-reconciled, which correctly offers.
+        // What is pinned here is that it ANSWERS at all.
+        assert.match((res.stdout || '').trim(), /^\{/, 'the hook must still emit its payload');
+    } finally { rmDir(cwd); rmDir(home); }
+});

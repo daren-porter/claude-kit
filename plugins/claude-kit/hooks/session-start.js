@@ -22,6 +22,44 @@ function readStdin() {
     }
 }
 
+// Atomic bounded read, and the only file door in this hook. Opening
+// non-blocking and THEN checking the descriptor is what makes it safe: openSync
+// on a FIFO blocks until a writer appears, which would hang a hook whose header
+// promises never to block (the S4 security review hung it for 5s this way before
+// killing it), and a stat-then-open pair leaves a TOCTOU window that same review
+// noted. O_NONBLOCK is a no-op for regular files, so this costs nothing on the
+// expected path. `hooks/memory-lib.js`'s readCapped is the same idiom, kept
+// separate because this hook stays dependency-free by design.
+//
+// Returns null on ANY failure including a non-regular file, which every caller
+// treats as "nothing to report" - the silent direction this whole file takes.
+// `text` is BOM-stripped for the callers that parse it; `raw` is the untouched
+// bytes, because the CLAUDE.md offer hashes them and a hash over the stripped
+// string would change every existing marker and fire a spurious offer for every
+// user. `bytes` is the raw count read, which the adoptions reader compares
+// against its cap to refuse a match landing on a filled buffer's edge.
+function readCapped(file, cap) {
+    let fd;
+    try {
+        fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NONBLOCK);
+    } catch {
+        return null;
+    }
+    try {
+        const stat = fs.fstatSync(fd);
+        if (!stat.isFile()) return null;
+        const buf = Buffer.alloc(cap);
+        const bytes = fs.readSync(fd, buf, 0, cap, 0);
+        let text = buf.toString('utf8', 0, bytes);
+        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        return { text, raw: buf.subarray(0, bytes), bytes, truncated: stat.size > bytes };
+    } catch {
+        return null;
+    } finally {
+        try { fs.closeSync(fd); } catch { /* already closed or invalid */ }
+    }
+}
+
 // Count pending kaizen items (raw notes + briefs) in the home-level inbox.
 // Only nudges inside the kit repo itself: friction is captured from anywhere,
 // but the reminder to act belongs where the user can act. Injects only a count,
@@ -38,38 +76,25 @@ function countPendingKaizen(cwd) {
         // Bounded read (the plan-scan idiom): never pull a huge file into
         // memory just to count what is in it.
         const notes = path.join(inbox, 'notes.md');
-        // Stat BEFORE opening: openSync on a FIFO blocks forever, so a check on an
-        // already-open descriptor never runs and the header's "never blocks" would
-        // be false. Same guard and same reason as adoptionPassElapsedDays below.
-        const st = fs.statSync(notes);
-        if (!st.isFile()) throw new Error('notes.md is not a regular file');
-        const size = st.size;
-        const buf = Buffer.alloc(65536);
-        const fd = fs.openSync(notes, 'r');
-        let bytes;
-        try {
-            bytes = fs.readSync(fd, buf, 0, 65536, 0);
-        } finally {
-            fs.closeSync(fd);
-        }
+        const read = readCapped(notes, 65536);
+        if (read === null) throw new Error('notes.md is not readable as a regular file');
         // A bounded read past the buffer counts only what it saw, and an undercount
         // that says nothing is the same failure this counter was fixed for. The
         // count becomes a floor and the caller says so, rather than a number that
         // looks exact. At the observed 727 bytes per note (18,898 bytes over the
         // 26 notes of 2026-08-31) 64KB holds about 90, so this is a guard rather
         // than an expected path.
-        truncated = size > bytes;
+        truncated = read.truncated;
         // Count ENTRIES, never lines. A note is one or more lines opening at
         // column zero with its capture date, optionally bulleted, and a long note
         // runs to several lines: on 2026-08-31 the inbox held 26 notes across 49
         // non-blank lines, so the line count reported 49 and the operator planned
         // a pass around a number nearly double the real one.
-        let text = buf.toString('utf8', 0, bytes);
-        // Strip a BOM as the file's three other bounded readers do. Without it the
-        // first note's line reads `\uFEFF2026-...`, the anchor fails, and a
-        // single-note inbox falls to the floor below: an undercount the old
+        // BOM already stripped by readCapped, as every reader here needs: without
+        // it the first note's line reads `\uFEFF2026-...`, the anchor fails, and a
+        // single-note inbox falls to the floor below, an undercount the old
         // per-line count was immune to.
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+        const text = read.text;
         // A note's first line opens at column zero with the capture date, bare or
         // behind a bullet; continuations are indented, which is what keeps the
         // anchor unambiguous. The bullet set is wider than the capture rule's `- `
@@ -115,23 +140,13 @@ function adoptionPassElapsedDays(cwd) {
     if (!fs.existsSync(kitMarker)) return null;
 
     const doc = path.join(cwd, 'docs', 'kit-adoptions.md');
-    let fd;
+    // Bounded head read: the header sits at the top. A missing or non-regular file
+    // reads as no adoptions doc rather than something to nudge about.
+    const read = readCapped(doc, 2048);
+    if (read === null) return null;
     try {
-        // A non-regular file (a FIFO would block openSync forever on read) is
-        // treated as no adoptions doc rather than opened; kit-goal-lib's plan
-        // reader carries the same guard.
-        if (!fs.statSync(doc).isFile()) return null;
-        fd = fs.openSync(doc, 'r');
-    } catch {
-        // No readable adoptions doc - nothing to nudge about.
-        return null;
-    }
-    try {
-        // Bounded head read (the plan-scan idiom): the header sits at the top.
-        const buf = Buffer.alloc(2048);
-        const bytes = fs.readSync(fd, buf, 0, 2048, 0);
-        let head = buf.toString('utf8', 0, bytes);
-        if (head.charCodeAt(0) === 0xFEFF) head = head.slice(1);
+        const head = read.text;
+        const bytes = read.bytes;
         // Anchored at column zero like the plan scans, and anchored at both ends:
         // a heading or list-item form is not the contract, and a line carrying
         // anything past the date is not strict YYYY-MM-DD. \r? keeps CRLF files
@@ -159,10 +174,9 @@ function adoptionPassElapsedDays(cwd) {
         // A pass dated in the future is not an elapsed span.
         return days < 0 ? null : days;
     } catch {
-        // A read that fails after the open succeeded - nothing to nudge about.
+        // A parse that throws on bytes we did hold - nothing to nudge about.
+        // readCapped owns the descriptor, so there is nothing to close here.
         return null;
-    } finally {
-        try { fs.closeSync(fd); } catch { /* already closed or invalid */ }
     }
 }
 
@@ -183,12 +197,9 @@ function findCompletedUnarchived(plansDir) {
     for (const file of entries) {
         try {
             // Bounded head read (the plan-scan idiom): only the header matters.
-            const fd = fs.openSync(path.join(plansDir, file), 'r');
-            const buf = Buffer.alloc(2048);
-            const bytes = fs.readSync(fd, buf, 0, 2048, 0);
-            fs.closeSync(fd);
-            let head = buf.toString('utf8', 0, bytes);
-            if (head.charCodeAt(0) === 0xFEFF) head = head.slice(1);
+            const read = readCapped(path.join(plansDir, file), 2048);
+            if (read === null) continue;   // unreadable or not a regular file
+            const head = read.text;
             if (/^status:[^\S\r\n]*complete/im.test(head)
                 && !/^status:[^\S\r\n]*in[^\S\r\n]*progress/im.test(head)) {
                 files.push(file.replace(/[^\x20-\x7E]/g, '').slice(0, 120));
@@ -211,9 +222,13 @@ function claudeMdSyncOffer() {
     let assetHash;
     try {
         // Bound the read: our asset is tiny, so refuse to hash a pathological file
-        // rather than pull it in unbounded.
-        if (fs.statSync(recommended).size > 1024 * 1024) return false;
-        assetHash = crypto.createHash('sha256').update(fs.readFileSync(recommended)).digest('hex');
+        // rather than pull it in unbounded. Hashes read.raw, NOT read.text: the
+        // marker on disk holds a hash of the asset's bytes, so hashing the
+        // BOM-stripped string would mismatch every existing marker and fire a
+        // spurious reconcile offer for every user on their next session.
+        const asset = readCapped(recommended, 1024 * 1024);
+        if (asset === null || asset.truncated) return false;
+        assetHash = crypto.createHash('sha256').update(asset.raw).digest('hex');
     } catch {
         // No readable recommended asset - nothing to offer.
         return false;
@@ -223,11 +238,10 @@ function claudeMdSyncOffer() {
     const marker = path.join(os.homedir(), '.claude', '.claude-kit-md-version');
     let markerHash = null;
     try {
-        const fd = fs.openSync(marker, 'r');
-        const buf = Buffer.alloc(256);
-        const bytes = fs.readSync(fd, buf, 0, 256, 0);
-        fs.closeSync(fd);
-        markerHash = buf.toString('utf8', 0, bytes).trim();
+        const read = readCapped(marker, 256);
+        // A BOM-prefixed marker used to compare unequal and offer forever, because
+        // this door was the one reader here that did not strip one. readCapped does.
+        if (read !== null) markerHash = read.text.trim();
     } catch {
         // No marker - never reconciled; offering is correct.
     }
@@ -438,12 +452,9 @@ function main() {
                 // Only the header matters; read the first 2KB. Anchored predicate
                 // with BOM strip, identical to findCompletedUnarchived below, so
                 // the two scans can never classify one header differently.
-                const fd = fs.openSync(path.join(plansDir, file), 'r');
-                const buf = Buffer.alloc(2048);
-                const bytes = fs.readSync(fd, buf, 0, 2048, 0);
-                fs.closeSync(fd);
-                let head = buf.toString('utf8', 0, bytes);
-                if (head.charCodeAt(0) === 0xFEFF) head = head.slice(1);
+                const read = readCapped(path.join(plansDir, file), 2048);
+                if (read === null) continue;   // unreadable or not a regular file
+                const head = read.text;
                 if (/^status:[^\S\r\n]*in[^\S\r\n]*progress/im.test(head)) {
                     // The header is repo-controlled data bound for a trusted
                     // context channel: whitelist the model and sanitize the

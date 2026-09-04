@@ -1,11 +1,21 @@
 #!/bin/sh
-# pre-commit - validate the plugin payload when a commit touches it.
+# pre-commit - validate the plugin payload, and run the test gate, when a commit
+# touches either.
 #
 # When a commit touches plugins/claude-kit/, run `claude plugin validate` so a
 # frontmatter or manifest mistake fails the commit instead of shipping silently.
 # Skips with a stderr note when the `claude` CLI is absent rather than failing
 # the commit (this repo has no CI, so a soft gate beats a check that cannot run
 # anywhere).
+#
+# Then, when a commit touches code the suite covers, run the test gate. Chosen
+# over a CI job because this repo has no CI and adding one is a larger decision,
+# and over a documented runner because that is what already existed and it is
+# only as good as someone remembering. Keyed on staged paths for the same reason
+# the validation is: a docs-only commit pays nothing, which matters because most
+# commits here are docs. The suite is a HARD gate, unlike validation: node is
+# always present (it runs the hooks), so there is no absent-tool case to be soft
+# about, and a red suite means a shipped guard is broken.
 #
 # Known limitation: the gate keys on STAGED paths but validates the WORKING
 # TREE, so a partial stage can pass validation while committing an invalid
@@ -16,6 +26,19 @@
 
 REPO_ROOT=$(git rev-parse --show-toplevel) || exit 1
 cd "$REPO_ROOT" || exit 1
+
+# The test gate first, because the plugin-validate branch below exits early when
+# no plugin path is staged, and the suite covers tools/ and test/ too.
+#
+# Scope note: the gate keys on STAGED paths but runs against the WORKING TREE,
+# the same known limitation the validation below carries and accepted for the
+# same reason. A partial stage can therefore pass on unstaged fixes.
+if git diff --cached --name-only -- 'plugins/claude-kit/hooks/' 'tools/' 'test/' | grep -q .; then
+    if ! node --test test/*.test.js tools/*.test.js < /dev/null; then
+        echo "test gate failed; commit blocked (fix the suite or bypass with --no-verify)" >&2
+        exit 1
+    fi
+fi
 
 # Only validate when plugin sources are part of this commit.
 if ! git diff --cached --name-only -- 'plugins/claude-kit/' | grep -q .; then
