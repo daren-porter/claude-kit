@@ -22,6 +22,130 @@ the kaizen loop is captured friction, and friction can only ever ask for more wo
 spared entry is not praise: it names a rule and what was observed to happen because of it,
 which is the closure event `docs/backlog.md` has always asked for and nothing collected.
 
+## 2026-09-03 - 463a9114d569b7c7b1c0bd596d5fa20f5752b0a0
+
+Examined `skills/writing-skills/SKILL.md:99-293`, "Know it works before you trust it". Chosen
+on three grounds rather than the nudge's count: it is rank 1 in `tools/accretion.js` at product
+4095, about 2.4x the next row; it grew by 17 lines since the last marker via `cc69a30`; and a
+paired review earlier the same day had already partially examined it and reported that a
+55-line addition to it was substantially redundant with what it already said.
+
+**Zero cut and zero addition.** One compression candidate named and not taken, one located
+defect, eleven spared, one half-rule left unverdicted.
+
+**The instrument, stated because it is also the bias.** This pass had just run a full arm
+inside this section: eleven reps across a RED and a GREEN, one brief closed as answered, and a
+four-part change drafted, reviewed and reverted. So these rules were exercised rather than read
+cold, which is the strongest evidence a take-stock has had here, and it biases hard toward
+sparing. A session that has just used a rule successfully is the worst-placed reader to ask
+whether the rule should go. Read every spare below as "this fired today", never as "this seems
+right", and note that the bias runs one way: nothing in a successful arm surfaces a rule that
+was never needed.
+
+### Spared, each naming what was observed
+
+- **`:285-293`, "An arm cannot test whether new wording conflicts with what the skill file
+  already says."** The strongest spare in the section, and it fired twice in one day. First: a
+  drafted freeze clause specified a window running from step 2's dispatch to step 4's return,
+  which contradicts `finishing-work:8` mandating that steps 2 and 3's Criticals are fixed
+  BEFORE step 4 dispatches. No arm could reach that; it was caught by reading, because this
+  rule says to read. Second: the staging change's arms surfaced no conflict, and the paired
+  review that followed found a stale enumeration at `:230`, a contradiction with `:282`, a unit
+  rule at `:370-383` that already legislated the new rule, and a bolded lead at `:193` that the
+  addition itself falsified. That is the rule's predicted failure reproduced exactly, in the
+  same shape as its recorded 2026-08-16 instance.
+- **`:199-218`, "Absolute absence is not the bar" and its detection instrument.** Used on every
+  rep. The `agent-<agentId>.jsonl` plus `.meta.json` sidecar procedure is what proved one rep
+  had grepped the live cache copy, the repo copy and two inbox files, and what cleared three
+  others. Its "Do not ask the rep: that is self-report" clause was independently vindicated: a
+  rep's own report stated "No code was touched, nothing was staged" while its staged diff
+  carried the edit under test.
+- **`:151-153`, "Run three reps at least - one sample lies."** Observed directly. One rep alone
+  read as compliance, another alone read as failure, and eight dispatches were needed to yield
+  three in-state reps. The GREEN then returned 44, 46 and 57 on one fixture, which is the same
+  lesson from the other side.
+- **`:129-137`, "A rep that disagrees with your premise is a result, not a fixture defect."**
+  This is what classified an out-of-state rep, a contaminated rep and a pre-empting rep as
+  restage-or-discard while holding three compliance results that the pass did not want. Its own
+  test, that the distinction comes off the rep's transcript and never off your account of your
+  staging, is the one that was applied.
+- **`:174-190`, "The arm controls which copy of the skill the rep reads."** Every fixture
+  carried a pinned copy diffed against the repo at dispatch. It also produced a counter-case:
+  the copy nominates which text is authoritative and does not limit what the rep reads, since a
+  rep holding a byte-identical copy read both live copies anyway. Parked on the brief, not
+  taken here.
+- **`:163-172`, "Run RED before you persist the wording, and keep it out of three places."**
+  Held through every RED-side arm. It produced its own counter-case too, a fourth place the
+  list does not name, which is parked rather than shipped.
+- **`:191-198`, "The scratchpad bar is arm-scoped, not absolute for the effort."** Applied as
+  written: draft out of the scratchpad through RED, GREEN fixtures inside it, spent fixtures
+  quarantined between arms.
+- **`:262-275`, "The wording is not the only thing that leaks; so does the answer."** Directly
+  caused a fixture rename, because the previous fixture's identifier was named on disk by the
+  brief under test along with its acceptance criteria.
+- **`:277-284`, "An open question the repo documents primes rather than answers."** Observed: a
+  rep read the parked brief and reported its framing back.
+- **`:255-260`, "Reps' own outputs travel the same way."** Observed fresh. An orphaned reviewer
+  from a discarded rep wrote its report into the next rep's fixture, and that rep spent its
+  entire run investigating a "foreign report" rather than the task. That is this rule's
+  predicted failure, and it is also the counter-case against `:233` recorded below.
+- **`:211-231`, "A fixture's path leaks with nothing walked."** The section's newest content,
+  added by `cc69a30` since the last marker. Applied preventively: fixture copies were given
+  neutral names with no ordinal or grading segments in any ancestor, and no rep reported path
+  contamination. **A preventive rule succeeds by producing no event, so this is spared on the
+  incident that admitted it rather than on a sighting**, which is the correct bar for it and
+  not a weaker one.
+
+### Located defect, which is neither spared nor retired
+
+- **`:242-254`, "The kaizen inbox is that same hazard with no fixture in it."** The hazard is
+  real, but the prescribed mechanism contradicts the kit elsewhere. It says "Clear the inbox
+  before an arm and read it after"; `kaizen/SKILL.md:19` says `notes.md` is "append-only for
+  capture, rewritten only by a triage pass clearing what it triaged". An operator following
+  this section destroys untriaged friction outside a triage pass, with nothing to re-file it.
+  Surfaced by a blind reviewer, not by an arm. Filed to `notes.md`; the candidate fix is on
+  this side, taking attribution from a copy or a byte offset rather than by clearing.
+
+### Unverdicted, honestly
+
+- **`:138-150`, the third arm a narrowing owes.** The read-the-reasoning-not-the-output half of
+  this rule is spared and fired today: the pass's decisive finding came off two reps'
+  transcripts rather than their outputs. The narrowing half went unexercised, because the
+  change under test was an addition rather than a narrowing. Nobody has watched that half here.
+
+### One compression candidate, named and not taken
+
+`:233-260` states one mechanism three times as three rules: reps that run in parallel need one
+fixture each (`:233`), the kaizen inbox is that same hazard with no fixture in it (`:242`), and
+reps' own outputs travel the same way (`:255`). Each carries its own incident and its own
+prescription, and each opens by pointing at the previous one as the same thing.
+
+**Today supplied the cost of the current form rather than a preference about it.** The pass hit
+a fourth instance of exactly that mechanism, an orphaned child writing into the next rep's
+fixture, and did not connect it to any of the three, because they read as three separate
+hazards rather than as one mechanism with a general form. A merged statement, that reps share
+more state than their fixture and the shared surfaces are the fixture, the inbox and the
+scratchpad, would have covered the teardown case that cost this arm a rep. Corroboration that
+someone else already saw this: a brief in the inbox cites "`shared-mutable-state.md`'s fourth
+instance", a file that exists nowhere on disk, so the merged framing was reached and lost once
+already.
+
+Not taken because it is a compression and owes the compression bill in full: a fixed claim
+unit, a two-directional inventory over roughly 28 lines, and a probe. That is the honest cost
+and it is the user's to authorize, not a thing to slip in at the end of a long pass. It is
+recorded here so the next pass starts from the mapping rather than the intention.
+
+### Why nothing came down
+
+Not for want of looking, and the honest answer is uncomfortable: this section is the one the
+pass leaned on hardest, and nearly every rule in it earned itself inside a single day's work,
+with a named observed event rather than a plausible one. The section is rank 1 by accretion and
+the measurement says its rules are load-bearing, which are not in tension: it is the most
+accreted section because it is the most used one, and it accretes because every arm that goes
+wrong teaches it something new. Two of this pass's own counter-cases are parked as future
+additions to it, so the pressure on it is still upward. The compression above is the only
+identified route by which it gets shorter, and it stays open.
+
 ## 2026-09-01 - ce35c3d77404fc38b848c2ebeb85bca0b5d361d8
 
 Examined `writing-skills/SKILL.md`, "Know it works before you trust it", which
