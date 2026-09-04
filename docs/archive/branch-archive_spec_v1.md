@@ -1,8 +1,26 @@
 # Branch Archive Before Delete
 
-Status: Proposed
+Status: Abandoned
 Commit Model: Commit-and-Push
 Created: 2026-08-14
+Closed: 2026-09-04
+
+## Why this was abandoned
+
+Adjudicated by the operator in the 2026-09-04 kaizen triage, on the worth question this stub
+itself named as the first one to answer. **The motivating case does not exist.** The stub was
+proposed off a single run of `branch-hygiene`'s cleanup, and asked for a case where someone
+actually wanted the original commits of a squash-landed branch after deleting it. Nobody has
+wanted one, and the operator's judgment is that the existing behavior is fine.
+
+That is the outcome this stub's own Starting point section predicted and sanctioned: "If that case
+does not exist, the honest outcome is to close this stub Abandoned and leave `branch-hygiene`'s
+caveat sentence as the whole answer, which costs nothing and already tells the truth."
+
+The reachability asymmetry below is still true and is still stated where the sweep hands a branch
+back, so nothing is lost by closing this. **Revive it on one recorded instance** of someone
+wanting a squash-landed branch's original commit sequence after the ref was deleted, which is the
+evidence the design was always waiting on.
 
 ## Why this exists
 

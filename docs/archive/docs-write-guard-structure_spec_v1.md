@@ -1,8 +1,59 @@
 # docs-write-guard Reads Command Text, Not Command Structure
 
-Status: Proposed
+Status: Abandoned
 Commit Model: Commit-and-Push
 Created: 2026-09-04
+Closed: 2026-09-04
+
+## Why this was abandoned, the same day it was filed
+
+**Its own first design question was the answer.** That question was "whether any code change is
+warranted at all", and it named the alternative: leave the matcher alone, document the false block
+where an operator will hit it, and say to rephrase. That alternative shipped, and it closes this.
+
+Adjudicated on the operator's delegation in the 2026-09-04 kaizen triage. Three grounds, in order
+of weight:
+
+1. **The matcher fix has been examined twice and failed twice, both times in the dangerous
+   direction.** A tokenizer produced eight measured deny-to-allow regressions on real writes plus
+   a critical unbounded-allocation hang; blanking quoted spans produced three more, because the
+   redirect pattern deliberately matches a quoted target. A third mechanism was located this pass
+   and is recorded below, but building it means putting a small shell parser inside a fail-open
+   `PreToolUse` hook that fires on every tool call in every repository on this machine, with no
+   registered timeout. Attempt 1 already reached the right conclusion about that.
+2. **Matcher precision is not what makes this guard work, and the file says so.** Its header:
+   "the teeth are the role rule, not path spelunking." It already tolerates far larger holes by
+   design, since `python3`, `sed -i` and `Copy-Item` walk straight past it. Spending a shell
+   parser to sharpen a heuristic whose own author declared it a heuristic is the wrong trade.
+3. **The measured harm was the AMBIGUITY, not the block.** The friction as recorded is "a blocked
+   call plus a full read of the hook to decide whether retrying is legitimate or evasion." The
+   block costs one rephrase. The hook read costs far more, and it was caused by a denial message
+   that told a falsely-caught agent it "may not write into docs/" when it had not tried to.
+
+## What shipped instead, and it is small
+
+`docs-write-guard.js` now names the false-positive class in the denial, but **only on a
+command-matcher hit**, since Write/Edit are matched exactly by `file_path` and have no
+false-positive class:
+
+> If this command only MENTIONS a docs/ path rather than writing to one - a path inside a commit
+> message, a quoted string, or a heredoc body - this is a known false positive: the shell matcher
+> reads command text, not command structure. Rephrasing to avoid the literal string is legitimate
+> and is not an attempt to evade this guard.
+
+The false blocks still deny; the matcher is untouched. Two tests pin it, and the second is the
+pin against the WRONG fix (appending the clause unconditionally, which would tell an agent that
+really did target `docs/` that rephrasing might get it through). Watched failing against that fix
+before being trusted. The header's known-misses paragraph now points here instead of at an inbox
+brief that no longer exists.
+
+## Revival condition, stated so this is not lost
+
+**A third false-block instance, or one instance where rephrasing is not possible.** Everything a
+revival needs is below: the located operator-position mechanism, both measured disproofs with
+their commands, the fail-safe direction, the heredoc-before-quotes ordering trap, and the
+mandatory `sh -c` / `eval` carve-out. The design question that would then be live is the one
+ground 1 above answers only for today's evidence, not forever.
 
 ## Why this exists
 

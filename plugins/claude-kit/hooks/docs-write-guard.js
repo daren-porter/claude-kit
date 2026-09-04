@@ -211,8 +211,12 @@ function docsTargets(c) {
 // 2026-09-02 blocking a reviewer's own harness file). A project path holding a space,
 // a quote, or one of `&;|` blinds both patterns outright, since the path class
 // excludes those. The false hits trip this file's cardinal rule and are not fixed here
-// - a quoting-aware matcher is its own change, and the inbox carries it with the
-// multi-target gap. The
+// - a quoting-aware matcher is its own change, examined twice and declined both
+// times (docs/archive/docs-write-guard-structure_spec_v1.md carries both measured
+// disproofs, the mechanism that would work, and the revival condition). What IS done
+// about them is the denial text: a command-matcher hit says the false-positive class
+// out loud, so a caught-in-the-crossfire reader need not read this file to tell a
+// legitimate rephrase from evasion. The
 // command-position anchor keeps an embedded name (Reset-Content) from matching.
 //
 // EVERY writer in the command is judged, not just the first. A non-global match
@@ -248,8 +252,9 @@ function main() {
     const cwd = (typeof p.cwd === 'string' && p.cwd) ? p.cwd : process.cwd();
 
     let hit = false;
+    let viaCommand = false;    // the shell matcher is the only path that can false-hit
     if (fp) hit = targetsDocs(fp) && insideProject(fp, cwd);
-    if (!hit && input.command) hit = commandWritesDocs(input.command, cwd);
+    if (!hit && input.command) hit = viaCommand = commandWritesDocs(input.command, cwd);
     if (!hit) return;          // not a docs/ write: allow
 
     process.stderr.write(
@@ -257,6 +262,12 @@ function main() {
         + `(plans and the docs-curator's docs). A report or scratch file goes to .kit/ (gitignored), `
         + `and the durable record is the plan's Chapter. Write to .kit/ instead, or return the content `
         + `in your final message.\n`
+        + (viaCommand
+            ? `\nIf this command only MENTIONS a docs/ path rather than writing to one - a path `
+              + `inside a commit message, a quoted string, or a heredoc body - this is a known false `
+              + `positive: the shell matcher reads command text, not command structure. Rephrasing `
+              + `to avoid the literal string is legitimate and is not an attempt to evade this guard.\n`
+            : '')
     );
     process.exitCode = 2;      // deny: set rather than forced, so the stderr write flushes
 }

@@ -437,3 +437,37 @@ test('a non-string cwd does not disable the guard', () => {
         }
     } finally { rmrf(repo); }
 });
+
+// The shell matcher reads command TEXT, not command structure, so it denies commands
+// that only MENTION a docs/ path: `git commit -m 'wrote > docs/a.md today'`, and a
+// heredoc whose BODY holds a redirect (which blocked a blind reviewer's own harness
+// file mid-review, 2026-09-02). Two attempts to fix the matcher were measured and
+// declined - a tokenizer produced eight deny-to-allow regressions plus an
+// unbounded-allocation hang, and blanking quoted spans produced three more, because
+// the redirect pattern deliberately matches a QUOTED TARGET. See
+// docs/archive/docs-write-guard-structure_spec_v1.md. What ships instead is the
+// denial text naming the class, so a caught reader can tell a legitimate rephrase
+// from evasion without reading the hook. The false blocks themselves still deny.
+test('a command-matcher denial names the false-positive class', () => {
+    const r = runGuard({
+        tool_name: 'Bash',
+        agent_type: 'claude-kit:implementer-opus',
+        cwd: '/repo',
+        tool_input: { command: "git commit -m 'wrote > docs/a.md today'" },
+    });
+    assert.strictEqual(r.status, 2, 'still a deny: the matcher is unchanged');
+    assert.match(r.stderr, /known false positive/);
+    assert.match(r.stderr, /command text, not command structure/);
+    assert.match(r.stderr, /is legitimate and is not an attempt to evade/);
+});
+
+// The pin that fails against the WRONG fix, which is appending the clause
+// unconditionally. Write/Edit are matched EXACTLY by file_path, so there is no
+// false-positive class on that path and the clause would be a lie there - it would
+// tell an agent that really did target docs/ that rephrasing might get it through.
+test('an exact file_path denial does NOT carry the false-positive clause', () => {
+    const r = runGuard(writePayload('claude-kit:implementer-opus', DOCS_PATH));
+    assert.strictEqual(r.status, 2);
+    assert.doesNotMatch(r.stderr, /false positive/);
+    assert.doesNotMatch(r.stderr, /command structure/);
+});

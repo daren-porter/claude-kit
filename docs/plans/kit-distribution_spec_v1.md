@@ -17,6 +17,29 @@ Publishing is real but unscheduled, and a lot of other change comes first. This 
 future state so the work already proposed can be sequenced against it rather than colliding
 with it.
 
+## Operator ruling, 2026-09-04: kept, on its own content rather than on its ambition
+
+Put up in the 2026-09-04 kaizen triage as a large feature with no observed friction driving it.
+The operator's test was explicit: keep it if it carries good initial ideas about how the kit would
+change to be more widely distributed, eliminate it if it is only a stub for the idea, since the
+idea itself will not be forgotten.
+
+**It passes that test, and the deciding content is the section immediately below.** This is not a
+stub for an ambition; it is analysis that would be expensive to re-derive:
+
+- The fork relationship **already exists, implemented once**, so most of the work is parameterizing
+  an upstream rather than building fork support. That reframing is what makes the whole thing
+  tractable, and nothing else in the repo records it.
+- Two concrete pointers that survive independently: per-fork state is already outside the shipped
+  payload, and `reconcile-claude-md` is the fork-merge problem solved at one-file scale.
+- **Capability 2 is valuable even if distribution never happens.** Deriving a style skill from
+  samples a user volunteers turns `csharp-style` and `sql-style` from one person's house style into
+  generated artifacts. That is a product idea in its own right and it is the reason this file earns
+  its place independent of the aspiration.
+
+Still aspirational as a whole, and explicitly not queued. The ruling is about not discarding the
+analysis, not about scheduling the work.
+
 ## The finding that reframes this
 
 **The fork relationship already exists, implemented once.** `kit-adoption-pass/SKILL.md:8` opened

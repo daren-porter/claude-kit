@@ -100,6 +100,30 @@ then `.editorconfig` or siblings, then the skill), and design work needs exactly
 a project with a real design system must beat the kit's taste, every time. Copy the
 ladder rather than inventing a posture.
 
+## Operator ruling, 2026-09-04: kept, and the purpose is stated
+
+Put up as an abandon candidate in the 2026-09-04 kaizen triage on the ground that
+`artifact-design` already loads in every session and Hallmark names it as an upstream.
+**Kept.** The operator's stated purpose: a kit-native "anti AI slop" design skill, which
+Hallmark and its siblings intentionally aim at.
+
+**That answers why, and it deliberately does not answer the first design question below**,
+which stays live and stays first. The objection was never "why would anyone want anti-slop
+design guidance"; it was that the anti-slop content may already be present first-hand, since
+Hallmark's own head note sources its rules to "the consensus of the anti-AI-slop design field
+(Anthropic's frontend-design skill, the Claude cookbook on frontend aesthetics, ...)". So the
+question narrows rather than dissolves:
+
+**Not** "should the kit have an anti-slop design skill" - the operator has ruled that it should.
+**But** "what does `artifact-design` fail to deliver, measured on a real page rather than
+described?" The stub's own Starting point already prescribes that measurement, and it is now the
+whole gate: whatever survives it is the kit-native skill's content, and if nothing survives, the
+honest outcome is a thin router pointing at what already loads. Either way the ruling is
+satisfied, because a router is still kit-native.
+
+Read the per-clause boundary finding below as the standing hazard for this one, since a taste
+corpus written to a purpose is exactly where behavior claims accrete unmarked.
+
 ## What is undefined (the first design work)
 
 - **What does it add over what already loads?** `artifact-design`, `dataviz` and

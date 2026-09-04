@@ -64,7 +64,37 @@ what it does with that overlap before it says anything else.
 - Whether `docs/usage-awareness.md` shrinks once a configuration home exists, or stays whole with the
   inventory pointing at it. This is the only part of the work that could subtract.
 
+## Operator ruling, 2026-09-04: kept, and the reader is now named
+
+Adjudicated in the 2026-09-04 kaizen triage, where this stub was put up as an abandon candidate on
+its own "an idea rather than observed friction" self-description. **Kept, and the ask sharpened
+into something the stub did not previously contain.** The operator's words: make sure it is "in an
+obvious place that other users could go to in order to answer 'what are the things that I can
+tweak/change about how this kit works out-of-the-box?'"
+
+Two consequences, both of which change the work:
+
+- **The reader is a NEW USER of the kit, not the maintainer.** That resolves the first Open
+  Question below, which asked whether the operator served is the user, a forker or a session
+  reading its own configuration. It is the first, and a forker's needs are
+  `plans/kit-distribution_spec_v1.md`'s problem rather than this one's.
+- **Discoverability is a requirement, not a side effect.** An inventory that exists and cannot be
+  found fails this ask outright, so the deliverable is the document PLUS its route from the root
+  `README.md`, which today has no configuration section at all. That is a second, cheaper
+  falsifiable test than "does the inventory cover the seven surfaces": can a new user who has just
+  installed the kit find the answer without being told where to look?
+
+This also promotes the inventory from "the outcome to argue against" to the likely answer, since a
+named reader who wants a lookup is exactly the case a document serves and a skill does not. What
+still has to be argued is only whether anything beyond a document is warranted.
+
+Because the reader is now named and is not this repo's maintainer, the deliverable qualifies for
+`blind-reader` against that persona, which is the check that would actually falsify the
+discoverability claim rather than asserting it.
+
 ## Open Questions
 
 - Is the operator being served here the user, a forker, or a session reading its own configuration?
-  The three want different documents, and the ask did not distinguish them.
+  The three want different documents, and the ask did not distinguish them. **Answered above,
+  2026-09-04: the new user.** Left in place because the distinction it draws is still load-bearing
+  for the other two readers.
