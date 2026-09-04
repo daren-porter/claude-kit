@@ -14,11 +14,12 @@ Created: 2026-08-20
 
 ## Why this exists
 
-**At least eight times** now, an enumeration in the kit's own prose has been found stopping short of
+**At least nine times** now, an enumeration in the kit's own prose has been found stopping short of
 its set. In instances 1 to 5 the missing member was the newest one every time; instance 6 is the
 variant where nothing is missing and the description has gone false instead; instances 7 and 8 were
-committed by the kaizen pass that was writing this file, one of them while repairing the other.
-**Eight is a floor rather than a total**, and the reason is itself evidence: a further one surfaced
+committed by the kaizen pass that was writing this file, one of them while repairing the other; and
+instance 9 widens the class again, an index omission with no enumeration around it to be short of.
+**Nine is a floor rather than a total**, and the reason is itself evidence: a further one surfaced
 during the close-out of the very effort that opened this stub, when QA found a six-item list of bars
 in `arm-boundaries_spec_v1.md` described as five, after four QA rounds had read past it. It is
 deliberately unnumbered because it was never walked against this file's own test. Any count here
@@ -98,6 +99,35 @@ separate times, committed here in the one document whose entire substance is an 
    produced repeated false claims about which round committed and caught what, because nothing can
    separate uncommitted rounds after the fact. What is checkable is that the class was committed
    twice in one pass, in the file specifying it, by an author who had it open.
+
+9. **`docs/README.md`'s archive section at `b3eb640`, an OMISSION rather than a short count, and
+   the paired case at `:9` caught in flight.** The 2026-09-04 triage pass ran an index-parity check
+   for its own change and found `archive/writing-skills-ladder_spec_v1.md` **absent from the index
+   entirely** despite being Abandoned on disk since 2026-08-17. Nothing had counted it, because
+   there was no count to be short: an omission with no enumeration around it, which widens this
+   class the same way instance 6 did from the other side. Fixed at `a317818`, along with a full
+   both-ways audit (Proposed 14/14, Abandoned 4/4, every file under `docs/archive/` listed) since
+   a single fix does not establish the invariant.
+
+   **The paired case is the more useful half.** The same pass was about to add a fourth artifact to
+   `docs/README.md:9`, which enumerates the archive's supporting artifacts and joins them with
+   "and", reading as exhaustive. It caught itself, explicitly because it had just read this stub's
+   README entry earlier in the same session. So: **one instance of the class committed and shipped
+   in a file the pass was already editing, and one instance prevented in the same file minutes
+   later by an author primed by this very document.** That is the second recorded case of priming
+   working (instance 8 is the first, from the other direction, where an author with the file open
+   committed it twice), and it is direct evidence for the design question below about whether the
+   fix is a check or a prompt: the check found the shipped one, the priming prevented the other,
+   and review found neither.
+
+   **And adding this instance produced a third case within the same edit.** Writing instance 9 left
+   two statements short of it: this section's own "At least eight times" and `docs/README.md`'s
+   index entry carrying the same figure. Caught by grepping for dependents before committing rather
+   than by review or by priming. So one session produced the class shipped (the omission), the class
+   prevented by priming (`:9`), and the class prevented by a mechanical dependent-sweep (these two
+   counts) - which is as clean a three-way comparison of the candidate fixes as this file has, and
+   the mechanical sweep is the only one of the three that did not depend on the author happening to
+   remember.
 
 ## Examined and rejected, which is what keeps the pattern from licensing bad edits
 
