@@ -83,7 +83,7 @@ design pass must not read "the passes produce defects instead" as "the passes pr
 defects". The unreviewed rate is the open variable, and `arm-boundaries` owns it.
 
 **The operator's own reading, 2026-08-25, and the clearance-rate evidence behind it.** Asked why
-he had grown reluctant to open a kaizen pass, Daren named two things and treated them as related:
+the user had grown reluctant to open a kaizen pass, they named two things and treated them as related:
 more friction gets captured than used to, and passes now take a long time with a lot of
 back-and-forth through reviewers. The commit log on `kaizen/SKILL.md` supports the second half
 directly. Two passes in July closed with `clears 7 inbox items` and `clears 4 inbox items`; every
@@ -96,7 +96,7 @@ the apply path with a mandatory paired review whose own arming debt is `backlog.
 `kaizen/SKILL.md` explicitly denies it a proportionality escape, so a one-clause omission fix pays
 the same ceremony as a rule rewrite. The 2026-08-25 pass worked around that by batching four
 one-clause fixes into one commit for one review, which is a mitigation rather than an answer: it
-shows the tax is per commit and that nothing in the kit says to batch. Daren was offered the
+shows the tax is per commit and that nothing in the kit says to batch. The user was offered the
 mandate question as a retirement decision on the same day and deferred it, so `backlog.md:31`
 stands unchanged.
 

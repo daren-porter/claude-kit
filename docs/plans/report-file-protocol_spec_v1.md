@@ -57,14 +57,14 @@ fix:
 - `security-reviewer.md:7` reads "Read-only: never edit files", and `970827b` - the commit that
   added `executing-work:81`'s carve-out - records the roster identity as already in hand and the
   exclusivity as deliberate: "prose rather than a tool boundary, which makes the prose the whole
-  guarantee", and "Chose the exception over giving the agent a sanctioned write path, on Daren's
+  guarantee", and "Chose the exception over giving the agent a sanctioned write path, on the user's
   delegation."
 - One day later, `3604f03` went the other way for two agents: `blind-reader.md:21` and
   `prose-reviewer.md:21` both permit "writing the report to that one path" as "the single write
   this rule permits".
 
 So a sanctioned narrow write path is already shipped and in force for two of five seats. Extending
-it needs Daren's call, because `970827b` chose otherwise on his delegation. Two facts for whoever
+it needs the user's call, because `970827b` chose otherwise on their delegation. Two facts for whoever
 puts the question: **the step's reviewer roster is FIVE, not three**, and under an armed leash the
 report file is the only readiness signal, so a universal refusal leaves a leashed session with
 nothing to poll.

@@ -33,13 +33,30 @@ cd "$REPO_ROOT" || exit 1
 # Scope note: the gate keys on STAGED paths but runs against the WORKING TREE,
 # the same known limitation the validation below carries and accepted for the
 # same reason. A partial stage can therefore pass on unstaged fixes.
+GATE_RAN=0
 if git diff --cached --name-only -- 'plugins/claude-kit/hooks/' 'tools/' 'test/' | grep -q .; then
+    GATE_RAN=1
     # Quiet on success, loud on failure. The runner emits full TAP for every
     # passing subtest, which on its own first live fire buried the commit in
     # 107KB of "ok" lines; a gate nobody can read past is a gate people bypass.
     if ! gate_out=$(node --test test/*.test.js tools/*.test.js < /dev/null 2>&1); then
         printf '%s\n' "$gate_out" >&2
         echo "test gate failed; commit blocked (fix the suite or bypass with --no-verify)" >&2
+        exit 1
+    fi
+fi
+
+# The de-naming check on a PROSE-ONLY commit, which the code-keyed gate above
+# skips. This matters because prose is where that invariant actually drifted:
+# every one of the sixteen sites found on 2026-09-04 was in docs/, authored after
+# the sweep, and a docs-only commit is precisely the shape that introduces them.
+# One test file, about 95ms, so it is cheap enough to run on any prose commit
+# rather than being keyed to a subset of them.
+if [ "$GATE_RAN" -eq 0 ] \
+   && git diff --cached --name-only | grep -v '^docs/archive/' | grep -q .; then
+    if ! dn_out=$(node --test test/denaming.test.js < /dev/null 2>&1); then
+        printf '%s\n' "$dn_out" >&2
+        echo "de-naming check failed; commit blocked (fix the wording or bypass with --no-verify)" >&2
         exit 1
     fi
 fi

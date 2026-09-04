@@ -23,9 +23,9 @@ makes it `applied/` again - the store the kaizen skill itself says nothing reads
 can find does not stop the next session re-litigating what an earlier pass settled or re-running
 the arm behind it.
 
-**The operator asked for it in his own words on 2026-09-02:** "noting declined
+**The user asked for it in their own words on 2026-09-02:** "noting declined
 proposals/frictions/whatever, especially if it keeps us from re-hashing things we've already tested
-and determined aren't worth doing or aren't actual problems." He also chose the shape - capture
+and determined aren't worth doing or aren't actual problems." They also chose the shape - capture
 stays unchanged at zero cost, triage gains the check - and endorsed tallying recurrences so a
 decline is not permanent by inertia. **So no RED is owed. What is owed is GREEN**, showing the
 wording produces that state, every rep, plus the design decisions below that a first attempt got
@@ -76,10 +76,10 @@ NOWHERE, which makes it `applied/` again - the store the skill itself says nothi
 decline nobody can find does not stop the next session re-litigating what an earlier pass
 settled or re-running the arm behind it.
 
-**This is a specified design, not a proposal to argue.** The operator asked for it in his own
+**This is a specified design, not a proposal to argue.** The user asked for it in their own
 words on 2026-09-02: "noting declined proposals/frictions/whatever, especially if it keeps us
 from re-hashing things we've already tested and determined aren't worth doing or aren't actual
-problems." He also chose the shape (capture stays unchanged at zero cost; triage gains the
+problems." They also chose the shape (capture stays unchanged at zero cost; triage gains the
 check) and endorsed tallying recurrences so a decline is not permanent by inertia. So no RED is
 owed: what is owed is GREEN, showing the wording produces that state, every rep.
 

@@ -214,3 +214,44 @@ quarter rather than being written once.
   corrected; the commit message of `1042f68` still carries it and is immutable. The test is kept
   as a guard rather than a fix pin, and now rests on two mechanisms, so it holds if either is
   removed and fails only if both are.
+
+- **The de-naming vocabulary is an invariant nothing checks (opened 2026-08-20, closed
+  2026-09-04).** The contract at `archive/kit-denaming_s1-rules.md` defines the vocabulary, and
+  nothing mechanical held any of it: the only check was a by-hand grep, and the item's own
+  prediction was that "a new skill, a rule ported by `kit-adoption-pass`, or a Chapter written
+  from a transcript can put a name or a gendered pronoun back and nothing will say so."
+
+  **It had already happened, which is the finding.** Sixteen sites, none on any of the three
+  exhaustive keep-lists, all authored after the sweep and all in `docs/`: eleven gendered-pronoun
+  occurrences (misgendering the user in four specs and a ledger entry) and five prose namings of
+  the operator. All fixed in the closing commit.
+
+  Closed by `test/denaming.test.js`, a third path the item did not offer. Its two were writing the
+  rule into `writing-skills` or recording that habit plus a grep is enough; one of its premises had
+  aged, since it says the gate "cannot exercise prose" and `tools/accretion.test.js` has measured
+  prose mechanically since 2026-08-16. A test runs on every commit; a rule and a habit did not.
+
+  **Enforcement is split by decidability, which is the design to read before editing it.** The
+  operator's name and gendered pronouns are hard-failed, because their legitimate forms are a
+  short stable set of mechanical pointers and there are no false positives. The upstream author's
+  name is class-allowed and the test says why: the contract's own credit-versus-machinery
+  distinction is not mechanically decidable, so that half catches a bare new occurrence in an
+  unruled shape and cannot judge an attribution-shaped one. Allowlists are keyed on CONTENT rather
+  than location, as the contract keys its own `kit-denaming_spec` sites, so line movement cannot
+  rot them.
+
+  **A guard against the guard**, because this kind of check dies by being widened once to clear a
+  red build rather than by being deleted: a fourth test asserts no allowlist pattern matches a bare
+  name token. Verified firing by adding `/[Dd]aren/g` and watching it report that the pattern
+  "would silence the check".
+
+  Every violation class was watched being caught before the test was trusted: a pronoun in prose, a
+  prose naming, the all-caps spelling, an unruled upstream form, and the surname alone. `docs/archive/`
+  confirmed exempt. And `.githooks/pre-commit` now runs this one test on a PROSE-ONLY commit
+  (about 120ms) as well as inside the full gate, because prose is where the drift actually happened
+  and a docs-only commit is exactly the shape that introduces it.
+
+  **Deliberately not covered, and now its own backlog item:** the role noun "the operator". The
+  contract makes it a one-site exception; the live tree holds 100+ occurrences across 35 files.
+  Usage has voted against the contract, and whether that vote should stand is a vocabulary decision
+  for the user rather than something a test should force.
