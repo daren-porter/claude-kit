@@ -55,6 +55,12 @@ reason it needs a design rather than a sentence is that two sentences have alrea
   battery has a trigger (`Audience:` on a section) and corpus prose has no `Audience:` line, so the
   battery cannot fire for it by construction. That is the mechanism, and any fix has to give
   corpus prose a trigger of its own or change what the battery keys on.
+- **Where the draft and the review's verdict on it live, so a reviewer can read them and a
+  RED-side rep cannot.** **This one is now answered**, by a design council on 2026-09-04, and the
+  answer is below. It arises from the bullet above without answering it: handing `prose-reviewer`
+  the *document* creates a second copy of the wording that has to be placed somewhere, which is
+  what the criterion governs. How the *fact base* is handed over for corpus prose, where half of
+  it is session transcripts rather than paths, is still open.
 
 ---
 
@@ -198,3 +204,129 @@ were caught before shipping, two by review agents and one by the author re-deriv
 shipped was the one a reviewer supplied and nobody re-derived. That asymmetry says the guard belongs
 where a figure arrives from another agent, not where an author measures one, which is a much smaller
 ask than attempt 1's general inline-locator mandate.
+
+---
+
+# Design council, 2026-09-04: the placement criterion (CONVERGED)
+
+4 seats, 2 rounds, 2 facilitator passes. Full record, including every position and both
+facilitator verdicts, in `~/.claude-kaizen/briefs/prose-review-before-arms.md`. **Every candidate
+on the ballot was withdrawn by the seat that held it, each citing a distinct fact.**
+
+## The answer: a property, not an address
+
+Three seats independently concluded the deliverable is a **derivation, not an address**, because
+both eliminations were measurements of *mutable* stores and `.kit/` is the worked example of an
+address going bad. Placement belongs at `writing-skills:163`, where the three-places rule lives,
+with `:193`'s re-bind restated for the reviewer's copy.
+
+> **The pre-persistence draft, and any artifact carrying that wording or the review's verdict on
+> it, lives at a path satisfying all five. The effort records the check.**
+>
+> **(a) Not under the repo working tree, `.kit/` included.** Gitignored but on disk and readable
+> by any rep with repo access, and two shipped clauses send artifacts there
+> (`writing-skills:370`, `:384`).
+> **(b) Not under any session's scratchpad.** The harness injects the **root** session's
+> scratchpad into every subagent's prompt, instructing it to use that path for "ALL temporary
+> file needs", so **no fixture is required for a rep to be standing in it.**
+> **(c) Not under `~/.claude-kaizen/`.** `assets/CLAUDE.md:35` replicates `notes.md` into every
+> project's posture rule, so everything in that directory is one `ls` from a handed path.
+> **(d) Sharing no ancestor with any fixture path dispatched for the effort.** The only condition
+> mechanically checkable before dispatch.
+> **(e) No path segment naming the change's subject** (`writing-skills:220-231`).
+>
+> The bar is **"no ancestor a rep has reason to enumerate", where a reason includes a path handed
+> by a standing posture rule or by the harness, not only a fixture path.** Absolute absence is not
+> available (`writing-skills:199-204`).
+>
+> Checkability: one recorded pre-dispatch assertion that (d) holds for the fixture set actually
+> dispatched, plus the transcript instrument at `writing-skills:209-217` after.
+
+**The "handed by a standing rule" sharpening is required, not stylistic.** Strike it and both
+demonstrated non-fixture leaks pass the screen: `~/.claude-kaizen/notes.md`
+(`writing-skills:242-254`, "every rep involved followed a standing rule correctly and the shared
+file is kit-owned rather than something the fixture pointed at") and `.kit/`
+(`~/.local/share/kaizen-hold-20260903/record/arm-record.md:37-38`, a rep pointed there in that
+effort). Three distance metrics were tried and failed before the criterion fell back to this.
+
+## What the council measured, since these are the facts that decide it
+
+- **The harness injects the root session's scratchpad into every subagent.** A seat confirmed it
+  on its own prompt, finding the operator's draft one `ls` inside a path it had written nothing
+  to. `writing-skills:169` states a weaker, fixture-dependent mechanism; the real one needs no
+  fixture. This is what killed the scratchpad option.
+- **The out-of-tree quarantine in use at the time already failed condition (d):** 32 per-rep
+  fixtures under one root whose sibling directories held the arm record, the three reps' outputs
+  and a notes backup. So "out of the scratchpad" was never the fix; **two roots with no shared
+  enumerable ancestor** is.
+- **`quarantin` appears exactly once in the whole plugin tree** (`writing-skills:193`), naming no
+  location, and `docs/take-stock.md` records the practice without an address. Three efforts
+  invented three different addresses. The remedy that worked was applied in August
+  (`docs/archive/arm-boundaries_spec_v1.md:733-734`, a registration written "deliberately outside
+  the reps' working directory", 3 of 3) and **never shipped**: `writing-skills` has zero hits for
+  "working directory" or "outside the rep".
+
+## Newly surfaced, and open
+
+1. **The answer key has no sanctioned pre-arm destination, and it is a charter-created circle.**
+   A brief in `briefs/` is the pending-items predicate (`kaizen:28`); `kaizen:19` makes `notes.md`
+   rewritable only by a triage pass; `kaizen:207` sequences the archive to `applied/` **after the
+   commit**; `kaizen:25-26` says of `applied/` "Nothing counts it and no pass reads it"; and
+   `writing-skills:246` orders "Clear the inbox before an arm" while `kaizen:16-26` defines the
+   inbox as three directories, so the instruction is **unexecutable for two of the three**. This
+   forced three invented destinations and one permission-classifier denial (verified: `deny` is
+   `[]` globally and absent in the repo, so that denial was runtime judgment, not policy).
+
+   **The brief is held to a stricter bar than the draft**, which no seat separated:
+   `writing-skills:272`, "The test is whether the answer is on disk, not whether the fixture told
+   it to stay away." A brief carries acceptance criteria and the verbatim rationalization, so it
+   is an **answer**, not merely wording.
+
+   Two options survive scrutiny, and a third does not. **Archiving the brief early does NOT work:**
+   `applied/` is under `~/.claude-kaizen/`, so it still fails (c). Moving the answer key sideways
+   is not moving it out. What remains: **move `briefs/` out of `~/.claude-kaizen/`**, which breaks
+   exactly **one** live reference (`kaizen/SKILL.md:24`) because of the next item; or give the
+   inbox a parked state that lives outside that directory entirely.
+
+2. **Three shipped locators into `briefs/` are already dangling.** Of four in-repo citations,
+   three are `Promoted 2026-09-02 from ...` provenance lines in `docs/plans/` naming files that
+   exist at neither `briefs/` nor `applied/`, because `applied/` renames on archive with a
+   `YYYY-MM-DD-` prefix. The promoted-from path was never stable. Worth fixing regardless of
+   this spec.
+
+3. **Shipping the placement criterion alone changes nothing**, because there is no pre-arm draft
+   to place until the review is re-sequenced ahead of the arms. Note precisely what is novel:
+   `kaizen:181` already sanctions handing a reviewer "an intent note written before dispatch". What
+   is new is handing the reviewer **the draft wording itself**, which is what creates the second
+   copy needing placement.
+
+4. **The bill cannot be bought out.** `writing-skills:358-360` scopes the borrowed-evidence path
+   to wording **ported** from another kit or a failure **the user reports**. The recorded failure
+   is the operator's own conduct, so precondition 2's locator bar at `:444-448` cannot be
+   discharged and `:395` closes the section. Full three arms or it does not ship.
+
+5. **This spec is itself an answer-leak surface for its own arms.** `writing-skills:277-283`
+   records a probe primed by a `docs/plans/` stub committed hours earlier in its own pass; the
+   finding survived because it was checkable against the skill text, the claim to independence did
+   not. Any RED here needs an isomorph and must account for this file being on disk.
+
+## Two defects filed separately, not this spec's to fix
+
+- **`writing-skills:382-384` directs the pre-persistence draft into `.kit/`** ("a drafted message
+  body, or a `.kit/` file folded in at commit time") and `:370` parks delegated artifacts there,
+  while `:163` bars the wording from the repo and `:205-208` bars any directory a fixture points
+  into. `:386` also requires the recorded artifact to carry the prompt holding the wording. A live
+  contradiction in shipped text.
+- **The review output's own path** belongs to `plans/report-file-protocol_spec_v1.md`, which
+  already owns it: `docs/backlog.md`'s first active item is that path, `executing-work:81` names it
+  unsettled in shipped text, and that spec's acceptance already reads "a blind seat receives a path
+  naming neither section, round, nor role." It leaves here with the constraint attached, not
+  dropped.
+
+  **Corroboration, not discharge.** That spec's `## ANSWERED 2026-09-02, by probe` section
+  already settled the framework-injection question, and `463a911` is the commit. What this council
+  adds is two independent first-hand confirmations: two seats reported the injected "Do NOT Write
+  report/summary/findings/analysis .md files" line present in their own prompts, having been asked
+  nothing about it. **Separate small drift worth someone's attention:** `docs/backlog.md` still
+  carries "Verify that before designing" for a branch that spec answered two days earlier, so the
+  backlog line outlived its own instruction.

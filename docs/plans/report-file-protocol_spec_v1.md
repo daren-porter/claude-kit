@@ -6,6 +6,15 @@ Created: 2026-09-02
 
 ## Related
 
+- `plans/prose-claim-review_spec_v1.md` - its 2026-09-04 design council hands this spec one
+  constraint and one corroboration. **Constraint:** the report path this stub must bound also has
+  to satisfy that council's placement criterion, because an orchestrator-materialized report
+  carries the draft wording it reviewed, not only findings about it. That criterion is stricter
+  than "leak nothing to a blind seat" and is already stated there in full.
+  **Corroboration:** two council seats independently reported the framework-injected "do NOT write
+  report files" line present in their own prompts, unprompted, which is a second and third
+  first-hand sighting of what the ANSWERED section below established by probe.
+
 - Promoted 2026-09-02 from `~/.claude-kaizen/briefs/report-file-vs-write-refusal.md`, whose own
   2026-09-01 triage read "SPEC, not an apply", together with three inbox notes that turned out to
   be the same convention failing in three other places.
