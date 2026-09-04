@@ -55,6 +55,18 @@ reason it needs a design rather than a sentence is that two sentences have alrea
   battery has a trigger (`Audience:` on a section) and corpus prose has no `Audience:` line, so the
   battery cannot fire for it by construction. That is the mechanism, and any fix has to give
   corpus prose a trigger of its own or change what the battery keys on.
+- **Whether the claims half is better served by generalizing the claim-mapping bar than by routing
+  the battery at all.** `writing-skills:484-489` already states the checkable form, "Every claim in
+  the persisted wording maps to a specific sentence in the source record, or it is cut", and scopes
+  it to the borrowed-evidence path. Lifting that scope makes it a bar on any persisted wording,
+  which reaches the false-claims class with no dispatch and so sidesteps the affordability bullet
+  above. Against it: the bar is written for a *ported* source record, and corpus prose written from
+  this session's own work has no equivalent, which is the fact-base bullet again from the other
+  side. Filed from the 2026-09-04 note recording three kit-prose drafts killed in three days on
+  Criticals no arm could reach, whose two classes are the conflict class (`writing-skills:285` says
+  outright that no arm can test it) and the claims class (an arm measures whether a rep follows
+  wording, never whether the wording is true). The note left this as an open fork and it was not
+  registered anywhere; the conflict class is the position question this spec's council answered.
 - **Where the draft and the review's verdict on it live, so a reviewer can read them and a
   RED-side rep cannot.** **This one is now answered**, by a design council on 2026-09-04, and the
   answer is below. It arises from the bullet above without answering it: handing `prose-reviewer`
@@ -210,7 +222,7 @@ ask than attempt 1's general inline-locator mandate.
 # Design council, 2026-09-04: the placement criterion (CONVERGED)
 
 4 seats, 2 rounds, 2 facilitator passes. Full record, including every position and both
-facilitator verdicts, in `~/.claude-kaizen/briefs/prose-review-before-arms.md`. **Every candidate
+facilitator verdicts, in `docs/archive/prose-claim-review_council-record.md`. **Every candidate
 on the ballot was withdrawn by the seat that held it, each citing a distinct fact.**
 
 ## The answer: a property, not an address
