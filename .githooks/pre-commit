@@ -34,7 +34,11 @@ cd "$REPO_ROOT" || exit 1
 # the same known limitation the validation below carries and accepted for the
 # same reason. A partial stage can therefore pass on unstaged fixes.
 if git diff --cached --name-only -- 'plugins/claude-kit/hooks/' 'tools/' 'test/' | grep -q .; then
-    if ! node --test test/*.test.js tools/*.test.js < /dev/null; then
+    # Quiet on success, loud on failure. The runner emits full TAP for every
+    # passing subtest, which on its own first live fire buried the commit in
+    # 107KB of "ok" lines; a gate nobody can read past is a gate people bypass.
+    if ! gate_out=$(node --test test/*.test.js tools/*.test.js < /dev/null 2>&1); then
+        printf '%s\n' "$gate_out" >&2
         echo "test gate failed; commit blocked (fix the suite or bypass with --no-verify)" >&2
         exit 1
     fi
