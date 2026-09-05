@@ -289,3 +289,41 @@ quarter rather than being written once.
   hook. A similarity check at `add` time stays unbuilt and unneeded on this evidence; revisit if a
   duplicate ever appears. The finding and its measurement are recorded in
   `docs/cross-project-memory.md`, since the cap's behavior is not obvious from the cap.
+
+- **Decide whether "the operator" is still the wrong role noun (opened 2026-09-04, closed
+  2026-09-05).** Filed a day earlier while closing the de-naming-invariant item, on the reading
+  that the contract makes "the operator" a one-site exception while the live tree holds 100+
+  occurrences, so "usage has voted against the contract". **Ruled: no sweep, no change. The premise
+  was false**, and the correction is worth more than the ruling.
+
+  **The substitution table never mentions "operator."** `archive/kit-denaming_s1-rules.md:75-83`
+  replaces the NAME `Daren` with `the user` and the pronouns with they/them. That is all it does.
+  The sweep's scope was "all 47 match-bearing files", meaning files matching the name and pronoun
+  patterns, so prose that never contained the name was never in scope. The exception at
+  `agents/security-reviewer.md:29` is an exception to the REPLACEMENT TOKEN at one swept site,
+  chosen because "user" already carries the adversarial sense on that line ("any user-influenced
+  value"), which would have made one noun name both the attacker and the operator inside the clause
+  that downgrades a finding. The contract's "not a licence to vary it elsewhere" bars using `the
+  operator` as the replacement for `Daren` at OTHER swept sites. It never prohibited the word.
+
+  **The raw count was also inflated by a homonym.** Of 233 occurrences of "operator", roughly seven
+  are shell redirect and comparison operators (`docs-write-guard.js`'s "ONE TARGET PER OPERATOR",
+  `merged-pr-push-guard.js`'s "standalone shell operator", a staleness boundary operator in a
+  test), which is a different word.
+
+  **Measured over the corpus, the word earns its place.** Of 15 occurrences in the four measured
+  globs, **12 do not share a referent with "the user"**, carrying four distinct senses: the
+  disclosure boundary (a document persona sits "outside the operator"), a persona archetype ("an
+  operator, an engineer who works in it daily"), the operator of software the kit is helping WRITE
+  (`csharp-style`, `ai-tells`), and the sanctioned security exception. The contract's own rationale
+  for that exception is ambiguity, and it generalizes: in each of those senses "the user" would
+  undo the disambiguation rather than restore consistency.
+
+  **Residue, recorded rather than swept.** Three corpus sites use it for the same referent the
+  surrounding prose calls "the user": `executing-work:46` and `:175`, and `writing-skills:171`. The
+  first sits two lines from a `:48` saying "the user" for the identical person, so the
+  inconsistency is real but small. Left alone deliberately, and the reason is a trade rather than
+  an oversight: three words with no behavioral consequence do not earn a paired review of the kit's
+  most-read prose, and corpus-prose changes have died on that review four times in the last week.
+  Fold them in for free if an effort is already editing those files. Recorded in
+  `test/denaming.test.js`, which is where anyone asking "should I sweep operator?" will look.

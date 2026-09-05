@@ -37,12 +37,35 @@
 //     unexpected shape and CANNOT judge an attribution-shaped one. Stated rather
 //     than papered over: do not trust this half further than it goes.
 //
-// DELIBERATELY NOT COVERED: the role noun "the operator". The contract makes it a
-// one-site exception at agents/security-reviewer.md:29; the live tree had 100+
-// occurrences across 35 files when this test was written. Usage has voted against
-// the contract there, and whether that vote should stand is a vocabulary decision
-// for the user rather than something a test should force. Reported as a finding,
-// not enforced here.
+// DELIBERATELY NOT COVERED, and settled 2026-09-05 so nobody re-opens it: the role
+// noun "the operator" is NOT drift and must not be swept.
+//
+// An earlier version of this comment said the contract "makes it a one-site
+// exception" and that "usage has voted against the contract". Both wrong, and the
+// correction is the useful part. The substitution table in
+// docs/archive/kit-denaming_s1-rules.md:75-83 has NO row for "operator": it
+// replaces the NAME `Daren` with `the user` and the pronouns with they/them. The
+// exception at agents/security-reviewer.md:29 is an exception to the REPLACEMENT
+// TOKEN at one swept site, chosen because "user" already carries the adversarial
+// sense on that line ("any user-influenced value"), so `the user's own EF Core
+// projects` would have made one noun name both the attacker and the operator. It
+// never prohibited the word anywhere else, and prose that never contained the name
+// was never in the sweep's scope at all.
+//
+// Measured over the corpus rather than argued: of 15 occurrences in the four
+// measured globs, 12 do not share a referent with "the user" at all. They carry
+// four distinct senses - the disclosure boundary (a document persona sits "outside
+// the operator"), a persona archetype ("an operator, an engineer who works in it
+// daily"), the operator of software the kit is helping WRITE (csharp-style,
+// ai-tells), and the sanctioned security exception. In every one of those the word
+// is doing disambiguating work that "the user" would undo.
+//
+// Residue, recorded rather than swept: three sites use it for the same referent the
+// surrounding prose calls "the user" - executing-work:46 and :175, and
+// writing-skills:171. executing-work:46 sits two lines from a ":48" that says "the
+// user" for the identical person. Left alone deliberately: three words with no
+// behavioral consequence do not earn a paired review of the kit's most-read prose.
+// Fold them in for free if an effort is already editing those files.
 
 'use strict';
 
