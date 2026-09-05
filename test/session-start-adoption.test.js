@@ -1405,3 +1405,74 @@ test('an unrecognized Commit Model is reported as unknown, not echoed', () => {
         assert.doesNotMatch(context, /Whatever-I-Like/, 'the raw value must not reach the context');
     } finally { rmDir(cwd); }
 });
+
+// ---------------------------------------------------------------------------
+// Truncation NAMES what it drops, added 2026-09-05.
+//
+// docs/backlog.md carried "nothing in the cross-project tier detects one fact
+// stored under two names" from 2026-08-10. Measured before changing anything:
+// the live store held 31 records with no near-duplicate, the highest Jaccard
+// similarity across all 465 pairs being 0.172 and those pairs topically related
+// rather than duplicated. The gap has never bitten.
+//
+// The reason is structural, not luck. Every session is handed every record's
+// description before it could bank a fact, so a session about to write a
+// duplicate has already read the original. That protection degrades exactly at
+// MEMORY_INDEX_MAX_LINES, and it began to at the 31st record: listRecords sorts
+// by name, so the drop is DETERMINISTIC, and one specific record went invisible
+// to every session and would have stayed invisible. That record is precisely the
+// fact most likely to be re-learned and re-banked under a different name, which
+// is the failure the backlog item predicted.
+//
+// So the fix is to keep naming what falls off the cap, which costs a few tokens
+// per record against roughly forty for a full line.
+
+function storeOf(prefix, count, namer) {
+    return makeStore(prefix, Array.from({ length: count }, (_, i) => ({
+        name: namer(i),
+        description: `fact number ${i}`,
+    })));
+}
+
+test('a store under the cap raises no truncation note', () => {
+    const cwd = makeKitRepo('ssm-nocap-', doc(`Last pass: ${daysAgo(3)}`));
+    const store = storeOf('ssm-nocapstore-', 5, (i) => `rec-${String(i).padStart(3, '0')}`);
+    try {
+        const { context } = runHook(cwd, store);
+        assert.doesNotMatch(context, /more record\(s\) are held in this tier/);
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// The regression pin. Before this change the note counted the dropped records
+// and never named them, so a session could not tell WHICH fact it was missing.
+test('truncation names the dropped records, not just their count', () => {
+    const cwd = makeKitRepo('ssm-cap-', doc(`Last pass: ${daysAgo(3)}`));
+    // 32 records, so exactly two fall past the 30-line cap. Names sort last on
+    // purpose, mirroring the deterministic drop the live store hit.
+    const store = storeOf('ssm-capstore-', 32, (i) => `zz-rec-${String(i).padStart(3, '0')}`);
+    try {
+        const { context } = runHook(cwd, store);
+        assert.match(context, /2 more record\(s\) are held in this tier/);
+        assert.match(context, /They are: zz-rec-030, zz-rec-031\./,
+            'the note must name what fell off the cap: ' + context);
+        assert.match(context, /a fact this tier ALREADY holds/,
+            'and say what a name here means, since that is the whole point');
+        assert.doesNotMatch(context, /, and others\./,
+            'only two dropped, so nothing is elided beyond them');
+    } finally { rmDir(cwd); rmDir(store); }
+});
+
+// The name list is bounded in turn, or a very large store would undo the cap it
+// sits beside. MEMORY_DROPPED_NAMES_MAX is 40, so 30 shown + 40 named + elision.
+test('the dropped-name list is itself bounded and says so', () => {
+    const cwd = makeKitRepo('ssm-capbig-', doc(`Last pass: ${daysAgo(3)}`));
+    const store = storeOf('ssm-capbigstore-', 90, (i) => `zz-rec-${String(i).padStart(3, '0')}`);
+    try {
+        const { context } = runHook(cwd, store);
+        assert.match(context, /60 more record\(s\) are held in this tier/);
+        assert.match(context, /, and others\./,
+            'past the name cap the note must admit it is eliding, not trail off silently');
+        const named = (context.match(/zz-rec-\d{3}/g) || []).filter((n, i, a) => a.indexOf(n) === i);
+        assert.ok(named.length <= 70, `30 shown plus at most 40 named, got ${named.length}`);
+    } finally { rmDir(cwd); rmDir(store); }
+});

@@ -34,7 +34,7 @@ The memory block comes last, after all six nudges, because a reference list and 
 - <name> [<kind>] @<machine> [body revised]: <description>
 ```
 
-The header frames the lines as recorded data rather than instructions, names the tier as separate from the project's own memory, and points at the `cross-project-memory` skill. The block is capped at 30 lines for this tier alone, never a combined cap with the native project index. Past the cap it names the counted remainder and prints the resolved `node "<path>" list` command. Every line is reduced to printable ASCII with whitespace runs collapsed and is capped at 700 characters with truncation announced; the collapse is what stops record content from forging a blank line and with it a block boundary.
+The header frames the lines as recorded data rather than instructions, names the tier as separate from the project's own memory, and points at the `cross-project-memory` skill. The block is capped at 30 lines for this tier alone, never a combined cap with the native project index. Past the cap it names the counted remainder, **names the dropped records themselves** (bounded at 40 names, with an explicit "and others" past that) and prints the resolved `node "<path>" list` command, telling the reader to treat a name there as a fact the tier already holds. That last part is load-bearing rather than cosmetic: see the duplicate-suppression note below. Every line is reduced to printable ASCII with whitespace runs collapsed and is capped at 700 characters with truncation announced; the collapse is what stops record content from forging a blank line and with it a block boundary.
 
 The decay nudge joins the nudge stack above the memory block. It is a count and a command, never a list, because the memory block already carries the records themselves.
 
@@ -64,6 +64,28 @@ The hook names marked records from `lines()`'s `markedNames`, which comes from v
 ## Advisory decay
 
 Nothing retires, rewrites, or removes a record automatically. `rankDecay` in `memory-lib.js` is the single source of the ranking, read by both `memory.js decay` and the hook, so the count in the nudge and the list it points at cannot disagree.
+
+**Why the dropped names are printed, which is not obvious from the cap.** `docs/backlog.md` carried
+"nothing in the cross-project tier detects one fact stored under two names" from 2026-08-10:
+`add` publishes with `linkSync` so two writers cannot claim the same *name*, but no write path
+compares bodies, so two sessions naming one fact differently produce two records. Measured on
+2026-09-05, that has never happened: 31 records, no near-duplicate, the highest Jaccard similarity
+across all 465 pairs being 0.172, and those pairs topically related rather than duplicated
+(`ado-ssh-key-expiry` against `sandbox-git-ssh-fetch`, for instance).
+
+The reason is structural rather than lucky, and naming it is what makes the cap's behavior matter.
+**Every session is handed every record's description before it could bank a fact**, so a session
+about to write a duplicate has already read the original. Nothing detects duplicates because
+nothing has needed to.
+
+That protection degrades exactly at the 30-line cap, and it began to at the 31st record.
+`listRecords` sorts by name, so the drop is **deterministic rather than rotating**: one specific
+record goes invisible to every session and stays invisible, which makes it precisely the fact most
+likely to be re-learned and re-banked under a different name. Naming the dropped records preserves
+the property the descriptions were providing, because a session needs to know a fact is already
+held rather than to read it here, and a name costs a few tokens against roughly forty for a full
+line. A similarity check at `add` time remains unbuilt and unneeded on this evidence; revisit it if
+a duplicate ever appears.
 
 A record's idle days are counted from its most recent applied day, or from `created` when it has never been applied. Recorded use buys time rather than immunity: `threshold = 30 + min(distinctAppliedDays * 7, 60)` days, and a record is a candidate when its idle days exceed its threshold. Candidates sort most-idle first, then by name.
 

@@ -255,3 +255,37 @@ quarter rather than being written once.
   contract makes it a one-site exception; the live tree holds 100+ occurrences across 35 files.
   Usage has voted against the contract, and whether that vote should stand is a vocabulary decision
   for the user rather than something a test should force.
+
+- **Nothing in the cross-project tier detects one fact stored under two names (opened 2026-08-10,
+  closed 2026-09-05).** `add` publishes with `linkSync` so two writers cannot claim the same
+  *name*, but no write path compares bodies, so two sessions naming one fact differently produce
+  two records and every later reader sees both. Surfaced unprompted by all three reps of the S7
+  RED's first arm.
+
+  **Measured before building anything, and the measurement decided it.** The live store held 31
+  records with **no near-duplicate**: the highest Jaccard similarity across all 465 pairs was
+  0.172, and the top-scoring pairs were topically related rather than duplicated
+  (`ado-ssh-key-expiry` against `sandbox-git-ssh-fetch`; the two ADO SSH records, which carry
+  different facts). After roughly two months and 31 records written by many sessions, the predicted
+  failure has not once occurred.
+
+  **The reason is structural rather than lucky, and finding it is what closed this differently than
+  either offered path.** Every session is handed every record's description in the SessionStart
+  block before it could bank a fact, so a session about to write a duplicate has already read the
+  original. Nothing detects duplicates because nothing has needed to.
+
+  **That protection had just started failing, which is the live defect this found.** The block is
+  capped at 30 lines and the store reached 31. `listRecords` sorts by name, so the drop is
+  **deterministic rather than rotating**: `utf16le-sql-breaks-diffs` had gone invisible to every
+  session and would have stayed invisible, making it precisely the fact most likely to be
+  re-learned and re-banked under a different name. The backlog item's own predicted failure, with a
+  specific record already selected for it.
+
+  Closed by having truncation **name** what it drops rather than only counting it, bounded at 40
+  names with an explicit "and others" past that, and telling the reader to treat a name there as a
+  fact the tier already holds. A name costs a few tokens against roughly forty for a full line, so
+  this preserves the duplicate-suppressing property at a fraction of the cost of the similarity
+  detector the item contemplated. Three pins, two of them watched failing against the pre-change
+  hook. A similarity check at `add` time stays unbuilt and unneeded on this evidence; revisit if a
+  duplicate ever appears. The finding and its measurement are recorded in
+  `docs/cross-project-memory.md`, since the cap's behavior is not obvious from the cap.

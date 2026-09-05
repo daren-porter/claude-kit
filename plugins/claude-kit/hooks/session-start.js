@@ -273,6 +273,28 @@ function claudeMdSyncOffer() {
 // runs past this number on its own.
 const MEMORY_INDEX_MAX_LINES = 30;
 
+// When the cap above truncates, the dropped records are still NAMED, and this
+// bounds that list in turn so a very large store cannot undo the cap it exists
+// beside. A name costs a few tokens against roughly forty for a full line.
+//
+// WHY THIS EXISTS AT ALL, because a reader will otherwise price it as noise. The
+// duplicate-detection gap in docs/backlog.md ("nothing in the cross-project tier
+// detects one fact stored under two names") has never bitten: 31 records on
+// 2026-09-05 held no near-duplicate, the highest Jaccard similarity over all 465
+// pairs being 0.172, and those pairs were topically related rather than
+// duplicated. The reason is structural rather than lucky. Every session is handed
+// every record's description before it could bank a fact, so a session about to
+// write a duplicate has already read the original.
+//
+// That protection degrades exactly at this cap, and it began to on the 31st
+// record. listRecords sorts by name, so the drop is DETERMINISTIC rather than
+// rotating: one specific record goes invisible to every session and stays
+// invisible, which makes it precisely the fact most likely to be re-learned and
+// re-banked under a different name. Naming the dropped records keeps the property
+// the descriptions were providing, since a session needs to know the fact is
+// already held rather than to read it here.
+const MEMORY_DROPPED_NAMES_MAX = 40;
+
 // Per-line character bound at this door. A maximal legitimate generated line
 // runs about 660 characters (an 80-char name, two 72-char labels, the marker,
 // and a 412-char description), so this bounds a hand-edited record without
@@ -366,6 +388,15 @@ function crossProjectMemory() {
     }
 
     const shown = safe.slice(0, MEMORY_INDEX_MAX_LINES);
+    // The NAMES of what the cap dropped, so truncation stays visible as specific
+    // absent facts rather than as a number. A rendered line always begins with a
+    // validated record name, so the name is the leading token up to the first
+    // space, bracket or colon; anything that does not yield one is skipped rather
+    // than guessed at, and the count above still reports it.
+    const droppedNames = safe.slice(MEMORY_INDEX_MAX_LINES)
+        .map((l) => (/^-\s+([^\s[:]+)/.exec(l) || [])[1])
+        .filter(Boolean)
+        .slice(0, MEMORY_DROPPED_NAMES_MAX);
     const skipped = safeCount(generated.skipped);
     const reason = generated.reason ? safeContext(generated.reason, 200) : null;
     // An empty or absent store is silence. A store whose records all failed to
@@ -381,6 +412,7 @@ function crossProjectMemory() {
         unreadable: false,
         lines: shown,
         remainder: safe.length - shown.length,
+        droppedNames,
         unusable,
         skipped,
         markedNames: Array.isArray(generated.markedNames)
@@ -642,7 +674,13 @@ function main() {
         if (memory.remainder > 0) {
             // Truncation announces a counted remainder and how to reach the
             // rest. The path is this hook's own directory, not store content.
-            notes.push(`${memory.remainder} more record(s) are held in this tier and are not listed above; run ${memoryCommand('list')} to read them all.`);
+            // Named, not just counted. A count tells a session that something is
+            // missing; the names tell it WHICH facts it already holds, which is the
+            // property that keeps it from banking one of them again under a new name.
+            const named = memory.droppedNames.length > 0
+                ? ` They are: ${memory.droppedNames.join(', ')}${memory.droppedNames.length < memory.remainder ? ', and others' : ''}.`
+                : '';
+            notes.push(`${memory.remainder} more record(s) are held in this tier and are not listed above; run ${memoryCommand('list')} to read them all.${named} Treat a name here as a fact this tier ALREADY holds: read it before banking anything that sounds like it.`);
         }
         if (memory.skipped > 0) {
             notes.push(`${memory.skipped} file(s) in the store could not be read or parsed, so their facts are missing from the list above.`);
