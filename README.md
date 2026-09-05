@@ -120,6 +120,36 @@ itself, because the hook that would carry the warning is also a Node script.
 
 5. Merge `settings/settings.recommended.json` (from the clone in step 1) into each config dir's `settings.json` (`~/.claude-personal/settings.json`, `~/.claude-work/settings.json`, or `~/.claude/settings.json`). It sets `acceptEdits` and allow-lists read-only git plus `dotnet build/test/format/list` (which execute or rewrite project code; an accepted dev-machine tradeoff) - no `git add/commit/push` (commits always prompt; pushes always prompt).
 
+6. **Verify the install, because the way this fails is silent.** Every hook in `hooks.json` runs as
+   `node "${CLAUDE_PLUGIN_ROOT}/hooks/<file>.js"`, and **Claude Code bundles no Node** on any install path
+   (native installer, Homebrew, WinGet, apt/dnf/apk, the desktop app; the npm method needs Node only to
+   install). A hook whose command cannot be spawned is a **non-blocking** error and the action proceeds, so on
+   a machine without Node the plugin lists its skills and looks installed while every guard fails open,
+   compaction recovery never fires and the goal leash never holds. The kit cannot warn you about this itself,
+   because anything it could write to warn you would also be a Node script.
+
+   - `node --version` must print a version. If the command is not found, stop here and install Node; nothing
+     below will work and nothing will tell you so.
+   - You already have the end-to-end check, in step 4: on a machine that has never reconciled, the SessionStart
+     hook offers to fold the kit's rules into your CLAUDE.md. **That offer appearing is proof a hook ran.** If
+     step 4's offer never appeared, the hooks are not firing, and Node is the first thing to check.
+
+7. **To uninstall.** `/plugin uninstall claude-kit@daren` removes the plugin, and
+   `/plugin marketplace remove daren` removes the marketplace. That leaves what steps 4 and 5 wrote
+   **outside** the plugin, which is deliberate (it is your content, not the kit's) but is yours to
+   clean up:
+
+   - `~/.claude/CLAUDE.md`, plus the `~/.claude-personal/CLAUDE.md` and `~/.claude-work/CLAUDE.md` symlinks
+     `setup.sh` created. The canonical file holds your own rules merged with the kit's, so edit rather than
+     delete unless you want both gone.
+   - `~/.claude/.claude-kit-md-version`, the reconcile marker (`setup.sh:77`).
+   - The `settings.json` merge from step 5, in each config dir. Nothing tracks which keys came from the kit.
+   - Standing state the kit accumulates as you use it, none of it removed by uninstalling:
+     `~/.claude-kaizen/` (the kaizen inbox), `~/.claude-kit-memory/` (cross-project memory) and
+     `~/.claude-kit-usage/` (usage-awareness config). Each is durable content rather than cache, so removing
+     any of them is a decision.
+   - Per-project `.kit/` directories (goal state, scratch), gitignored and safe to delete.
+
 Updating: run `/plugin update claude-kit` on each machine. (Publishing the change in the first place is the maintainer half, under PUBLISHING below.) Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. Background auto-updates on a private repo need more than the foreground path does, and setting `GITHUB_TOKEN` in your environment is not enough on its own: a provider token takes effect only through a configured credential helper, such as the `gh` CLI's, which reads `GH_TOKEN` and `GITHUB_TOKEN`. Background marketplace refreshes also disable credential helpers by default, so an HTTPS private repo fails there until you either set `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` to keep the cached copy, configure a git URL rewrite embedding a read-only token, or configure a helper the re-clone fallback can use. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
 
 ## THE WORKFLOW

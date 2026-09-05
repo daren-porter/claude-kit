@@ -191,7 +191,7 @@ const OPERATOR_ALLOWED = [
     /"name":\s*"Daren Porter"/g,               // package and marketplace author
     /"name":\s*"daren"/g,                      // the marketplace id every install path keys off
     /`daren`/g,                                // the marketplace id, backticked, in prose
-    /marketplace (?:add|update) daren\b/gi,    // command arguments
+    /marketplace (?:add|update|remove) daren\b/gi,   // command arguments
     /[-/]home[-/]daren[-/]/gi,                 // real filesystem paths, both spellings
     /Daren Porter \/ ASR Solutions/g,          // the generated banner line
     /`DAREN PORTER`/g,                         // see the note below

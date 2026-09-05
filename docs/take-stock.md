@@ -479,7 +479,7 @@ as well evidenced as when it was parked.**
 
 **One omission found, narrower than the version this pass first wrote down.** `brainstorming`
 never teaches that an in-session Fable spend is recordable in the `Fable Spend:` header, or
-how. `executing-work:46` and `:112` both gate continue-versus-hand-off on "a header recording
+how. `executing-work:50` and `:173` both gate continue-versus-hand-off on "a header recording
 an authorized in-session spend", and every form `brainstorming:38` and the `:79` template teach
 records a delegated or review surface instead. A Fable-led brainstorm that should execute in
 place therefore produces a header reading as hand-off by default.
