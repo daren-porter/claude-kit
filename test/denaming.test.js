@@ -52,20 +52,47 @@
 // never prohibited the word anywhere else, and prose that never contained the name
 // was never in the sweep's scope at all.
 //
-// Measured over the corpus rather than argued: of 15 occurrences in the four
-// measured globs, 12 do not share a referent with "the user" at all. They carry
-// four distinct senses - the disclosure boundary (a document persona sits "outside
-// the operator"), a persona archetype ("an operator, an engineer who works in it
+// Measured over the corpus rather than argued. At 815834b, before the fold-in
+// below, 15 occurrences sat in the four measured globs and 12 of them did not share
+// a referent with "the user" at all. Those 12 are untouched and carry four distinct
+// senses - the disclosure boundary (a document persona sits "outside the
+// operator"), a persona archetype ("an operator, an engineer who works in it
 // daily"), the operator of software the kit is helping WRITE (csharp-style,
-// ai-tells), and the sanctioned security exception. In every one of those the word
-// is doing disambiguating work that "the user" would undo.
+// ai-tells), and the sanctioned security exception. In every one the word is doing
+// disambiguating work that "the user" would undo.
 //
-// Residue, recorded rather than swept: three sites use it for the same referent the
-// surrounding prose calls "the user" - executing-work:46 and :175, and
-// writing-skills:171. executing-work:46 sits two lines from a ":48" that says "the
-// user" for the identical person. Left alone deliberately: three words with no
-// behavioral consequence do not earn a paired review of the kit's most-read prose.
-// Fold them in for free if an effort is already editing those files.
+// A FIFTH SENSE, and the measurement above could not see it. The owner of the
+// kit's own usage config is "the operator" consistently across the tree
+// (hooks/usage-lib.js:1219 "an operator who did not opt in",
+// docs/architecture.md:97 "the operator-written config.json",
+// docs/security-model.md:308 "the operator's thresholds", README.md:62-63). Every
+// one of those sites is OUTSIDE the four globs, so a corpus-only count is
+// structurally blind to the sense, which is the limit to remember before trusting
+// any future count taken the same way.
+//
+// The residue, and what became of it. Three sites named the same referent the
+// surrounding prose calls "the user". They were recorded here on 2026-09-05 as not
+// worth a paired review, and the user overrode that a few minutes later and asked
+// for the sweep, so the trade was re-decided rather than ignored. The review it
+// then took split them three ways, which is why this paragraph is a record of an
+// outcome rather than of an intention:
+//
+//   - executing-work:46 SWEPT to "the user". Both reviewers confirmed it is
+//     correct rather than merely consistent: :42 and :48 name the same supervising
+//     human, and the paragraph separates orchestrator, subagent and dispatcher
+//     from that person.
+//   - executing-work:175 LEFT as "the operator". It is the fifth sense above, and
+//     sweeping it would have put the sentence at odds with the hook that reads
+//     that very config.
+//   - writing-skills:171 REWORDED to name no actor at all. Commit 6b16b9c, the
+//     primary record, has the SESSION authoring and placing the candidate ("my
+//     sentence", "my own new text", files in the session scratchpad) and calls the
+//     contamination "operator error", so "the user" would have pinned a false
+//     actor into date-stamped evidence-bearing prose. The clause keeps its
+//     evidence and drops the disputed party.
+//
+// So the settlement at :40-54 stands unchanged: "the operator" is not drift and the
+// 12 sites above must not be swept.
 
 'use strict';
 

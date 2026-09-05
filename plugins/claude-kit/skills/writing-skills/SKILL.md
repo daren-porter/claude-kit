@@ -168,7 +168,7 @@ edited file's line numbers). The RED prompt is barred because the prompt that ca
 wording is GREEN's, and RED's whole job is to fail without it. **The scratchpad is the worst of
 the three**, because fixtures point subagents into it by construction. A rep once found the
 candidate wording beside its own fixture, read it, and reported the contamination itself
-(2026-08-11, the operator having deliberately kept the draft out of the repo and put it there
+(2026-08-11, the draft having been deliberately kept out of the repo and put there
 instead), so "out of the repo" is the wrong test and passing it is no comfort.
 
 **The arm controls which copy of the skill the rep reads, and the repo is not it.** Reps load
