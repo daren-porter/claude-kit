@@ -327,3 +327,34 @@ quarter rather than being written once.
   most-read prose, and corpus-prose changes have died on that review four times in the last week.
   Fold them in for free if an effort is already editing those files. Recorded in
   `test/denaming.test.js`, which is where anyone asking "should I sweep operator?" will look.
+
+- **`README.md` still fails its first-time reader on eight counts (opened 2026-08-27, closed
+  2026-09-05).** Closed by the item's own second path, **a recorded decision that the kit's README
+  is for its author and the outside-reader lens does not apply to it**, ruled by the operator on
+  2026-09-05. The item itself called that "a real answer given the repo is private", and the repo
+  is still private with `plans/kit-distribution_spec_v1.md` explicitly aspirational.
+
+  **Two of the eight shipped first, and deliberately not as a compromise.** A post-install
+  verification step and an uninstall path (`README.md` steps 6 and 7) were chosen precisely because
+  they serve the author on a private repo and so did not depend on this ruling either way. The
+  verification step is also the practical half of the unbuilt first-run check in the
+  Node-prerequisite item, which stays open.
+
+  **The six declined, each an outside-reader finding and nothing else.** Three load-bearing terms
+  undefined at first use (`Fable`, sixteen uses across MODEL TIERING; `Chapter`; "the document
+  battery"); the advisor sentence at MODEL TIERING's foot that resolved for neither reader who met
+  it; THE WORKFLOW's ~330-word opening paragraph carrying three commit models, the section loop,
+  five review agents, four execution modes and the whole finishing sequence; and the missing case
+  against the reader's actual status quo, plain Claude Code. Every one of them is a cost paid only
+  by someone who does not already hold the kit's vocabulary. The author does.
+
+  **What the ruling does NOT undo.** `archive/reader-facing-docs_spec_v1.md`'s accuracy work
+  stands: false claims and the broken install path were fixed there and are not reopened by this.
+  The declined six were always the audience-and-structure residue that pass deliberately scoped
+  out. A README may be written for one reader and still be required to be true.
+
+  **Reopens if the repo goes public or the kit is ever forked by someone else**, which is exactly
+  what `plans/kit-distribution_spec_v1.md` contemplates: its capability 1 is a guided first run,
+  and a guided first run for a stranger is this item under another name. One consequence is already
+  recorded against `plans/config-surface_spec_v1.md`, whose reader is a new user and whose
+  discoverability test can no longer assume the README orients a newcomer.

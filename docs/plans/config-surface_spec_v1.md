@@ -84,6 +84,14 @@ Two consequences, both of which change the work:
   falsifiable test than "does the inventory cover the seven surfaces": can a new user who has just
   installed the kit find the answer without being told where to look?
 
+  **Constraint added 2026-09-05, and it bites this bullet specifically.** The operator has since
+  ruled that `README.md` is written for the kit's author and the outside-reader lens does not apply
+  to it (`archive/backlog-2026-Q3.md`). A pointer in an author-facing README is still a valid route,
+  but the discoverability test above can no longer *assume* a newcomer opens that file to orient
+  themselves, because nothing now promises it will orient them. So the design owes a route that
+  survives an author-facing README: name it, rather than inheriting the README as the entry point by
+  default.
+
 This also promotes the inventory from "the outcome to argue against" to the likely answer, since a
 named reader who wants a lookup is exactly the case a document serves and a skill does not. What
 still has to be argued is only whether anything beyond a document is warranted.

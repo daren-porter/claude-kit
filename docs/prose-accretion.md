@@ -139,7 +139,7 @@ node --test test/take-stock-nudge.test.js     # 16 cases, inside the repo gate
 node --test tools/accretion.test.js           # 15 cases, in the gate since 2026-08-16
 ```
 
-The documented gate is `node --test test/*.test.js tools/*.test.js` from the repo root (`README.md:159`), widened 2026-08-16 to reach `tools/` for exactly this reason: `accretion-lib.js` ships in the payload and `tools/accretion.test.js` is its only coverage, so the narrower form left a payload file untested by the thing called the gate. That narrower `test/*.test.js` form still appears in `README.md:63`'s directory listing and is not the gate.
+The documented gate is `node --test test/*.test.js tools/*.test.js` from the repo root (`README.md:231`), widened 2026-08-16 to reach `tools/` for exactly this reason: `accretion-lib.js` ships in the payload and `tools/accretion.test.js` is its only coverage, so the narrower form left a payload file untested by the thing called the gate. That narrower `test/*.test.js` form still appears in `README.md:63`'s directory listing and is not the gate.
 
 ## Modifying it safely
 
