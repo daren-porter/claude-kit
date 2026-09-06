@@ -37,9 +37,18 @@ than accepted ones.
 
 ## Trusted channels: what is instruction and what is data
 
-**Nine surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
+**Ten surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
 `session-start.js`'s `additionalContext` was the only one, which would have told a later review to
-audit one door out of nine. The two newest are also the first two that are not
+audit one door out of ten.
+
+**The counting unit, stated because a reviewer cannot otherwise tell an addition from a
+re-description.** A row is one *surface plus sanitization rule*, not one file: the ten rows below
+name **twelve** emitting files, because the three deny-by-stderr guards share a row. Count rows to
+audit the rules and count files to audit the emitters, and note the two numbers move
+independently. The list is of EMITTERS only. A library behind an emitter is covered by that
+emitter's row and is deliberately absent - `hooks/accretion-lib.js` reaches the model solely
+through `take-stock-nudge.js`, so it is not a door, and an auditor finding it unlisted is seeing
+that rather than an omission. The two newest are also the first two that are not
 session-lifecycle: `usage-nudge.js` speaks mid-turn and `usage-barrier.js` speaks on a refusal,
 so a reader who has internalized "kit text arrives at session start" is now wrong about both.
 
@@ -50,6 +59,7 @@ so a reader who has internalized "kit text arrives at session start" is now wron
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
 | `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and the orchestrator's wherever the harness puts an agent identity on a subagent's payload, which is an inference rather than a verified fact: the hook returns before this channel on any payload carrying one, and if a subagent's payload omits those fields instead then this row's audience is wider than it says: a window label from a two-literal whitelist, two numbers rendered by `usage-lib.js`'s shared `formatOneDecimal`, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
+| `additionalContext` | `node-probe.sh` | trusted session context, and **the only row carrying no interpolated data at all**: the message is a fixed literal, so nothing from the environment reaches the model. Also the only non-Node emitter, and it speaks only when `node` is absent. |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
 | stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
@@ -149,6 +159,14 @@ block tells the session to read that record at the source, so the kit itself ord
 Acceptable under the same-uid premise; not acceptable if bodies ever arrive from another machine,
 which is the inbound half of the deferred git-sync question.
 
+**Two senses of "touches a credential", separated here because a reviewer meeting the claim above
+needs to know which one is scoped.** This section is the inventory of credentials the kit **reads
+and parses**: one file, one token, six verified properties. It is NOT the inventory of credentials
+the kit's actions **spend**. `merged-pr-push-guard.js` spends the operator's ambient `gh` and `az`
+authentication on every `git push` it inspects, never reading or parsing either credential, and it
+is documented immediately below rather than here for that reason. A reviewer auditing exposure
+wants both lists and they answer different questions: what could leak, and what could act.
+
 **The kit's one command-injection barrier, which most needs re-verifying on any change.**
 `merged-pr-push-guard.js` fires on any Bash or PowerShell call matching `git push`, parses a branch
 name out of the model's own command, and interpolates it into `execSync` strings that reach the host
@@ -161,7 +179,7 @@ in this document where the premise is a regex rather than an environmental assum
 
 ## The one credential the kit reads
 
-`hooks/usage-lib.js` is the only component that touches a credential, and it is the newest thing
+`hooks/usage-lib.js` is the only component that **reads** a credential, and it is the newest thing
 in this document, so what it does is stated rather than left to be inferred.
 
 It reads `claudeAiOauth.accessToken` from `<CLAUDE_CONFIG_DIR>/.credentials.json`, falling back to
@@ -333,7 +351,9 @@ backwards.
 - `usage-barrier` is the first kit guard that denies on a **network-derived** signal, so its
   allow-on-doubt set is wider than any other guard's and is worth reading as the interesting case
   rather than as more of the same. It allows on a stale reading, on every one of the reader's eight
-  failure reasons including `expired`, on an absent or disabled config, on a window whose percent
+  failure reasons, which are named here rather than counted so a reviewer can check the set
+  against `usage-lib.js` without grepping for it (`bad-call`, `expired`, `locked`, `no-store`,
+  `no-token`, `parse`, `rate-limited`, `timeout`), on an absent or disabled config, on a window whose percent
   the endpoint did not report, and on any tool that is not `Agent` or `Task`. It denies only from a
   positive determination on **fresh** data, and freshness for a refusal is a stricter standard than
   the evaluator's polling advice: `lib.withinDenyBudget` holds a wind-down or barrier deny to a
