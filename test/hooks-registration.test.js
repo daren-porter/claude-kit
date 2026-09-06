@@ -28,7 +28,13 @@ const HOOKS_JSON = path.join(HOOKS_DIR, 'hooks.json');
 // The command form every kit hook is registered with. Captured so the script
 // name can be checked against the directory: a path typo is the failure this
 // whole file exists to catch, and it is invisible from anywhere else.
+// The kit's registration forms. `node` is the rule and covers every hook that can
+// assume Node exists. `sh` is the single deliberate exception, for the one probe
+// whose whole job is to report that Node does NOT exist and which therefore cannot
+// be a Node script; the test below pins it at exactly one so the exception cannot
+// quietly become a second convention.
 const COMMAND_RE = /^node "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/([A-Za-z0-9._-]+\.js)"$/;
+const SH_COMMAND_RE = /^sh "\$\{CLAUDE_PLUGIN_ROOT\}\/hooks\/([A-Za-z0-9._-]+\.sh)"$/;
 
 // Every registration flattened to one row per command, carrying the event, the
 // entry's matcher (and whether it declared one at all, which is a different
@@ -43,13 +49,14 @@ function registrations() {
             assert.ok(entry && Array.isArray(entry.hooks), `every ${event} entry must carry a hooks array`);
             for (const hook of entry.hooks) {
                 assert.strictEqual(hook.type, 'command', `every ${event} hook must be a command hook`);
-                const match = COMMAND_RE.exec(hook.command);
+                const match = COMMAND_RE.exec(hook.command) || SH_COMMAND_RE.exec(hook.command);
                 rows.push({
                     event,
                     hasMatcher: Object.prototype.hasOwnProperty.call(entry, 'matcher'),
                     matcher: entry.matcher,
                     command: hook.command,
                     script: match === null ? null : match[1],
+                    interp: COMMAND_RE.test(hook.command) ? 'node' : (SH_COMMAND_RE.test(hook.command) ? 'sh' : null),
                 });
             }
         }
@@ -111,4 +118,35 @@ test('usage-barrier.js is registered on PreToolUse for Agent|Task', () => {
     const rows = rowsFor('PreToolUse', 'usage-barrier.js');
     assert.strictEqual(rows.length, 1, 'the dispatch barrier must be registered exactly once on PreToolUse');
     assert.strictEqual(rows[0].matcher, 'Agent|Task');
+});
+
+// The Node probe, and the guard that keeps its exception an exception.
+//
+// Every other hook runs as `node <script>.js`, so on a machine without Node the
+// entire mechanical layer is dead: guards fail open, compaction recovery never
+// fires, the leash never holds, and the plugin still lists its skills. Verified
+// 2026-09-06 rather than assumed: a deliberately unspawnable SessionStart hook
+// registered through `claude -p --settings` produced exit_code 127 and outcome
+// "error" in the hook_response event, and that event is visible ONLY under
+// `--output-format stream-json --verbose`. The ordinary session printed nothing.
+//
+// So the failure is silent, and nothing written in Node can report it.
+test('node-probe.sh is registered on SessionStart for startup|resume', () => {
+    const rows = rowsFor('SessionStart', 'node-probe.sh');
+    assert.strictEqual(rows.length, 1, 'the Node probe must be registered exactly once');
+    assert.strictEqual(rows[0].matcher, 'startup|resume',
+        'startup and resume are when someone would act on it; compact would be noise mid-run');
+    assert.strictEqual(rows[0].interp, 'sh', 'the probe cannot be a Node script: that is its whole point');
+});
+
+// THE ANTI-WIDENING GUARD. A shell registration is a real exception - it is silent
+// on Windows, where no `sh` is on PATH, which is acceptable for a probe and is NOT
+// acceptable for a hook anyone relies on. Left ungated, `sh` would drift into a
+// second convention and take that Windows blind spot with it.
+test('sh is used by exactly one registration, and it is the probe', () => {
+    const sh = registrations().filter((r) => r.interp === 'sh');
+    assert.strictEqual(sh.length, 1,
+        'sh registrations found: ' + sh.map((r) => r.script).join(', ')
+        + ' - every hook that CAN be Node must be Node, because sh is silent on Windows');
+    assert.strictEqual(sh[0].script, 'node-probe.sh');
 });

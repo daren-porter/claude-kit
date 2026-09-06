@@ -125,8 +125,14 @@ itself, because the hook that would carry the warning is also a Node script.
    (native installer, Homebrew, WinGet, apt/dnf/apk, the desktop app; the npm method needs Node only to
    install). A hook whose command cannot be spawned is a **non-blocking** error and the action proceeds, so on
    a machine without Node the plugin lists its skills and looks installed while every guard fails open,
-   compaction recovery never fires and the goal leash never holds. The kit cannot warn you about this itself,
-   because anything it could write to warn you would also be a Node script.
+   compaction recovery never fires and the goal leash never holds. **This was measured, not inferred**
+   (2026-09-06): an unspawnable hook is recorded as exit 127 with outcome `error`, and that record is visible
+   only under `--output-format stream-json --verbose`. An ordinary session shows nothing.
+
+   One hook does report it, and it is the only one that can: `hooks/node-probe.sh`, a POSIX shell script
+   rather than a Node script, registered on SessionStart. If Node is missing it injects a warning naming the
+   blast radius. It is silent on Windows, where no `sh` is on PATH, so the two checks below are still the
+   check that covers every platform.
 
    - `node --version` must print a version. If the command is not found, stop here and install Node; nothing
      below will work and nothing will tell you so.

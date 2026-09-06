@@ -358,3 +358,42 @@ quarter rather than being written once.
   and a guided first run for a stranger is this item under another name. One consequence is already
   recorded against `plans/config-surface_spec_v1.md`, whose reader is a new user and whose
   discoverability test can no longer assume the README orients a newcomer.
+
+- **The kit's only mechanical layer has an unenforceable prerequisite (opened 2026-08-27, closed
+  2026-09-06).** Every hook runs as `node "${CLAUDE_PLUGIN_ROOT}/hooks/<file>.js"` and Claude Code
+  bundles no Node on any install path, so on a Node-less machine the guards fail open, compaction
+  recovery never fires, the leash never holds, and the plugin still lists its skills. The item held
+  that the kit "cannot detect this itself, because any hook written to warn would also be a Node
+  script", and left both options **unpriced**.
+
+  **Pricing them is what settled it, and the decisive fact was never verified before.** The item's
+  premise that the failure is SILENT was an inference from the docs word "non-blocking", which
+  describes only whether the action proceeds. Measured instead: a deliberately unspawnable
+  SessionStart hook registered through `claude -p --settings` produced
+  `"stderr":"/bin/sh: 1: <cmd>: not found","exit_code":127,"outcome":"error"` in the hook_response
+  event, and that event is visible **only** under `--output-format stream-json --verbose`. The
+  ordinary session printed nothing but its answer. The premise holds.
+
+  **The same measurement dissolved the objection that had kept this unbuilt.** The item priced a
+  shell probe as "not free" because it works on POSIX and not on Windows. But the error text
+  `/bin/sh: 1:` proves hook commands are run through `/bin/sh` on POSIX, so a shell probe is
+  registrable; and since an unspawnable hook is silent, the Windows half costs **nothing visible**
+  rather than adding noise. A gap, not a regression. That is what turned a judgment call into an
+  easy build.
+
+  Closed by `hooks/node-probe.sh`, registered on SessionStart for `startup|resume`: silent and exit
+  0 when Node is present, a warning naming the blast radius when it is not. **Verified end to end,
+  not composed from unit results** - a real session run with a `/usr/bin` symlink farm minus `node`
+  had the model quote the warning back and conclude "every kit hook is dead here".
+
+  **The exception is gated.** This is the kit's only non-Node registration, and
+  `hooks-registration.test.js` now pins `sh` at exactly one registration and asserts it is this
+  probe, because a shell hook carries a Windows blind spot that is acceptable for a probe and not
+  for anything anyone relies on. Four behavioral tests cover the probe itself, including one that
+  asserts its own node-unreachable setup actually holds - an earlier draft used
+  `PATH="$D:/bin"` and silently tested nothing, since `/bin` symlinks to `/usr/bin` here.
+
+  What it does not cover, stated rather than implied: a `node` on PATH is not proof the Node
+  Claude Code spawns is the same one or is usable, and the probe is silent on Windows. `README.md`
+  step 6's two checks remain the platform-complete answer, and its claim that nothing in the kit
+  could report this is corrected there.
