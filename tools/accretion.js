@@ -501,7 +501,13 @@ function main() {
 // plugins/claude-kit/hooks/accretion-lib.js and is tested from there. The rest of
 // this file is I/O around the two.
 module.exports = {
-    rank
+    rank,
+    // Exported for test/corpus-agreement.test.js only. The corpus is defined twice,
+    // here and as inCorpus() in hooks/take-stock-nudge.js, and nothing asserted the
+    // two agreed until 2026-09-06. The hook mirrors this function's unevenness on
+    // purpose rather than stating a tidier rule of its own; that only works if
+    // something checks the mirror.
+    listProseFiles
 };
 
 // Render only when invoked directly, never when required as a module (the unit test

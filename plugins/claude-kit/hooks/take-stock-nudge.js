@@ -420,4 +420,13 @@ function main() {
     ]);
 }
 
-try { main(); } catch { /* never break a session over a hook */ }
+// Fire only when invoked directly, never when required as a module, exactly as
+// tools/accretion.js does for the same reason: test/corpus-agreement.test.js
+// imports inCorpus() to check it against that tool's listProseFiles(). Claude Code
+// spawns this file as `node <path>`, so require.main IS this module and the hook
+// runs unchanged; the guard only opens a door for the test.
+if (require.main === module) {
+    try { main(); } catch { /* never break a session over a hook */ }
+}
+
+module.exports = { inCorpus };
