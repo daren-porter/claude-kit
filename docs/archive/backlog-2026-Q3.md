@@ -474,3 +474,48 @@ quarter rather than being written once.
   2026-08-26 measurement, why both fixes were declined, the three layers that do cover it, and the
   reopen condition: **one observed instance of a governed subagent writing into `docs/` through an
   interpreter unprompted.**
+
+- **A deliberate guard deny reaches the model as a hook error (opened 2026-08-11, closed
+  2026-09-06).** The three PreToolUse guards deny by writing stderr and exiting 2, which the
+  harness surfaces as `PreToolUse:Write hook error: [node .../docs-write-guard.js]: Blocked: ...`.
+  The reason survives intact, so the block works; the concern was framing, that an agent could read
+  "hook error" as tooling malfunctioning and hunt for a way around instead of obeying. Closed by
+  the item's second path: **a recorded decision that the exit-2 framing is fine permanently.**
+
+  **The item said form two "could not be observed from inside a session", and that stopped being
+  true.** It rested on patching the installed plugin cache being blocked and a settings-registered
+  hook needing a restart. `claude -p --settings <file>` **is** that restart: it spawns a session
+  with arbitrary hooks registered, and `--include-hook-events --output-format stream-json --verbose`
+  shows every `hook_started`/`hook_response` with `exit_code` and `outcome`. That technique also
+  settled the Node-prerequisite item the same day.
+
+  **What the observation found, and it points away from the concern.** A model met a deny carrying
+  the guard's real message and read it as a rule, not a malfunction: it changed nothing on disk,
+  investigated the guard's source rather than routing around, and **explicitly declined the
+  interpreter bypass** having read `docs-write-guard.js:16-24` where the guard documents its own
+  misses, saying it would not use "a guard's self-documented gap to complete a blocked action".
+  It then concluded the deny was an impostor and that "your actual guard would have allowed both
+  calls" - **and still did not write the file.** Treating a deny as authoritative regardless of
+  provenance is the opposite of the failure this item was watching for. That makes two observations
+  pointing the same way, with the item's own 2026-08-11 subagent.
+
+  **The envelope itself argues against the concern.** `hook error: [<command>]: <reason>` shows a
+  hook with a REASON attached. A crash has no reason string, so the shape reads as
+  tooling-with-a-rule rather than tooling-broken.
+
+  **The cost of switching, unchanged and still decisive.** Form two moves three security-adjacent
+  guards to a path where exit 0 plus one mistyped field name is a **silent allow**, and requires
+  rewriting the roughly 15 `status === 2` deny assertions - the assertions that caught the
+  2026-08-11 fail-open bug in the first place. That is a real risk against a harm with zero
+  observations in either direction.
+
+  **Methodological finding, recorded so nobody burns another probe on it: a synthetic deny is
+  self-identifying.** The error envelope prints the configured command verbatim, so a fake guard
+  shows as `[printf '...' >&2; exit 2]` rather than `[node ".../docs-write-guard.js"]`. The model
+  listed five independent tells including that one, the wording differing from
+  `docs-write-guard.js:256-259`, and the fact that the real guard allows a main session at `:242`.
+  **Any future probe of this question needs the real guard and a genuinely governed subagent**, not
+  an impostor, or the observer effect is in the result.
+
+  Reopen condition unchanged: an agent observed reading a guard denial as a malfunction - retrying
+  the same write, routing around to another `docs/` path, or reporting the hook as broken.
