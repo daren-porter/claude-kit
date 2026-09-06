@@ -14,12 +14,12 @@ Created: 2026-08-20
 
 ## Why this exists
 
-**At least nine times** now, an enumeration in the kit's own prose has been found stopping short of
+**At least ten times** now, an enumeration in the kit's own prose has been found stopping short of
 its set. In instances 1 to 5 the missing member was the newest one every time; instance 6 is the
 variant where nothing is missing and the description has gone false instead; instances 7 and 8 were
 committed by the kaizen pass that was writing this file, one of them while repairing the other; and
 instance 9 widens the class again, an index omission with no enumeration around it to be short of.
-**Nine is a floor rather than a total**, and the reason is itself evidence: a further one surfaced
+**Ten is a floor rather than a total**, and the reason is itself evidence: a further one surfaced
 during the close-out of the very effort that opened this stub, when QA found a six-item list of bars
 in `arm-boundaries_spec_v1.md` described as five, after four QA rounds had read past it. It is
 deliberately unnumbered because it was never walked against this file's own test. Any count here
@@ -128,6 +128,21 @@ separate times, committed here in the one document whose entire substance is an 
    counts) - which is as clean a three-way comparison of the candidate fixes as this file has, and
    the mechanical sweep is the only one of the three that did not depend on the author happening to
    remember.
+
+10. **`README.md`'s test-coverage enumeration, missed three times in two days by the author who had
+    just written instance 9.** That instance concluded the mechanical dependent-sweep was "the only
+    one of the three that did not depend on the author happening to remember". The same session then
+    added three test files (`denaming`, `node-probe`, `kit-adoptions-ledger`) across three commits
+    without touching the one sentence enumerating what the suite covers, which joins its members
+    with "and" and so reads as exhaustive. That sentence also still said four of
+    `session-start.js`'s eight blocks were "verified manually (pinning the rest is a backlog item)"
+    two days after that item closed by pinning all eight. Caught on the fourth addition, by running
+    the sweep instance 9 recommended.
+
+    **This is the file's strongest evidence for the mechanical fix**, because it is the failure mode
+    of the alternative measured on the author best primed against it: priming worked once (instance
+    9's `docs/README.md:9` catch) and then failed three times running. An author who has just
+    written the rule is still an author relying on memory.
 
 ## Examined and rejected, which is what keeps the pattern from licensing bad edits
 

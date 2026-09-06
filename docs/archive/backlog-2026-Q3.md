@@ -397,3 +397,39 @@ quarter rather than being written once.
   Claude Code spawns is the same one or is usable, and the probe is silent on Windows. `README.md`
   step 6's two checks remain the platform-complete answer, and its claim that nothing in the kit
   could report this is corrected there.
+
+- **The adoption ledger's currency contract does not exist (opened 2026-08-31, closed
+  2026-09-06).** Seven counts. **Two were already fixed on the day the item was written**, by
+  `d9ee478`: the escaped table cell that made candidates 2-21 render as one run-on paragraph, and
+  the "only two conventions" count, now three - the third being the convention that fixed the
+  first. An item and its fix landed the same day and neither knew about the other.
+
+  **One was not a defect.** The item read `Last pass: 2026-08-26` against candidate 1's 08-27 to
+  08-31 strata as stale, but that line's own contract says "A pass updates it. Nothing else
+  reformats it." It dates the window, not the file. The real reader problem was that nothing said
+  so, and taken as an mtime it claims the ledger stopped a week before it did. Now stated.
+
+  **Four were live and are fixed.** The amendment convention now covers a live `pending` entry
+  (the old bullet covered `rejected`, which is not the class that accrues) and says not to tidy
+  superseded reasoning away, since the sequence of what was believed and what falsified it is the
+  entry's value to a later pass. The 2026-08-26 preamble's three "verified on this machine" facts
+  are marked as of that date against client `2.1.246`, which this machine no longer runs. Six
+  settled verdicts carried no date, across two passes rather than the one the item named, and each
+  is now dated by its own pass. And candidate 1 was **re-verdicted** from `pending, likely inert on
+  this account` to `rejected 2026-08-26, superseded natively` on the operator's call: its body had
+  adjudicated three times over while the label sat still, which for a `pending` entry is an
+  instruction to a future pass to go and redo settled work.
+
+  **The contract is now a test rather than a convention**, `test/kit-adoptions-ledger.test.js`,
+  which is what the item's title actually asked for. Four pins: the ledger parses, every settled
+  verdict carries a date (`pending` exempt, since there is no decision date to carry), every table
+  keeps consistent column counts, and **every candidate's index row and detail section carry the
+  identical verdict string**. That last invariant was discovered by measurement rather than
+  invented: it held 31 of 31 before this pass, and dating the index rows alone broke it to 25 of
+  31, which is how it surfaced as worth keeping. The dating pin was watched failing against the
+  pre-pass ledger.
+
+  Recorded against `plans/enumerations-stop-short_spec_v1.md` as instance 10: `README.md`'s
+  test-coverage enumeration went three commits and two days out of date during this same session,
+  missed by the author who had just written instance 9's conclusion that only a mechanical sweep
+  survives an author's memory.

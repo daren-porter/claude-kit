@@ -171,8 +171,8 @@ a version, not standing facts about the current client, and the third describes 
 
 | # | Capability | Verdict |
 |---|---|---|
-| 1 | `CLAUDE_CODE_RETRY_WATCHDOG=1` | **pending, likely inert on this account** |
-| 2 | Stop-failure recovery | **rejected** |
+| 1 | `CLAUDE_CODE_RETRY_WATCHDOG=1` | **rejected 2026-08-26, superseded natively** |
+| 2 | Stop-failure recovery | **rejected 2026-08-26** |
 | 3 | The post-compaction re-load block | **rejected 2026-08-26, premise falsified on this harness** |
 | 4 | `docs-write-guard` git-root containment | **adopted 2026-08-26** |
 | 5 | The boundary-gated compaction engine | **pending, too large to adjudicate in a pass** |
@@ -187,17 +187,17 @@ a version, not standing facts about the current client, and the third describes 
 | 14 | Backlog visibility | **pending** |
 | 15 | The `consult` read-only judge | **pending** |
 | 16 | `peer-sessions` | **pending** |
-| 17 | `coordinator`, `standing-watch`, `dispatch-authority` | **rejected** |
+| 17 | `coordinator`, `standing-watch`, `dispatch-authority` | **rejected 2026-08-26** |
 | 18 | Memory `supersedes:` frontmatter | **pending** |
 | 19 | `kit-goal` queue and arm-time binding | **pending, arm-time binding confirmed live here** |
 | 20 | Positive controls on absence-proving checks | **pending, cheap prose, and this skill needs it** |
-| 21 | `kit-statusline.js` and `kit-goal-statusline.js` | **rejected** |
+| 21 | `kit-statusline.js` and `kit-goal-statusline.js` | **rejected 2026-08-26** |
 
 Each candidate's reasoning follows below, one section apiece.
 
 #### 2026-08-26 candidate 1: `CLAUDE_CODE_RETRY_WATCHDOG=1`
 
-*`CLAUDE_CODE_RETRY_WATCHDOG=1`: the harness's own session-limit park, which supersedes any hand-built watcher.* **Verdict: pending, likely inert on this account**
+*`CLAUDE_CODE_RETRY_WATCHDOG=1`: the harness's own session-limit park, which supersedes any hand-built watcher.* **Verdict: rejected 2026-08-26, superseded natively**
 
 This is the whole answer to session-limit awareness, and it is a settings change rather than a port. With it set, a 429 (a session limit is one) stops counting against the retry budget and the client sleeps to the instant in the response's own `anthropic-ratelimit-unified-reset`, capped at six hours, falling back to exponential backoff capped at five minutes. Their RED/GREEN against a fake API is the cleanest experiment in the window: without the variable a run exhausted retries and died in 187 seconds with `error: "rate_limit"`; with it, same server and same 429s, it was still retrying past ten minutes. Verified independently in this machine's binary (above). **The tradeoff, stated in their own close-out:** an interactive session at the limit then parks alive rather than erroring, which is what you want unattended and may not be what you want at a keyboard. Their spec calls that an operator decision, not a blocker. **Downgraded 2026-08-26 on an operator fact that probably takes the whole candidate out.** On this Team plan with overage spending enabled, the operator reports never seeing a use-credits prompt at the session limit: the account simply starts spending against the configured monthly overage, with little or no indication. The binary corroborates the mechanism. The pre-watchdog 429 branch reads a header named `anthropic-ratelimit-unified-overage-disabled-reason`, a reason overage is **off**, and the string table carries `overageConsentRequired`, `overage_consent_prompt` and `overage_dialog_shown` as conditional surfaces. Read together with the operator's observation, the inference is that an account with overage enabled is served rather than 429'd at the session limit, so the 429 this variable exists to catch never fires and setting it changes nothing. **Superseded natively, and a piece of this entry's own evidence is withdrawn.** Two corrections, in order of importance.
 
@@ -207,9 +207,27 @@ This is the whole answer to session-limit awareness, and it is a settings change
 
 Three hooks were registered, not two, and an earlier draft of this correction wrote "both hooks" as a closed count: `usage-nudge.js` on `PostToolUse`, `usage-barrier.js` on `PreToolUse` for `Agent|Task`, and `usage-autocontinue-nudge.js` on `SessionStart`, the last being section 7's posture check. **The `enabled` gate describes the first two only.** The posture check reads settings files for `autoContinueAtUsageLimit`, never calls `readConfig`, and never touches the endpoint or a credential, so what keeps it off the network is that it has no reason to go there rather than any usage config. An earlier draft of this correction rested it on the store being absent instead and was falsified within the hour by this effort's own `usage.js status`, which created `~/.claude-kit-usage/` and answered the endpoint at 17:47Z; the store exists now and that is why. So the endpoint has been answered three ways, by a plain Node probe (200 in 290ms), by the third-party tool, and by the kit's own read CLI, and by no kit hook. Hook context stays untested until someone arms it. **Usage is per-account, which is the stake behind the profile detail:** three `CLAUDE_CONFIG_DIR` profiles exist on this machine and one is live, so a reader resolving the wrong one does not fail loudly, it reports another account's percentages as this one's, which is why the store is keyed on the resolved credentials directory rather than on the machine. `oauth-2025-04-20`'s stability is likewise still unestablished, and one further trap was found by probe rather than reasoning, an empty bearer answering 429 with a ~54 minute retry-after rather than 401, so a reader on the wrong profile self-inflicts backoff that looks exactly like throttling.
 
+**Re-verdicted 2026-09-06, from `pending, likely inert on this account` to `rejected 2026-08-26,
+superseded natively`. Nothing above changed; only the verdict line caught up with it.** The body
+had adjudicated this three times over and the verdict had not moved: the harness ships
+`autoContinueAtUsageLimit` natively with the keyboard-versus-unattended discriminator this entry
+went looking for, so "The kit has nothing to build here"; on this account with overage enabled the
+429 the variable exists to catch never fires, so setting it changes nothing; and what the kit
+actually built on 2026-08-28 is a **spend** control, which is a different capability rather than
+this one adopted. The rejection is dated **08-26** because that is when the reasoning that decides
+it landed, not today, which is only when the label was corrected.
+
+Two things a later pass should not have to re-derive. **This entry is why the amendment convention
+now exists**: a `pending` verdict is an instruction to a future pass to go and adjudicate, so an
+entry whose body has concluded and whose label has not costs that pass the whole re-read, which is
+exactly the failure the persona in the currency item met. And per this file's own vocabulary a
+rejection is "permanent unless the reason stops holding", so the reasons are named separately
+above rather than bundled: the native supersession would survive an overage change, while the
+never-fires-on-this-account half would not.
+
 #### 2026-08-26 candidate 2: Stop-failure recovery
 
-*Stop-failure recovery: the durable `StopFailure` marker, the scheduled watcher, the incident budget, the resume-and-re-arm.* **Verdict: rejected**
+*Stop-failure recovery: the durable `StopFailure` marker, the scheduled watcher, the incident budget, the resume-and-re-arm.* **Verdict: rejected 2026-08-26**
 
 Built in this window and **removed in the same window** as dormant, on the ground that candidate 1 supersedes it: with the watchdog set, no `StopFailure` ever fires and the watcher never engages. The end-to-end path never ran once. This is the strongest removals-as-signal reading this file has recorded: the upstream author spent a whole effort on the feature the user asked about and then deleted it in favour of an environment variable. Take the variable, not the machinery.
 
@@ -299,7 +317,7 @@ The capability postdates model knowledge, which is their whole argument for anno
 
 #### 2026-08-26 candidate 17: `coordinator`, `standing-watch`, `dispatch-authority`
 
-*`coordinator` (a machine-wide seat with a committed board), `standing-watch` (a skill for attended loops watching a system the session does not own), `dispatch-authority` (a plan doc carrying a Dispatch Authorization section a receiving session arms on without a confirmation round-trip).* **Verdict: rejected**
+*`coordinator` (a machine-wide seat with a committed board), `standing-watch` (a skill for attended loops watching a system the session does not own), `dispatch-authority` (a plan doc carrying a Dispatch Authorization section a receiving session arms on without a confirmation round-trip).* **Verdict: rejected 2026-08-26**
 
 Upstream-specific as a set: they serve a multi-machine fleet with a planner/executor mesh across sessions, named machines (NEO-CLAUDE, SCOTT-CLAUDE, SCOTT-DEVELOP) and an operator steering from Discord. `standing-watch` is the closest to portable and could be revisited if this kit ever grows an attended-loop use case; `coordinator` and `dispatch-authority` presuppose the mesh.
 
@@ -323,7 +341,7 @@ Adopted by them from a third-party evaluation, and it indicts a step of `kit-ado
 
 #### 2026-08-26 candidate 21: `kit-statusline.js` and `kit-goal-statusline.js`
 
-*`kit-statusline.js` and `kit-goal-statusline.js`.* **Verdict: rejected**
+*`kit-statusline.js` and `kit-goal-statusline.js`.* **Verdict: rejected 2026-08-26**
 
 The user runs `ccstatusline` (`~/.claude/settings.json`), and a kit-owned statusline would replace it rather than compose with it. Revisit only if the goal state ever needs a display surface the session-start block cannot give it. **A second reason to revisit appeared 2026-08-27, and candidate 1 of this same pass has since retired it (see its point (4)): the kit polls itself from its own hooks, so nothing needs to run often enough to keep a cache warm, and 21 stays rejected on its original composition grounds. Left in place with this marker rather than deleted, because a reader who opens 21 alone was getting a live reason to reopen it.** The usage and spend signal documented in candidate 1 of this pass reaches the disk through whatever refreshes its cache, and a statusline is the only surface that runs often enough to keep one warm at no scheduling cost. So a kit-owned statusline would be carrying a data duty rather than a display duty. The composition objection above is unchanged and still decides it: replacing `ccstatusline` means owning its usage fetch, its lock, its error caching and its git and skills caches, not just its rendering. The operator's stated interest, 2026-08-27, is exactly that replacement, both to drop the third-party dependency and to build usage-limit behavior on top. That is a spec rather than a port, and it belongs to this kit rather than to the upstream one.
 
@@ -378,22 +396,22 @@ run)` in place rather than restated here.
 
 | # | Capability | Verdict |
 |---|---|---|
-| 1 | Semantic memory system | **adapted** |
+| 1 | Semantic memory system | **adapted 2026-08-07** |
 | 2 | `readonly-agent-guard` | **pending, strong** |
 | 3 | `hook-canary` | **pending, strong** |
 | 4 | `kit-version-nudge` | **pending, blocked on a prerequisite** |
 | 5 | Doctrine rightsizing | **pending, method only** |
 | 6 | `output-styles/kit.md` | **pending, mechanism only** |
 | 7 | `docs/security-model.md` | **pending, shape only** |
-| 8 | Fleet integration and the external-engine standdown | **rejected** |
-| 9 | `operating-instructions` skill changes | **rejected** |
+| 8 | Fleet integration and the external-engine standdown | **rejected 2026-08-07** |
+| 9 | `operating-instructions` skill changes | **rejected 2026-08-07** |
 | 10 | Backlog-sweep batch | **pending, split** |
 
 Each candidate's reasoning follows below, one section apiece.
 
 #### 2026-08-07 candidate 1: Semantic memory system
 
-*Semantic memory system: `memq.js` (5,337 lines), `memory-index.js` (1,092), `memory-session.js` (772), the `memory-system` skill, `memq-shim`, `memq-grant`, `memory-usage-stamp`, ~14k lines of tests, PowerShell doctor sections, 6 specs.* **Verdict: adapted**
+*Semantic memory system: `memq.js` (5,337 lines), `memory-index.js` (1,092), `memory-session.js` (772), the `memory-system` skill, `memq-shim`, `memq-grant`, `memory-usage-stamp`, ~14k lines of tests, PowerShell doctor sections, 6 specs.* **Verdict: adapted 2026-08-07**
 
 **Adjudicated 2026-08-08 in a design council; the effort is `plans/cross-project-memory_spec_v1.md`.** The engine is not taken. Two separable ideas are: a kit-owned cross-project tier, and advisory decay with use-reinforcement. Both reshaped hard against this kit's evidence rather than ported. What the council changed versus their design: the emitted index line is **generated from each record's `description:`** rather than hand-maintained (theirs is hand-maintained, and this store shows index currency is a byproduct of creating a record 15/15 and never of revising one 0/8); a computed `[body revised]` marker covers the residue that generation cannot; bodies stay directly `Read`-able rather than CLI-gated (`docs-curator` grants no Bash under any grant, so a CLI-gated body is unreachable to this kit's own curator); decay is advisory rather than automatic; and the root is a clean kit-owned directory, which drops their allowlist, four probes, and drift detection entirely. The embedder, git sync, and the whole fleet half stay out. The classification reasoning that led here follows. **Measured 2026-08-07 (2nd run):** the engine is ~7.2k lines of production JS plus ~14k of tests, against this whole kit's ~7.9k lines total, so adopting it wholesale is a >3.5x codebase increase for one subsystem. Two framing corrections from reading their specs. First, `automemory-off_spec_v1` shows the design **does not require turning native off**: they abandoned harness detection outright (the harness decides auto-memory through private minified code merging five settings tiers, and two review rounds each found another layer), so the kit emits its own index unconditionally and the cost of native being on is a redundant few-hundred-token duplicate index, not a conflict. Second, the embedder is a **later addition, not the core**: `memory-recall-and-reinforcement_spec_v1` settled recall with embeddings explicitly out of scope, using a no-query digest the model itself scores, and their design council rejected lexical scoring in favour of that. The vector layer arrived only in `synced-semantic-memory_spec_v2`. **The size argument against embeddings here:** the native store holds 62 records across all projects (8 in this one), while their own recall digest budgets 200 lines, so this store is at ~31% of a budget built to be generous. Brute-force cosine over 62 records, bought with a several-hundred-MB `onnxruntime-node` install, is a vector index over a shoebox; the digest the model reads with the task in view is both cheaper and the better scorer at this corpus size. The separable ideas worth a brainstorm are the two native genuinely lacks: **decay with use-reinforcement**, and a **cross-project tier** (their journal → project → type → operator → doctrine ladder) for facts that today strand in whichever project store learned them. Two cautions to carry in: they report a real store showing **23 decay candidates against one recorded stamp**, so the usage signal the whole reinforcement model feeds on is weakly produced in practice; and their `~/.claude`-as-git-repo sync, allowlisted and pushed to a private GitHub remote, is the highest-risk piece by a distance (their own words: the allowlist "is the only barrier between 'sync memories' and 'publish credentials'"), is motivated by their four machines, and should not come across for a single Linux workstation.
 
@@ -435,13 +453,13 @@ This kit has a backlog item of that exact title open since 2026-07-24, and the g
 
 #### 2026-08-07 candidate 8: Fleet integration and the external-engine standdown
 
-*Fleet integration and the external-engine standdown: `KIT_EXTERNAL_ENGINE`, run-scoped memory tiers, the memq grant, the frozen plan-doc machine contract.* **Verdict: rejected**
+*Fleet integration and the external-engine standdown: `KIT_EXTERNAL_ENGINE`, run-scoped memory tiers, the memq grant, the frozen plan-doc machine contract.* **Verdict: rejected 2026-08-07**
 
 Upstream-specific. It is a contract with an external engine (Spine's Dispatch) that the user does not run. Revisit only if this kit ever gets spawned by an orchestrator.
 
 #### 2026-08-07 candidate 9: `operating-instructions` skill changes
 
-*`operating-instructions` skill changes.* **Verdict: rejected**
+*`operating-instructions` skill changes.* **Verdict: rejected 2026-08-07**
 
 The 2026-06-17 rejection of the full operating manual holds. Rightsizing is the separable part worth reading, and it is tracked as candidate 5.
 
