@@ -433,3 +433,44 @@ quarter rather than being written once.
   test-coverage enumeration went three commits and two days out of date during this same session,
   missed by the author who had just written instance 9's conclusion that only a mechanical sweep
   survives an author's memory.
+
+- **Decide whether `docs-write-guard` should reach interpreter writes (opened 2026-08-27, closed
+  2026-09-06).** Closed by the item's own second path: **a recorded decision that the declarative
+  half is enough here.** Not closed by elimination, though both named candidates do fail; the
+  positive case is below.
+
+  **The gap is real and wider than a "known miss" usually is.** The guard intercepts
+  `Write`/`Edit`/`MultiEdit` exactly and shell writes only heuristically, so `python3 - <<EOF`,
+  `sed -i` and `Copy-Item` are out of reach. What makes it matter is that an auto-mode session is
+  *instructed* to edit files through "sed, heredocs, or short scripts", so the unguarded channel is
+  the instructed default rather than an unusual choice. The session that closed this used
+  `python3 - <<PY` for essentially every edit it made across seventeen commits, which is first-hand
+  confirmation that the channel is the default one; that session was a main session and permitted,
+  so it is evidence about the channel and not about subagents leaking.
+
+  **Both candidates are worse than the gap.** A heuristic keyed on a `docs/` path near a known
+  interpreter over-blocks a command that merely names one, which is the direction the guard's own
+  cardinal rule forbids, and `archive/docs-write-guard-structure_spec_v1.md` records that direction
+  failing twice on measured deny-to-allow regressions plus an unbounded-allocation hang. Widening
+  the Stop-scan to any `docs/` file a turn modified needs a per-turn baseline a Stop hook does not
+  have; reading repo state instead is precisely the regression `stop-docs-hygiene`'s own header
+  records and forbids re-adding, having once ended a one-question diagnosis with an archiving
+  demand about an unrelated plan.
+
+  **The positive case, in the order that decides it.** The guard's teeth are the **role rule**,
+  which is declarative and intact: an interpreter write escapes one channel's enforcement rather
+  than the rule, and a subagent doing it has ignored its charter twice instead of finding a
+  loophole. `security-model.md`'s trusted-workspace premise makes that subagent mistaken rather
+  than hostile, and the guard reliably catches the mistake shape, which is reaching for `Write`.
+  The last net is human: implementers stage rather than commit, so an unexpected `docs/` path sits
+  in the staged set the operator reads before a commit they must explicitly permit. And the
+  measured harm across the guard's whole life is **zero** - the 2026-08-26 evidence is a deliberate
+  probe that landed a file on purpose, not an incident, and `stop-docs-hygiene` has never been
+  recorded firing.
+
+  **What shipped is visibility, not enforcement.** `docs/architecture.md` described the four
+  PreToolUse guards in detail and named this limit nowhere, so the operator's own architecture
+  document overstated coverage to the one reader who gates commits. It now carries the miss, the
+  2026-08-26 measurement, why both fixes were declined, the three layers that do cover it, and the
+  reopen condition: **one observed instance of a governed subagent writing into `docs/` through an
+  interpreter unprompted.**

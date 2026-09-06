@@ -43,6 +43,37 @@ File doors in that hook are at three different standards, which matters because 
 
 Four PreToolUse guards deny rather than advise, and are the only kit code that can block a tool call: `docs-write-guard.js` on `Write|Edit|MultiEdit|Bash|PowerShell` (a non-curator subagent writing into `docs/`), `pr-docs-guard.js` and `merged-pr-push-guard.js` on `Bash|PowerShell` (opening a PR with `docs/` dirty, pushing to a merged branch), and `usage-barrier.js` on `Agent|Task` (subagent dispatch from the usage wind-down threshold upward, carrying a different instruction at the wind-down and at the barrier, and a dispatch carrying an explicit fable model override once the Fable weekly window passes its ratchet). The first three deny by exiting 2 with the reason on stderr; `usage-barrier.js` denies by writing `permissionDecision: "deny"` as JSON and exiting 0, because the reason it carries has to be a complete stop instruction rather than an error line. One PostToolUse hook advises and cannot block: `usage-nudge.js` emits the usage wind-down, and it is the kit's only mid-turn channel to the model. Two Stop hooks close a turn: `stop-docs-hygiene.js` flags scratch leaked into `docs/`, and `kit-goal-stop.js` holds an armed plan run to completion with no LLM evaluator in the path.
 
+**What the mechanical layer does not reach, stated here because this paragraph otherwise reads as
+coverage.** `docs-write-guard` intercepts `Write`/`Edit`/`MultiEdit` exactly, by `file_path`, and
+shell writes only heuristically. **An interpreter that opens the file itself is out of reach**:
+`python3 - <<EOF`, `sed -i`, `Copy-Item`. That is not an exotic choice, which is what makes it
+worth naming rather than filing as a known miss: an auto-mode session is instructed to make file
+changes through Bash with "sed, heredocs, or short scripts", so the unguarded channel is the
+*instructed default*. Measured 2026-08-26 on cache `10e4078df8f5`, three arms: the `Write` tool
+blocked, `echo probe > docs/x.md` blocked, `python3 - <<EOF` on the same path **allowed and the
+file landed**. `stop-docs-hygiene` is a thinner net than it looks, since it matches leaked-scratch
+names and directories and then exempts anything carrying the plan-header contract, so an edit to an
+existing curated doc passes both checks.
+
+**Deliberately not closed, 2026-09-06, because both available fixes are worse than the gap.** A
+heuristic keyed on a `docs/` path near a known interpreter over-blocks a command that merely names
+one, which is the direction `docs-write-guard`'s own cardinal rule forbids and which
+`archive/docs-write-guard-structure_spec_v1.md` records failing twice on measured deny-to-allow
+regressions. Widening the Stop-scan to any `docs/` file a turn modified needs a per-turn baseline a
+Stop hook does not have; reading repo state instead is the regression `stop-docs-hygiene`'s own
+header records and forbids re-adding, having once ended a one-question diagnosis with an archiving
+demand about an unrelated plan.
+
+**Three things do cover it, none of them this hook.** The role rule is declarative and intact: an
+interpreter write escapes one channel's enforcement, not the rule, and a subagent doing it has
+ignored its charter twice rather than found a loophole. `security-model.md`'s trusted-workspace
+premise makes such a subagent mistaken rather than hostile, and the guard catches the mistake
+shape, which is reaching for `Write`. And the last net is human: implementers stage rather than
+commit, so an unexpected `docs/` path sits in the staged set the operator reads before a commit
+they must explicitly permit. **Reopens on one observed instance** of a governed subagent writing
+into `docs/` through an interpreter unprompted, which in this guard's whole life has not happened;
+the 2026-08-26 evidence is a deliberate probe.
+
 ## State, and where it lives
 
 Two of the kit's seven state locations sit under a project root and five are home-rooted, shared by every project on the machine. Of the two, only `docs/` is tracked; `.kit/` is scratch, and the next paragraph covers how each project comes to ignore it.
