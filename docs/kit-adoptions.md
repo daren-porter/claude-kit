@@ -27,6 +27,13 @@ head of this file. Four rules follow, all of them about that one line:
   not find a line pushed below it.
 - A pass updates it. Nothing else reformats it.
 
+**So `Last pass:` dates the last PASS, never the last edit to this file, and the difference is
+visible rather than theoretical.** A live entry keeps accruing dated amendments between passes:
+the 2026-08-26 candidate 1 entry carries strata dated 08-27, 08-28, 08-29, 08-30 and 08-31, all
+of them later than the header above them and none of them a pass. A reader who takes the header
+as a file mtime concludes the ledger stopped a week before it did. **The newest date inside an
+entry is that entry's currency; the header is the window's.**
+
 `Watermark:` and `Source:` are for human readers and for the pass itself. Nothing parses
 them, and they carry no format contract beyond staying legible.
 
@@ -126,7 +133,10 @@ session-limit awareness. All three have answers below. Two of them cost less tha
 and the third is the largest single candidate ever recorded here.
 
 **Three facts were verified on this machine rather than taken from their specs**, because
-each one decides a candidate:
+each one decides a candidate. **Read all three as of 2026-08-26 against client `2.1.246`**,
+which this machine no longer runs (2.1.261 as of 2026-09-06): they are findings with a date and
+a version, not standing facts about the current client, and the third describes two
+`docs-write-guard.js` defects **this same pass then fixed**.
 
 - **`CLAUDE_CODE_RETRY_WATCHDOG` is real and live on this box.** Confirmed against
   `~/.local/share/claude/versions/2.1.246` (an unstripped ELF, so `strings` reads it):
@@ -561,6 +571,14 @@ runs, and nothing here restates it. Three conventions belong to the file itself:
 - **A `rejected` entry the new window touched gets re-checked**, since verdicts are keyed
   by capability and a substantial rework can outdate the reason. Update the entry in
   place and re-date it.
+- **A live entry is amended in place and the amendment carries its own date**, in bold, at the
+  point the new evidence lands: "**Built, 2026-08-28, and four of the claims above no longer
+  hold.**" The rule above covers `rejected`; this covers the class that actually accrues, since
+  a `pending` entry is by definition waiting for evidence and gets it in strata. Never rewrite
+  the superseded reasoning to match the new finding: the entry's value to a later pass is the
+  sequence of what was believed and what falsified it, and a tidied entry destroys exactly that.
+  **When an amendment changes the verdict, change the verdict line too** - an entry whose body
+  has concluded and whose verdict has not is the one failure this convention exists to prevent.
 - **A pass section is an index table plus one `####` section per candidate**, never a table
   carrying the reasoning in its cells. The index is `| # | Capability | Verdict |` with a short
   capability label; the section is `#### <pass date> candidate <n>: <short label>`, carrying the
