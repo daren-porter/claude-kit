@@ -186,6 +186,55 @@ wording in the prompt rather than the file: persisting to the repo does not chan
 loads, so in-prompt is mandatory rather than stylistic, and what goes untested that way is
 placement, trigger, and whether a real session would read the rule at all.
 
+**One correction to the resolution instruction above.** That file can hold more than one record
+for the same plugin: on 2026-09-06 it held two for this one, distinguished by `scope`, a `user`
+record last updated 2026-09-04 and a `project` record rooted at the home directory last updated
+2026-08-15. The live one was the `user` record, which was also the first in the file, so nothing
+here says the ordering is meaningless, only that it is not documented as meaningful. No rule for
+which record the harness picks is established here, so confirm from a load: the `Base directory
+for this skill` line the harness prints ahead of a loaded skill body carries the full install
+path, and it lands in the transcript of whichever agent performed the load, so a rep's line is
+in the rep's own file.
+
+**In-prompt delivery is necessary and not sufficient, because the first channel is pushed rather
+than fetched.** Every general-purpose rep in the 2026-08-20 arm (session
+`fe8497f6-86d2-4cee-99eb-e64344400df4`) carries an injected `skill_listing` attachment ahead of
+its first tool call, holding the name and description of all 39 skills the harness listed, and
+the descriptions in it are the installed ones. Grep for that record type rather than a line
+position, which shifts with the session's tool set. So a rep in an arm whose treated text
+includes a description holds both versions at once, asymmetrically, which all twelve of that
+arm's treated reps record, six on each variant across its two skills: each variant-A rep carried
+its skill's pre-sweep description string twice, once from the listing and once from the variant
+it was given, and each variant-B rep carried the pre-sweep string once and the swept string
+once. **The listing is per-rep and tracks the tool list.** The thirteen dispatches in that same
+session that went to agent types whose definitions restrict `tools:` to lists omitting `Skill`
+carried none at all, which is a 13-against-15 split in one session rather than a documented
+rule, and the tool list is one of several things those definitions change, so take it as the
+lead to follow. **A rep carrying the `Skill` tool cannot be used to contrast a skill's
+description**, installation being neither the condition nor the fix, and no absence of a `Skill`
+call clears one, that absence bearing on the body alone.
+
+**The second channel is fetched, and the two are complementary.** In the same arm the three reps
+of the cell given no skill text each read its task, called `Skill {"skill": "claude-kit:cold"}`
+before anything else, and worked from what arrived; the twelve that read a variant from a
+fixture file named in their dispatch made no such call, and those three are the only `Skill`
+calls among that session's 28 subagents. What the call delivered carries no frontmatter and no
+`description:` line at all, so the listing supplies the description and never the body, and the
+call supplies the body and never the description. Every dispatch in that arm, control and
+treated alike, ended "Do not read any other file, do not search the repository, and do not run
+any other commands", and all three control reps called `Skill` anyway, which is this file's own
+rule that instructing a subagent not to look is not a control, met again. Prevention is the
+construction above, a rep whose definition omits `Skill`. Detection does not reach the pushed
+channel at all, a rep contaminated by the listing leaving no tool call to find, so it covers the
+fetched one only: what each rep opened, plus that `Base directory` line naming the exact tree it
+loaded. **That arm's write-up has the cue right and one sentence wrong.**
+`docs/archive/kit-denaming_s2-arm/arm-result.md` records that every rep "had the pre-sweep skill
+available and cued", which the transcripts confirm, and then that "both arms ran the same
+installed skill", which they do not, the treated cells having been reached by the listing alone;
+and the cell it labels a no-skill control had the `Skill` tool and used it. It is immutable
+history per `docs/README.md:9`, so it stands as written and this is the correction travelling
+with the citation.
+
 **The scratchpad bar is arm-scoped, not absolute for the effort.** It exists so a RED rep
 cannot read the draft, so it binds through every RED-side arm and lifts once you are running
 GREEN, whose reps are supposed to have the wording: a GREEN fixture copy in the scratchpad is
@@ -328,16 +377,21 @@ even. Three reps inventorying one section with no stated unit returned 20, 13 an
 which argues for stating a unit rather than for this one.
 
 **A followability probe on the compressed text**, run per the gated path's definition below,
-persisted first as that definition requires, and carrying its rule that you ask whether the
-rule was applied and never whether an ambiguity can be named in it. **It needs one control that
-path does not: the rep must not reach the pre-compression text.** Persisting leaves the longer
+persisted first as that definition requires, and carrying its rule that you ask whether the rule
+was applied and never whether an ambiguity can be named in it. **It needs one control that path
+does not: the rep must not reach the pre-compression text.** Persisting leaves the longer
 version in git history and in every installed plugin cache, which is where a rep resolving a
 skill by name reads it, and it makes all the same claims, so that rep applies the old wording
 correctly and passes whatever the new text does. Hand it the compressed section in the prompt,
 give the task identifiers that do not name the skill, and read what it opened before counting
-the pass. Where the compression's own motive is that the current wording does not land, probe
-the before text under the same task as well; a before-probe that comes back clean disproves the
-motive and the compression proceeds on length alone.
+the pass. Naming is not the whole of that control, per the arms rule above. Hiding the skill's
+name from the task does not deny it to the rep, since the injected listing names every skill the
+harness lists whatever the task says, and reading what the rep opened cannot see a pushed
+listing at all. So the control here is a rep that cannot call `Skill`; short of that, the longer
+version also sits in git history and in every installed cache, where a `Read` reaches it. Where
+the compression's own motive is that the current wording does not land, probe the before text
+under the same task as well; a before-probe that comes back clean disproves the motive and the
+compression proceeds on length alone.
 
 **Disposal turns on which direction the gap runs, and only the first stays on this path.**
 
