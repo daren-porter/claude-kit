@@ -1,0 +1,107 @@
+// Materializes one isolated directory per rep for a writing-skills arm.
+//
+// WHY THIS EXISTS. An arm dispatched from inside this repo cannot control what
+// reaches its reps. Measured 2026-09-07, a rep dispatched here quoted, from context
+// alone: the project auto-memory index and three of its titles, the memory entries
+// "Premise corrections need verifying" and "Size a wording change by its readers",
+// and the global style rules. For an arm about prose rules that is the answer key.
+// A rep dispatched from a scratch directory instead reported no memory index and no
+// such entries, because the project auto-memory is keyed to the repo path.
+//
+// The other half is the agent definition. A rep whose `tools:` omits `Skill` gets
+// no Skill tool AND no skill_listing at all, verified by the rep reporting "no list
+// of available skills with names and descriptions anywhere in my context". A
+// general-purpose rep gets the listing, which carries every installed skill's
+// description, so an arm whose treated text is a description runs with both
+// versions in front of it.
+//
+// WHAT THIS DOES NOT CLOSE, measured the same day and stated because a harness
+// oversold is worse than none: the global CLAUDE.md still loads (it is user-level,
+// and it names kit skills in prose), MCP server instructions still arrive, and
+// `advisor` is injected whatever the tools list says. And isolation is not
+// discriminating power: the arm that motivated this was ALSO void because its
+// criteria were satisfiable by any competent rep, which no harness fixes.
+//
+// Node core only, CommonJS, no dependencies, consistent with tools/accretion.js.
+
+'use strict';
+
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const TEMPLATE = path.join(__dirname, 'arm-harness', 'arm-rep.md');
+
+// The repo must never be the cwd of a rep, which is the whole point, so refuse a
+// destination inside it rather than trusting the caller to pass one outside.
+function insideRepo(dir) {
+    const repo = path.resolve(__dirname, '..');
+    const rel = path.relative(repo, path.resolve(dir));
+    return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+}
+
+function materialize(opts) {
+    const { name, reps, fixtures, root } = opts;
+    if (!/^[a-z0-9][a-z0-9-]{0,40}$/.test(String(name || ''))) {
+        return { ok: false, reason: 'arm name must be kebab-case, 1-41 chars' };
+    }
+    const n = Number(reps);
+    if (!Number.isInteger(n) || n < 1 || n > 20) {
+        return { ok: false, reason: 'reps must be an integer 1-20' };
+    }
+    for (const f of fixtures) {
+        if (!fs.existsSync(f)) return { ok: false, reason: 'fixture not found: ' + f };
+        if (!fs.statSync(f).isFile()) return { ok: false, reason: 'fixture is not a file: ' + f };
+    }
+    const base = root || fs.mkdtempSync(path.join(os.tmpdir(), 'arm-' + name + '-'));
+    if (insideRepo(base)) {
+        return { ok: false, reason: 'destination is inside the repo, which defeats the isolation: ' + base };
+    }
+    const template = fs.readFileSync(TEMPLATE, 'utf8');
+    const dirs = [];
+    for (let i = 1; i <= n; i++) {
+        // One directory per rep, because reps that run in parallel against a shared
+        // output path overwrite each other and the failure is silent.
+        const dir = path.join(base, 'rep-' + String(i).padStart(2, '0'));
+        fs.mkdirSync(path.join(dir, '.claude', 'agents'), { recursive: true });
+        fs.writeFileSync(path.join(dir, '.claude', 'agents', 'arm-rep.md'), template, 'utf8');
+        for (const f of fixtures) {
+            fs.copyFileSync(f, path.join(dir, path.basename(f)));
+        }
+        dirs.push(dir);
+    }
+    return { ok: true, base, dirs };
+}
+
+function main() {
+    const argv = process.argv.slice(2);
+    if (argv.length < 3) {
+        process.stderr.write(
+            'usage: arm-harness.js <arm-name> <reps> <fixture>...\n'
+            + '  Creates one isolated directory per rep, each carrying the arm-rep agent\n'
+            + '  definition and a copy of every fixture. Prints the dispatch command per rep.\n'
+            + '  Nothing is dispatched: the caller runs each command and reads each reply.\n');
+        process.exitCode = 1;
+        return;
+    }
+    const r = materialize({ name: argv[0], reps: argv[1], fixtures: argv.slice(2) });
+    if (!r.ok) {
+        process.stderr.write('arm-harness: ' + r.reason + '\n');
+        process.exitCode = 1;
+        return;
+    }
+    process.stdout.write(r.base + '\n\n');
+    for (const d of r.dirs) {
+        // The dispatch prompt is passed inline rather than written into the rep
+        // directory: a rep reads what is in its cwd, and one that found the
+        // dispatcher's own prompt file there reported reading it.
+        process.stdout.write('cd ' + d + ' && claude -p "<the rep task>" --output-format text\n');
+    }
+    process.stdout.write(
+        '\nEach directory is one rep. Dispatch serially where the arm is RED-side.\n'
+        + 'Do not write the dispatch prompt, notes or scoring into a rep directory.\n');
+}
+
+if (require.main === module) { main(); }
+
+module.exports = { materialize, insideRepo };
