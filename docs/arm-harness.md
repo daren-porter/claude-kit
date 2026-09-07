@@ -57,6 +57,25 @@ by any competent rep, so a control cell scored the same ceiling as both treatmen
 A harness cannot make a fixture discriminate; only a fixture whose criteria a
 competent rep can fail does that.
 
+## Two cues the harness itself leaked, found on its first live use
+
+Both are fixed and both are pinned by `test/arm-harness.test.js`, and they are recorded
+because the class recurs rather than because these two instances are still live.
+
+**The rep directory named the arm.** It was `arm-<name>-<random>`, so every rep's cwd
+announced the experiment. Rep 01 of the first arm wrote that it declined to read this
+very document because "the directory name says this is a probe", and the same rep then
+went to the real repo and quoted `accretion.js:489`. Directories are now `w-XXXXXX`.
+
+**The agent was called `arm-rep`.** A rep enumerating its own `.claude/agents/` saw
+`arm-rep.md`. It is now `plain-worker`, which is also what the charter actually
+describes.
+
+Two of three reps under the leaky harness tried to reach the real kit and one
+succeeded, so this was not a theoretical exposure. `writing-skills` already records the
+mechanism, a fixture path reaching every rep with nothing walked, and the harness
+walked into it.
+
 ## Two things that leak through the harness itself
 
 **Do not put the dispatch prompt, notes or scoring in a rep directory.** A rep reads

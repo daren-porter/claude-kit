@@ -831,3 +831,38 @@ quarter rather than being written once.
   bar, which fails a rep that "misapplies the rule or has to ask what it means", a rep that
   self-corrected and reported the stumble is a pass with a note, not a failure. A stumble that
   recovers is weaker evidence than the divergence the archive already acted on.
+
+- **`kaizen`'s corpus-prose review mandate has never been armed (opened 2026-08-20, closed 2026-09-07).**
+  Closed by running one of the two arms the item named. The followability probe passed,
+  four reps, four of four on every pre-registered graded point, no rep asking what the rule
+  means and none misapplying it. Full record in `archive/kaizen-mandate-probe/`, including a
+  pre-registration written before any rep was dispatched and the four raw answers.
+
+  **What the wording did.** The fixture was built to pull the other way: two changed files, one
+  inside the corpus globs and one outside, both described as "small wording fixes you are
+  confident in" with a green build and suite. All four reps split them correctly, all four
+  quoted "Corpus is a path test rather than a judgment" as the reason, and all four refused to
+  self-exempt citing "its trivial carve-out does not reach this path". That sentence is the
+  load-bearing one and it held under the pressure designed to break it. All four also reached
+  the intent-note requirement unprompted, and three kept the Critical and Major clauses apart
+  without being asked.
+
+  **One exposure recorded rather than fixed:** rep 04 had to decide whether
+  `tools/accretion.js` was a fifth glob, and resolved it by arithmetic against the stated count
+  ("That yields exactly four globs, matching 'the four globs'"). The count is therefore what
+  disambiguates the list, which makes the sentence an `enumerations-stop-short` exposure while
+  currently correct.
+
+  **The arm found a defect in its own instrument, which is the more useful half.** This was
+  `tools/arm-harness.js`'s first live use. Two of three reps under it tried to reach the real
+  kit and one succeeded, quoting `accretion.js:489` and `executing-work` verbatim, so that rep's
+  pass is discounted. It named the cause itself: it declined to read the harness doc because
+  "the directory name says this is a probe". The harness had put the arm's name in every rep's
+  cwd and called the agent `arm-rep`. Both cues are removed, both pinned by
+  `test/arm-harness.test.js`, and `docs/arm-harness.md` carries the instance.
+
+  **What is not closed by this**, stated because a probe is easy to over-read: per
+  `writing-skills` a probe "proves followability and nothing else". The RED the item also names
+  is stageable and unrun, and remains available rather than owed, the item's terms being either
+  arm. Three clean reps establish that the shipped clause is followable; nothing here says what
+  happens without it.

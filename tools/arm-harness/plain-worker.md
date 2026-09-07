@@ -1,5 +1,5 @@
 ---
-name: arm-rep
+name: plain-worker
 description: A plain worker with a minimal charter and no skills available to it. Takes its entire task in the prompt, works it, and reports what it did and what it based its judgments on. Use when the task must be worked from the prompt alone.
 tools: Read, Bash
 ---

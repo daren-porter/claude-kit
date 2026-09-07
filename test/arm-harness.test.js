@@ -51,7 +51,7 @@ test('one directory per rep, each with the agent definition and every fixture', 
     assert.strictEqual(r.ok, true, r.reason);
     assert.strictEqual(r.dirs.length, 3);
     for (const d of r.dirs) {
-        const agent = path.join(d, '.claude', 'agents', 'arm-rep.md');
+        const agent = path.join(d, '.claude', 'agents', 'plain-worker.md');
         assert.ok(fs.existsSync(agent), 'agent definition present in ' + d);
         const body = fs.readFileSync(agent, 'utf8');
         assert.match(body, /^tools: Read, Bash$/m, 'tools omit Skill, which is what suppresses the listing');
@@ -61,6 +61,7 @@ test('one directory per rep, each with the agent definition and every fixture', 
     }
     // Distinct directories, so parallel reps cannot overwrite each other's work.
     assert.strictEqual(new Set(r.dirs).size, 3);
+
 });
 
 test('bad inputs are refused rather than half-materialized', () => {
@@ -74,4 +75,30 @@ test('bad inputs are refused rather than half-materialized', () => {
         /fixture not found/);
     assert.match(materialize({ name: 'ok', reps: 1, fixtures: [work], root: out }).reason, /not a file/);
     assert.ok(!fs.existsSync(out), 'no directory created by any refused call');
+});
+
+// Both cues that leaked on this harness's first live arm, pinned so they cannot come
+// back. One rep wrote that it declined to read the harness doc because "the directory
+// name says this is a probe"; another enumerated its own `.claude/agents/arm-rep.md`.
+// A fixture's path reaches every rep and no rep can decline to read its own cwd, which
+// is `writing-skills`' recorded leak-with-nothing-walked.
+test('the generated rep path names neither the arm nor the experiment', () => {
+    const work = scratch();
+    const f = fixture(work, 'task.md', 'x');
+    const r = materialize({ name: 'kaizen-mandate-probe', reps: 1, fixtures: [f] });
+    assert.strictEqual(r.ok, true, r.reason);
+    const generated = path.relative(os.tmpdir(), r.base);
+    assert.ok(!/arm|probe|rep|kaizen|mandate|test|fixture/i.test(generated),
+        'the generated directory must carry no cue: ' + generated);
+    assert.match(path.basename(r.dirs[0]), /^rep-\d\d$/,
+        'the per-rep leaf is positional only');
+});
+
+test('the agent file carries no experiment cue in its name either', () => {
+    const work = scratch();
+    const f = fixture(work, 'task.md', 'x');
+    const r = materialize({ name: 'probe', reps: 1, fixtures: [f], root: path.join(scratch(), 'o') });
+    const agents = fs.readdirSync(path.join(r.dirs[0], '.claude', 'agents'));
+    assert.deepStrictEqual(agents, ['plain-worker.md']);
+    assert.ok(!/arm|probe|rep\b/i.test(agents[0]), 'agent filename is a cue: ' + agents[0]);
 });

@@ -30,7 +30,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const TEMPLATE = path.join(__dirname, 'arm-harness', 'arm-rep.md');
+const TEMPLATE = path.join(__dirname, 'arm-harness', 'plain-worker.md');
 
 // The repo must never be the cwd of a rep, which is the whole point, so refuse a
 // destination inside it rather than trusting the caller to pass one outside.
@@ -53,7 +53,12 @@ function materialize(opts) {
         if (!fs.existsSync(f)) return { ok: false, reason: 'fixture not found: ' + f };
         if (!fs.statSync(f).isFile()) return { ok: false, reason: 'fixture is not a file: ' + f };
     }
-    const base = root || fs.mkdtempSync(path.join(os.tmpdir(), 'arm-' + name + '-'));
+    // The directory name carries NO arm name, and the agent is called plain-worker
+    // rather than arm-rep, because both leaked on this harness's first live use. One
+    // rep wrote that it declined to read the harness doc since "the directory name
+    // says this is a probe"; another enumerated its own `.claude/agents/arm-rep.md`.
+    // A fixture's path reaches every rep and no rep can decline to read its own cwd.
+    const base = root || fs.mkdtempSync(path.join(os.tmpdir(), 'w-'));
     if (insideRepo(base)) {
         return { ok: false, reason: 'destination is inside the repo, which defeats the isolation: ' + base };
     }
@@ -64,7 +69,7 @@ function materialize(opts) {
         // output path overwrite each other and the failure is silent.
         const dir = path.join(base, 'rep-' + String(i).padStart(2, '0'));
         fs.mkdirSync(path.join(dir, '.claude', 'agents'), { recursive: true });
-        fs.writeFileSync(path.join(dir, '.claude', 'agents', 'arm-rep.md'), template, 'utf8');
+        fs.writeFileSync(path.join(dir, '.claude', 'agents', 'plain-worker.md'), template, 'utf8');
         for (const f of fixtures) {
             fs.copyFileSync(f, path.join(dir, path.basename(f)));
         }
@@ -78,7 +83,7 @@ function main() {
     if (argv.length < 3) {
         process.stderr.write(
             'usage: arm-harness.js <arm-name> <reps> <fixture>...\n'
-            + '  Creates one isolated directory per rep, each carrying the arm-rep agent\n'
+            + '  Creates one isolated directory per rep, each carrying the plain-worker agent\n'
             + '  definition and a copy of every fixture. Prints the dispatch command per rep.\n'
             + '  Nothing is dispatched: the caller runs each command and reads each reply.\n');
         process.exitCode = 1;
@@ -102,6 +107,11 @@ function main() {
         + 'Do not write the dispatch prompt, notes or scoring into a rep directory.\n');
 }
 
-if (require.main === module) { main(); }
+if (require.main === module) {
+    // Piping this to `head` closes stdout mid-write, and an unhandled EPIPE prints a
+    // stack trace over the output the caller is trying to read.
+    process.stdout.on('error', (err) => { if (err && err.code === 'EPIPE') process.exit(0); });
+    main();
+}
 
 module.exports = { materialize, insideRepo };
