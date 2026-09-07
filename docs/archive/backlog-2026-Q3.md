@@ -600,3 +600,74 @@ quarter rather than being written once.
   review rounds: first recording the opposite of `cross-project-memory`'s own adjudication, then
   describing a design that had already been rejected. A closure record written before the design
   settles is a claim about work that has not happened yet. Write it last.
+
+- **Five residuals from the red-for-rule-changes reviews (opened 2026-08-16, closed 2026-09-07).**
+  Closed as five declines. The first pass at this closed four and acted on the fifth; review
+  reversed the action, and the reversal is the more useful record.
+
+  **(e) `kaizen`'s "baseline-test any behavior-shaping wording", declined on an unmet trigger.**
+  I qualified it, then reverted. Two things settled that. `archive/red-for-rule-changes_spec_v1.md`
+  Chapter 1 rejected it because "a qualifier there is behavior-shaping wording in a second file
+  that would owe its own arm", and recorded it "as a candidate if a further misroute is observed";
+  no misroute has been. What I offered instead was that I twice reasoned out which bill a change
+  owed during this pass, which is the rule working rather than failing, and I never read the brief
+  template at all, Phase 1 and Phase 2 having collapsed into one session. And the line is not
+  false: `writing-skills:152` makes the arms "the standard for any change to behavior-shaping
+  content", so the brief states the default correctly and "follow writing-skills" carries the
+  reader to the three sections that route around it. Incomplete is not wrong, and the premise
+  correction I claimed had no false premise under it. **What keeping it buys** is one pointer
+  rather than a second copy of a routing table that would need syncing; the draft I reverted was
+  already out of sync on the day it was written, dropping the borrowed-evidence bill entirely and
+  every other omission in the down-cost direction. **The trigger is recorded here so the next
+  session that observes a real misroute can act with it met.**
+
+  **(a) A baseline rep in the untouched state for a narrowing's third arm, declined.** What
+  keeping the shape at three arms buys: a clean third arm already has a defined reading, because
+  `writing-skills:116-122` sends any clean run to the four answers rather than only to the section
+  that owns them. The concession, since the proposal was to measure rather than to read: this is a
+  reading rule and not evidence.
+
+  **(b) "record the observed instance" implies a count of one, declined, and the reason I first
+  gave for declining it was wrong.** The verdict stands on the file rather than on argument:
+  `writing-skills:609-611` says "this scopes the evidence, never the shape:
+  contradicted-versus-narrower governs any rule change, including one about what an agent does,
+  whose evidence is still the arms", so the three-rep bar the original finding said this clause
+  contradicted is in fact preserved for every claim about an agent. **What keeping the clause
+  buys** is the provenance its admitting incident exists for: the pr-review anchor fabrication at
+  `writing-skills:585-590`, where an agent preserved a mandate by inventing a distinction nothing
+  observed had supported. Note two supersessions rather than hiding them. Chapter 1 filed this
+  finding as "the point is real" and `backlog.md` repeated that, and this closure declines it on
+  the merits. And my first reason ("a plural invites padding one genuine observation into a fake
+  set") named no incident and no sighting, which is the bar `kaizen` sets for a spared verdict; it
+  is replaced above. I had also reached for "five or six single-observation errors this session"
+  as support, with no locator, which `writing-skills:498-504` calls hearsay with more words. Those
+  errors were real but they were errors of GENERALIZING from one observation, which this clause
+  does not govern.
+
+  **(c) Carrying the rule-change carve-out into the second copy of the redundancy list, declined.**
+  **What keeping the single copy buys**, verifiable at `writing-skills:121-122`: that copy already
+  points at the four answers under "When a local RED is not available", so a reader who reaches it
+  is routed rather than stranded, and a second carve-out would owe its own arm. One thing the first
+  pass attached here is withdrawn: it recorded a "refinement" that repairing a defective
+  instruction is not a second copy and owes no arm, sourced to a subagent review's ruling during
+  this session. A review's ruling is not a rule change, and using it to license (e) while claiming
+  it did not reach (c) is preserving a position by a distinction nothing recorded supports, which
+  is `writing-skills:584-590`'s named failure. If that boundary is worth stating it goes to
+  `writing-skills` through its own bar.
+
+  **(d) Consolidating the transcript clause with the self-report principle, declined, and the
+  first pass adjudicated it against the wrong text.** The pair Chapter 3 names is S2's transcript
+  clause and the self-report principle, which today are `writing-skills:144` and `:264`; the first
+  pass compared `:264` with `:528`, the probe-prompt clause, which is a third clause the residual
+  never named. **What keeping them separate buys** is that they govern different objects rather
+  than different readers: `:144` is the rep's REASONING, taken off the transcript instead of asked
+  for, and `:264` is what the rep OPENED. Merging them is a compression owing an inventory and a
+  probe for a few lines. **The cause of the mis-map is a factual error in this item's own text**,
+  which said the self-report principle sat "70 lines above" the transcript clause. At `67994f9`
+  the transcript clause was `:121` and the principle `:192`, so it was 71 lines BELOW. A paraphrase
+  that inverts a direction sends the next reader to the wrong paragraph, which is what happened.
+
+  **A second fidelity error in this item, found the same way.** Chapter 1 names two sites for (e),
+  `kaizen/SKILL.md:90` and `:94` at `9f5398a`, which are the Discipline line and the Applying line.
+  This item quoted only the first. Both are declined above on the same grounds, but a reader
+  working from the item alone would have repaired half a residual and thought it whole.
