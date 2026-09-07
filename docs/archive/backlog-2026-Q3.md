@@ -794,3 +794,40 @@ quarter rather than being written once.
   What the two versions before this had in common is worth naming, since the class recurs: both
   stated a number with no rule for reproducing it. A count without a counting rule is not a
   baseline, and a tripwire that fires on "a sixth" needs one that a reader can derive.
+
+- **The narrowing's third-arm clause reads against the in-prompt mandate (opened 2026-08-16, closed 2026-09-07).**
+  Closed on the item's second branch: the surrounding text does disambiguate it, and the effort
+  that shipped the clause had already decided so on stronger evidence than the item carries.
+
+  **The clause names both vehicles in one sentence**, which is what the item reads as a conflict.
+  `writing-skills`: "That arm carries the draft and can fail, so it holds the replaced rule in its
+  fixture and dispatches serially like RED." Two texts, two vehicles, one each. The draft is
+  CARRIED, and `:186`'s mandate is about the draft, so carried means in-prompt. The REPLACED RULE
+  is what sits in the fixture. There is no text the sentence leaves without a vehicle and none it
+  gives two.
+
+  **The record already settled it, and this closure does not supersede that.**
+  `archive/red-for-rule-changes_spec_v1.md:435-445` resolved the strip-versus-leave sub-question
+  by naming "which text each arm's fixture carries" as the deciding observable, states that the
+  shipped clause "now names it for the third arm, which was the one place reps actually diverged
+  (arm 2's rep 1 gave the third arm the old rule while its prompt carried the new one)", and
+  concludes "No further SKILL.md prose is owed". The leak-posture Critical the item's concern
+  belongs to is recorded as fixed at `:411-412`, by naming the arm as carrying the draft and
+  dispatching serially. So the wording exists because reps diverged, and was written to end the
+  divergence.
+
+  **What keeping it as it is buys**, in the currency a spared verdict pays in: the sentence is the
+  one place that says which text each arm's fixture carries, which the effort measured as the
+  observable that decides the question, and it says it in the same breath as the leak posture that
+  makes the draft in-prompt. Splitting it re-opens a question settled against six reps across two
+  arms.
+
+  **The counter-argument, stated because it comes from the same file and nearly reaches.**
+  `writing-skills` holds that "prose that only capable readers survive is a defect whether or not
+  a rep trips on it", and this item's evidence is a rep tripping: an S3 probe rep set the arm up
+  backwards on the misreading and then corrected itself by reading further. Two things stop it
+  reaching. That sentence governs wording that was WRONG and which a capable rep routed around;
+  this wording is correct, and the rep reached the correct setup from it. And by the probe's own
+  bar, which fails a rep that "misapplies the rule or has to ask what it means", a rep that
+  self-corrected and reported the stumble is a pass with a note, not a failure. A stumble that
+  recovers is weaker evidence than the divergence the archive already acted on.
