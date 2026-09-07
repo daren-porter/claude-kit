@@ -21,6 +21,34 @@ session does for itself.
 
 ## Arm
 
+**First arm in a repo only.** Goal state is machine-local working state and must
+never be committed, and the arm writes a transient `.kit/goal-state.json.tmp.<pid>`
+beside it. Probe both, one path per invocation because `-q` refuses more than one:
+`git check-ignore -q .kit/goal-state.json`, then the same on
+`.kit/goal-state.json.tmp.0`, whose `0` stands in for any pid. Probe the artifacts
+and not `.kit/`, because the directory can report ignored while a file inside it is
+not: with a nested `.kit/.gitignore` of `*` then `!*.json`, `.kit/` exits 0 (the
+trailing slash leaves an empty remainder for `*` to match) while `git add -A`
+stages the state file. Observed 2026-09-07.
+
+Exit 0 on both and there is nothing to do. Exit 128 means git refuses to answer
+here, which is no repository, a bare one, or a rejected owner rather than any fact
+about the project's ignores, so report which fatal came back and ask before arming
+rather than editing ignores against an answer you do not have.
+
+Otherwise, in this order. Add nothing if a rule already covers the path. Give the
+repo's root `.gitignore` a trailing newline if it lacks one, because appending
+without one welds the new rule onto its last and destroys both. Append `.kit/`
+there rather than writing `.kit/.gitignore`: only a committed rule holds for a
+clone, and `docs-write-guard.js` and `stop-docs-hygiene.js` call `.kit/` gitignored
+for any repo the kit runs in rather than for this checkout alone. Say that you
+edited it, since that edit lands in the worktree diff and not the staged one. Then
+re-probe. Still failing means git already tracks the path, which no rule reaches:
+confirm with `git ls-files .kit` before acting, then `git rm --cached -r -f .kit`,
+which needs both flags, the plain form exiting 1 on a three-way index divergence
+and 128 on a directory. It keeps the working files and leaves a staged deletion to
+report. Re-probe again.
+
 `/kit-goal <plan path>`, where the argument is a repo-relative plan path like
 `docs/plans/foo_spec_v1.md`. Run the CLI, which validates the plan and writes the
 state atomically:
@@ -43,10 +71,6 @@ wrote the spec and is handing execution off does not arm (the leash would block
 its own handoff stop), so arm in the execution session instead. One goal per
 project: arming while another goal is armed, for any plan, replaces it and
 resets its binding.
-
-Before the first arm in a repo, check that the project's `.gitignore` covers
-`.kit/`, and add that line first if it does not. Goal state is machine-local
-working state and must never be committed.
 
 The command refuses, with the reason, a plan that does not exist, a plan already
 at `Status: Complete`, or a path that resolves outside the repo. Surface that

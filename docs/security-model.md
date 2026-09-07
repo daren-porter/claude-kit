@@ -417,15 +417,20 @@ block cap rather than by anything the kit controls. `stop-docs-hygiene` does car
 
 ## Project write surfaces the kit creates
 
-Two, both under `.kit/` per repo and both machine-local. `.kit/goal-state.json` is the goal
+Two under `.kit/` per repo, both machine-local, plus one edit outside it: `kit-goal`'s arm step
+appends `.kit/` to the project's root `.gitignore`, a tracked file, which it is required to
+report. `.kit/goal-state.json` is the goal
 leash, written by `kit-goal.js` and guarded at the write door (see the trusted-channel table).
 `.kit/visuals/` is the visual companion's screens, written by a session following
 `brainstorming`, and it is the only kit surface whose contents can be project-confidential:
 screens are mockups of the thing under design. Three properties bound it. A screen is inert by
 rule, the only URL in one being its stylesheet and script and form elements barred, so opening
 one makes no request. The directory is confirmed ignored before the first write, with
-`.kit/.gitignore` containing `*` when the project's own ignores do not cover it, so a later
-`git add -A` cannot stage a mockup. And the screens are swept at spec-write. None of the three
+`.kit/.gitignore` containing `*` when the project's own ignores do not cover it. That is not a
+guarantee, and two ways it fails were measured on 2026-09-07: a screen git already tracks stays
+tracked whatever rules are added, and a negation already in that file survives the write, both
+leaving `git add -A` able to stage a mockup. The instruction now re-probes and stops rather than
+assuming the write settled it. And the screens are swept at spec-write. None of the three
 is enforced by a hook; all three are skill instructions, so they hold to the extent the model
 follows them, which is the general caveat in the fail-open section below.
 

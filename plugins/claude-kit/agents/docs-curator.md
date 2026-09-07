@@ -44,4 +44,4 @@ DRIFT REPORT:
 DRIFT: NONE  (if spec, code, and docs genuinely agree - say so plainly)
 ```
 
-Where drift exists, document the as-built behavior (truth on disk) and mark the passage with `<!-- DRIFT: D1 pending adjudication -->` so adjudication can find it. If the implementation looks like a mistake rather than a decision (e.g., the spec's behavior is clearly better and the code diverged by accident), say that directly in the Impact line. Do not pad the report; if there is no drift, one line says so.
+Where drift exists, document the as-built behavior (truth on disk) and mark the passage with `<!-- DRIFT: Dn pending adjudication -->`, `Dn` matching that finding's own label in the report above (`D1`, `D2`, ...) rather than `D1` for every marker, so adjudication can both find the passage and tell which finding it belongs to. The marker goes immediately after the passage it flags, never before it. If the implementation looks like a mistake rather than a decision (e.g., the spec's behavior is clearly better and the code diverged by accident), say that directly in the Impact line. Do not pad the report; if there is no drift, one line says so.

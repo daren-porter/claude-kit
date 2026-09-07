@@ -653,8 +653,8 @@ function main() {
         // counts are integers computed here - nothing from a record reaches
         // this sentence.
         // A count of zero is only ever emitted alongside unranked records, so
-        // the sentence has to lead with them rather than with a nothing, and
-        // "more" is wrong when there is nothing for them to be more than.
+        // the sentence states the nothing first and names the unranked count
+        // after it, and "more" is wrong when there is nothing to be more than.
         const reason = ' could not be ranked (an unusable created or applied date)';
         const lead = decay.count === 0
             ? `No cross-project memory record is idle past its use-adjusted threshold, but ${decay.unevaluated}${reason}`

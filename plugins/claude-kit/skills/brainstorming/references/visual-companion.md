@@ -36,15 +36,24 @@ Four rules about those paths:
 
 ## The loop
 
-0. **First push in a project only.** Confirm the screens will be ignored, with
-   `git check-ignore -q .kit/visuals/current.html`. That one command covers a global ignore, a
-   nested one, and the narrow case where the project ignores `.kit/goal-state.json` but not the
-   directory, which a substring check for `.kit/` would pass wrongly. If it fails, write
-   `.kit/.gitignore` containing `*`: it ignores itself, needs no git repo, and touches no file
-   the user already tracks, so nothing appears in their staged diff as an unrelated change. Untracked
-   is not ignored, and a later `git add -A` would otherwise stage client mockups. Then
-   `mkdir -p .kit/visuals` and copy `frame.css` in if it is not already there: on a first push
-   the directory does not exist yet, so the copy fails without it.
+0. **First push in a project only.** Confirm the screens will be ignored, with `git
+   check-ignore -q .kit/visuals/current.html`, probing the screen itself rather than `.kit/`: a
+   nested negation can leave a file stageable while the directory reports ignored. That command
+   covers a global ignore, a nested one, and the narrow case where the project ignores some
+   other path under `.kit/`, which a substring check for `.kit/` would pass wrongly. If it
+   fails, write `.kit/.gitignore` containing `*`: it ignores itself and needs no git repo.
+   Where that file already exists, PREPEND the rule rather than overwriting or appending.
+   Overwriting destroys the project's rules; `*` placed last overrides any negation above it,
+   so a `!keep.tmp` stops being honored while its text still sits in the file; and appending to
+   a file with no trailing newline welds `*` onto the last rule, so neither that rule nor this
+   one survives. Then re-probe, because a negation already in the file survives a prepend and
+   was observed leaving the screens unignored. If it still fails, stop and say so rather than
+   writing a screen: the negation has to be scoped or removed and that is the project's file to
+   change. Where the file was already tracked, the edit lands in the worktree diff rather than
+   the staged one, so say you made it. Untracked is not ignored, and a later `git add -A` would
+   otherwise stage client mockups. Then `mkdir -p .kit/visuals` and copy `frame.css` in if it
+   is not already there: on a first push the directory does not exist yet, so the copy fails
+   without it.
 1. Write `current.html`. Then copy that file to the numbered archive name with `cp`; do not
    write the document a second time, which would double the output tokens this design exists
    to save, and would let the two copies drift.

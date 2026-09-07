@@ -44,8 +44,7 @@ Bodies never cross into context through the hook. A body is reached by reading t
 
 `memory.js add` is the only way a record is created. It validates the name (kebab-case, 80 characters), requires `--kind` from `machine|platform`, requires `--description` (400 characters, control characters and bidi or zero-width characters refused), bounds every metadata value at 200 characters, generates `created` and `modified`, and publishes the file with `linkSync`, which claims the name in one atomic syscall and returns a duplicate-name refusal on `EEXIST`. A body arrives through `--body`, is normalized from CRLF, and is refused if it carries control characters other than tab and newline or any bidi or zero-width character. That last guard exists because a body is read directly by humans and models, which is the Trojan Source shape.
 
-`memory.js stamp <name>` appends one line to `applied.jsonl` and never rewrites the record, so the record file is byte-identical after a stamp and a test pins that. That is the tier's whole concurrency story for stamping. The earlier design rewrote the record under a compare-and-swap on its content hash, and was measured losing an applied day 8.3% of the time with two concurrent stampers, every process reporting success. The append-only form was verified at 20 concurrent stampers over five runs and 40 two-stamper trials with zero losses. The compare-and-swap survives in `writeRecord` as an optional guarded replace, and nothing calls it, in the shipped hooks or in the tests.
-<!-- DRIFT: D1 pending adjudication -->
+`memory.js stamp <name>` appends one line to `applied.jsonl` and never rewrites the record, so the record file is byte-identical after a stamp and a test pins that. That is the tier's whole concurrency story for stamping. The earlier design rewrote the record under a compare-and-swap on its content hash, and was measured losing an applied day 8.3% of the time with two concurrent stampers, every process reporting success. The append-only form was verified at 20 concurrent stampers over five runs and 40 two-stamper trials with zero losses. The compare-and-swap did not survive: `4f7272c` removed it with the design it belonged to. What `writeRecord` has instead is two publish modes: `create` claims the name with `linkSync` and fails `EEXIST`, and `replace` overwrites with a plain `renameSync`. `replace` is the default when no mode is passed, so an unguarded overwrite is what a caller gets by omission. Of the shipped hooks only the CLI calls it, and it passes `create`; the tests are its other callers.
 
 Both writes refresh `.index.json` best-effort afterwards. A sidecar that could not be written costs one marker, and a derived cache must never veto an authoring act.
 
@@ -89,8 +88,7 @@ a duplicate ever appears.
 
 A record's idle days are counted from its most recent applied day, or from `created` when it has never been applied. Recorded use buys time rather than immunity: `threshold = 30 + min(distinctAppliedDays * 7, 60)` days, and a record is a candidate when its idle days exceed its threshold. Candidates sort most-idle first, then by name.
 
-The nudge is silent at zero candidates only when nothing was left unranked. A store with no candidates but one or more records the ranking could not evaluate (an unusable `created` or `applied` date) emits a line that leads with the unranked count instead, because a store where nothing could be ranked saying nothing at all is the same silent drop in a different costume.
-<!-- DRIFT: D4 pending adjudication -->
+The nudge is silent at zero candidates only when nothing was left unranked. A store with no candidates but one or more records the ranking could not evaluate (an unusable `created` or `applied` date) emits a line saying nothing is past its threshold and then naming the unranked count, because a store where nothing could be ranked saying nothing at all is the same silent drop in a different costume.
 
 The ranking is advisory because its input signal is weakly produced. The upstream kit's own store showed 23 decay candidates against one recorded usage stamp, which is why automatic retirement was refused. This store demonstrates the same weakness right now: `applied.jsonl` does not exist, so all 14 records rank from `created` alone. Chapter 8 recorded 5 candidates at 33 to 44 idle days on the tier's first real day, and those numbers are measured from migration-era creation dates with no use data behind them at all.
 
@@ -114,8 +112,7 @@ Status is set through `process.exitCode` in all three memory files and no `proce
 
 ## Operating it
 
-The invocation that resolves from anywhere is the absolute one. The session-start memory block prints exactly that form, `node "<plugin>/hooks/memory.js" list`, and `finishing-work` step 7 names the CLI as `<plugin>/hooks/memory.js`. The skill's copy-pasteable block gives the path relative to the skill's own base directory instead (`node ../../hooks/memory.js add ...`), which a reader has to join against that base directory rather than against the session's cwd. The `kit-goal` skill it cites as precedent carries the same explanatory sentence but puts `<plugin-root>/hooks/kit-goal.js` in its block.
-<!-- DRIFT: D2 pending adjudication -->
+The invocation that resolves from anywhere is the absolute one. The session-start memory block prints exactly that form, `node "<plugin>/hooks/memory.js" list`, and `finishing-work` step 7 names the CLI as `<plugin>/hooks/memory.js`. The skill's copy-pasteable block now gives that same form, `node <plugin-root>/hooks/memory.js add ...`, and states that `../../hooks/memory.js` is only correct read against the skill's own base directory. That matches the `kit-goal` skill it cites as precedent, which puts `<plugin-root>/hooks/kit-goal.js` in its block.
 
 ```
 memory.js add <name> --kind <machine|platform> --description "<text>"
@@ -133,8 +130,7 @@ Two environment seams, both real operating levers:
 
 Gotchas worth knowing before you author:
 
-- **`origin` refuses a comma** even though the schema header calls it a free label. The comma guard exists for the inline list fields and is applied to every metadata value, `origin` included. Six of 14 `add` calls during the migration failed on values like "EleosCore, PR 395" and were reworded. Left as a finding rather than a code change, so the authoritative schema statement currently overstates what the field accepts.
-<!-- DRIFT: D6 pending adjudication -->
+- **Every metadata value refuses a comma except `origin`.** The guard and its reason are recorded inline in `memory-lib.js`; this is the warning, not a second copy of the contract. Refusing it on `origin` too had rejected values like "EleosCore, PR 395" on 6 of 14 seed migrations, which is why the exemption exists.
 - **`--description` is the field to slow down for.** It generates the emitted line and is capped at 400 characters. It carries the correction, not a topic label. Four of the 14 migrated records bundle more than one correction in a description (mean 363 characters against the 119 measured on the native store) because their source records did; the cost is that a stamp on a multi-fact record cannot say which fact was used.
 - **The hook sweeps the store twice per session start**, once for the index and once for the ranking. That was measured at 48ms and 60 to 70ms and kept deliberately. The residual is a two-snapshot window inherent to any hook that reads twice. Do not "fix" it without reading Chapter 6.
 

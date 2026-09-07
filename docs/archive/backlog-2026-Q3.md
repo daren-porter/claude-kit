@@ -519,3 +519,84 @@ quarter rather than being written once.
 
   Reopen condition unchanged: an agent observed reading a guard denial as a malfunction - retrying
   the same write, routing around to another `docs/` path, or reporting the hook as broken.
+
+- **Spread the visual companion's ignore idiom to `kit-goal` (opened 2026-08-14, closed 2026-09-07).**
+  Closed, but not by porting the idiom, which is what the item asked for and what three paired
+  review rounds rejected in three different forms. `plans/ignore-precondition_spec_v1.md` is the
+  Proposed stub that came out of it and carries the four versions, what each review found, and the
+  measured probe table; that table is not repeated here.
+
+  **What shipped.** `kit-goal/SKILL.md` had said to "check that the project's `.gitignore` covers
+  `.kit/`", a substring test whose two gaps a security review had already found in the identical
+  instruction in `brainstorming`. It now probes the two artifacts the arm actually writes,
+  `git check-ignore -q` on `.kit/goal-state.json` and on the transient
+  `.kit/goal-state.json.tmp.<pid>`, because probing either the directory or the state file alone
+  was reproduced passing while a path stayed stageable. For the remedy it names the three verified
+  traps and requires a re-probe, and deliberately prescribes no algorithm: every algorithm written
+  for it had a reachable hole, which is the stub's whole subject.
+  `brainstorming/references/visual-companion.md` took two corrections of its own on the way, both
+  live defects rather than tidying. It had said to write `.kit/.gitignore` containing `*`, an
+  unconditional overwrite that destroys whatever rules a project put there, and it promised an end
+  state it never verified; it now prepends and re-probes.
+
+  **The item's second half was right about the risk and wrong about the instance, and my first
+  reading of it was wrong about both.** It reported the curator's `<!-- DRIFT: Dn -->` slug
+  "currently varies between reports", citing `DRIFT: D3 (visual-companion)`. That exact form is
+  not recoverable: the only place the string was committed is `334d093`, into the backlog item's
+  own prose, which is a quotation and not a marker, and the item's own wording ("in this effort's")
+  points at a returned Drift Report. But the variance it warned about did materialize on disk six
+  days later, which my first pass missed and a reviewer's pickaxe found: `35025fe` (2026-08-20) put
+  a bare `<!-- DRIFT: D3 pending adjudication -->` into `docs/security-model.md`, the slug
+  `(kit-denaming)` was added to it before `3846b74` removed the whole marker on 2026-08-25. So two
+  forms did coexist in committed files. My rebuttal was also aimed at the wrong claim: the item
+  said the slug varies between REPORTS, and "every marker on disk was uniform" does not answer
+  that. The real defect underneath was
+  different and is fixed: `docs-curator.md` gave the marker as the LITERAL `D1` while its own
+  report template numbers findings `[D1]`, `[D2]`, so a curator following it marks every passage
+  `D1`. It now says `Dn` matches the finding's label, states that the marker follows the passage it
+  flags, and names `DRIFT: D` as the grep, because varying the number costs the fixed-string search
+  the uniform literal used to allow.
+
+  **Found while checking it: four drift markers pending 28 days in `cross-project-memory.md`**, from
+  `4f7272c` (2026-08-10), which `archive/document-review-battery_spec_v1.md:632-633` had already
+  seen and deliberately left alone as belonging to a prior effort, rather than overlooked. All four
+  are adjudicated and cleared, and the first pass at them got two wrong. Authority on which finding
+  is which: `archive/cross-project-memory_spec_v1.md:1049-1051`.
+
+  - **D1** (marker at `:48`, flagging the stamping paragraph) was real drift with the code fixed and
+    the doc repair still owed, so clearing it as "never drift" left a false sentence standing. The
+    doc said the compare-and-swap "survives in `writeRecord` as an optional guarded replace".
+    `4f7272c` removed `expectVersion` with the design it belonged to; `writeRecord` has two publish
+    modes, `create` claiming the name by `linkSync` and `replace` overwriting by plain `renameSync`,
+    and `replace` is the DEFAULT when none is passed, so an unguarded overwrite is what a caller
+    gets by omission. Of the shipped hooks only the CLI calls it, passing `create`; 27 test call
+    sites are its other callers, which is the scoping the first repair dropped.
+  - **D4** (marker at `:93`, the zero-candidate paragraph) substantially holds:
+    `session-start.js:475` returns null only when `count === 0 && unevaluated === 0`. One clause
+    named the wrong lead and is fixed, and so is the comment at `:655-657` that generated it, which
+    said the sentence must lead with the unranked count while the string it introduces leads with
+    the nothing. Repairing only the doc would have let the claim regenerate.
+  - **D2** (marker at `:118`, the CLI invocation) was real and already fixed in the skill, whose
+    block now gives `<plugin-root>/hooks/memory.js`.
+  - **D6** (marker at `:137`, `origin` refuses a comma) was real and fixed the other way:
+    `memory-lib.js` scopes the guard around `origin` (`key !== 'origin'`), citing the same 6-of-14
+    seed-migration incident the doc cites. The doc's claim that the schema header "overstates what
+    the field accepts" was true of the pre-fix code and went stale in the very commit that fixed it.
+
+  **How two were got wrong, because the mechanism is reusable.** The convention is
+  marker-follows-passage. Both mis-adjudications attributed the marker to the paragraph TWO above
+  it, and the cause was the reading tool rather than the judgment: a five-line context window ENDING at the
+  marker, on a file whose paragraphs are single unwrapped lines, spans several paragraphs, and
+  the top of the window gets read rather than the line adjacent to the marker. A window
+  centred on the marker would have held the right paragraph, so the shape is the whole defect. D2 and D6 came out right only
+  because a heading and a list lead-in sat above them, leaving no competing paragraph.
+
+  D6 was caught by accident rather than by audit: an `add` earlier the same day passed
+  `--origin "claude-kit, kaizen pass 2026-09-06"` and succeeded, which is the documented failure not
+  happening. A probe record with `--origin "alpha, beta"` confirmed it and was deleted.
+
+  **One process note, recorded because this entry was wrong twice before it was right.** It was
+  drafted at the point the work looked finished and then contradicted by each of the next two
+  review rounds: first recording the opposite of `cross-project-memory`'s own adjudication, then
+  describing a design that had already been rejected. A closure record written before the design
+  settles is a claim about work that has not happened yet. Write it last.

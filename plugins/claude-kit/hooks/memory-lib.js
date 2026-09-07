@@ -741,9 +741,11 @@ function ensureStore() {
 //   'create'  publish with linkSync, which fails EEXIST when the name is
 //             taken. Exclusive creation in one atomic syscall.
 //   'replace' publish with renameSync (the default), overwriting whatever
-//             is at the name. No caller uses this today: `add` creates and
-//             `stamp` appends to the journal instead of rewriting a record,
-//             so this mode exists for a future editing verb.
+//             is at the name. No SHIPPED HOOK uses it: `add` passes 'create'
+//             and `stamp` appends to the journal instead of rewriting a
+//             record, so this mode exists for a future editing verb. The
+//             tests do reach it, and every test call that omits opts gets it
+//             by default, so it is exercised rather than dead.
 //
 // This replaced a lockfile. Two review rounds produced Criticals that were
 // all lock-lifecycle failures (a stale lock stealing, a reused pid wedging
@@ -754,7 +756,8 @@ function ensureStore() {
 // concurrency has no lifecycle to get wrong.
 //
 // Returns { ok, record }, or { ok:false, reason } and { ok:false, conflict:true }
-// for a lost CAS. Never throws.
+// when 'create' loses the name to an EEXIST. There is no compare-and-swap here:
+// 4f7272c removed it with the design it belonged to. Never throws.
 function writeRecord(record, now, opts) {
     if (!record || typeof record !== 'object') return { ok: false, reason: 'record is required' };
     const nameCheck = validateName(record.name);
