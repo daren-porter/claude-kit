@@ -471,3 +471,45 @@ test('an exact file_path denial does NOT carry the false-positive clause', () =>
     assert.doesNotMatch(r.stderr, /false positive/);
     assert.doesNotMatch(r.stderr, /command structure/);
 });
+
+
+// The agent type is harness-supplied and reaches the model verbatim in the deny
+// text, so it takes the same delete-and-truncate door its sibling guards give
+// their own interpolations. A blind-reader sent in as the security-reviewer
+// persona on 2026-09-07 reported this site as the one interpolation in
+// security-model.md's trusted-channel table with no stated treatment, and could
+// not tell whether it had found that document's own "unsanitized site" tripwire
+// or a case the document had merely forgotten to explain. It was the former.
+//
+// These pin the door and, more importantly, pin that it is DISPLAY ONLY: the raw
+// value still feeds the isCurator and isBackgroundMain gates, so sanitizing it
+// at the gate instead would change which dispatches are allowed.
+
+test('a control character in the agent type never reaches the deny text', () => {
+    const r = runGuard(writePayload('imp\nlementer-sonnet', DOCS_PATH));
+    assert.strictEqual(r.status, 2, 'still a deny');
+    const firstLine = r.stderr.split('\n')[0];
+    assert.ok(/^[\x20-\x7E]*$/.test(firstLine),
+        'first line of the deny carries only printable ASCII');
+    assert.match(r.stderr, /the implementer-sonnet subagent/,
+        'the stripped value is what gets rendered');
+});
+
+test('an oversized agent type is truncated at 120 characters', () => {
+    const r = runGuard(writePayload('a'.repeat(400), DOCS_PATH));
+    assert.strictEqual(r.status, 2);
+    const rendered = /the (a+) subagent/.exec(r.stderr);
+    assert.ok(rendered, 'the type still renders');
+    assert.strictEqual(rendered[1].length, 120, 'truncated to the sibling cap');
+});
+
+test('sanitizing is display only: the curator gate still reads the raw value', () => {
+    // docs-curator is allowed to write docs/. Applying the deny-text sanitizer
+    // inside subagentType() instead would let a type that only BECOMES a curator
+    // name after stripping pass the gate, which is what this placement avoids.
+    const allowed = runGuard(writePayload('docs-curator', DOCS_PATH));
+    assert.strictEqual(allowed.status, 0, 'curator still allowed');
+    const smuggled = runGuard(writePayload('docs- curator', DOCS_PATH));
+    assert.strictEqual(smuggled.status, 2,
+        'a type that only looks like the curator after sanitizing is still denied');
+});

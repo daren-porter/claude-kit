@@ -730,3 +730,34 @@ quarter rather than being written once.
   One number in this pass was wrong before it shipped and is recorded because the class recurs: the
   `.kit/` count was written as 82 from arithmetic over a truncated `uniq -c` listing, and the
   actual `find` count is 95.
+
+- **`docs-write-guard.js` interpolates the harness payload's subagent type with no sanitizer (opened and closed 2026-09-07).**
+  Closed by applying the sibling treatment, which was the item's first branch. `:261` wrote the
+  raw `agent_type` off the PreToolUse payload into the deny text the model reads, while the three
+  other interpolating channels in `security-model.md`'s trusted-channel table all cap theirs at
+  160, 120 and 300. It now takes the same door as the kit's other identifier sites,
+  `replace(/[^\x20-\x7E]/g, '').slice(0, 120)`.
+
+  **The placement is the load-bearing decision.** The sanitizer is applied at the interpolation
+  site, not inside `subagentType()`, because that same value feeds the `isCurator` and
+  `isBackgroundMain` allow gates: sanitizing at the gate would let a type that only BECOMES a
+  curator name after stripping pass, turning a display fix into a hole. `test/docs-write-guard.test.js`
+  pins all three properties, and the third is the one worth having, since it fails if a later
+  session moves the door: a type of `docs- curator` is still denied.
+
+  Watched fail first, which is how the two door tests were known to test the right thing: against
+  `git show HEAD:` of the guard, the control-character and truncation tests failed and the
+  display-only test passed, correctly, since it pins a property that was already true. The
+  working copy was restored byte-identical (sha256 5e7fb1eb) before proceeding. Suite 620 -> 623.
+
+  **How it was found is the part worth keeping.** Not by a security review of the guard, but by a
+  `blind-reader` dispatched as the `security-reviewer` persona to read `security-model.md`, which
+  reported that this was the one interpolating row in that table with no stated treatment and that
+  it could not tell whether it had found the document's own "an unsanitized site is worth
+  reporting" tripwire or a case the document had forgotten to explain. It was the former. A
+  document review found a code defect because the document's own tripwire told its reader what to
+  look for, which is the argument for writing tripwires into a preconditions document at all.
+
+  Severity, stated rather than implied: bounded by the same-uid premise and by the value's
+  provenance, the harness populating it from the `Agent` tool's own `subagent_type`. This was
+  consistency with three siblings rather than a live exposure.

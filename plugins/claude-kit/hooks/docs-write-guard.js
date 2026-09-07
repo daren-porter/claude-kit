@@ -257,8 +257,16 @@ function main() {
     if (!hit && input.command) hit = viaCommand = commandWritesDocs(input.command, cwd);
     if (!hit) return;          // not a docs/ write: allow
 
+    // The agent type is harness-supplied and reaches the model verbatim in the
+    // deny text below, so it takes the same door its siblings give their own
+    // interpolations: delete anything outside printable ASCII, then truncate.
+    // Applied HERE rather than in subagentType(), because that value also feeds
+    // the isCurator and isBackgroundMain gates above and sanitizing it there
+    // would change which dispatches are allowed. This is display only.
+    const safeType = t.replace(/[^\x20-\x7E]/g, '').slice(0, 120);
+
     process.stderr.write(
-        `Blocked: the ${t} subagent may not write into docs/. docs/ holds curated content only `
+        `Blocked: the ${safeType} subagent may not write into docs/. docs/ holds curated content only `
         + `(plans and the docs-curator's docs). A report or scratch file goes to .kit/ (gitignored), `
         + `and the durable record is the plan's Chapter. Write to .kit/ instead, or return the content `
         + `in your final message.\n`
