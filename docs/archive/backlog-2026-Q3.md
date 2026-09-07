@@ -671,3 +671,62 @@ quarter rather than being written once.
   `kaizen/SKILL.md:90` and `:94` at `9f5398a`, which are the Discipline line and the Applying line.
   This item quoted only the first. Both are declined above on the same grounds, but a reader
   working from the item alone would have repaired half a residual and thought it whole.
+
+- **`security-model.md`'s remaining comprehension debt is vocabulary, not inventory (opened 2026-08-31, closed 2026-09-07).**
+  Closed by the documentation pass its closure condition asked for, with one substitution stated
+  rather than hidden: **the two blind-reader reports it named as the pass's input do not exist.**
+  They were agent output, never written to disk, which is
+  `plans/report-file-protocol_spec_v1.md`'s subject arriving on an unrelated item. A fresh reading
+  was run instead, as the `security-reviewer` persona the document names, and it is what this pass
+  worked from.
+
+  **The fresh reading was worth more than the item's summary of the old ones**, and disagreed with
+  it in one place that mattered. The item said "the `additionalContext` row's audience clause did
+  not parse on three readings"; a draft of this pass guessed that meant the ~600-character
+  `permissionDecisionReason` cell, and it was the `usage-nudge.js` `PostToolUse` row instead, whose
+  audience clause carried two colons in one sentence and an elided noun after "the orchestrator's".
+  Guessing which sentence a reader could not parse is how this session's first pass at the drift
+  markers went wrong, so waiting for the reading rather than acting on the summary is the
+  transferable part.
+
+  **Fixed.** The two directory roots are now stated, which the document's own locating contract
+  ("each claim names the file and the function so it can be found") needed and did not have: a
+  bare filename is a `plugins/claude-kit/hooks/` file, with no exceptions across all 21 of them,
+  verified; `hooks/` is plugin-root relative; `docs/`, `test/` and `tools/` are repo-root relative;
+  and the one path the document tells the model to run is repo-root relative and fails from the
+  plugin root. The borrowed usage vocabulary now points at `docs/usage-awareness.md`, which owns
+  the threshold ladder and defines wind-down, barrier and the Fable ratchet, and the four terms
+  that live nowhere else are defined here instead: a window, Fable scope, "near a barrier" (within
+  `NEAR_BARRIER_POINTS`, ten, which is the one place proximity changes what the guard acts on, and
+  therefore the answer to "fails open, but closed on what"), and the resume pad. Three counted-but-
+  unnamed literal sets are named, because they are the values that cross into model context: the
+  two window labels, the three integration branch names, the three Commit Model literals. The
+  emitter table states its counting unit, a hook output field, so three kit CLIs the document
+  itself sends the model to are deliberately out of scope rather than missing. "payload" no longer
+  means both the shipped file set and the hook input JSON. `node-probe.sh` joins the fail-open
+  section along with what the document had never said about its own condition: with `node` absent,
+  the other eleven hooks cannot be spawned, an unspawnable hook exits 127 with outcome `error`, an
+  erroring hook does not block, so the whole kit fails open at once and silently. `kit-goal-stop`'s
+  re-blocking bound is given a value (eight, `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`). The credential
+  spend inventory gains `branch-reaper-nudge.js`, which spends whatever ambient git credential the
+  remote requires on an unprompted `git fetch --prune`, `GIT_TERMINAL_PROMPT=0` establishing that
+  it will not prompt rather than that it presents none. "Standing Brief Amendment 1" gets a
+  location, "the plan docs" gets a path, and "the claim above" stops pointing at the wrong section.
+  A structural break is repaired where a list preamble ran into the previous bullet with no blank
+  line and a dated retraction floated between them, correcting a claim that had since left the
+  page. And the `.kit/` enumeration now covers the kind it omitted and which outnumbers the other
+  two by an order of magnitude: session scratch and review reports, 95 files in this repository
+  against the two the section named, routed there by `docs-write-guard.js` and
+  `stop-docs-hygiene.js` rather than written by any one component.
+
+  **Two findings came out of the reading and are now their own items**, because neither is
+  vocabulary. `docs-write-guard.js` interpolates the harness payload's subagent type with no
+  sanitizer while its three siblings cap theirs, which is the document's own tripwire firing. And
+  the sanitizer ledger's file and cap counts reconcile under no rule: the shipped version said
+  seven files and three caps, the reader could reach eight or six but never seven, and a probe
+  found four definers and seven cap values. Those counts are removed rather than guessed, and the
+  tripwire now stands on the five listed behaviors, which are checkable without them.
+
+  One number in this pass was wrong before it shipped and is recorded because the class recurs: the
+  `.kit/` count was written as 82 from arithmetic over a truncated `uniq -c` listing, and the
+  actual `find` count is 95.

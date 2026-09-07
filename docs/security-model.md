@@ -10,6 +10,14 @@ read out of the code rather than remembered, and where the code and this documen
 code wins and this document is the bug. Line references are omitted deliberately: they rot, and
 each claim names the file and the function so it can be found.
 
+**Two directory roots appear below and they are different.** A path written `hooks/`, `skills/`,
+`agents/` or `assets/` is relative to the plugin root, `plugins/claude-kit/`. A path written
+`docs/`, `test/` or `tools/` is relative to the repository root. And a bare filename with no
+directory at all, which is how most files are named here, is a file in
+`plugins/claude-kit/hooks/`: every one of them is, with no exceptions. The one path this document
+tells the model to run, `node tools/accretion.js`, is repo-root relative and fails from the
+plugin root.
+
 ## What the kit is, in security terms
 
 A set of hooks, skills, and agent definitions that run inside Claude Code, on the operator's own
@@ -20,7 +28,7 @@ that reaches the model, plus files it reads and writes under `$HOME` and the cur
 ## Two premises that bound almost every finding
 
 **Same uid.** Every store the kit owns (`~/.claude-kit-memory/`, `~/.claude-kaizen/`,
-`~/.claude-kit-usage/`, the plan docs, and `.kit/goal-state.json` in the repo) is writable by exactly the account that can also edit `~/.claude/settings.json`
+`~/.claude-kit-usage/`, the plan docs under `docs/plans/` and `docs/archive/`, and `.kit/goal-state.json` in the repo) is writable by exactly the account that can also edit `~/.claude/settings.json`
 and register an arbitrary hook. So "an attacker who can write to the store can make the model do
 X" describes a precondition that already grants strictly more than X. This is the ceiling on a
 whole class of findings, and naming it is not a dismissal: it is the difference between a Critical
@@ -35,6 +43,23 @@ against a remote the repo names. Opening a hostile repo is outside what the kit 
 If that premise ever stops holding, the fetch and every repo-file read become live findings rather
 than accepted ones.
 
+**The usage-awareness vocabulary is borrowed, not defined here.** The second half of this
+document analyses the kit's spend controls, and the terms are `docs/usage-awareness.md`'s: it
+states the threshold ladder in "Arming it" (`session.warn` 80, `session.barrier` 95,
+`weeklyAll.warn` 85, `weeklyAll.barrier` 95, `fableRatchet` 85, all operator-settable) and
+defines wind-down, barrier and the Fable ratchet. Read it first if those are new. Four things it
+does not supply, so they are stated here. **A window** is one of three usage windows the endpoint
+reports and `usage-lib.js`'s `WINDOW_KEYS` names: `session`, `weeklyAll`, `fableWeekly`.
+**Fable scope** is the third of those, the weekly window covering Fable-routed work only.
+**"Near a barrier"** is a code concept rather than a threshold: within `NEAR_BARRIER_POINTS`, ten
+points, of a barrier, which is what tightens the staleness tolerance from `STALENESS_SECONDS` 600
+to `STALENESS_NEAR_BARRIER_SECONDS` 120. So the answer to "the guard fails open, but closed on
+what" is that it never fails closed, and this is the one place where being close to a barrier
+changes what it will act on. **The resume pad** is text added to the deny reason telling the
+orchestrator how to resume after the window resets; it is what grew the barrier's longest
+rendering to 1458 characters over 11 lines. And precedence, from `usage-lib.js`: any barrier
+outranks any warn, and `weeklyAll` outranks `session` at the same level.
+
 ## Trusted channels: what is instruction and what is data
 
 **Ten surfaces carry kit text to the model, not one.** An earlier draft of this section claimed
@@ -48,21 +73,25 @@ audit the rules and count files to audit the emitters, and note the two numbers 
 independently. The list is of EMITTERS only. A library behind an emitter is covered by that
 emitter's row and is deliberately absent - `hooks/accretion-lib.js` reaches the model solely
 through `take-stock-nudge.js`, so it is not a door, and an auditor finding it unlisted is seeing
-that rather than an omission. The two newest are also the first two that are not
+that rather than an omission. **The counting unit is a hook output field**, not any text that
+reaches the model: a kit CLI's stdout returns to the model as a tool result and is deliberately
+out of scope here, which is why `memory.js`, `tools/accretion.js` and `hooks/usage.js status` have
+no row even though this document sends the model to all three. Their text is literal and
+kit-authored; what a row exists to describe is a channel the harness itself carries. The two newest are also the first two that are not
 session-lifecycle: `usage-nudge.js` speaks mid-turn and `usage-barrier.js` speaks on a refusal,
 so a reader who has internalized "kit text arrives at session start" is now wrong about both.
 
 | Surface | Written by | Reaches the model as |
 |---|---|---|
 | `additionalContext` | `session-start.js` | trusted session context |
-| `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name from a fixed three-literal set) |
+| `additionalContext` | `branch-reaper-nudge.js` | trusted session context (two integers plus a branch name, one of exactly three: `develop`, `main`, `master`, from `branch-reaper-nudge.js`'s `integrationNames`) |
 | `additionalContext` | `take-stock-nudge.js` | trusted session context (one integer, plus a date and 40-hex sha) |
 | `additionalContext` | `usage-autocontinue-nudge.js` | trusted session context (settings-file paths only, each non-ASCII deleted at a 300 cap: the one path found to hold `autoContinueAtUsageLimit: false`, plus the list of up to four candidate paths the run built. Settings *content* never crosses, and no field of the SessionStart payload is read at all) |
-| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`, and the orchestrator's wherever the harness puts an agent identity on a subagent's payload, which is an inference rather than a verified fact: the hook returns before this channel on any payload carrying one, and if a subagent's payload omits those fields instead then this row's audience is wider than it says: a window label from a two-literal whitelist, two numbers rendered by `usage-lib.js`'s shared `formatOneDecimal`, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
+| `additionalContext` | `usage-nudge.js` | trusted session context, **mid-turn** on `PostToolUse`. **Whose context:** the orchestrator's, by inference rather than verification. The hook returns early on any payload carrying an agent identity, so it speaks only where the harness puts none, which is the main session if the harness marks every subagent payload; if a subagent's payload omits those fields instead, this row's audience is wider than stated. **What crosses:** a window label, one of exactly two (`session (5-hour)` and `weekly all-models`, from `usage-nudge.js`'s `WINDOW_LABELS`; `fableWeekly` has no label because the ratchet does not nudge), two numbers rendered by `usage-lib.js`'s shared `formatOneDecimal`, and one ISO-8601 timestamp `usage-lib.js` already validated against an anchored pattern that requires the zone. Every other character is a hardcoded literal. No string from the endpoint payload crosses, `spend.disclaimer` included, because it carries a markdown link |
 | `additionalContext` | `node-probe.sh` | trusted session context, and **the only row carrying no interpolated data at all**: the message is a fixed literal, so nothing from the environment reaches the model. Also the only non-Node emitter, and it speaks only when `node` is absent. |
 | Stop `reason` | `stop-docs-hygiene.js` | instruction text the harness replays (interpolates `docs/` paths from a filesystem walk; non-ASCII deleted, 160 cap) |
 | Stop `reason` | `kit-goal-stop.js` | the same (interpolates the armed plan path; non-ASCII deleted, 120 cap) |
-| stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the payload's subagent type, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
+| stderr on a deny | `docs-write-guard.js`, `pr-docs-guard.js`, `merged-pr-push-guard.js` | the deny reason the model reads (the first interpolates the harness payload's subagent type with NO sanitizer and no cap, which is the one interpolating site in this table with no treatment, and is worth reporting as such rather than reading as an omission here, the third the allowlisted branch, and `pr-docs-guard.js` interpolates nothing at all, its text being entirely hardcoded literals). `pr-docs-guard.js` was missing from this row until 2026-08-28; it hid no unsanitized site, but this row's job is to be an exhaustive door list, so an omission in it is a defect regardless of what the omitted door turned out to carry |
 | `permissionDecisionReason` on a deny | `usage-barrier.js` | the deny reason the model reads. Same constrained values as the `usage-nudge.js` row, and nothing from `tool_input` crosses either, so the reason never echoes the agent type, the prompt or the model value it saw. It is the first kit deny that is JSON on stdout rather than exit 2 plus stderr, and the first whose text is a complete instruction rather than an explanation, which is why its length is budgeted (1810 characters over 12 lines at its longest branch, the session wind-down's orchestrator form at a one-decimal percent, measured across all twenty renderings rather than estimated; the barrier's own longest is 1458 over 11, which grew with the same resume pad) rather than merely bounded |
 
 `take-stock-nudge.js` answers the same question a different way, and it is worth naming because a
@@ -108,7 +137,7 @@ Values entering `session-start.js`'s channel, and what neutralizes each:
 | Pending kaizen count | `~/.claude-kaizen/notes.md` | counted only; no note text is emitted |
 | Cross-project memory lines | `~/.claude-kit-memory/` records | `safeContext`: non-ASCII to a space, whitespace collapsed, capped with truncation announced |
 | Decay counts | derived from the same records | integers via `safeCount` |
-| Plan header's Commit Model | repo | whitelisted to three literals or `unknown` |
+| Plan header's Commit Model | repo | whitelisted to `Review-Only`, `Branch-and-PR`, `Commit-and-Push`, or `unknown` |
 | Memory failure reason | store path plus filesystem error text | `safeContext` at 200 |
 | The emitted `memory.js` command path | `__dirname` | refused entirely if it contains `"`, a backtick, `\`, or `$`, or if it would truncate |
 
@@ -120,10 +149,16 @@ The marked-record note names records from validated filenames rather than from r
 is the fix for a real laundering path (a record could otherwise trigger a kit instruction by
 carrying its token).
 
-**Recorded divergence: five BEHAVIORS across seven files and three cap values.** The unit counted
-here is the behavior, not the file and not the call site, because two files carry more than one door
-and three more only call a helper defined elsewhere; an earlier version of this paragraph gave the
-count three ways at once and a blind reader reported that its tripwire could not be executed.
+**Recorded divergence: five BEHAVIORS, listed below, which are the baseline.** The unit is the
+behavior, not the file and not the call site, and the bullets are the enumeration rather than any
+number in this sentence: the tripwire below fires on a SIXTH behavior, so it is checkable against
+the five without a file count. Two earlier versions of this paragraph did carry file and cap
+counts, and both were unreconcilable. The second claimed seven files and three cap values; a blind
+reader on 2026-09-07 could produce eight distinct filenames from the bullets, or six excluding the
+two named only as callers, and never seven, and a probe the same day found four files defining a
+door helper and seven distinct cap values passed to one. **The correct file and cap inventory is
+therefore open work rather than stated here**, and `backlog.md` carries it; do not read a count
+into this paragraph, and where a number here disagrees with the bullets, the bullets win.
 
 - Delete-and-truncate-silently at 120: `session-start.js`'s three filename doors, `kit-goal-stop.js`'s plan path.
 - Delete-and-truncate-silently at 160: `stop-docs-hygiene.js`, two sites.
@@ -141,7 +176,7 @@ And it said "none is identical to another", which is false: `usage-lib.js`'s `sa
 byte-identical to `memory-lib.js`'s, duplicated rather than imported for the reason its neighbouring
 `readCapped` comment gives, that the memory tier does not export it and coupling a usage reader to
 that tier's internals would rot with them. The file count was also six until this effort's own
-`usage-lib.js` was added to it, which is the enumeration class Standing Brief Amendment 1 exists for.
+`usage-lib.js` was added to it, which is the enumeration class Standing Brief Amendment 1 exists for. That amendment is stated in `skills/executing-work/SKILL.md` and repeated in the implementer and prose-reviewer charters; a reviewer who does not hold it can read this paragraph without it.
 
 All five are safe. Unifying them would mean editing doors no effort has had reason to touch, so the
 divergence is a recorded choice rather than a new oversight. **A SIXTH behavior, or an unsanitized
@@ -159,12 +194,16 @@ block tells the session to read that record at the source, so the kit itself ord
 Acceptable under the same-uid premise; not acceptable if bodies ever arrive from another machine,
 which is the inbound half of the deferred git-sync question.
 
-**Two senses of "touches a credential", separated here because a reviewer meeting the claim above
+**Two senses of "touches a credential", separated here because a reviewer meeting the read-half claim below
 needs to know which one is scoped.** This section is the inventory of credentials the kit **reads
 and parses**: one file, one token, six verified properties. It is NOT the inventory of credentials
-the kit's actions **spend**. `merged-pr-push-guard.js` spends the operator's ambient `gh` and `az`
+the kit's actions **spend**. Two components spend. `merged-pr-push-guard.js` spends the operator's ambient `gh` and `az`
 authentication on every `git push` it inspects, never reading or parsing either credential, and it
-is documented immediately below rather than here for that reason. A reviewer auditing exposure
+is documented immediately below rather than here for that reason. And `branch-reaper-nudge.js`
+spends whatever ambient git credential the repo's remote requires, running `git fetch --prune`
+unprompted at session start; `GIT_TERMINAL_PROMPT=0` establishes that it will not prompt for one,
+not that it presents none, so an agent key or a credential helper is spent there without the kit
+reading it. A reviewer auditing exposure
 wants both lists and they answer different questions: what could leak, and what could act.
 
 **The kit's one command-injection barrier, which most needs re-verifying on any change.**
@@ -225,7 +264,7 @@ Six properties, each verified against the code rather than intended:
   does exist on this machine now, created a few minutes later by `usage.js status` run by hand,
   which is the exception below behaving exactly as documented rather than a counter-example to the
   sentence above. The
-  payload carries one deliberate exception, `hooks/usage.js status`, a read-only command that
+  shipped file set carries one deliberate exception, `hooks/usage.js status`, a read-only command that
   answers whether or not the feature is armed, because refusing to say what the usage
   is while the control is disarmed would be useless. It is the only path here that reaches the
   credential and the network without `enabled` being true. **It is no longer reached only by
@@ -242,18 +281,16 @@ Six properties, each verified against the code rather than intended:
   small JSON file plus a Node process start, per tool call, and when armed it additionally pays the
   reader's 6-second request deadline in-turn on the one tool call per staleness window that misses
   cache. Both were accepted rather than overlooked.
+
 Four more properties belong to the two consumers rather than to the credential, and they are
-kept in this section because they are what a reviewer arriving at the credential path next needs:
-
-
-  **Superseded as a statement about the present, 2026-08-31, and kept as dated history because the
-  reasoning still holds.** The operator armed the feature on 2026-08-29, so hook context is no longer
-  untested here: that profile's `nudged.log` carries eight dedupe markers written by `usage-nudge.js`
-  across 2026-08-29 and 2026-08-30, each requiring a successful hook-context read, and `readings.log`
-  holds forty-four real readings. A reviewer reading only the sentences above would take away that no
-  hook has ever exercised this credential path on this machine, which was true when written and is
-  now false. What the armed runs found is the argument for arming rather than reasoning: two live
-  defects no review had reached, both in the dedupe key's handling of a reset instant.
+kept in this section because they are what a reviewer arriving at the credential path next needs.
+First, one dated observation that is not one of the four: **the credential path has been exercised
+by a hook on this machine since 2026-08-29**, when the operator armed the feature. That profile's
+`nudged.log` carries eight dedupe markers written by `usage-nudge.js` across 2026-08-29 and
+2026-08-30, each requiring a successful hook-context read, and `readings.log` holds forty-four real
+readings. The armed runs are the argument for arming rather than reasoning: they found two live
+defects no review had reached, both in the dedupe key's handling of a reset instant. (This replaces
+a retraction dated 2026-08-31 that corrected an earlier claim no longer on this page.)
 - **`usage-nudge.js`'s `PostToolUse` registration carries no matcher, and that is load-bearing
   rather than lazy.** Confirmed against the 2.1.248 binary: in the tool-call path a `PreToolUse`
   chain that yields a stop returns immediately with the deny message, before the tool is called, so
@@ -335,7 +372,7 @@ backwards.
 
 - All four SessionStart hooks (`session-start.js`, `branch-reaper-nudge.js`,
   `take-stock-nudge.js`, `usage-autocontinue-nudge.js`) wrap `main()` in a bare catch and then let the process end on its own
-  with status 0. None of them calls `process.exit()`; that idiom was swept out of the payload and
+  with status 0. None of them calls `process.exit()`; that idiom was swept out of the kit's shipped files and
   a re-added `process.exit(0)` is a change worth questioning rather than the invariant. A hook must
   never break a session. `take-stock-nudge.js` adds a second bound of the same kind, a 6-second
   budget for its whole run on top of a 5-second timeout per git call, and a failed measurement is
@@ -381,7 +418,19 @@ backwards.
   escape the guard the sync form cannot leak past.
 - The two Stop hooks (`stop-docs-hygiene`, `kit-goal-stop`) block by writing
   `{"decision":"block","reason":...}` to stdout and still exiting 0, never by exit 2, and any
-  internal error allows the stop.
+  internal error allows the stop. `kit-goal-stop` omits a `stop_hook_active` loop guard on
+  purpose, and the bound on its re-blocking is the harness's own consecutive-block cap, eight
+  blocks without progress, tunable by `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+- **The twelfth emitter is the one exception to the Node idioms above, and it exists for the
+  condition that disables every other hook.** `node-probe.sh` is shell, so none of the bare-catch
+  or promise-catch reasoning applies to it; it exits 0 when `node` resolves and otherwise prints
+  one fixed JSON warning. That condition is worth stating plainly rather than leaving to
+  inference: with `node` absent, the other eleven hooks cannot be spawned at all, a hook the
+  harness cannot spawn yields exit 127 with outcome `error`, and an erroring hook does not block,
+  so the whole kit fails open at once and silently. It is silent both ways: an unspawnable hook
+  prints nothing in ordinary session output, which is why the probe is a shell script rather than
+  a Node one. `node-probe.sh` cannot fire on Windows either, where no `sh` is available, and that
+  is accepted for the same reason.
 - `memory-lib.js` states and holds a never-throws contract: every function touching the filesystem
   or parsing data degrades to a null, an empty, or a typed failure.
 
@@ -417,9 +466,20 @@ block cap rather than by anything the kit controls. `stop-docs-hygiene` does car
 
 ## Project write surfaces the kit creates
 
-Two under `.kit/` per repo, both machine-local, plus one edit outside it: `kit-goal`'s arm step
-appends `.kit/` to the project's root `.gitignore`, a tracked file, which it is required to
-report. `.kit/goal-state.json` is the goal
+Three kinds under `.kit/` per repo, all machine-local, plus one edit outside it: `kit-goal`'s arm
+step appends `.kit/` to the project's root `.gitignore`, a tracked file, which it is required to
+report.
+
+**Session scratch and review reports are the largest kind by file count, and no single component
+writes them.** `docs-write-guard.js` and `stop-docs-hygiene.js` both route a session's reports and
+working artifacts to `.kit/`, so an effort's gate files, review outputs and arm records land there
+under whatever subdirectory the session picks. This repository's own `.kit/` held 95 such files
+when this was written, against the two named below, so a reviewer listing `.kit/` and finding only
+the two would be reading the wrong enumeration. They are session-authored prose rather than
+kit-authored, which is why no trusted-channel row covers them: nothing re-reads one into the model
+except a session that opens it deliberately.
+
+`.kit/goal-state.json` is the goal
 leash, written by `kit-goal.js` and guarded at the write door (see the trusted-channel table).
 `.kit/visuals/` is the visual companion's screens, written by a session following
 `brainstorming`, and it is the only kit surface whose contents can be project-confidential:
