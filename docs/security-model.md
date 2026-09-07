@@ -149,18 +149,32 @@ The marked-record note names records from validated filenames rather than from r
 is the fix for a real laundering path (a record could otherwise trigger a kit instruction by
 carrying its token).
 
-**Recorded divergence: five BEHAVIORS, listed below, which are the baseline.** The unit is the
-behavior, not the file and not the call site, and the bullets are the enumeration rather than any
-number in this sentence: the tripwire below fires on a SIXTH behavior, so it is checkable against
-the five without a file count. Two earlier versions of this paragraph did carry file and cap
-counts, and both were unreconcilable. The second claimed seven files and three cap values; a blind
-reader on 2026-09-07 could produce eight distinct filenames from the bullets, or six excluding the
-two named only as callers, and never seven, and a probe the same day found four files defining a
-door helper and seven distinct cap values passed to one. **The correct file and cap inventory is
-therefore open work rather than stated here**, and `backlog.md` carries it; do not read a count
-into this paragraph, and where a number here disagrees with the bullets, the bullets win.
+**Recorded divergence: five BEHAVIORS across seven files, and the counting rule that makes those
+numbers checkable.** A ledger file is one that DEFINES a door on an EMISSION path, which is the
+same unit the trusted-channel table above uses: a value entering a hook output field the harness
+carries to the model. Four kinds of door are therefore out of scope, and they are named here
+because a reviewer who counts one as a sixth behavior will report a tripwire that has not fired.
+`kit-goal.js` and `usage.js` each carry a delete-and-truncate door on their own stdout, which
+reaches the model as a tool result rather than through a hook field. `memory.js` carries a
+write-path normalizer that substitutes a space for anything outside printable ASCII EXCEPT `\n`
+and `\t`, which it preserves deliberately. `usage-lib.js` has a filename slug, non-word
+characters to `-`, that neutralizes nothing bound for the model. And `memory-index.js` and
+`memory.js` only CALL `memory-lib.js`'s `sanitize`, defining no door of their own.
 
-- Delete-and-truncate-silently at 120: `session-start.js`'s three filename doors, `kit-goal-stop.js`'s plan path.
+On caps, which an earlier version of this paragraph counted at three: three are FIXED, one per
+behavior in the delete-and-truncate family (120, 160, 300). The two substitute-and-collapse
+behaviors take their cap per call site instead, so counting them is counting call sites rather
+than doors: `safeContext` is called at 80, 200 and 700, and `sanitize` at 40 and 120.
+
+**This paragraph has been wrong twice, so the bullets are the baseline and any number above is
+subordinate to them.** The first version gave the count three ways at once. The second claimed
+seven files and three cap values with no rule attached, and a blind reader on 2026-09-07 could
+reach eight distinct filenames from the bullets, or six excluding the callers, and never seven,
+and reported the missing baseline as the first step it could not perform. Seven is right under the
+rule above and was six until `docs-write-guard.js` gained a door on 2026-09-07, which is exactly
+the drift `test/security-model-channels.test.js` now pins.
+
+- Delete-and-truncate-silently at 120: `session-start.js`'s three filename doors, `kit-goal-stop.js`'s plan path, `docs-write-guard.js`'s subagent type.
 - Delete-and-truncate-silently at 160: `stop-docs-hygiene.js`, two sites.
 - Delete-and-truncate-silently at 300: `usage-autocontinue-nudge.js`'s `safePath`, one site. The wider
   cap because a `CLAUDE_CONFIG_DIR` path has a plausible claim on more room than a filename.

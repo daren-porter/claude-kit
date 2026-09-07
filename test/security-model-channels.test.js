@@ -102,3 +102,89 @@ test('the stated row and emitter counts match the table', () => {
     assert.strictEqual(WORDS[named[1]], emitters,
         `prose says ${named[1]} emitting files, the Written-by column names ${emitters}`);
 });
+
+
+// THE SANITIZER LEDGER, pinned for the same reason the table above is: the doc's
+// paragraph on it has been wrong twice. Version one gave the count three ways at
+// once; version two claimed seven files and three caps with no counting rule, and
+// a blind-reader on 2026-09-07 could reach eight filenames or six but never seven,
+// and reported the missing baseline as the first step it could not perform.
+//
+// The rule the doc now states: a LEDGER file defines a door on an EMISSION path,
+// meaning a value entering a hook output field the harness carries to the model.
+// Doors on a CLI's own stdout and on a write path are out of scope, because a CLI's
+// output reaches the model as a tool result rather than through a hook field.
+//
+// This census is deliberately dumb. It counts sites of the one idiom the ledger
+// tracks and asserts the per-file map, so ANY new door anywhere fails and the author
+// has to decide which side of the rule it falls on and say so here. That is the
+// property version two lacked: its number could drift silently in either direction.
+
+const DOOR_IDIOM = 'replace(/[^\\x20-\\x7E';
+
+// Files whose doors are deliberately NOT ledger files, with the reason each is out
+// of scope. A door added to one of these still fails the census below, which is the
+// point: the exemption is per site, not a blanket pass for the file.
+const OUT_OF_SCOPE = {
+    'kit-goal.js': 'door on the CLI\'s own stdout, which reaches the model as a tool result',
+    'usage.js': 'door on the CLI\'s own stdout, same reason',
+    'memory.js': 'write-path normalizer, and the one door that preserves \\n and \\t',
+};
+
+const DOOR_CENSUS = {
+    'docs-write-guard.js': 1,
+    'kit-goal-stop.js': 1,
+    'kit-goal.js': 1,
+    'memory-lib.js': 1,
+    'memory.js': 1,
+    'session-start.js': 4,
+    'stop-docs-hygiene.js': 2,
+    'usage-autocontinue-nudge.js': 1,
+    'usage.js': 1,
+    'usage-lib.js': 1,
+};
+
+function doorCensus() {
+    const out = {};
+    for (const f of fs.readdirSync(HOOKS)) {
+        if (!f.endsWith('.js')) continue;
+        const body = fs.readFileSync(path.join(HOOKS, f), 'utf8');
+        let n = 0, at = 0;
+        for (;;) {
+            const i = body.indexOf(DOOR_IDIOM, at);
+            if (i === -1) break;
+            n++; at = i + 1;
+        }
+        if (n) out[f] = n;
+    }
+    return out;
+}
+
+test('the sanitizer door census matches, so a new door cannot appear unnoticed', () => {
+    const found = doorCensus();
+    assert.ok(Object.keys(found).length >= 5,
+        `census found ${Object.keys(found).length} files with a door; the scan is probably broken`);
+    assert.deepStrictEqual(found, DOOR_CENSUS);
+});
+
+test('the ledger files are exactly the census minus the out-of-scope ones', () => {
+    const ledger = Object.keys(doorCensus())
+        .filter((f) => !Object.prototype.hasOwnProperty.call(OUT_OF_SCOPE, f))
+        .sort();
+    assert.strictEqual(ledger.length, 7,
+        `the doc says seven ledger files; the rule yields ${ledger.length}: ${ledger.join(', ')}`);
+    const doc = fs.readFileSync(DOC, 'utf8');
+    assert.match(doc, /five BEHAVIORS across seven files/,
+        'the doc states a count this test can check');
+    for (const f of ledger) {
+        assert.ok(doc.includes('`' + f + '`'), `ledger file ${f} is not named in the document`);
+    }
+});
+
+test('the three fixed caps in the delete-and-truncate family are the ones stated', () => {
+    const doc = fs.readFileSync(DOC, 'utf8');
+    for (const cap of ['120', '160', '300']) {
+        assert.ok(doc.includes('at ' + cap),
+            `the doc no longer states the ${cap} cap`);
+    }
+});

@@ -761,3 +761,36 @@ quarter rather than being written once.
   Severity, stated rather than implied: bounded by the same-uid premise and by the value's
   provenance, the harness populating it from the `Agent` tool's own `subagent_type`. This was
   consistency with three siblings rather than a live exposure.
+
+- **`security-model.md`'s sanitizer inventory does not reconcile (opened and closed 2026-09-07).**
+  Closed by the audit its first branch asked for: a counting rule is now stated, it yields a
+  number, and `test/security-model-channels.test.js` derives that number from the hooks rather
+  than trusting the prose.
+
+  **The rule is the whole fix.** A ledger file DEFINES a door on an EMISSION path, which is the
+  unit the trusted-channel table already used: a value entering a hook output field the harness
+  carries to the model. Under it the count is five behaviors across seven files, and every
+  apparent extra resolves rather than being argued away. `kit-goal.js` and `usage.js` each carry a
+  delete-and-truncate door on their own stdout, which the same document declares out of scope
+  earlier the same day, a CLI's output reaching the model as a tool result rather than through a
+  hook field. `memory.js:430` is a write-path normalizer and the one door that preserves `\n` and
+  `\t` deliberately. `usage-lib.js:392` is a filename slug that neutralizes nothing bound for the
+  model. `memory-index.js` and `memory.js` only call `memory-lib.js`'s `sanitize`. Caps were also
+  miscounted rather than merely uncounted: three are fixed, one per behavior in the
+  delete-and-truncate family (120, 160, 300), while the two substitute-and-collapse behaviors take
+  theirs per call site, so counting those counts call sites rather than doors.
+
+  **Seven was right and had been wrong, which is why a test and not a correction.** The count was
+  six until `docs-write-guard.js` gained a door earlier the same day, in the commit closing the
+  sibling item this reading also produced. So the prose was accurate for a few hours by accident,
+  after being unreconcilable for weeks. The census test asserts a per-file map of door sites,
+  which makes it deliberately dumb: any new door anywhere fails it, and the author must decide
+  which side of the rule the new site falls on and record that in the exemption map, per site
+  rather than per file. Watched fail against `a60be63~1`, the real state before today's door: it
+  reported "the doc says seven ledger files; the rule yields 6" and named all six, which is
+  exactly the derivable baseline the blind reader could not produce. Working copy restored
+  byte-identical. Suite 623 -> 626.
+
+  What the two versions before this had in common is worth naming, since the class recurs: both
+  stated a number with no rule for reproducing it. A count without a counting rule is not a
+  baseline, and a tripwire that fires on "a sixth" needs one that a reader can derive.
