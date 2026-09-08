@@ -6,15 +6,22 @@ is the machinery for dispatching one that can, plus the measured list of what it
 still cannot close.
 
 `tools/arm-harness.js` materializes one directory per rep outside the repo, each
-carrying the `arm-rep` agent definition and a copy of every fixture:
+carrying the `plain-worker` agent definition and a copy of every fixture:
 
 ```
 node tools/arm-harness.js <arm-name> <reps> <fixture>...
 ```
 
-It dispatches nothing. It prints one `claude -p` command per rep, and you run them
-and read each reply yourself, because reading every flagged result is the part of an
-arm that cannot be automated.
+It dispatches nothing. It prints one command per rep, and you run them and read each
+reply yourself, because reading every flagged result is the part of an arm that cannot
+be automated. **The `--agent plain-worker` in the printed command is load-bearing and
+was missing from the first version of this tool.** Without it the command starts an
+ordinary top-level session, which receives the injected listing: the top-level
+transcript of this harness's own first live use carries `ATTACH skill_listing`, and
+only the subagent transcript shows none. That first measurement suppressed the listing
+through a hand-typed "Dispatch the plain-worker agent" wrapper the tool never told
+anyone to write, so the invocation that produced the result was not the invocation on
+offer. Both review seats found it independently.
 
 ## Why not just dispatch a subagent from here
 
@@ -36,26 +43,46 @@ voided the `kit-denaming` S2 arm. A rep whose agent definition omits `Skill` fro
 with names and descriptions anywhere in my context", and no `Skill` tool with which
 to pull a body.
 
-## What it does not close, and none of this is fixable from here
+## What it does not close
 
-Stated because a harness oversold is worse than no harness.
+Stated because a harness oversold is worse than no harness. The first version of this
+section was headed "and none of this is fixable from here", asserted without checking
+the CLI, and it omitted two of the rows below including the largest. Neither omission
+was caught by me.
 
-| Still reaches every rep | Note |
+| Still reaches a rep | Note |
 |---|---|
-| The global `CLAUDE.md` | User-level, so a scratch cwd does not shed it. It names kit skills in prose (`executing-work`, `brainstorming`, `kaizen`, `cross-project-memory`) and carries the style rules; a rep quoted the em-dash ban verbatim. |
-| MCP server instructions | Present for three servers whose tools are not even callable. |
+| The filesystem | `plain-worker` holds `Read` and `Bash`, so nothing stops a rep walking to the repo by absolute path, and on the first live arm one did, quoting `accretion.js:489`. Renaming the rep directory did not close this: the directory name was that rep's stated reason for DECLINING one read, not the mechanism of the successful one. Give the fixture identifiers this disk does not answer, and read every rep's own path list. |
+| The global `CLAUDE.md` | The `instructions` attachment carries exactly one file, the user-level `CLAUDE.md`. A scratch cwd does not shed it. It names kit skills in prose and carries the style rules; a rep quoted the em-dash ban verbatim. |
+| The org-level instructions | Reaches a rep through the SYSTEM PROMPT rather than the `instructions` attachment, which is a different channel from the row above; an earlier rep quoted "CRITICAL: The following are organization-level instructions". No managed-settings file exists on this machine. |
+| MCP server instructions | Present, and the count is session-dependent rather than constant: one block in a top-level run, three in subagent reps. Their tools are absent from the rep's callable list, which is a property of `tools:` and not of MCP. |
 | `advisor` | Injected whatever `tools:` says. A rep can consult it and bring back guidance the arm did not author. |
-| The org-level instructions | Same channel as the global rules. |
 
-So an arm through the harness is **cleaner, not clean**. Where the wording under test
-overlaps the global rules or a skill named in them, say so in the arm's record rather
-than claiming isolation.
+**Why a rep is a subagent and not `claude -p --agent plain-worker`.** The flag form is
+simpler and it does suppress the listing, verified with a discriminating control. It also
+makes the rep a TOP-LEVEL session, which receives the SessionStart hook injection that a
+subagent does not: measured, none of the six recorded arm reps carried
+`hook_additional_context`, while a top-level run carries a 2KB preview of the kit's
+cross-project memory. **And the truncation is a pointer, not a bound.** The preview
+itself contains the absolute path of the untruncated output, and that file holds all
+thirty records, among them the two describing the skill-listing mechanism this harness
+exists to control. It is one `Read` away for a rep holding `Read`. The only thing
+observed stopping a rep was a prompt telling it not to look, and this kit's own rules say
+that is not a control. So the tool prints the subagent form, and the flag form is
+documented here as the thing not to reach for.
 
-**And isolation is not discriminating power.** The arm this harness came out of was
-void for two reasons, and the harness fixes one. Its criteria were also satisfiable
-by any competent rep, so a control cell scored the same ceiling as both treatments.
-A harness cannot make a fixture discriminate; only a fixture whose criteria a
-competent rep can fail does that.
+**What was tried on the residuals, since the first version claimed impossibility.**
+`claude --bare` skips hooks, auto-memory and `CLAUDE.md` auto-discovery, which reaches
+three rows. It is unusable on this seat for two independent reasons, both observed: it
+demands a login this profile does not have, and it drops project-agent discovery, so
+`--agent plain-worker` comes back "not found". Supplying the agent inline with `--agents`
+does not rescue it, the blocker being auth.
+
+**So an arm through the harness is cleaner, not clean, and that has a duty attached.**
+Where the wording under test overlaps the global rules or a skill named in them, say so
+in the arm's record rather than claiming isolation. And an arm that does NOT use the
+harness owes its record a sentence naming which of the rows above were open, because a
+result whose contamination is unstated cannot be re-read later by anyone.
 
 ## Two cues the harness itself leaked, found on its first live use
 
@@ -83,12 +110,13 @@ what is in its cwd. One did exactly that, reporting that it had read the dispatc
 own `p.txt` and correctly noting it was "the parent's dispatch prompt, not an input to
 my answer". The tool passes the prompt inline for this reason.
 
-**The rep does not see the agent definition's `description`,** only its body: asked
-to quote any description of its own role, a rep returned the generic SDK preamble
-rather than the `arm-rep` description. So the description is dispatcher-facing. The
-body is not, which is why `arm-rep`'s body says nothing about being a test, an arm, or
-a measured rep: `writing-skills` holds that a rep told it is comparing two drafts will
-find a difference because it was asked to.
+**The rep does not see the agent definition's `description`,** only its body:
+asked to quote any description of its own role, a rep returned the generic SDK
+preamble rather than the `plain-worker` description. So the description is
+dispatcher-facing. The body is not, which is why `plain-worker`'s body says
+nothing about being a test, an arm, or a measured rep: `writing-skills` holds
+that a rep told it is comparing two drafts will find a difference because it was
+asked to.
 
 ## Re-verifying it
 
@@ -97,6 +125,9 @@ worth re-checking after a Claude Code upgrade or a config change rather than tru
 this page. Materialize a one-rep arm whose fixture asks the rep to report, from
 context alone, whether it has a `Skill` tool, a skills listing, a project memory
 index, and the two memory entries named above. Four noes and the style rule is the
-expected result. `test/arm-harness.test.js` holds the one property a unit test can:
-that a rep directory is never created inside this repo, which would silently restore
-the memory channel with nothing in the output looking different.
+expected result. `test/arm-harness.test.js` holds what a unit test can reach without
+dispatching a rep: the tool's input refusals, one directory per rep, the `tools: Read,
+Bash` line that is the suppression mechanism, the permission grant the printed dispatch
+needs, both leaked cues, and the one that matters most, that a rep directory is never
+created inside this repo, which would silently restore the auto-memory channel with
+nothing in the output looking different.

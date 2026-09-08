@@ -866,3 +866,59 @@ quarter rather than being written once.
   is stageable and unrun, and remains available rather than owed, the item's terms being either
   arm. Three clean reps establish that the shipped clause is followable; nothing here says what
   happens without it.
+
+- **The installed-plugin confound is two channels, and this item's own closure candidate is not
+  a control (opened 2026-08-20, closed 2026-09-07).**
+  Closed on the item's SECOND branch: a recorded decision that naming the channels is enough and
+  each arm picks for itself, with the harness as the cheap default. A first draft of this entry
+  claimed a third route, that a tool had superseded the rule the item expected, and review was
+  right that this is branch 2 wearing better clothes. An arm author still picks among an in-repo
+  dispatch, the harness, and the fictional-name isomorph; the tool improves one option without
+  removing the choice, and on the item's own axis, which construction is REQUIRED, the answer
+  after this changeset is none.
+
+  **So the decision, stated because branch 2's artifact is the decision and the first draft never
+  wrote it:** no construction is required. The channels are named in `writing-skills`, the harness
+  is the cheap default for an arm that needs the isolation, and an arm that does not reach for it
+  owes its record a sentence naming which channels were open. That duty does not live only here:
+  it is stated in `docs/arm-harness.md`'s cleaner-not-clean instruction and in `writing-skills`'
+  arms paragraph, because a duty readable only in a closed archive entry is one no arm author will
+  meet.
+
+  **Why not require it.** A requirement would owe the arms, and `writing-skills` already carries
+  one un-armed prohibition in this territory, "A rep carrying the `Skill` tool cannot be used to
+  contrast a skill's description", which is the requirement half for the case that voided the
+  original arm. That is prose shipped as a premise correction, not a construction mandate, and it
+  is why the remaining question is a default rather than a rule. The harness is also not the path
+  of least resistance, which the first draft claimed: it is a `node` run plus one `claude -p` child
+  per rep read by hand, against a single tool call for the contaminated dispatch. It is chosen
+  because it is correct, not because it is easy.
+
+  **What the harness does, measured rather than argued.** `tools/arm-harness.js` materializes one
+  directory per rep outside the repo, each carrying a `plain-worker` agent definition whose
+  `tools:` omits `Skill`. Two halves and neither works alone: the out-of-repo directory sheds the
+  cwd-keyed auto-memory, and the printed dispatch makes the rep a SUBAGENT, which suppresses the
+  listing. The invocation went through three forms under review. The first printed no agent at
+  all, so it started an ordinary session holding the full listing while a corpus sentence claimed
+  otherwise, which both seats caught. The second used `claude -p --agent plain-worker`, which does
+  suppress the listing but makes the rep a top-level session, and a seat then measured that such a
+  session receives a SessionStart injection none of the recorded reps had, carrying the path of a
+  file holding the kit's whole cross-project memory including the records describing this very
+  mechanism. The third and shipped form is the subagent dispatch, which is what the recorded reps
+  actually ran. Four reps ran through the harness or
+  its predecessor on 2026-09-07 with the listing and the project auto-memory structurally absent.
+  The two prose-rule memory entries were checked on two further reps, one inside the repo which had
+  them and one from a scratch directory which did not, and both were CUED by a prompt naming the
+  entries, so that pair establishes presence in context rather than that a rep would volunteer the
+  answer key. `docs/arm-harness.md` carries the measurements and the does-not-close list, whose
+  largest row is the one the harness does not address: the rep holds `Read` and `Bash` and on the
+  first live arm one walked to the repo and quoted `accretion.js:489`.
+
+  **The candidates, and where each landed.** Four, counting the control cell the item
+  treated separately from its three, and one of the four is deliberately left open. "A no-skill control cell in every arm" is
+  not a control and is dropped; that cell had the `Skill` tool and used it. The agent-definition
+  construction is what the harness implements. The fictional-name isomorph is neither adopted nor
+  declined and needs no verdict, being compatible with the harness. And the third, running arms
+  where the plugin is unloaded, does not follow, because the listing is not repo-conditional: it
+  carries user-scope plugins unrelated to the project, which `writing-skills` now states rather
+  than leaving to be recovered from a conclusion.

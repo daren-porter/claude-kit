@@ -211,7 +211,9 @@ session that went to agent types whose definitions restrict `tools:` to lists om
 carried none at all, which is a 13-against-15 split in one session rather than a documented
 rule, and the tool list is one of several things those definitions change, so take it as the
 lead to follow. **A rep carrying the `Skill` tool cannot be used to contrast a skill's
-description**, installation being neither the condition nor the fix, and no absence of a `Skill`
+description**, installation being neither the condition nor the fix. The listing is not
+repo-conditional either, carrying user-scope plugins unrelated to the project, so running the arm
+where this plugin is unloaded does not answer it. And no absence of a `Skill`
 call clears one, that absence bearing on the body alone.
 
 **The second channel is fetched, and the two are complementary.** In the same arm the three reps
@@ -234,6 +236,18 @@ installed skill", which they do not, the treated cells having been reached by th
 and the cell it labels a no-skill control had the `Skill` tool and used it. It is immutable
 history per `docs/README.md:9`, so it stands as written and this is the correction travelling
 with the citation.
+
+**The harness for both of the channels above is `docs/arm-harness.md` in this repo**, with
+`tools/arm-harness.js` materializing one directory per rep outside it. Two halves, and neither
+works alone: the directory keeps the cwd out of the repo, which is what sheds the project's
+cwd-keyed auto-memory, and the printed dispatch makes the rep a subagent of a `plain-worker`
+agent whose `tools:` omits `Skill`, which is what suppresses the listing. **Read that doc's
+does-not-close list before trusting any result from it.** Two of its rows were missing when it
+was written and one is the largest: the rep holds `Read` and `Bash`, so nothing stops it walking
+to the repo by absolute path and on the first live arm one did, while a rep run as a top-level
+session instead is handed the path of a file holding the kit's whole cross-project memory. Give
+the fixture identifiers this disk does not answer, read every rep's own path list, and where an
+arm does not use the harness say in its record which channels were open.
 
 **The scratchpad bar is arm-scoped, not absolute for the effort.** It exists so a RED rep
 cannot read the draft, so it binds through every RED-side arm and lifts once you are running

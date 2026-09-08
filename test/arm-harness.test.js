@@ -1,5 +1,7 @@
-// The harness's whole value is the isolation it produces, and the one property a
-// unit test can hold is that it never materializes a rep inside this repo. That is
+// The harness's whole value is the isolation it produces. A unit test cannot dispatch
+// a rep, so what it holds is the materialization: the tool's own guards, the agent
+// definition it writes, and above all that it never materializes a rep inside this
+// repo. That is
 // the guard worth having, because the isolation was MEASURED against a scratch cwd:
 // a rep dispatched from the repo quoted the project auto-memory index and two of its
 // prose-rule entries from context alone, and one dispatched from a scratch directory
@@ -8,7 +10,7 @@
 
 'use strict';
 
-const { test } = require('node:test');
+const { test, after } = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
@@ -17,9 +19,18 @@ const path = require('path');
 const { materialize, insideRepo } = require('../tools/arm-harness.js');
 const REPO = path.join(__dirname, '..');
 
+// Every directory these tests create is registered and removed at the end, because
+// the tool's own default destination is a mkdtemp under the system temp dir and an
+// unregistered one is never cleaned up.
+const MADE = [];
 function scratch() {
-    return fs.mkdtempSync(path.join(os.tmpdir(), 'arm-harness-test-'));
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), 'arm-harness-test-'));
+    MADE.push(d);
+    return d;
 }
+after(() => {
+    for (const d of MADE) { try { fs.rmSync(d, { recursive: true, force: true }); } catch { /* best effort */ } }
+});
 function fixture(dir, name, body) {
     const p = path.join(dir, name);
     fs.writeFileSync(p, body, 'utf8');
@@ -86,10 +97,20 @@ test('the generated rep path names neither the arm nor the experiment', () => {
     const work = scratch();
     const f = fixture(work, 'task.md', 'x');
     const r = materialize({ name: 'kaizen-mandate-probe', reps: 1, fixtures: [f] });
+    // Registered BEFORE the assert: materialize mkdtemps before both its insideRepo
+    // check and its template read, so a failure can leave the directory on disk.
+    if (r.base) MADE.push(r.base);
     assert.strictEqual(r.ok, true, r.reason);
     const generated = path.relative(os.tmpdir(), r.base);
-    assert.ok(!/arm|probe|rep|kaizen|mandate|test|fixture/i.test(generated),
-        'the generated directory must carry no cue: ' + generated);
+    // Assert the opaque FORM rather than scanning for cue substrings: mkdtemp's
+    // random suffix can contain "rep" or "arm" by chance, and the scan this replaced
+    // was case-insensitive, so it would have failed about once in three thousand
+    // runs. Both review seats brute-forced it independently, at 1-in-3,640 and
+    // 1-in-3,333 over 20,000,000 and 20,000 trials; the estimate here was 20,000.
+    assert.match(generated, /^w-[A-Za-z0-9]{6}$/,
+        'the generated directory must be the opaque fixed form: ' + generated);
+    // No second assertion on the name: given the form above, `generated` is exactly
+    // eight characters, so no arm name can fit in it. The form regex is the guard.
     assert.match(path.basename(r.dirs[0]), /^rep-\d\d$/,
         'the per-rep leaf is positional only');
 });
@@ -101,4 +122,18 @@ test('the agent file carries no experiment cue in its name either', () => {
     const agents = fs.readdirSync(path.join(r.dirs[0], '.claude', 'agents'));
     assert.deepStrictEqual(agents, ['plain-worker.md']);
     assert.ok(!/arm|probe|rep\b/i.test(agents[0]), 'agent filename is a cue: ' + agents[0]);
+});
+
+// The permission grant, pinned because without it the printed dispatch is refused by
+// the classifier in a non-interactive session, which was observed after four reps had
+// already succeeded with the same command shape.
+test('each rep directory grants the dispatch the printed command needs', () => {
+    const work = scratch();
+    const f = fixture(work, 'task.md', 'x');
+    const r = materialize({ name: 'grant', reps: 2, fixtures: [f], root: path.join(scratch(), 'g') });
+    assert.strictEqual(r.ok, true, r.reason);
+    for (const d of r.dirs) {
+        const cfg = JSON.parse(fs.readFileSync(path.join(d, '.claude', 'settings.local.json'), 'utf8'));
+        assert.deepStrictEqual(cfg.permissions.allow.slice().sort(), ['Agent', 'Task']);
+    }
 });
