@@ -5,8 +5,9 @@ dispatched from inside this repo cannot control what else reaches its reps, so t
 is the machinery for dispatching one that can, plus the measured list of what it
 still cannot close.
 
-`tools/arm-harness.js` materializes one directory per rep outside the repo, each
-carrying the `plain-worker` agent definition and a copy of every fixture:
+`tools/arm-harness.js` materializes one directory per rep outside the repo, each an
+independent `w-XXXXXX` directly in the system temp dir, each carrying the
+`plain-worker` agent definition and a copy of every fixture at its own root:
 
 ```
 node tools/arm-harness.js <arm-name> <reps> <fixture>...
@@ -53,6 +54,7 @@ was caught by me.
 | Still reaches a rep | Note |
 |---|---|
 | The filesystem | `plain-worker` holds `Read` and `Bash`, so nothing stops a rep walking to the repo by absolute path, and on the first live arm one did, quoting `accretion.js:489`. Renaming the rep directory did not close this: the directory name was that rep's stated reason for DECLINING one read, not the mechanism of the successful one. Give the fixture identifiers this disk does not answer, and read every rep's own path list. |
+| Sibling reps | Every rep runs as the same user, so no permission separates them and `ls /tmp` finds the others. Separate `w-XXXXXX` roots remove the arm-owned parent and the `ls ..` that used to show a rep it was one of N, and they close nothing beyond that. An arm that needs reps not to find each other does not get it from here. |
 | The global `CLAUDE.md` | The `instructions` attachment carries exactly one file, the user-level `CLAUDE.md`. A scratch cwd does not shed it. It names kit skills in prose and carries the style rules; a rep quoted the em-dash ban verbatim. |
 | The org-level instructions | Reaches a rep through the SYSTEM PROMPT rather than the `instructions` attachment, which is a different channel from the row above; an earlier rep quoted "CRITICAL: The following are organization-level instructions". No managed-settings file exists on this machine. |
 | MCP server instructions | Present, and the count is session-dependent rather than constant: one block in a top-level run, three in subagent reps. Their tools are absent from the rep's callable list, which is a property of `tools:` and not of MCP. |
@@ -71,6 +73,18 @@ observed stopping a rep was a prompt telling it not to look, and this kit's own 
 that is not a control. So the tool prints the subagent form, and the flag form is
 documented here as the thing not to reach for.
 
+**Two more parts of the printed command are load-bearing, and both were defects a live
+arm found.** `< /dev/null` closes stdin: without it every rep of a 2026-09-17 arm wrote
+"no stdin data received in 3s" into its own captured output. And the command says "your
+entire final output must be that agent reply reproduced verbatim" rather than the older
+"then report its reply verbatim and nothing else", because the older phrasing let the
+dispatcher relay the reply in one turn and summarize in the next, and `--output-format
+text` keeps only the last message. Two of three reps in that arm returned 377 and 157
+bytes, one of them entirely "The plain-worker's reply is the message I just posted
+above, verbatim", and the run was discarded. Counting these, the invocation this tool
+prints has now been wrong five times, which is the reason `dispatchCommand` is one
+exported function the test reads rather than a string assembled at the call site.
+
 **What was tried on the residuals, since the first version claimed impossibility.**
 `claude --bare` skips hooks, auto-memory and `CLAUDE.md` auto-discovery, which reaches
 three rows. It is unusable on this seat for two independent reasons, both observed: it
@@ -84,10 +98,12 @@ in the arm's record rather than claiming isolation. And an arm that does NOT use
 harness owes its record a sentence naming which of the rows above were open, because a
 result whose contamination is unstated cannot be re-read later by anyone.
 
-## Two cues the harness itself leaked, found on its first live use
+## Three cues the harness itself leaked
 
-Both are fixed and both are pinned by `test/arm-harness.test.js`, and they are recorded
-because the class recurs rather than because these two instances are still live.
+All three are fixed and all three are pinned by `test/arm-harness.test.js`, and they are
+recorded because the class recurs rather than because these instances are still live.
+The third is the evidence for that: it sat in the tool for the whole life of the first
+two fixes, in a test file that banned the same token six lines further down.
 
 **The rep directory named the arm.** It was `arm-<name>-<random>`, so every rep's cwd
 announced the experiment. Rep 01 of the first arm wrote that it declined to read this
@@ -98,12 +114,33 @@ went to the real repo and quoted `accretion.js:489`. Directories are now `w-XXXX
 `arm-rep.md`. It is now `plain-worker`, which is also what the charter actually
 describes.
 
+**The rep directory was an ordinal, `w-XXXXXX/rep-01`.** The first two fixes took the
+cues that named the ARM and left the one that numbers the REP. `writing-skills`' own
+fixture-path leak records where the tell actually sat in its recorded instance: not the
+fixture directory but `red` and `r4`, "ancestor segments the arm's author had added for
+bookkeeping". `rep-01` is that segment. Reps read it and quote it back, twenty such
+paths in one 2026-09-17 arm's saved output ("Source file read at
+`/tmp/w-OjmdCK/rep-02/DocumentNotifier.cs`"), and no rep can decline to read its own
+cwd. Meanwhile `test/arm-harness.test.js` asserted the leaf must match `/^rep-\d\d$/`
+and, six lines below, that the agent filename must not match `/arm|probe|rep\b/i`: the
+same file banning the token and mandating it. Each rep now gets its own `w-XXXXXX` root
+and the assertion is inverted rather than deleted. No rep was observed acting on it,
+which is what the leak rule predicts, since detection by what a rep opened cannot see a
+path it never opened.
+
 Two of three reps under the leaky harness tried to reach the real kit and one
 succeeded, so this was not a theoretical exposure. `writing-skills` already records the
 mechanism, a fixture path reaching every rep with nothing walked, and the harness
 walked into it.
 
-## Two things that leak through the harness itself
+## Three things that leak through the harness itself
+
+**A rep writes outside its own cwd.** One wrote a scratch file one level above it, into
+the arm-owned parent its two siblings shared, and it was caught only because the
+operator listed that directory by hand between serial reps; a parallel arm would not
+have caught it. Separate roots retire that particular surface, and they do not make a
+rep's writes bounded. Read what a rep says it wrote rather than assuming its cwd bounds
+it, which is the same instrument the leak rules already ask for.
 
 **Do not put the dispatch prompt, notes or scoring in a rep directory.** A rep reads
 what is in its cwd. One did exactly that, reporting that it had read the dispatcher's
@@ -128,6 +165,7 @@ index, and the two memory entries named above. Four noes and the style rule is t
 expected result. `test/arm-harness.test.js` holds what a unit test can reach without
 dispatching a rep: the tool's input refusals, one directory per rep, the `tools: Read,
 Bash` line that is the suppression mechanism, the permission grant the printed dispatch
-needs, both leaked cues, and the one that matters most, that a rep directory is never
-created inside this repo, which would silently restore the auto-memory channel with
-nothing in the output looking different.
+needs, all three leaked cues, the two invocation clauses above against the real
+`dispatchCommand` string, that reps share no parent but the system temp dir, and the one
+that matters most, that a rep directory is never created inside this repo, which would
+silently restore the auto-memory channel with nothing in the output looking different.

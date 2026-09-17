@@ -58,16 +58,28 @@ function materialize(opts) {
     // rep wrote that it declined to read the harness doc since "the directory name
     // says this is a probe"; another enumerated its own `.claude/agents/arm-rep.md`.
     // A fixture's path reaches every rep and no rep can decline to read its own cwd.
-    const base = root || fs.mkdtempSync(path.join(os.tmpdir(), 'w-'));
-    if (insideRepo(base)) {
-        return { ok: false, reason: 'destination is inside the repo, which defeats the isolation: ' + base };
+    //
+    // EACH REP GETS ITS OWN TOP-LEVEL DIRECTORY, which is the third instance of that
+    // same class and the one the first two fixes left behind. Reps used to sit at
+    // `w-XXXXXX/rep-01`, and `rep-01` is an ordinal the arm's author added for
+    // bookkeeping: exactly the `r4` segment `writing-skills` records as the tell in
+    // its fixture-path leak, in a file whose own next test bans `/arm|probe|rep\b/i`
+    // in the agent filename as a cue. Reps read it and quote it back; twenty such
+    // paths appear in one 2026-09-17 arm's saved output. Separate roots also retire
+    // the shared parent, which was a write surface no caller was told about (a rep
+    // wrote a scratch file one level above its own cwd, where its siblings could
+    // have read it) and an `ls ..` away from announcing that this is one of N.
+    const parent = root || os.tmpdir();
+    if (insideRepo(parent)) {
+        return { ok: false, reason: 'destination is inside the repo, which defeats the isolation: ' + parent };
     }
+    if (root) fs.mkdirSync(root, { recursive: true });
     const template = fs.readFileSync(TEMPLATE, 'utf8');
     const dirs = [];
     for (let i = 1; i <= n; i++) {
         // One directory per rep, because reps that run in parallel against a shared
         // output path overwrite each other and the failure is silent.
-        const dir = path.join(base, 'rep-' + String(i).padStart(2, '0'));
+        const dir = fs.mkdtempSync(path.join(parent, 'w-'));
         fs.mkdirSync(path.join(dir, '.claude', 'agents'), { recursive: true });
         fs.writeFileSync(path.join(dir, '.claude', 'agents', 'plain-worker.md'), template, 'utf8');
         // Without this the printed dispatch is refused by the permission classifier
@@ -85,7 +97,27 @@ function materialize(opts) {
         }
         dirs.push(dir);
     }
-    return { ok: true, base, dirs };
+    return { ok: true, dirs };
+}
+
+// The printed dispatch, in one place so `test/arm-harness.test.js` reads the real
+// string rather than a copy of it. Two clauses here are defects the harness shipped
+// and a live arm found, both fixed and both measured on four reps afterwards.
+//
+// `< /dev/null` is load-bearing. Without it every rep of a 2026-09-17 arm printed
+// "no stdin data received in 3s" into the captured output, and two of three returned
+// 377 and 157 bytes instead of a reply.
+//
+// "your entire final output must be" replaces "then report its reply verbatim and
+// nothing else". The old phrasing let the dispatcher relay the reply in one turn and
+// then summarize in the next, and `--output-format text` captures only the last
+// message, so the reply was discarded and the summary kept. One rep's whole captured
+// output was "The plain-worker's reply is the message I just posted above, verbatim."
+function dispatchCommand(dir) {
+    return 'cd ' + dir + " && claude -p 'Dispatch the plain-worker agent with exactly "
+        + 'this prompt. Your entire final output must be that agent reply reproduced '
+        + 'verbatim, with no preamble, no summary, and nothing after it: \"<the rep '
+        + 'task>\"\' --output-format text < /dev/null';
 }
 
 function main() {
@@ -105,7 +137,6 @@ function main() {
         process.exitCode = 1;
         return;
     }
-    process.stdout.write(r.base + '\n\n');
     for (const d of r.dirs) {
         // A rep is a SUBAGENT of a throwaway dispatcher session, not a top-level
         // session, and that is measured rather than stylistic. Every one of the six
@@ -125,14 +156,14 @@ function main() {
         // The prompt is passed inline rather than written into the rep directory: a
         // rep reads what is in its cwd, and one that found the dispatcher's own
         // prompt file there reported reading it.
-        process.stdout.write(
-            'cd ' + d + " && claude -p 'Dispatch the plain-worker agent with exactly "
-            + "this prompt, then report its reply verbatim and nothing else: \"<the rep "
-            + "task>\"' --output-format text\n");
+        process.stdout.write(dispatchCommand(d) + '\n');
     }
     process.stdout.write(
-        '\nEach directory is one rep. Dispatch serially where the arm is RED-side.\n'
-        + 'Do not write the dispatch prompt, notes or scoring into a rep directory.\n');
+        '\nEach directory is one rep, and they share no parent but the system temp dir.\n'
+        + 'Dispatch serially where the arm is RED-side.\n'
+        + 'Do not write the dispatch prompt, notes or scoring into a rep directory. A rep\n'
+        + 'may also write outside its own cwd on its own initiative, so read what it says\n'
+        + 'it wrote rather than assuming its cwd bounds it.\n');
 }
 
 if (require.main === module) {
@@ -142,4 +173,4 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { materialize, insideRepo };
+module.exports = { materialize, insideRepo, dispatchCommand };

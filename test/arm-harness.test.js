@@ -16,7 +16,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { materialize, insideRepo } = require('../tools/arm-harness.js');
+const { materialize, insideRepo, dispatchCommand } = require('../tools/arm-harness.js');
 const REPO = path.join(__dirname, '..');
 
 // Every directory these tests create is registered and removed at the end, because
@@ -50,7 +50,7 @@ test('a destination inside the repo is refused, which is the isolation guard', (
     const r = materialize({ name: 'probe', reps: 1, fixtures: [f], root: path.join(REPO, '.kit', 'arm') });
     assert.strictEqual(r.ok, false);
     assert.match(r.reason, /inside the repo/);
-    assert.ok(!fs.existsSync(path.join(REPO, '.kit', 'arm', 'rep-01')),
+    assert.ok(!fs.existsSync(path.join(REPO, '.kit', 'arm')),
         'nothing was created before the refusal');
 });
 
@@ -96,23 +96,83 @@ test('bad inputs are refused rather than half-materialized', () => {
 test('the generated rep path names neither the arm nor the experiment', () => {
     const work = scratch();
     const f = fixture(work, 'task.md', 'x');
-    const r = materialize({ name: 'kaizen-mandate-probe', reps: 1, fixtures: [f] });
-    // Registered BEFORE the assert: materialize mkdtemps before both its insideRepo
-    // check and its template read, so a failure can leave the directory on disk.
-    if (r.base) MADE.push(r.base);
+    const r = materialize({ name: 'kaizen-mandate-probe', reps: 3, fixtures: [f] });
+    // Registered BEFORE the assert: materialize mkdtemps before its template read,
+    // so a failure can leave directories on disk.
+    for (const d of (r.dirs || [])) MADE.push(d);
     assert.strictEqual(r.ok, true, r.reason);
-    const generated = path.relative(os.tmpdir(), r.base);
-    // Assert the opaque FORM rather than scanning for cue substrings: mkdtemp's
-    // random suffix can contain "rep" or "arm" by chance, and the scan this replaced
-    // was case-insensitive, so it would have failed about once in three thousand
-    // runs. Both review seats brute-forced it independently, at 1-in-3,640 and
-    // 1-in-3,333 over 20,000,000 and 20,000 trials; the estimate here was 20,000.
-    assert.match(generated, /^w-[A-Za-z0-9]{6}$/,
-        'the generated directory must be the opaque fixed form: ' + generated);
-    // No second assertion on the name: given the form above, `generated` is exactly
-    // eight characters, so no arm name can fit in it. The form regex is the guard.
-    assert.match(path.basename(r.dirs[0]), /^rep-\d\d$/,
-        'the per-rep leaf is positional only');
+    for (const d of r.dirs) {
+        const generated = path.relative(os.tmpdir(), d);
+        // Assert the opaque FORM rather than scanning for cue substrings: mkdtemp's
+        // random suffix can contain "rep" or "arm" by chance, and the scan this
+        // replaced was case-insensitive, so it would have failed about once in three
+        // thousand runs. Both review seats brute-forced it independently, at
+        // 1-in-3,640 and 1-in-3,333 over 20,000,000 and 20,000 trials.
+        assert.match(generated, /^w-[A-Za-z0-9]{6}$/,
+            'every rep directory must be the opaque fixed form: ' + generated);
+    }
+});
+
+// The ordinal. This assertion is INVERTED from the one it replaces, which required
+// the per-rep leaf to match /^rep-\d\d$/ and called it "positional only". It is the
+// third instance of the cue class the two tests above pin: `rep-01` is a bookkeeping
+// ordinal in every rep's cwd, which is exactly the `r4` ancestor segment
+// `writing-skills` records as the tell in its fixture-path leak, and the test six
+// lines below has always banned the same token in the agent filename. Reps read the
+// segment and quote it back; twenty such paths appear in one 2026-09-17 arm's output.
+// Inverted rather than deleted, because a deleted assertion and one that never
+// existed look identical to every later reader.
+test('no rep directory carries an ordinal or an experiment token', () => {
+    const work = scratch();
+    const f = fixture(work, 'task.md', 'x');
+    const r = materialize({ name: 'ordinal', reps: 3, fixtures: [f], root: path.join(scratch(), 'o') });
+    assert.strictEqual(r.ok, true, r.reason);
+    for (const d of r.dirs) {
+        const leaf = path.basename(d);
+        // Exact, not a substring scan. The comment above records why scanning is the
+        // wrong instrument here: mkdtemp's suffix can contain "rep" or "arm" by
+        // chance, so a case-insensitive scan fails about once in three thousand runs.
+        // The old shape is what this asserts against, and the opaque form is the guard.
+        assert.ok(!/^rep-\d+$/.test(leaf),
+            'rep directory leaf is a bookkeeping ordinal, the shape this test inverted: ' + leaf);
+        assert.match(leaf, /^w-[A-Za-z0-9]{6}$/,
+            'rep directory leaf must be the opaque fixed form: ' + leaf);
+    }
+});
+
+// Separate roots, which is what retires the shared parent. It was a write surface no
+// caller was told about: a rep of the 2026-09-17 arm wrote a scratch file one level
+// above its own cwd, where its two siblings could have read it, and it was caught only
+// because the operator listed that directory by hand between serial reps.
+test('reps share no parent but the system temp dir', () => {
+    const work = scratch();
+    const f = fixture(work, 'task.md', 'x');
+    const r = materialize({ name: 'noshare', reps: 3, fixtures: [f] });
+    for (const d of (r.dirs || [])) MADE.push(d);
+    assert.strictEqual(r.ok, true, r.reason);
+    assert.strictEqual(new Set(r.dirs).size, 3);
+    for (const d of r.dirs) {
+        assert.strictEqual(path.dirname(d), os.tmpdir(),
+            'a rep directory sits directly in the temp dir, with no arm-owned parent');
+        // The fixtures are at the rep's own root, so nothing about the layout tells a
+        // rep it is one of several.
+        assert.ok(fs.existsSync(path.join(d, 'task.md')), 'fixture at the rep root');
+    }
+    assert.ok(!('base' in r), 'materialize no longer hands back a shared base');
+});
+
+// Both invocation defects, measured on four reps of the 2026-09-17 posting-scope arm
+// before they were written down. Pinned against the real string rather than a copy.
+test('the printed dispatch closes stdin and demands the reply as the final output', () => {
+    const cmd = dispatchCommand('/tmp/w-abc123');
+    assert.ok(cmd.includes('< /dev/null'),
+        'without this every rep printed "no stdin data received in 3s" into the capture');
+    assert.ok(cmd.includes('Your entire final output must be'),
+        'the reply has to BE the last message, since --output-format text keeps only that');
+    assert.ok(!/report its reply verbatim and nothing else/.test(cmd),
+        'the old phrasing let the dispatcher relay and then summarize, and the summary won');
+    assert.ok(cmd.includes('--agent') || cmd.includes('Dispatch the plain-worker agent'),
+        'the rep must be a subagent, not a top-level session');
 });
 
 test('the agent file carries no experiment cue in its name either', () => {
