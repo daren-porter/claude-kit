@@ -12,6 +12,9 @@ Created: 2026-09-02
 - `plans/kaizen-pass-economics_spec_v1.md` - this stub is a live data point for it. The apply-now
   attempt below cost 6 rep dispatches and 2 review dispatches for one sentence, then failed review
   and promoted. That is the arithmetic that stub was opened to interrogate.
+- `plans/agent-effort-dials_spec_v1.md` - deferred the reviewer compensation notch partly on this
+  stub. The notch would fire on the Fable-downgrade paths the `Fable Spend:` header governs, so its
+  trigger is undefined until the ruling here is worded.
 
 ## The decision, already made
 

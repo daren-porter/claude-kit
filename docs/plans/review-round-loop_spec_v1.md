@@ -75,3 +75,7 @@ because nothing states one. The questions each time:
   input, and neither exists on disk.
 - `plans/dispatch-determinacy_spec_v1.md` - dispatch-side determinism, where gap 1's fix would
   land if it becomes a dispatch convention rather than a rule.
+- `plans/agent-effort-dials_spec_v1.md` - deferred its compensation notch to this seam. Raising a
+  reviewer's effort above its frontmatter value at dispatch time has to go through `Workflow`'s
+  `agent()`, since the Agent tool has no effort parameter, and a `Workflow` round returns a task id
+  and completes asynchronously, which is this plan's dispatch-and-await question.
