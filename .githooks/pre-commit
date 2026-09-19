@@ -34,7 +34,7 @@ cd "$REPO_ROOT" || exit 1
 # the same known limitation the validation below carries and accepted for the
 # same reason. A partial stage can therefore pass on unstaged fixes.
 GATE_RAN=0
-if git diff --cached --name-only -- 'plugins/claude-kit/hooks/' 'tools/' 'test/' | grep -q .; then
+if git diff --cached --name-only -- 'plugins/claude-kit/hooks/' 'plugins/claude-kit/agents/' 'tools/' 'test/' | grep -q .; then
     GATE_RAN=1
     # Quiet on success, loud on failure. The runner emits full TAP for every
     # passing subtest, which on its own first live fire buried the commit in

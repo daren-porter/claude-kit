@@ -11,9 +11,9 @@
 //
 // WHY THIS FILE EXISTS. Absent, the key means "inherit the session's effort",
 // which is a per-machine setting the kit does not ship, cannot read, and does not
-// carry to any other operator's machine. Three facts measured on 2026-09-19
-// against client 2.1.278 make a typo in this field indistinguishable from that
-// absence, with nothing anywhere saying so:
+// carry to any other operator's machine. Two facts measured on 2026-09-19 against
+// client 2.1.278, and one the architecture doc already recorded, make a typo in
+// this field indistinguishable from that absence, with nothing anywhere saying so:
 //
 //   - An agent declaring `effort: ultrahigh` LOADS WITHOUT ERROR, dispatches
 //     without error, and runs at the inherited effort. The invalid level is
@@ -33,10 +33,15 @@
 // decision to read before editing anything below. A hard-coded list of the
 // thirteen agents would pass a fourteenth silently, which is the same
 // silent-absence failure in a new place. Scope is `git ls-files` over the
-// directory rather than a filesystem walk, matching test/denaming.test.js and
-// test/corpus-agreement.test.js: the plugin reaches an operator by clone, so
-// tracked is exactly what ships, and a fourteenth agent becomes visible here the
-// moment it is staged, which is before it can be committed.
+// directory rather than a filesystem walk, following the git-scoped pattern both
+// siblings use while differing from one of them on which git view:
+// test/denaming.test.js:113 reads the INDEX with `git ls-files`, as this does,
+// and test/corpus-agreement.test.js:38 reads the committed tree with
+// `git ls-tree -r HEAD`. The index is the right view here because the plugin
+// reaches an operator by clone, so tracked is exactly what ships, and a
+// fourteenth agent becomes visible the moment it is staged, which is before it
+// can be committed. An untracked agent file on disk is invisible to all of this,
+// which is the accepted cost of that choice.
 //
 // DELIBERATELY NOT COVERED. Four gaps, each real rather than a hedge:
 //
@@ -51,10 +56,10 @@
 //     frontmatter, and a level the selected model does not support falls back to
 //     `high` rather than to the next rung down. Chapter 1 measured resolution by
 //     probe. Nothing mechanical does.
-//   - THE KEY IS THE FILENAME STEM, while the client identifies an agent by its
-//     `name:` field. All thirteen agree today and nothing here asserts they must,
-//     so a file renamed without its `name:` would pin an effort onto an agent
-//     type that no longer exists.
+//   - WHETHER A FILE HERE IS AN AGENT AT ALL. Every tracked `.md` under the
+//     directory is treated as a charter, so a README dropped in would be told to
+//     declare an effort. The directory holds only charters today and the kit's
+//     other two scope definitions treat it as flat.
 //   - WHETHER THE ASSIGNMENT IS RIGHT. The table below is a record of a decision,
 //     not a defense of one, and the spec carries an open question on the two
 //     implementer seats. Changing a value is meant to cost a second file edit;
@@ -76,9 +81,14 @@ const AGENTS = 'plugins/claude-kit/agents';
 // fail the assignment check below in any case.
 const LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
 
-// The recorded assignment, keyed by filename stem. Eleven gates at xhigh, one
-// rung above the fleet's own default effort; the two plan-following implementer
-// seats at that default, pinned rather than inherited.
+// The recorded assignment, keyed by filename stem. Eleven seats at xhigh, one
+// rung above the fleet's own default effort, and two at that default, pinned
+// rather than inherited. The split is by FAILURE MODE and not by job title: ten
+// of the eleven are gates, and the eleventh is implementer-fable, whose sections
+// are the subtle cross-cutting correctness a review round is least reliable at
+// catching, so its failure is not the loud kind the other two implementers' is.
+// Counting it among "the gates" is the specific error this comment exists to
+// prevent, since it erases the one reasoned exception in the table.
 const ASSIGNMENT = {
     'adversarial-reviewer': 'xhigh',
     'blind-reader': 'xhigh',
@@ -97,30 +107,73 @@ const ASSIGNMENT = {
 
 const NO_KEY = '(no effort: key)';
 const NO_FRONTMATTER = '(no frontmatter block)';
+const DUPLICATE_KEY = '(more than one effort: key)';
 
 function agentFiles() {
     const res = spawnSync('git', ['-C', REPO, 'ls-files', '-z', '--', AGENTS], { encoding: 'utf8' });
     assert.strictEqual(res.status, 0, 'git ls-files must succeed: this test defines its own scope');
-    return res.stdout.split('\0').filter((f) => f.endsWith('.md')).sort();
+    return res.stdout.split('\0').filter((f) => f.toLowerCase().endsWith('.md')).sort();
 }
 
 // Read the `effort:` value out of the frontmatter block ALONE. Every agent body
 // discusses effort in prose, and a paragraph is not a declaration. A file listed
 // by the index but missing from disk throws here, which names it and is loud.
 function declaredEffort(rel) {
-    const lines = fs.readFileSync(path.join(REPO, rel), 'utf8').split('\n');
+    // Strip CR before splitting: a Windows checkout with core.autocrlf=true would
+    // otherwise fail `lines[0] !== '---'` and report every agent as frontmatter-less.
+    const lines = fs.readFileSync(path.join(REPO, rel), 'utf8').replace(/\r/g, '').split('\n');
     if (lines[0] !== '---') return NO_FRONTMATTER;
     const end = lines.indexOf('---', 1);
     if (end === -1) return NO_FRONTMATTER;
-    const hit = lines.slice(1, end).join('\n').match(/^effort:[ \t]*(.*)$/m);
-    if (!hit) return NO_KEY;
-    return hit[1].trim().replace(/^["']|["']$/g, '');
+    const hits = lines.slice(1, end).filter((l) => /^effort:/.test(l));
+    // A second `effort:` line is its own defect and must not resolve to the first.
+    // YAML takes the last or rejects the document; this regex would have taken the
+    // first, so `effort: xhigh` followed by `effort: ultrahigh` would have read as
+    // valid while shipping the typo.
+    if (hits.length > 1) return DUPLICATE_KEY;
+    if (hits.length === 0) return NO_KEY;
+    return hits[0]
+        .replace(/^effort:[ \t]*/, '')
+        .replace(/\s+#.*$/, '')   // a legal trailing YAML comment is not part of the value
+        .trim()
+        .replace(/^["']|["']$/g, '');
+}
+
+// The stem is the map key everywhere below, and `path.basename` is case- and
+// extension-sensitive in ways the discovery above deliberately is not, so it is
+// computed in one place.
+function stem(rel) {
+    return path.basename(rel).replace(/\.md$/i, '');
 }
 
 function declared() {
     const out = {};
-    for (const rel of agentFiles()) out[path.basename(rel, '.md')] = declaredEffort(rel);
+    for (const rel of agentFiles()) out[stem(rel)] = declaredEffort(rel);
     return out;
+}
+
+// Two files sharing a stem would let the second silently overwrite the first in
+// that map and never be compared to anything. Discovery recurses, so
+// `agents/legacy/qa-verifier.md` is reachable and would do exactly that.
+function stemCollisions() {
+    const seen = new Map();
+    for (const rel of agentFiles()) {
+        const key = stem(rel);
+        seen.set(key, (seen.get(key) || []).concat(rel));
+    }
+    return [...seen.entries()].filter(([, files]) => files.length > 1);
+}
+
+// The frontmatter `name:` is what the client dispatches by; the stem is only what
+// this file keys on. They agree across all thirteen today and nothing made them.
+function declaredName(rel) {
+    const text = fs.readFileSync(path.join(REPO, rel), 'utf8').replace(/\r/g, '');
+    const lines = text.split('\n');
+    if (lines[0] !== '---') return null;
+    const end = lines.indexOf('---', 1);
+    if (end === -1) return null;
+    const hit = lines.slice(1, end).join('\n').match(/^name:[ \t]*(.*)$/m);
+    return hit ? hit[1].trim().replace(/^["']|["']$/g, '') : null;
 }
 
 function report(findings, guidance) {
@@ -132,19 +185,23 @@ function report(findings, guidance) {
 test('every agent definition declares an effort level', () => {
     const findings = agentFiles()
         .map((rel) => [rel, declaredEffort(rel)])
-        .filter(([, value]) => value === NO_KEY || value === NO_FRONTMATTER)
+        .filter(([, value]) => value === NO_KEY || value === NO_FRONTMATTER || value === DUPLICATE_KEY)
         .map(([rel, value]) => `${rel}: ${value}`);
     assert.strictEqual(findings.length, 0, report(findings,
         'An agent with no `effort:` key inherits the session\'s effort, which is a per-machine '
         + 'setting the kit does not ship. Add the key on its own line after `description:`, and add '
-        + 'the same value to ASSIGNMENT above. The spec\'s assignment rule decides which value: a '
-        + 'seat whose failure is silent runs at `xhigh`, a plan-following seat at the model default.'));
+        + 'the same value to ASSIGNMENT above. The spec\'s assignment rule decides which value, and '
+        + 'it turns on how the seat FAILS rather than on what it is called: a seat whose failure is '
+        + 'silent, because nothing downstream re-asks the question, runs one rung above the model '
+        + 'default at `xhigh`; a seat whose failure is loud, because a build, a test run or a review '
+        + 'round already catches it, runs at that default and never below it. implementer-fable sits '
+        + 'in the first group despite being an implementer, for the reason beside ASSIGNMENT above.'));
 });
 
 test('every declared effort is one of the five named levels', () => {
     const findings = agentFiles()
         .map((rel) => [rel, declaredEffort(rel)])
-        .filter(([, value]) => value !== NO_KEY && value !== NO_FRONTMATTER && !LEVELS.includes(value))
+        .filter(([, value]) => ![NO_KEY, NO_FRONTMATTER, DUPLICATE_KEY].includes(value) && !LEVELS.includes(value))
         .map(([rel, value]) => `${rel}: ${JSON.stringify(value)}`);
     assert.strictEqual(findings.length, 0, report(findings,
         `The client accepts only ${LEVELS.join(' | ')}. Anything else is ignored in silence: an agent `
@@ -162,15 +219,41 @@ test('the declared efforts match the assignment this test records', () => {
         + 'authority. If it was not, the agent file is the thing to fix.');
 });
 
-// A positive control on the discovery itself. Every check above iterates what the
-// glob returns, so a glob that matched nothing would pass all of them vacuously,
-// which is how a guard like this dies: not by being deleted, but by quietly
-// selecting an empty set.
-test('the discovery finds the whole agent inventory', () => {
-    const files = agentFiles();
-    const expected = Object.keys(ASSIGNMENT).length;
-    assert.ok(files.length >= expected,
-        `discovery returned ${files.length} file(s) under ${AGENTS}/, fewer than the ${expected} `
-        + 'recorded in ASSIGNMENT. Either agents were removed without updating the table, or the '
-        + 'discovery itself has stopped selecting them and every check in this file is now vacuous.');
+// A positive control on the discovery itself. The first two checks above iterate
+// what discovery returns and would pass vacuously on an empty set; the third
+// would not, since deepStrictEqual against a populated ASSIGNMENT fails loudly on
+// `{}`. So this covers tests 1 and 2, which is narrower than "all of them" and is
+// the honest claim. What it adds beyond that is the UNDER-selection case a count
+// comparison misses: an agent file discovery fails to claim leaves the set short
+// by one name rather than empty, and a `>=` count would wave it through.
+test('discovery selects exactly the recorded agent inventory', () => {
+    const found = agentFiles().map(stem).sort();
+    assert.deepStrictEqual(found, Object.keys(ASSIGNMENT).sort(),
+        `discovery under ${AGENTS}/ returned a different set of agents than ASSIGNMENT records. `
+        + 'If an agent was added or removed, update the table. If the names match what you expect, '
+        + 'the discovery itself has stopped selecting a file, and the two checks above are now '
+        + 'vacuous for it.');
+});
+
+// Two files, one stem. Not reachable through the check above, which compares sets.
+test('no two agent files share a stem', () => {
+    const findings = stemCollisions().map(([key, files]) => `${key}: ${files.join(', ')}`);
+    assert.strictEqual(findings.length, 0, report(findings,
+        'The stem is this file\'s map key, so a second file at the same stem overwrites the first '
+        + 'and its effort is never compared to anything. Rename one, or remove it.'));
+});
+
+// The client dispatches by the frontmatter `name:`, not by the filename. They
+// agree across all thirteen and nothing enforced that until now, so a file
+// renamed without its `name:` would pin an effort onto an agent type that no
+// longer exists, and a `name:` changed without the file would do the reverse.
+test('each agent\'s frontmatter name matches its filename', () => {
+    const findings = agentFiles()
+        .map((rel) => [rel, declaredName(rel)])
+        .filter(([rel, name]) => name !== stem(rel))
+        .map(([rel, name]) => `${rel}: name is ${JSON.stringify(name)}`);
+    assert.strictEqual(findings.length, 0, report(findings,
+        'This file keys its assignment by filename while the client dispatches by `name:`. When '
+        + 'they disagree, the pinned effort belongs to an agent type nothing dispatches. Make the '
+        + 'two agree rather than relaxing this check.'));
 });
