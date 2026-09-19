@@ -45,7 +45,7 @@
 // correction is the useful part. The substitution table in
 // docs/archive/kit-denaming_s1-rules.md:75-83 has NO row for "operator": it
 // replaces the NAME `Daren` with `the user` and the pronouns with they/them. The
-// exception at agents/security-reviewer.md:29 is an exception to the REPLACEMENT
+// exception at agents/security-reviewer.md:30 is an exception to the REPLACEMENT
 // TOKEN at one swept site, chosen because "user" already carries the adversarial
 // sense on that line ("any user-influenced value"), so `the user's own EF Core
 // projects` would have made one noun name both the attacker and the operator. It

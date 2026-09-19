@@ -54,13 +54,13 @@ fix:
 **Should the three code reviewers carry the single-write clause that `blind-reader` and
 `prose-reviewer` already have?** The facts, checked:
 
-- `security-reviewer.md:7` reads "Read-only: never edit files", and `970827b` - the commit that
+- `security-reviewer.md:8` reads "Read-only: never edit files", and `970827b` - the commit that
   added `executing-work:81`'s carve-out - records the roster identity as already in hand and the
   exclusivity as deliberate: "prose rather than a tool boundary, which makes the prose the whole
   guarantee", and "Chose the exception over giving the agent a sanctioned write path, on the user's
   delegation."
-- One day later, `3604f03` went the other way for two agents: `blind-reader.md:21` and
-  `prose-reviewer.md:21` both permit "writing the report to that one path" as "the single write
+- One day later, `3604f03` went the other way for two agents: `blind-reader.md:22` and
+  `prose-reviewer.md:22` both permit "writing the report to that one path" as "the single write
   this rule permits".
 
 So a sanctioned narrow write path is already shipped and in force for two of five seats. Extending
@@ -108,7 +108,7 @@ rather than anything the kit or the dispatch supplies:**
   ("the parent agent reads your text output"). No sentinel is needed and no per-seat write clause
   is needed.
 - **The reviewer single-write question below is very likely MOOT, and this is the surprise.**
-  `blind-reader.md:21` and `prose-reviewer.md:21` grant "the single write this rule permits" - a
+  `blind-reader.md:22` and `prose-reviewer.md:22` grant "the single write this rule permits" - a
   permission the kit cannot actually grant, because the block is above the kit. So `970827b`'s
   choice to refuse rather than sanction a write path was correct for reasons its author did not
   have, and `3604f03` shipped two clauses that the harness overrides. **Do not put the roster

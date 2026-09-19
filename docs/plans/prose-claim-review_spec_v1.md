@@ -128,7 +128,7 @@ Killed by two false premises, both checkable on disk, neither checked:
    trigger "only ever adds reviewers". The change contradicted that skill while claiming to
    inherit from it.
 2. **"a blind reviewer handed a prose change has no diff to run" is false, and this repo already
-   said so.** `agents/blind-reviewer.md:32` gives it an explicit job on prose diffs
+   said so.** `agents/blind-reviewer.md:33` gives it an explicit job on prose diffs
    (contradictions between rules, instructions that cannot be executed, references to things
    that do not exist), and `:13` handles the no-commands case. `docs/archive/arm-boundaries_spec_v1.md:722-725`
    adjudicated the identical premise and rejected it, closing: **"The premise was checkable on
