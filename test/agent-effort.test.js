@@ -223,9 +223,11 @@ test('the declared efforts match the assignment this test records', () => {
 // what discovery returns and would pass vacuously on an empty set; the third
 // would not, since deepStrictEqual against a populated ASSIGNMENT fails loudly on
 // `{}`. So this covers tests 1 and 2, which is narrower than "all of them" and is
-// the honest claim. What it adds beyond that is the UNDER-selection case a count
-// comparison misses: an agent file discovery fails to claim leaves the set short
-// by one name rather than empty, and a `>=` count would wave it through.
+// the honest claim. Against test 3 it is otherwise redundant, since that
+// deepStrictEqual already fails on any key-set difference in either direction.
+// What it buys is a failure message that names the DISCOVERY rather than the
+// assignment, which is the difference a reader needs between "the table is wrong"
+// and "the check has stopped seeing files".
 test('discovery selects exactly the recorded agent inventory', () => {
     const found = agentFiles().map(stem).sort();
     assert.deepStrictEqual(found, Object.keys(ASSIGNMENT).sort(),

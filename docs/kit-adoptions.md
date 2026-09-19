@@ -280,8 +280,10 @@ the strongest gate in the system". Measured here: no agent definition pinned any
 absent key inherits the *session's* effort rather than the model's, which is
 `effortLevel: "xhigh"` in two of the user's three profiles and unset in the third, where it falls
 to the client's own default. That third profile is the default-install case this entry turns on. So the gates were already running at the strongest effort
-the client offers and the mispriced seats were the opposite ones, the cheap model-pinned
-implementer and verifier burning top-tier reasoning on plan-following work. The candidate stands
+the client offers, and what was mispriced was the opposite end: the two plan-following
+implementer seats ran at an effort nobody had chosen for them. `qa-verifier` looks like a third
+and is not; it is model-pinned to stay cheap and its failure is a gate's, so it is held at
+`xhigh` deliberately. The candidate stands
 re-aimed rather than retired: the defect is that agent strength was **undetermined**, set by a
 per-machine setting the kit does not ship, and an operator installing this plugin with no
 `effortLevel` got a different kit.
