@@ -92,8 +92,7 @@ already exist. The second half of that reasoning is taken from the upstream kit,
 states it as the ground for making compensation a reviewer's instrument and never an
 implementer's, and adds that surplus effort runs in opposite directions on the two, buying
 recall on an open-ended search and buying tangents on a settled plan. The first half is
-this kit's own framing at `executing-work:171` ("Review and QA dispatches never downgrade,
-judgment is their product"), which already puts QA on the gate side of the line.
+this kit's own framing at `executing-work:171` ("Review and QA dispatches never downgrade - judgment is their product"), which already puts QA on the gate side of the line.
 
 Applied, with the gate level set to `xhigh` because that is what these seats measurably run
 at on this machine today, so holding them there changes no observed behavior and only makes
@@ -168,11 +167,18 @@ the reading this section needs.
 An agent definition written mid-session may not be visible to the Agent tool, which resolves
 its agent types from what was loaded at session start; where it is not, the route is a
 top-level `claude -p --agent <name>` run from Bash, which the client supports alongside an
-`--effort` flag that doubles as a control. The arm harness already uses that second route
-for its own reasons (`docs/arm-harness.md`), and its warning applies here too: a top-level
-run receives SessionStart hook injection that a subagent does not. That difference does not
-bear on this measurement, which reads one field out of a hook payload, but the Chapter
-states which route produced the numbers.
+`--effort` flag that doubles as a control. **The arm harness deliberately refused that
+second route**, and its reason applies here: `docs/arm-harness.md:63` heads its rationale
+"Why a rep is a subagent and not `claude -p --agent plain-worker`", because a top-level run
+receives SessionStart hook injection that a subagent does not, and `tools/arm-harness.js:116`
+prints a nested-session dispatch with no `--agent` flag at all. So the harness is a warning
+about this route rather than a precedent for it. The Chapter states which route produced the
+numbers.
+
+A pre-existing contradiction in that doc is what made this easy to get backwards, and it is
+recorded here rather than fixed, being outside this effort: `docs/arm-harness.md:18` says
+"The `--agent plain-worker` in the printed command is load-bearing", which the command
+`dispatchCommand` actually emits does not contain. Section 4 files it.
 
 Measure four conditions, each one dispatch of a scratch agent instructed to run one trivial
 Bash command:
@@ -288,8 +294,31 @@ Acceptance criteria:
   parameter on the Agent tool, `effort` present in `Workflow`'s inline agent-definition key
   list) and a closure clause naming both exits, which are building the notch and recording a
   decision that reviewers never compensate.
+- **`docs/backlog.md`** also gains two smaller items, both dated 2026-09-19. First, the
+  payload-path residue of Open Question 3, closing on one `echo $CLAUDE_EFFORT` inside a
+  dispatched kit agent after the next `/plugin update`, or on a recorded decision that the
+  project-scope measurement generalizes. Second, a contradiction this effort tripped over and
+  did not fix: `docs/arm-harness.md:18` calls `--agent plain-worker` "load-bearing in the
+  printed command" while the command `dispatchCommand` emits at `tools/arm-harness.js:116`
+  contains no `--agent` flag, so a living doc describes a command the tool does not produce.
+  It closes by correcting the doc or by a recorded decision that the sentence describes an
+  intent the tool abandoned.
 - **`docs/README.md`**: this plan is registered with a one-line hook, and the entry flips to
   its closing state when `curating-docs` runs in the close-out.
+- **The five stale citations Section 2's insertion created are repaired.** Adding one line to
+  each agent file shifted every body line by one, and five live `file:line` citations into
+  agent bodies now land one line short: `test/denaming.test.js:48`,
+  `docs/plans/prose-claim-review_spec_v1.md:131`, and
+  `docs/plans/report-file-protocol_spec_v1.md:57`, `:62`, `:63` and `:111`. Each is re-read at
+  its new line and corrected. **`docs/archive/` is deliberately not swept**: those are dated
+  snapshots and editing them would falsify the record, which is the same reason the archive is
+  excluded from the de-naming invariant.
+- **The `xhigh` choice is stated in both directions.** The Goal says holding the gates at
+  `xhigh` "changes no observed behavior", and that is true of this machine only. `max` sits
+  above `xhigh`, and Chapter 1's row `f` proves `max` takes effect on a subagent, so on an
+  operator machine set to `"effortLevel": "max"` these ten gate seats now run one notch
+  **below** what they inherited before. The documents say so rather than letting the
+  determinacy framing obscure it.
 - Every measured figure in all five documents is traceable to this spec's Approach or a
   Chapter, and nothing states a client version other than the one measured (2.1.278).
 
@@ -297,8 +326,9 @@ Audience: one persona, an operator who works in this repository daily and holds 
 to know what the kit's agents now do and what an install on a machine with a different
 `effortLevel` will do.
 Must answer: what decides each agent's effort now; what changes if the operator's own
-`effortLevel` changes; what the kit does when a model does not support the level an agent
-declares; why the compensation notch is absent and what would close it.
+`effortLevel` changes, **in both directions, including that a machine set above `xhigh` now
+gets less on the gate seats than it did**; what the kit does when a model does not support the
+level an agent declares; why the compensation notch is absent and what would close it.
 Fact base: `plugins/claude-kit/agents/*.md`, `test/agent-effort.test.js`,
 `docs/architecture.md`, this spec's Approach section and Section 1's measured table.
 Style authority: none. This kit has no writing-voice skill and has decided against one, so
@@ -310,6 +340,23 @@ Execution mode: main.
 
 Tests: none directly. The claims are checked by the document battery this section's
 `Audience:` line triggers.
+
+## Standing Brief Amendments
+
+Every later dispatch in this effort carries these, per `executing-work`'s recurrence rule.
+Added 2026-09-19 after Section 1's review found two of them in one round.
+
+- **Open the file before you cite it.** Two claims in this spec about other files in this
+  repository were wrong, and both were written from recollection of a doc rather than from the
+  file at the cited line: that the arm harness uses the `claude -p --agent` route (it records
+  rejecting it), and a quotation of `executing-work:171` that changed the punctuation inside
+  quotation marks. Any load-bearing claim about another file is verified by opening that file
+  at that line, and the citation carries the line number so the next reader can do the same.
+- **A declared key is not a measured one.** Section 1's own headline finding is that a
+  frontmatter key can be silently ignored depending on how the agent is started. So nothing in
+  this effort concludes anything about a `model:` or `effort:` value from the fact that a
+  definition declared it; the value is confirmed from an independent reading (the resolved
+  level via `$CLAUDE_EFFORT` or the hook payload, the model via the session's `modelUsage`).
 
 ## Out of Scope
 
@@ -330,8 +377,10 @@ Tests: none directly. The claims are checked by the document battery this sectio
 ## Open Questions
 
 - ~~Whether `xhigh` survives on a `sonnet`-pinned agent.~~ **Answered 2026-09-19 by Section 1's
-  probe: it survives, and so does `max`. No silent downgrade at any level this effort uses.
-  The table's values stand unamended.**
+  probe: `xhigh` survives on a `sonnet`-pinned agent, and so do `max` and `medium`. The pin
+  itself is confirmed rather than assumed, by the dispatching session's `modelUsage` recording
+  `claude-sonnet-5` alongside its own Opus. No silent downgrade was observed at any level this
+  effort ships. The table's values stand unamended.**
 - Whether the two implementer drops are right. No local evidence either way, and the
   rationale is borrowed. Owner: the user, on the first delegated section that fails review
   for thin reasoning rather than a thin brief.
@@ -339,39 +388,55 @@ Tests: none directly. The claims are checked by the document battery this sectio
   user-scope agents. One source suggested a narrower list for plugin agents and a direct
   re-read did not confirm it. **Settled for project-scope agents 2026-09-19: both levels took
   effect.** The residue is the payload path specifically, since Section 1's probe agents were
-  project-scope, and it is confirmed by the `/plugin update` that follows this effort rather
-  than by anything inside it. Owner: the user, at the next plugin update.
+  project-scope, and nothing inside this effort can reach it: the installed plugin cache is
+  built from the trunk, and this work is on a branch. **Section 4 files it with a closing
+  criterion rather than leaving it to be archived with this plan**, and the check is one line
+  now that the instrument is known: run `echo $CLAUDE_EFFORT` inside any dispatched kit agent
+  after the next `/plugin update` and read the level back. Owner: the user, at that update.
 
 ## Chapters
 
 ### Chapter 1 - 2026-09-19
 Completed: Section 1, Measure what effort actually resolves to
 Implemented By: main session
-Metrics: 0 review rounds at time of writing (the section's own review runs concurrently with Section 2); 0 NEEDS_CONTEXT; 0 escalations; advisor on (Opus), 2 consultations, both answered
-Decisions / Surprises: **The route decides whether the key works at all, which the spec did not anticipate and which nearly produced a false negative.** All four spec'd conditions were run first through `claude -p --agent <name>`, and every one of them reported the session's level regardless of what its frontmatter declared, including the variant declaring `effort: medium` against a session at `xhigh`. Read alone that says the key is inert. A control settled it instead: `--effort medium` and `--effort low` on the same route moved the reported level to `medium` and `low`, so the hook reading is live and responsive and it is the frontmatter that route ignores. **A top-level session started with `--agent` does not take that agent's declared effort.** Re-run as real subagents, dispatched from a nested session, the same definitions behave exactly as documented. The kit dispatches subagents and never uses the `--agent` route, so the finding costs the kit nothing and was worth an hour to not get backwards.
+Metrics: 2 review rounds (round 1 returned CHANGES_REQUIRED with 5 Major and 8 Minor; round 2 below); 0 NEEDS_CONTEXT; 0 escalations; advisor on (Opus), 2 consultations, both answered
+Decisions / Surprises: **The route decides whether the key works at all, which the spec did not anticipate and which nearly produced a false negative.** All four spec'd conditions were run first through `claude -p --agent <name>`, and every one reported the session's level regardless of what its frontmatter declared, including the variant declaring `effort: medium` against a session at `xhigh`. Read alone that says the key is inert. A control settled it instead: `--effort medium` on the same route, and `--effort low` on a plain `-p` run, moved the reported level to `medium` and `low`, so the reading is live and responsive and it is the frontmatter that route ignores. Stated at the width of the evidence, which round 1's review was right to insist on: **frontmatter effort had no effect on the `--agent` route, and whether the definition loaded at all on that route was never confirmed.** Re-run as real subagents, the definitions behave exactly as documented. The kit dispatches subagents and never uses the `--agent` route, so the finding costs the kit nothing.
 
-Measured, client 2.1.278, quoted from the probe's capture (`effort.level` out of a PreToolUse payload):
+**The section was reviewed twice and the second probe round exists because of the first review.** Round 1 found that the deliverable had no subagent-route row for the inheritance condition, and that the two `model: sonnet` rows concluded something about sonnet from agents that merely *declared* sonnet, which is the section's own headline failure mode used as evidence about itself. Both were right. Round 2 re-probed with a cheaper instrument the review itself named: the client exposes the resolved level to Bash as `$CLAUDE_EFFORT`, so each agent reports its own effort with no hook needed, and the hook was kept only to capture the transcript path.
 
-| Condition | Frontmatter | Route | Session effort | Reported |
-|---|---|---|---|---|
-| a | none | `--agent` | xhigh (settings) | `xhigh` |
-| b | `effort: xhigh` | `--agent` | xhigh | `xhigh` |
-| c | `effort: xhigh`, `model: sonnet` | `--agent` | xhigh | `xhigh` |
-| d | `effort: medium` | `--agent` | xhigh | `xhigh` |
-| control | none | `--agent`, `--effort medium` | medium | `medium` |
-| control | none | plain `-p`, `--effort low` | low | `low` |
-| d | `effort: medium` | **subagent** | xhigh | **`medium`** |
-| b | `effort: xhigh` | **subagent** | xhigh | `xhigh` |
-| b | `effort: xhigh` | **subagent** | low | **`xhigh`** |
-| c | `effort: xhigh`, `model: sonnet` | **subagent** | low | **`xhigh`** |
-| e | `effort: max`, `model: sonnet` | **subagent** | low | **`max`** |
-| f | `effort: max` | **subagent** | low | **`max`** |
+Measured, client 2.1.278. Round 2 rows carry two independent readings that agree, the PreToolUse payload's `effort.level` and the agent's own `$CLAUDE_EFFORT`:
 
-What each row buys. The subagent `d` row is the key lowering below the session. The subagent `b` and `c` rows at session `low` are it raising above the session, and `c` is the answer to the section's named question: **`xhigh` survives on a `sonnet`-pinned agent, with no silent downgrade**, and `e` shows `max` survives there too. So the Approach table's provisional values for `qa-verifier` and `implementer-sonnet` stand unamended, and the third Open Question (whether a narrower level set applies to some agents) is answered for every level this effort uses.
+| # | Frontmatter | Route | Session effort | Reported | Round |
+|---|---|---|---|---|---|
+| a | none | `--agent` | xhigh (settings) | `xhigh` | 1 |
+| b | `effort: xhigh` | `--agent` | xhigh | `xhigh` | 1 |
+| c | `effort: xhigh`, `model: sonnet` | `--agent` | xhigh | `xhigh` | 1 |
+| d | `effort: medium` | `--agent` | xhigh | `xhigh` | 1 |
+| control | none | `--agent`, `--effort medium` | medium | `medium` | 1 |
+| control | none | plain `-p`, `--effort low` | low | `low` | 1 |
+| d | `effort: medium` | **subagent** | xhigh | **`medium`** | 1 |
+| b | `effort: xhigh` | **subagent** | xhigh | `xhigh` | 1 |
+| b | `effort: xhigh` | **subagent** | low | **`xhigh`** | 1 |
+| c | `effort: xhigh`, `model: sonnet` | **subagent** | low | **`xhigh`** | 1 |
+| e | `effort: max`, `model: sonnet` | **subagent** | low | **`max`** | 1 |
+| f | `effort: max` | **subagent** | low | **`max`** | 1 |
+| control | (the dispatching parent itself) | plain `-p`, `--effort low` | low | **`low`** | 2 |
+| a | none | **subagent** | low | **`low`** | 2 |
+| c | `effort: xhigh`, `model: sonnet` | **subagent** | low | **`xhigh`** | 2 |
+| g | `effort: medium`, `model: sonnet` | **subagent** | low | **`medium`** | 2 |
 
-Two conditions beyond the spec's four were added while the instrument was standing, `e` and `f`, both pinning `max`. Cheap, same question, and they are what make the no-downgrade claim a ceiling result rather than a single point.
+What each row buys. Round 2's parent control is the in-route proof that the dispatching session really sat at `low`, so every "raises above the session" row below it is a comparison against a measured level rather than against a flag that was passed. Round 2's `a` row is inheritance measured on the route the kit actually uses: no key, and the subagent took the parent's `low`. The `d` row is the key lowering below a session at `xhigh`; the `b`, `c` and `g` rows are it raising above a session at `low`. Row `g` is `implementer-sonnet`'s exact shipped combination, which round 1 never ran.
 
-Outside-the-repo changes, all reverted: `.claude/settings.local.json` gained a temporary `PreToolUse` hook and one `Bash(echo *)` allow entry, and was restored byte-identical from a backup (`diff` clean). Seven nested `claude -p` sessions were run. Seven probe agent definitions under `.claude/agents/` and the probe hook and capture file were deleted; `.claude/agents/` no longer exists and `git status --porcelain` shows nothing from the probe.
-Review Findings: pending; the section's adversarial review is dispatched alongside Section 2's implementer.
+**The `model: sonnet` pin is confirmed rather than assumed**, which is what makes the sonnet rows evidence. The round-2 dispatching session's transcript records `modelUsage` across two models, `claude-opus-5[1m]` and `claude-sonnet-5`, and the only sonnet-pinned dispatches in that session were the two probes that declared it. So `xhigh` and `medium` both survived on an agent genuinely running sonnet, with no silent downgrade at any level this effort ships.
+
+Conditions beyond the spec's four were added while each instrument stood: `e` and `f` in round 1 (both pinning `max`, which is what makes the no-downgrade result a ceiling rather than a point), and `g` in round 2. Cheap, same question.
+
+**The capture is archived rather than deleted**, at `docs/archive/agent-effort-dials_s1-probe/capture.md`. The section's original acceptance criterion said to delete it, and round 1's review was right that this left twelve numbers with no on-disk corroboration, which is exactly what made its own two Major findings unrecoverable instead of re-checkable. The criterion was wrong and the record is the thing worth keeping.
+
+**Process deviation, recorded rather than smoothed over.** Section 1 was committed at `6e07421` with `Review Findings: pending`, before its review returned. `executing-work`'s section loop binds its seven steps in sequence and its concurrency allowance covers starting a *later* section inside a review window, not closing the earlier one. Round 1 flagged it and the flag is correct. The cost was real rather than theoretical: Section 2's implementer was dispatched against a sonnet premise that round 1 then put in doubt, and only round 2 rescued it. What a later session should take from this is that the review window is for starting disjoint work, never for closing the section under review.
+
+Outside-the-repo changes, all reverted. `.claude/settings.local.json` gained a temporary `PreToolUse` hook and one `Bash(echo *)` allow entry in each round, and was restored byte-identical from a backup after each (`diff` clean both times). Eleven `claude -p` invocations in all: round 1 ran six on the `--agent` route (four variants plus two controls) and two nested dispatching sessions covering six subagent runs, and round 2 ran one nested dispatching session covering three subagent runs. Ten probe agent definitions were written under `.claude/agents/` across the two rounds (seven in round 1, three in round 2) and all were deleted; `.claude/agents/` no longer exists, and `git status --porcelain` shows nothing from either probe.
+Review Findings: Round 1, adversarial, CHANGES_REQUIRED. Five Major, four accepted and one rejected. Accepted and fixed: the missing subagent-route inheritance row and the missing in-route parent control (round 2 measures both); the unconfirmed `model: sonnet` pin (round 2 confirms it by `modelUsage`); the false claim that the arm harness uses the `--agent` route, when `docs/arm-harness.md:63` records it rejecting that route and `tools/arm-harness.js:116` prints no such flag; and Open Question 3 having no closing criterion, now given one in Section 4. Accepted: committing with findings pending, recorded above. **Rejected:** that the raise-above-session rows had no in-route control, on the ground that the `--effort low` control sat on the invalidated `--agent` route. It did not; that control was a plain `-p` run with no `--agent`, the same route as the dispatching session. Round 2 measures the parent directly anyway, so the gap the finding pointed at is closed even though its stated reason was wrong. Minors: fixed the overbroad "no silent downgrade at any level", the unsupported "a top-level `--agent` session does not take the declared effort" (softened to what was observed), the missing docs-only justification (below), the unreconciled run counts, a `docs/README.md` blank line splitting the plan list, and a misquotation of `executing-work:171` inside quotation marks. Noted and not acted on: that the three sibling `Related` back-references were outside the section's deliverable, which is rejected as a finding because `brainstorming` step 7 mandates that cross-referencing through `curating-docs`' create path.
+Docs-only: this section's entire changeset is under `docs/`, so it took the adversarial review without a blind pair, per the docs-only rule. Its deliverable is a record rather than a document for a named reader, so the document battery does not apply either.
 Next: Section 2, Put the dials on all thirteen agents
 Commit Model: Branch-and-PR (substituted, see header)
