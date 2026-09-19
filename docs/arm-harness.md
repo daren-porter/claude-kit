@@ -60,6 +60,8 @@ was caught by me.
 | MCP server instructions | Present, and the count is session-dependent rather than constant: one block in a top-level run, three in subagent reps. Their tools are absent from the rep's callable list, which is a property of `tools:` and not of MCP. |
 | `advisor` | Injected whatever `tools:` says. A rep can consult it and bring back guidance the arm did not author. |
 
+**A rep's reasoning effort is inherited rather than declared.** `tools/arm-harness/plain-worker.md` carries no `effort:` key, so a rep runs at whatever level its dispatching `claude -p` session resolved, which comes from the `effortLevel` of the config directory that run used and is unset on some profiles. Measured 2026-09-19 on client 2.1.278: a subagent whose definition declares no effort takes its parent session's level. The 13 charters under `plugins/claude-kit/agents/` declare theirs and `test/agent-effort.test.js` pins them; neither that test nor the pre-commit gate that runs it reaches this file, which is outside the directory both enumerate. 
+
 **Why a rep is a subagent and not `claude -p --agent plain-worker`.** The flag form is
 simpler and it does suppress the listing, verified with a discriminating control. It also
 makes the rep a TOP-LEVEL session, which receives the SessionStart hook injection that a

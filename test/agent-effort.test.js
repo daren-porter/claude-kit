@@ -204,7 +204,9 @@ test('every declared effort is one of the five named levels', () => {
         .filter(([, value]) => ![NO_KEY, NO_FRONTMATTER, DUPLICATE_KEY].includes(value) && !LEVELS.includes(value))
         .map(([rel, value]) => `${rel}: ${JSON.stringify(value)}`);
     assert.strictEqual(findings.length, 0, report(findings,
-        `The client accepts only ${LEVELS.join(' | ')}. Anything else is ignored in silence: an agent `
+        `This kit uses only ${LEVELS.join(' | ')}. The client's own schema also accepts a bare `
+        + 'integer, which nothing here has reasoned about, so an integer is refused as kit policy '
+        + 'rather than as a client error. A misspelling is ignored in silence: an agent '
         + 'declaring `effort: ultrahigh` loads, dispatches, and runs at the inherited effort with no '
         + 'error anywhere. Fix the spelling rather than widening LEVELS.'));
 });

@@ -2,8 +2,11 @@
 
 Raw `effort.level` readings out of PreToolUse payloads, in run order, from the two
 probe rounds described in Chapter 1 of `plans/agent-effort-dials_spec_v1.md`.
-Round 1 used a hook alone; round 2 added each agent's own `$CLAUDE_EFFORT` as a
-second independent reading. The instrument is deleted; this is what it produced.
+Both rounds captured the hook's `effort.level`, which is what the JSON below holds.
+Round 2 also had each agent echo its own `$CLAUDE_EFFORT` as a second independent
+reading, and those agreed with the hook's; they were read from the agents' replies
+rather than captured here, so what survives of them is the `cmd` field showing the
+command that produced each one. The instrument is deleted.
 
 **Identifiers are truncated and paths are placeholders.** The full values named this
 machine's config directory, its scratch root and eight session UUIDs, and the archive is

@@ -310,7 +310,11 @@ Acceptance criteria:
   the inheritance fact (absent means inherit the session's effort, which is set by a user
   setting outside the kit) appears once, where a reader meets the agent inventory.
 - **`README.md`**: the model-tiering material in THE WORKFLOW names effort alongside model,
-  in one clause, without restating the table.
+  without restating the per-agent table. **Amended 2026-09-19: "in one clause" is struck.** The
+  passage runs to several sentences because the blind reader established that a one-clause version
+  left a reader able to state the effort of one agent out of thirteen, and the curator's drift
+  report flagged the unamended criterion as the thing that would invite a later reader to compress
+  it back.
 - **`docs/kit-adoptions.md`**: candidate 9 of the 2026-08-26 pass is amended in place per
   that file's own convention, with the amendment dated 2026-09-19 and in bold, the prior
   reasoning left standing rather than tidied, and **the verdict line changed** to record
@@ -351,10 +355,14 @@ Acceptance criteria:
   excluded from the de-naming invariant.
 - **The `xhigh` choice is stated in both directions.** The Goal says holding the gates at
   `xhigh` "changes no observed behavior", and that is true of this machine only. `max` sits
-  above `xhigh`, and Chapter 1's row `f` proves `max` takes effect on a subagent, so on an
-  operator machine set to `"effortLevel": "max"` these ten gate seats now run one notch
-  **below** what they inherited before. The documents say so rather than letting the
-  determinacy framing obscure it.
+  above `xhigh`, and Chapter 1's row `f` proves `max` takes effect on a subagent, so a session
+  at `max` now gets one notch **less** on the eleven pinned seats than it inherited before.
+  **Amended 2026-09-19 after the close-out prose review:** that route is the per-session
+  `--effort max` or `/effort max` and never a settings file, because the `effortLevel` key accepts
+  only `low | medium | high | xhigh` (`effortLevel:G(["low","medium","high","xhigh"])` in the
+  2.1.278 bundle), so a machine "set to `effortLevel: max`" is a configuration that cannot exist
+  and this criterion asked for prose describing one. The documents carry the upward direction too,
+  which is the one an adopting machine actually lands in.
 - Every measured figure in all five documents is traceable to this spec's Approach or a
   Chapter, and nothing states a client version other than the one measured (2.1.278).
 
