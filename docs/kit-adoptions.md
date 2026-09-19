@@ -273,7 +273,7 @@ This kit's `writing-skills` owns exactly this bar and these four are all about e
 
 Answers a real hole this kit shares: it falls back to the session model at whatever effort the agent definition happens to pin, which silently weakens the strongest gate in the system. Two portable observations ride with it, both about the Agent tool: it takes a model override but no effort parameter, so an effort override has to go through `Workflow`'s `agent()`; and an unnamed effort has been observed resolving to `xhigh` on a session whose agents were expected at medium, which makes "named explicitly, never left to inherit" a rule rather than a preference. The `effort:` frontmatter dials themselves are already tracked as candidate 10 of 2026-08-07.
 
-**Adjudicated and half-shipped 2026-09-19 by `plans/agent-effort-dials_spec_v1.md`, and the
+**Adjudicated and half-shipped 2026-09-19 by `archive/agent-effort-dials_spec_v1.md`, and the
 paragraph above is wrong about this kit in both of its halves.** It says the kit "falls back to
 the session model at whatever effort the agent definition happens to pin, which silently weakens
 the strongest gate in the system". Measured here: no agent definition pinned anything, and an

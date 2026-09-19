@@ -7,7 +7,7 @@
 // produced it - effort follows the failure mode, not the model, so a seat whose
 // failure is silent runs one rung above the model's own default and a seat whose
 // failure is loud runs at that default and never below it - are in
-// docs/plans/agent-effort-dials_spec_v1.md.
+// docs/archive/agent-effort-dials_spec_v1.md.
 //
 // WHY THIS FILE EXISTS. Absent, the key means "inherit the session's effort",
 // which is a per-machine setting the kit does not ship, cannot read, and does not

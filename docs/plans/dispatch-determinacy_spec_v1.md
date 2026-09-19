@@ -13,7 +13,7 @@ Created: 2026-09-02
 - `plans/enumerations-stop-short_spec_v1.md` - checked, and neither finding here is an instance:
   nothing is one member short of a set. Both are cases where a stated instruction underdetermines
   the action it names.
-- `plans/agent-effort-dials_spec_v1.md` - finding 2 with one noun swapped. Omitting an agent's
+- `archive/agent-effort-dials_spec_v1.md` - finding 2 with one noun swapped. Omitting an agent's
   `effort:` resolves to a configured session default exactly as omitting the model override
   resolves to a configured default subagent model, and that plan measured the session default on
   this machine at `xhigh`. It pins effort and leaves the model half here untouched.

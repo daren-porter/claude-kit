@@ -1,7 +1,7 @@
 # Section 1 probe capture, 2026-09-19
 
 Raw `effort.level` readings out of PreToolUse payloads, in run order, from the two
-probe rounds described in Chapter 1 of `plans/agent-effort-dials_spec_v1.md`.
+probe rounds described in Chapter 1 of `archive/agent-effort-dials_spec_v1.md`.
 Both rounds captured the hook's `effort.level`, which is what the JSON below holds.
 Round 2 also had each agent echo its own `$CLAUDE_EFFORT` as a second independent
 reading, and those agreed with the hook's; they were read from the agents' replies
