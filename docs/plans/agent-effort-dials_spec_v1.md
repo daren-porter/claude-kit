@@ -154,9 +154,11 @@ model tier it lost, is **not** in this spec. Three reasons, in order of weight:
    asynchronously, so adopting it reworks how a review round is dispatched and awaited.
 2. **That seam is owned.** `plans/review-round-loop_spec_v1.md` is open against exactly the
    space between dispatching a round and committing.
-3. **Its trigger is rare and its governing header is unsettled.** The notch would fire on
-   the kit's Fable-downgrade paths, whose semantics `plans/fable-spend-absence_spec_v1.md`
-   is still deciding.
+3. **Its trigger is rare and its governing header is worded but not settled.** The notch
+   would fire on the kit's Fable-downgrade paths. The operator's ruling there is already made
+   (2026-09-02: an absent header leaves the fable default in force);
+   `plans/fable-spend-absence_spec_v1.md` is open on the wording alone, which is still enough
+   to leave the notch's trigger undefined.
 
 Section 4 files it as a backlog item carrying this evidence, so the next session does not
 re-derive the transport finding.
@@ -232,7 +234,7 @@ briefable.
 
 Tests: none. The deliverable is a measurement, and the probe is deleted at section close.
 
-### 2. Put the dials on all thirteen agents
+### 2. Put the dials on all thirteen agents (COMPLETE 2026-09-19)
 
 Add one `effort:` line to each of the thirteen agent definitions under
 `plugins/claude-kit/agents/`, with the value from the Approach's table, amended only where
@@ -257,7 +259,7 @@ error.
 
 Tests: covered by Section 3, which is where the durable pin belongs.
 
-### 3. Pin the assignment
+### 3. Pin the assignment (COMPLETE 2026-09-19)
 
 Add `test/agent-effort.test.js`, joining the suite the README's gate runs
 (`node --test test/*.test.js tools/*.test.js` from the repo root, with `< /dev/null`).
@@ -274,8 +276,14 @@ Acceptance criteria:
 - The test fails when a value is outside the five named levels.
 - The test fails when a value diverges from the table the test itself carries, so changing
   an agent's effort is a deliberate two-file edit rather than a drift.
-- The test discovers agent files by globbing the directory, so adding a fourteenth agent
-  without an effort value fails the suite rather than passing unnoticed.
+- The test discovers agent files by enumerating the directory rather than by iterating a
+  hard-coded list, so adding a fourteenth agent without an effort value fails the suite rather
+  than passing unnoticed. **Amended 2026-09-19 to match what shipped**: the enumeration is
+  `git ls-files` over the directory rather than a filesystem glob, following the two sibling
+  invariant tests, on the reasoning that the plugin reaches an operator by clone so tracked is
+  exactly what ships. The accepted cost, recorded in the test's own header, is that an
+  untracked agent file on disk is invisible to the check; the pre-commit gate closes most of
+  that, since a commit stages before it commits.
 - Each of the four failures above is **watched failing before the fix**, and the Chapter
   records what was broken to produce each one.
 - The full gate passes.
@@ -286,7 +294,7 @@ brief loses.
 
 Tests: this section is the test.
 
-### 4. Record it
+### 4. Record it (COMPLETE 2026-09-19)
 
 Four documents, all under `docs/` or the root `README.md`, so this section runs in the main
 thread per `executing-work`'s rule that a section writing under `docs/` is never delegated.
@@ -322,11 +330,12 @@ Acceptance criteria:
   intent the tool abandoned.
 - **`docs/README.md`**: this plan is registered with a one-line hook, and the entry flips to
   its closing state when `curating-docs` runs in the close-out.
-- **The five stale citations Section 2's insertion created are repaired.** Adding one line to
+- **The six stale citations Section 2's insertion created are repaired.** Adding one line to
   each agent file shifted every body line by one, and five live `file:line` citations into
   agent bodies now land one line short: `test/denaming.test.js:48`,
   `docs/plans/prose-claim-review_spec_v1.md:131`, and
-  `docs/plans/report-file-protocol_spec_v1.md:57`, `:62`, `:63` and `:111`. Each is re-read at
+  `docs/plans/report-file-protocol_spec_v1.md:57`, `:62`, `:63` and `:111`, which is six sites
+  across three files. Each is re-read at
   its new line and corrected. **`docs/archive/` is deliberately not swept**: those are dated
   snapshots and editing them would falsify the record, which is the same reason the archive is
   excluded from the de-naming invariant.
@@ -388,8 +397,14 @@ Added 2026-09-19 after Section 1's review found two of them in one round.
 - **Effort for the main session.** The kit deliberately never ties the main thread to a
   model name, and the same restraint applies to effort: the session's level is the
   operator's setting, not the kit's.
-- **The other seventeen pending adoption candidates.** This effort adjudicates candidate 9
-  and touches no other ledger entry.
+- **The other pending adoption candidates.** This effort adjudicates candidate 9. **One
+  exception, adjudicated 2026-09-19 after the prose review raised it:** candidate 10 of the
+  2026-08-07 pass says "the effort dials are a cheap capability this kit lacks", which this
+  effort made false, so the ledger would have asserted in one entry that the dials shipped and
+  in another that the kit lacks them. That clause gains a dated amendment pointing at candidate
+  9. Nothing else in that entry is touched and it stays `pending, split` on its other two
+  halves. The rule this line exists to enforce is no drift into unrelated candidates, not a
+  licence to ship a self-contradicting ledger about the capability just delivered.
 
 ## Open Questions
 
@@ -488,4 +503,22 @@ Decisions / Surprises: **Both Majors were real and neither was in the test's log
 Review Findings: **Adversarial, 1 Major accepted and fixed** (the pre-commit pathspec), 5 Minor all accepted and fixed: the `git ls-files` deviation is recorded rather than reverted and the spec criterion amended to match; the vacuity justification was false and is corrected (it covers tests 1 and 2, since test 3 fails loudly on an empty set); "Eleven gates at xhigh"; a citation claiming `corpus-agreement.test.js` uses `git ls-files` when it uses `git ls-tree -r HEAD`; and "Three facts measured" where the third is a quotation from a doc. **Blind, 1 Major accepted and fixed** (the `.MD` case), 7 Minor: the discovery control is replaced with set equality against the recorded names, which is strictly stronger and catches under-selection a count comparison waves through; stem collisions, a duplicate `effort:` key, a trailing YAML comment and CRLF are each now handled and each was watched failing or passing as appropriate; the `name:`-versus-stem gap is now a test rather than a disclaimer; the non-agent-`.md`-in-`agents/` case is recorded as a known limit rather than built for. **Blind reader, 1 Critical and 5 Major, all accepted**, all documentation, all fixed as described above. Nothing was rejected in this round.
 Verification: every new guard watched failing before it was trusted, five of them, each with the tree restored after; `.githooks/pre-commit` watched exiting 1 on a keyless agents-only stage; full gate green.
 Next: Section 4 is already committed at `46157e4` and its documents are repaired here; finishing-work
+Commit Model: Branch-and-PR (substituted, see header)
+
+### Chapter 4 - 2026-09-19
+Completed: Section 4, Record it, and the repair round the document battery earned
+Implemented By: main session
+Metrics: 1 review round (blind-reader, 1 Critical and 5 Major; prose-reviewer, 1 Critical and 6 Major, CHANGES_REQUIRED); 0 NEEDS_CONTEXT; 0 escalations; advisor on (Opus)
+Decisions / Surprises: **I mutated the documents while their prose review was reading them, and that is a process error rather than a near miss.** The blind reader returned first, its findings drove a documentation rewrite in `96c8167`, and the prose reviewer was still reading the superseded text. Its report then had to be triaged finding by finding against the current tree rather than accepted or rejected as written, and several of its findings were already fixed while five were not. Nothing was lost, because every finding was re-checked against what is actually on disk, but the re-check was work the freeze exists to avoid. This is a fourth instance for `plans/review-round-loop_spec_v1.md`, and the first where the orchestrator rather than a concurrent section caused it.
+
+**The battery earned its cost twice over, and the two agents failed in opposite directions, which is the argument for running both.** The blind reader, denied all intent, found that neither document named the frontmatter key, enumerated the five levels, said where `effortLevel` lives, or said that pinning the implementers at the default is a cap rather than a no-op; it could state the effort of one agent out of thirteen. The prose reviewer, holding everything, checked 28 claims against sources and found six the reader could not have: the ratchet gates fable-carrying dispatches only and exempts four of the eleven `xhigh` seats by name, so the ratchet backlog item mis-sized itself roughly 4x; that item's premise ("raises per-turn burn") is false on the very machine the threshold was calibrated on, where the pins raise nothing; `plans/fable-spend-absence_spec_v1.md` records its ruling as **made** and open only on wording, so "still deciding" overstated the blocker in three places including this spec; the `effort_cost_index` figure was true but traceable to no Chapter, which Section 4's own criterion forbids; and the ledger had come to contradict itself across two entries.
+
+**The `effort_cost_index` figure now has a home, which is this line.** Measured in the 2.1.278 bundle beside `default_effort:"high"` for `claude-fable-5-1`: `{low:0.75, medium:0.86, high:1, xhigh:1.38, max:1.74}`. The backlog item cites 1.38 and that citation now resolves.
+
+**One finding was escalated to me rather than fixed, correctly.** The prose reviewer found that candidate 10 of the 2026-08-07 ledger pass still reads "the effort dials are a cheap capability this kit lacks", which this effort made false, while this spec's Out of Scope forbade touching any other ledger entry. It declined to edit across that line and asked for adjudication. **Ruled:** the Out of Scope line exists to stop drift into unrelated candidates, not to license shipping a ledger that asserts the dials shipped in one entry and are absent in another. Candidate 10's dials clause gains a dated amendment pointing at candidate 9; its other two halves are untouched and it stays `pending, split`. The Out of Scope section records the exception rather than being quietly overrun.
+
+**The verdict word was outside the vocabulary and is now inside it.** The amendment first read `Verdict: split`, and `split` is not one of the four values the ledger's own table defines. It now reads `adapted 2026-09-19 for the dials, which shipped; the compensation notch stays pending`, which uses two table words and says which half each governs.
+Review Findings: **Blind reader, 1 Critical and 5 Major, all accepted and all fixed**: the undefined "gate seat" whose arithmetic could not close, the unnamed frontmatter key, the unenumerated level set, the unlocated `effortLevel`/`maxEffortLevel`, the `CLAUDE_CONFIG_DIR` profile-versus-machine scope, and the cap that read as a no-op. Its Minors on the circular bolded sentence and the mixed path roots are fixed; its Minor on the paragraph being one unbroken block is partly addressed by relocating the effort material beside the gate material rather than splitting the agent introduction, and the wider restructuring of that section is left alone as outside this effort. **Prose reviewer, 1 Critical and 6 Major.** The Critical was already fixed in two of its four places by the time the report arrived and was still live in `kit-adoptions.md` and `backlog.md`; both are fixed. Five Majors accepted and fixed (the ratchet scope, the false-on-this-machine premise, the untraceable figure, the "still deciding" overstatement in three files, and the over-broad fleet-default claim, which is now bounded to client 2.1.278 with the four `xhigh`-default models named as the case the floor clause does not reach). One Major escalated and ruled on, above. Minors accepted and fixed: one `fableRatchet` rather than "both thresholds" and it is configurable rather than fixed; `max` named and the loss stated in the operator's terms; the closed "four facts" count opened; the elided `cd <dir> &&` prefix in the arm-harness quote marked; "both profiles" corrected to two of three with the third named as the default-install case; the closed "two documented paths" count opened to include the silent invalid level; and the compensation item retitled to name the missing lever rather than the reviewer's worth. **One Minor rejected**, on the reviewer's own recommendation: the `X rather than Y` frequency finding, which it measured at roughly ten instances and then argued was the established house voice rather than anything this effort introduced, since the untouched prose around it carries the same density. Agreed, and recorded rather than swallowed.
+Verification: full gate green; the ledger currency test and the backlog closure test both green after every ledger and backlog edit.
+Next: finishing-work
 Commit Model: Branch-and-PR (substituted, see header)

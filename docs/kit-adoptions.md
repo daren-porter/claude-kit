@@ -179,7 +179,7 @@ a version, not standing facts about the current client, and the third describes 
 | 6 | The document review battery | **adapted, shipped 2026-08-26** |
 | 7 | `references/ai-tells.md` | **adapted, shipped 2026-08-26** |
 | 8 | `writing-skills` | **pending, strong** |
-| 9 | Reviewer effort compensation | **split 2026-09-19. The effort dials are adapted and shipped; the compensation notch stays pending.** |
+| 9 | Reviewer effort compensation | **adapted 2026-09-19 for the dials, which shipped; the compensation notch stays pending.** |
 | 10 | `responding-to-review` | **pending, cheap prose** |
 | 11 | The intake gap check | **pending** |
 | 12 | Outline before you read | **pending, unusually cheap here** |
@@ -269,7 +269,7 @@ This kit's `writing-skills` owns exactly this bar and these four are all about e
 
 #### 2026-08-26 candidate 9: Reviewer effort compensation
 
-*Reviewer effort compensation: an effort chosen for the model and for whether that model is the intended tier or a stand-in (Fable `high`, Opus `xhigh` with tier headroom, Opus `max` when covering for an absent Fable), plus the `Workflow`-route dispatch contract for any effort above an agent's frontmatter default.* **Verdict: split 2026-09-19. The effort dials are adapted and shipped; the compensation notch stays pending.**
+*Reviewer effort compensation: an effort chosen for the model and for whether that model is the intended tier or a stand-in (Fable `high`, Opus `xhigh` with tier headroom, Opus `max` when covering for an absent Fable), plus the `Workflow`-route dispatch contract for any effort above an agent's frontmatter default.* **Verdict: adapted 2026-09-19 for the dials, which shipped; the compensation notch stays pending.**
 
 Answers a real hole this kit shares: it falls back to the session model at whatever effort the agent definition happens to pin, which silently weakens the strongest gate in the system. Two portable observations ride with it, both about the Agent tool: it takes a model override but no effort parameter, so an effort override has to go through `Workflow`'s `agent()`; and an unnamed effort has been observed resolving to `xhigh` on a session whose agents were expected at medium, which makes "named explicitly, never left to inherit" a rule rather than a preference. The `effort:` frontmatter dials themselves are already tracked as candidate 10 of 2026-08-07.
 
@@ -277,8 +277,9 @@ Answers a real hole this kit shares: it falls back to the session model at whate
 paragraph above is wrong about this kit in both of its halves.** It says the kit "falls back to
 the session model at whatever effort the agent definition happens to pin, which silently weakens
 the strongest gate in the system". Measured here: no agent definition pinned anything, and an
-absent key inherits the *session's* effort rather than the model's, which on both profiles the
-user runs is `effortLevel: "xhigh"`. So the gates were already running at the strongest effort
+absent key inherits the *session's* effort rather than the model's, which is
+`effortLevel: "xhigh"` in two of the user's three profiles and unset in the third, where it falls
+to the client's own default. That third profile is the default-install case this entry turns on. So the gates were already running at the strongest effort
 the client offers and the mispriced seats were the opposite ones, the cheap model-pinned
 implementer and verifier burning top-tier reasoning on plan-following work. The candidate stands
 re-aimed rather than retired: the defect is that agent strength was **undetermined**, set by a
@@ -288,13 +289,15 @@ per-machine setting the kit does not ship, and an operator installing this plugi
 **What shipped** is the dials alone, on all 13 agents, under a rule stated locally rather than
 ported: effort follows the failure mode, not the model, so a seat whose failure is silent runs one
 rung above the model's own default and a seat whose failure is loud runs at that default and never
-below it. Eleven gate seats at `xhigh`, the two plan-following implementer seats at `high`. The
+below it. Eleven seats at `xhigh` of which ten are gates, the eleventh being `implementer-fable`, whose sections are the subtle cross-cutting correctness a review round is least reliable at catching; the two remaining implementer seats at `high`. The
 upstream's table is NOT taken, because it is keyed on their per-section reviewer tiering, which is
 a separate pending candidate (number 10 of the 2026-08-07 pass); taking the table would have
 imported that tiering by the back door.
 
-**Four facts were established first-hand against client 2.1.278**, and they are recorded here
-because the next pass should not re-derive them. `effort:` is a real agent-definition key taking
+**These facts were established first-hand against client 2.1.278**, and they are recorded here
+because the next pass should not re-derive them. The list is open rather than a closed count,
+which is deliberate: the plan's Approach numbers a different four, and a later pass cross-checking
+two closed quartets would stall on which set "the four" names. `effort:` is a real agent-definition key taking
 `low | medium | high | xhigh | max`, honored on the **plugin** load path (measured with a
 throwaway plugin, not inferred from a project-scope probe). An **invalid level loads silently**
 and runs at the inherited effort, and `claude plugin validate` accepts a bogus frontmatter key as
@@ -310,7 +313,9 @@ frontmatter value at dispatch time has to go through `Workflow`'s `agent()`, who
 agent-definition key list does include `effort`. A `Workflow` round returns a task id and
 completes asynchronously, so adopting it reworks the dispatch-and-await seam that
 `plans/review-round-loop_spec_v1.md` already owns, and the notch's own trigger sits on Fable
-downgrade paths whose header semantics `plans/fable-spend-absence_spec_v1.md` is still deciding.
+downgrade paths governed by a `Fable Spend:` header whose ruling is already made and whose wording
+is not: `plans/fable-spend-absence_spec_v1.md` records the operator's 2026-09-02 decision and is
+open only on how to word it.
 `docs/backlog.md` carries it with those two dependencies named.
 
 #### 2026-08-26 candidate 10: `responding-to-review`
@@ -507,7 +512,7 @@ The 2026-06-17 rejection of the full operating manual holds. Rightsizing is the 
 
 *Backlog-sweep batch: subagent `effort` frontmatter dials on six agents; the reviewer-one-tier-above-the-writer rule; the exit-after-stdout-write truncation fix across six SessionStart/Stop hooks.* **Verdict: pending, split**
 
-Three separable things. The truncation fix may be a latent bug in this kit's shared-lineage hooks and warrants a direct check before anything else here. The effort dials are a cheap capability this kit lacks. The reviewer-tier rule already carries their own adjudication against the Fable spend wall (their `claude-kit_backlog-sweep_spec_v1.md`, section 1: a below-fable session's reviewer override is Fable spend under the existing header semantics, and `none (cost hold)` caps it at the session model); this kit's wall was adapted from theirs, so start from that reasoning rather than re-deriving it.
+Three separable things. The truncation fix may be a latent bug in this kit's shared-lineage hooks and warrants a direct check before anything else here. The effort dials are a cheap capability this kit lacks. **No longer true of the dials half, 2026-09-19: they shipped under candidate 9 of the 2026-08-26 pass, on all 13 agents. Amended here rather than left to contradict that entry, which is the cross-entry case this file's editing rules already carry. The reviewer-tier rule and the truncation fix are untouched and this entry stays `pending, split` on them.** The reviewer-tier rule already carries their own adjudication against the Fable spend wall (their `claude-kit_backlog-sweep_spec_v1.md`, section 1: a below-fable session's reviewer override is Fable spend under the existing header semantics, and `none (cost hold)` caps it at the session model); this kit's wall was adapted from theirs, so start from that reasoning rather than re-deriving it.
 
 #### 2026-08-07 pass-level checks
 
