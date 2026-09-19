@@ -335,7 +335,13 @@ Acceptance criteria:
   agent bodies now land one line short: `test/denaming.test.js:48`,
   `docs/plans/prose-claim-review_spec_v1.md:131`, and
   `docs/plans/report-file-protocol_spec_v1.md:57`, `:62`, `:63` and `:111`, which is six sites
-  across three files. Each is re-read at
+  across three files. **A seventh was found by QA and is the one the enumeration itself could not
+  see:** `prose-claim-review_spec_v1.md:133` carries a bare `` `:13` `` continuation whose
+  antecedent is the `blind-reviewer.md` citation two lines above it, so no search for
+  `<agent>.md:<n>` reaches it. The sweep that closed it resolves every bare `` `:n` `` shorthand
+  in the citing files to its antecedent file and checks only those whose antecedent is an agent
+  definition: exactly one of ten, and it was this one. Repairing a list a reviewer hands you is
+  not the same as sweeping the class, which is the lesson worth more than the line. Each is re-read at
   its new line and corrected. **`docs/archive/` is deliberately not swept**: those are dated
   snapshots and editing them would falsify the record, which is the same reason the archive is
   excluded from the de-naming invariant.
@@ -513,7 +519,7 @@ Decisions / Surprises: **I mutated the documents while their prose review was re
 
 **The battery earned its cost twice over, and the two agents failed in opposite directions, which is the argument for running both.** The blind reader, denied all intent, found that neither document named the frontmatter key, enumerated the five levels, said where `effortLevel` lives, or said that pinning the implementers at the default is a cap rather than a no-op; it could state the effort of one agent out of thirteen. The prose reviewer, holding everything, checked 28 claims against sources and found six the reader could not have: the ratchet gates fable-carrying dispatches only and exempts four of the eleven `xhigh` seats by name, so the ratchet backlog item mis-sized itself roughly 4x; that item's premise ("raises per-turn burn") is false on the very machine the threshold was calibrated on, where the pins raise nothing; `plans/fable-spend-absence_spec_v1.md` records its ruling as **made** and open only on wording, so "still deciding" overstated the blocker in three places including this spec; the `effort_cost_index` figure was true but traceable to no Chapter, which Section 4's own criterion forbids; and the ledger had come to contradict itself across two entries.
 
-**The `effort_cost_index` figure now has a home, which is this line.** Measured in the 2.1.278 bundle beside `default_effort:"high"` for `claude-fable-5-1`: `{low:0.75, medium:0.86, high:1, xhigh:1.38, max:1.74}`. The backlog item cites 1.38 and that citation now resolves.
+**The `effort_cost_index` figure has a home here, and the item that cited it no longer needs one.** Measured in the 2.1.278 bundle beside `default_effort:"high"` for `claude-fable-5-1`: `{low:0.75, medium:0.86, high:1, xhigh:1.38, max:1.74}`. Recorded in the same breath as the correction that made it moot: the ratchet item was rewritten in the same commit to fix its 4x mis-sizing, and the rewrite dropped the figure, so nothing outside this Chapter cites 1.38 any more. Kept because the measurement is real and the next session to ask what an effort rung costs should not re-derive it. **QA caught this Chapter claiming otherwise** ("the backlog item cites 1.38 and that citation now resolves"), which was true of the draft and false of the commit.
 
 **One finding was escalated to me rather than fixed, correctly.** The prose reviewer found that candidate 10 of the 2026-08-07 ledger pass still reads "the effort dials are a cheap capability this kit lacks", which this effort made false, while this spec's Out of Scope forbade touching any other ledger entry. It declined to edit across that line and asked for adjudication. **Ruled:** the Out of Scope line exists to stop drift into unrelated candidates, not to license shipping a ledger that asserts the dials shipped in one entry and are absent in another. Candidate 10's dials clause gains a dated amendment pointing at candidate 9; its other two halves are untouched and it stays `pending, split`. The Out of Scope section records the exception rather than being quietly overrun.
 
