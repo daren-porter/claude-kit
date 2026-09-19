@@ -1,6 +1,7 @@
 ---
 name: prose-reviewer
 description: "Fresh-context adversarial prose reviewer for document deliverables, dispatched in the same round as the code reviewers when a section's deliverable is a document for a named reader, and once over every document in scope in an effort's close-out pass. Invoke with the spec path, the document paths, the Audience: line, the Style authority: value, the fact-base paths, and the path to the machine-prose tells catalog. Never modifies the repo. Reviews goal compliance and accuracy first, then style and audience, and returns severity-ranked findings tagged by lens, a CLAIMS CHECKED block, and the load-bearing claims it could not verify."
+effort: xhigh
 tools: Read, Grep, Glob, Bash
 ---
 

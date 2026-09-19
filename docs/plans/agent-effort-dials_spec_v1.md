@@ -31,9 +31,11 @@ whose failure a review round already catches, and a test pins the assignment so 
 fourteenth agent cannot ship without a considered value.
 
 What this is not: a strengthening of the review gate. On this machine the gates are already
-running at the session's `xhigh` and this effort holds them there deliberately rather than
-by accident. The product is determinacy, and on the two implementer seats, a small
-reduction in spend.
+running at the session's `xhigh` and this effort holds them there deliberately rather than by
+accident. The product is determinacy, and on the two plan-following implementer seats, a small
+reduction in spend. **Determinacy cuts both ways and the documents say so:** the field is an
+absolute override rather than a floor, so an operator who sets the session above `xhigh` now
+gets less on the gate seats than they inherited before.
 
 ## Approach
 
@@ -83,8 +85,9 @@ strength is undetermined, not that it is low. An operator installing this plugin
 
 One rule decides every value, stated so a fourteenth agent can be placed without re-arguing:
 
-> **Effort follows the failure mode, not the model.** A seat whose failure is silent runs at
-> the gate level. A seat whose failure is loud runs lower.
+> **Effort follows the failure mode, not the model.** A seat whose failure is silent runs one
+> rung above the model's own default. A seat whose failure is loud runs at that default, and
+> never below it.
 
 A gate fails silently: the finding it never raises leaves no trace, and the run reports
 green either way. A plan-following seat fails loudly, into a review round and a build that
@@ -94,9 +97,19 @@ implementer's, and adds that surplus effort runs in opposite directions on the t
 recall on an open-ended search and buying tangents on a settled plan. The first half is
 this kit's own framing at `executing-work:171` ("Review and QA dispatches never downgrade - judgment is their product"), which already puts QA on the gate side of the line.
 
-Applied, with the gate level set to `xhigh` because that is what these seats measurably run
-at on this machine today, so holding them there changes no observed behavior and only makes
-it deliberate:
+**The floor clause was earned by review rather than designed in**, and the measurement behind
+it is worth stating because it is not obvious: the model's default effort is `high` across the
+current fleet, evidenced in the 2.1.278 bundle by 27 model entries carrying
+`default_effort:"high"` against 4 at `"xhigh"`, plus a `default_effort??"high"` fallback. The
+first draft of this table put the two lower implementer seats at `high` and `medium`, read as
+a gentle ladder. It was not one. `medium` sits a rung *below* sonnet's own default, so it
+would have reduced every mechanical dispatch on every machine including a default install, in
+service of a rationale this spec had already admitted was borrowed and untested. An untested
+claim may justify leaving a seat where the model puts it. It may not justify moving one down.
+
+The gate level is `xhigh`, one rung above that default, which is also what these seats
+measurably run at on this machine today, so holding them there changes nothing observable here
+and makes it deliberate everywhere:
 
 | Agent | Effort | Why |
 |---|---|---|
@@ -111,19 +124,22 @@ it deliberate:
 | `design-facilitator` | `xhigh` | Gate. It owns the convergence verdict. |
 | `docs-curator` | `xhigh` | Gate. Drift it fails to name is drift nobody sees. |
 | `implementer-fable` | `xhigh` | Plan-following, but its sections are the subtle and cross-cutting correctness a review round is least reliable at catching, so the loud-failure premise does not hold for it. |
-| `implementer-opus` | `high` | Plan-following with mild ambiguity inside a clear design. |
-| `implementer-sonnet` | `medium` | Plan-following, clear contract, sibling pattern to mimic, failure cheaply detectable. |
+| `implementer-opus` | `high` | Plan-following with mild ambiguity inside a clear design. The model default, pinned rather than inherited. |
+| `implementer-sonnet` | `high` | Plan-following, clear contract, sibling pattern to mimic, failure cheaply detectable. The model default, pinned rather than inherited. |
 
 Eleven of thirteen land on the same value, and the spec says so rather than dressing the
-table up as fine-grained tuning. The product is that the eleven are now pinned rather than
-inherited; the differentiation is the two implementer seats, and that is the one behavior
-change this effort makes on this machine.
+table up as fine-grained tuning. The product is that all thirteen are pinned rather than
+inherited; the differentiation is the two plan-following implementer seats sitting one rung
+lower, at the model's own default.
 
-**The two implementer drops carry a borrowed rationale and no local evidence.** Nothing in
-this repo has measured a delegated implementation improving or degrading with effort. They
-are recorded here as the reversible half: if a delegated section starts failing review for
-reasons that read as thin reasoning rather than a thin brief, raising these two values back
-is a one-line edit per file, and the Chapter is where that observation belongs.
+**On this machine those two seats do drop one rung**, from the inherited `xhigh` to `high`,
+and that is the only behavior change this effort makes here. The rationale is borrowed from
+the upstream kit and nothing in this repo has measured a delegated implementation improving or
+degrading with effort, so it is recorded as the reversible half: if a delegated section starts
+failing review for reasons that read as thin reasoning rather than a thin brief, raising these
+two back to `xhigh` is a one-line edit per file, and the Chapter is where that observation
+belongs. What the floor clause buys is that the drop stops at the model's default instead of
+going through it, which bounds how wrong an untested rationale can be.
 
 ### What is deferred, and why
 
@@ -294,10 +310,11 @@ Acceptance criteria:
   parameter on the Agent tool, `effort` present in `Workflow`'s inline agent-definition key
   list) and a closure clause naming both exits, which are building the notch and recording a
   decision that reviewers never compensate.
-- **`docs/backlog.md`** also gains two smaller items, both dated 2026-09-19. First, the
-  payload-path residue of Open Question 3, closing on one `echo $CLAUDE_EFFORT` inside a
-  dispatched kit agent after the next `/plugin update`, or on a recorded decision that the
-  project-scope measurement generalizes. Second, a contradiction this effort tripped over and
+- **`docs/backlog.md`** also gains two smaller items, both dated 2026-09-19. First, that the
+  kit's Fable ratchet threshold was calibrated when every dispatch inherited the session's
+  effort, and standing pins raise per-turn burn against an unchanged threshold; it closes by
+  re-reading the threshold against the new floor or by recording that the delta is inside its
+  margin. Second, a contradiction this effort tripped over and
   did not fix: `docs/arm-harness.md:18` calls `--agent plain-worker` "load-bearing in the
   printed command" while the command `dispatchCommand` emits at `tools/arm-harness.js:116`
   contains no `--agent` flag, so a living doc describes a command the tool does not produce.
@@ -381,18 +398,18 @@ Added 2026-09-19 after Section 1's review found two of them in one round.
   itself is confirmed rather than assumed, by the dispatching session's `modelUsage` recording
   `claude-sonnet-5` alongside its own Opus. No silent downgrade was observed at any level this
   effort ships. The table's values stand unamended.**
-- Whether the two implementer drops are right. No local evidence either way, and the
-  rationale is borrowed. Owner: the user, on the first delegated section that fails review
-  for thin reasoning rather than a thin brief.
-- Whether the published reference's plugin-agent field list restricts `xhigh` and `max` to
-  user-scope agents. One source suggested a narrower list for plugin agents and a direct
-  re-read did not confirm it. **Settled for project-scope agents 2026-09-19: both levels took
-  effect.** The residue is the payload path specifically, since Section 1's probe agents were
-  project-scope, and nothing inside this effort can reach it: the installed plugin cache is
-  built from the trunk, and this work is on a branch. **Section 4 files it with a closing
-  criterion rather than leaving it to be archived with this plan**, and the check is one line
-  now that the instrument is known: run `echo $CLAUDE_EFFORT` inside any dispatched kit agent
-  after the next `/plugin update` and read the level back. Owner: the user, at that update.
+- Whether the two implementer seats belong at the model default rather than at the gate level.
+  No local evidence either way, and the rationale is borrowed; the floor clause bounds the
+  downside but does not test the claim. Owner: the user, on the first delegated section that
+  fails review for thin reasoning rather than a thin brief.
+- ~~Whether the published reference's plugin-agent field list restricts `xhigh` and `max` to
+  user-scope agents, and whether the plugin load path honors the key at all.~~ **Closed
+  2026-09-19, measured on the plugin path itself rather than inferred from the project-scope
+  probe.** A throwaway plugin (a `.claude-plugin/plugin.json` plus one agent declaring
+  `effort: medium`) loaded with `--plugin-dir` produced a subagent reporting
+  `CLAUDE_EFFORT=medium` under a parent session at `xhigh`. So a plugin-shipped definition
+  honors the key, which is the path this kit actually ships on. Reached independently by
+  Section 2's blind reviewer and then re-run here.
 
 ## Chapters
 
@@ -439,4 +456,20 @@ Outside-the-repo changes, all reverted. `.claude/settings.local.json` gained a t
 Review Findings: Round 1, adversarial, CHANGES_REQUIRED. Five Major, four accepted and one rejected. Accepted and fixed: the missing subagent-route inheritance row and the missing in-route parent control (round 2 measures both); the unconfirmed `model: sonnet` pin (round 2 confirms it by `modelUsage`); the false claim that the arm harness uses the `--agent` route, when `docs/arm-harness.md:63` records it rejecting that route and `tools/arm-harness.js:116` prints no such flag; and Open Question 3 having no closing criterion, now given one in Section 4. Accepted: committing with findings pending, recorded above. **Rejected:** that the raise-above-session rows had no in-route control, on the ground that the `--effort low` control sat on the invalidated `--agent` route. It did not; that control was a plain `-p` run with no `--agent`, the same route as the dispatching session. Round 2 measures the parent directly anyway, so the gap the finding pointed at is closed even though its stated reason was wrong. Minors: fixed the overbroad "no silent downgrade at any level", the unsupported "a top-level `--agent` session does not take the declared effort" (softened to what was observed), the missing docs-only justification (below), the unreconciled run counts, a `docs/README.md` blank line splitting the plan list, and a misquotation of `executing-work:171` inside quotation marks. Noted and not acted on: that the three sibling `Related` back-references were outside the section's deliverable, which is rejected as a finding because `brainstorming` step 7 mandates that cross-referencing through `curating-docs`' create path.
 Docs-only: this section's entire changeset is under `docs/`, so it took the adversarial review without a blind pair, per the docs-only rule. Its deliverable is a record rather than a document for a named reader, so the document battery does not apply either.
 Next: Section 2, Put the dials on all thirteen agents
+Commit Model: Branch-and-PR (substituted, see header)
+
+### Chapter 2 - 2026-09-19
+Completed: Section 2, Put the dials on all thirteen agents
+Implemented By: implementer-sonnet (delegate-mechanical), returned DONE_WITH_CONCERNS; one value changed afterwards by the main session on review
+Metrics: 1 review round (adversarial APPROVED_WITH_CONCERNS, 2 Minor; blind APPROVED_WITH_CONCERNS, 1 Major and 5 Minor); 0 NEEDS_CONTEXT; 0 escalations; advisor on (Opus)
+Decisions / Surprises: **The blind reviewer changed a value, and it found the thing the sighted pair could not.** Reviewing the diff with no intent story, it went and measured what the client's own per-model default effort is, and reported `default_effort:"high"` across the current fleet. Re-verified here in the 2.1.278 bundle: 27 model entries carry `default_effort:"high"` against 4 at `"xhigh"`, with a `default_effort??"high"` fallback. That reframes the table. The draft's `implementer-sonnet: medium` was not a gentle rung on a ladder, it sat one rung **below** the model's own default, so it would have reduced every mechanical dispatch on every machine including a default install. The rationale for lowering it was borrowed from the upstream kit and this spec had already recorded that no local evidence supports it. An untested claim can justify leaving a seat where the model puts it; it cannot justify moving one down. `implementer-sonnet` is now `high`, and the assignment rule gained a floor clause: a plan-following seat runs at the model default **and never below it**.
+
+The sighted reviewer read the same diff against the spec and correctly found it compliant, because it *was* compliant: the defect was in the spec's table, not in the implementation of it. That is the pair working as designed rather than one of them failing.
+
+**The blind reviewer also closed an Open Question by building a throwaway plugin**, loading it with `--plugin-dir` and watching a plugin-scope agent honor `effort: medium` under a parent at `xhigh`. Re-run here before acting on it, per this plan's own Standing Brief Amendment that a declared key is not a measured one: same result. Open Question 3 is closed, and it closed on the payload path rather than by generalizing from a project-scope probe.
+
+Three more measured facts came out of the round and are recorded because a later session will want them. An **invalid level is silently ignored**: an agent declaring `effort: ultrahigh` loads without error, dispatches without error, and runs at the inherited effort. That is Section 3's whole justification, promoted from "the shipped gate has no discriminating power" to a demonstrated silent failure. An **unsupported level falls back to `high`**, not to the next rung down: the bundle path reads `if(o==="max"&&!w2(n))o="high"; if(o==="xhigh"&&!t6(n))o="high"`. And the **field is an absolute override rather than a floor**, so a session set above `xhigh` now gets *less* on the gate seats than it inherited; the Goal and Section 4 both say so now rather than letting the determinacy framing hide it.
+Review Findings: Blind, 1 Major accepted and fixed (the sub-default `medium`, above). Blind Minors: the `implementer-opus: high` no-op-on-a-default-session observation is accepted as accurate and is now stated in the table as "the model default, pinned rather than inherited"; the cap-not-floor point is accepted and documented in the Goal; the invalid-value and no-test points are accepted and feed Section 3; the `xhigh`-degrades-on-older-models point is accepted and recorded above; the Fable-ratchet spend point is accepted and becomes a backlog item in Section 4. The `qa-verifier` inversion point (pinned to sonnet for cheapness, now raised to the most expensive rung) is noted and **not acted on**: model and effort are orthogonal levers and a cheap model reasoning harder is a coherent seat, which the documents will say. Adversarial, 2 Minor, both accepted and routed to Section 4: five `file:line` citations into agent bodies went stale when the insertion shifted every body line by one, and the `xhigh` choice needs stating in both directions.
+Verification: `node --test test/*.test.js tools/*.test.js < /dev/null` passes; `claude plugin validate ./plugins/claude-kit` passes with only the pre-existing no-version warning; the staged diff is 13 files, 13 insertions, 0 deletions.
+Next: Section 3, Pin the assignment
 Commit Model: Branch-and-PR (substituted, see header)

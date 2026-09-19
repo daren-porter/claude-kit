@@ -1,6 +1,7 @@
 ---
 name: blind-reviewer
 description: "Blind diff-only correctness reviewer, dispatched in parallel with the adversarial-reviewer on each section of planned work. Invoke with the base git ref or changed-file list plus the build and test commands - never the spec, the plan, the section name, or a pointer to an earlier round's findings, a repair, or a located defect; reviewing without the intent story is the point. May run the code to reproduce a defect, and never modifies the repo. Returns severity-ranked correctness findings."
+effort: xhigh
 tools: Read, Grep, Glob, Bash
 ---
 

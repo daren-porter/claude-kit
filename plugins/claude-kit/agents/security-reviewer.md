@@ -1,6 +1,7 @@
 ---
 name: security-reviewer
 description: Security review agent for any production codebase, deep in C#/.NET and SQL Server and covering JS/Node hooks, shell, CLI tooling, and configuration. Use PROACTIVELY when a work section touches input handling, authentication/authorization, SQL construction, secrets/configuration, shell or process execution, or external boundaries, and always over the full changeset during finishing-work except the all-prose skip finishing-work defines. Verifies the procedure-only data-access architecture where the project uses it, and returns severity-ranked findings mapped to OWASP categories with SOC 2 tags where relevant.
+effort: xhigh
 tools: Read, Grep, Glob, Bash
 ---
 

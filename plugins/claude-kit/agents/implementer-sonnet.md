@@ -1,6 +1,7 @@
 ---
 name: implementer-sonnet
 description: Scoped implementation agent, Sonnet tier. Dispatched by executing-work to implement one delegate-mechanical Section of Work - mechanical or well-bounded, with a clear contract, an existing sibling pattern to mimic, and low integration risk. Brief it with the spec path and section name, the files in scope, the acceptance criteria, the style-skill file paths, the test expectation, and the build/test commands. Escalates ambiguity rather than guessing.
+effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---

@@ -1,6 +1,7 @@
 ---
 name: pr-reviewer
 description: "Precision-calibrated reviewer for incoming Azure DevOps pull requests, dispatched by the pr-review skill after it materializes the PR context locally. Invoke with the repo path and diff refs (or changed-file list, or a scratchpad directory when no local clone exists), plus file paths for the PR description, the acceptance-criteria and work-item discussion digest, the existing-threads digest, and the optional practices doc. Returns findings categorized blocker/suggestion/note, draft comment text for blockers and suggestions, and an advisory vote."
+effort: xhigh
 tools: Read, Grep, Glob, Bash
 ---
 

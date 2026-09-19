@@ -1,6 +1,7 @@
 ---
 name: implementer-opus
 description: Scoped implementation agent, Opus tier. Dispatched by executing-work to implement one delegate-capable Section of Work - moderate complexity such as multi-file coordination, nuanced refactoring, performance-sensitive logic, or mild ambiguity within a clear design. Brief it with the spec path and section name, the files in scope, the acceptance criteria, the style-skill file paths, the test expectation, and the build/test commands. Escalates ambiguity rather than guessing.
+effort: high
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: opus
 ---

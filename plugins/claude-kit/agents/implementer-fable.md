@@ -1,6 +1,7 @@
 ---
 name: implementer-fable
 description: "Scoped implementation agent, top tier. Dispatched by executing-work to implement one delegate-fable Section of Work - novel logic, security-sensitive surfaces, or subtle and cross-cutting correctness within a settled design, and still buildable from a precise brief (strongest-model work that cannot be briefed stays in the main thread instead). Inherits the session model, or takes the explicit fable override from a below-fable session. Brief it with the spec path and section name, the files in scope, the acceptance criteria, the style-skill file paths, the test expectation, and the build/test commands. Escalates ambiguity rather than guessing."
+effort: xhigh
 tools: Read, Grep, Glob, Edit, Write, Bash
 ---
 
