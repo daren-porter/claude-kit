@@ -32,10 +32,14 @@ const { inCorpus } = require('../plugins/claude-kit/hooks/take-stock-nudge.js');
 
 const REPO = path.join(__dirname, '..');
 
-// Every file the corpus could possibly be drawn from, as the hook sees them:
-// repo-root-relative POSIX paths out of the tree at HEAD.
+// Every file the corpus could possibly be drawn from, as repo-root-relative POSIX
+// paths. Read from the index, not from HEAD as the hook does: the predicates are
+// what is under test, and the pre-commit gate runs this before HEAD moves, so a
+// HEAD listing blocked every commit that added or removed a corpus file (the
+// walk already reflects the change, HEAD does not). Outside a commit the index
+// and HEAD agree.
 function trackedUnderPlugin() {
-    const out = execSync('git ls-tree -r -z --full-name --name-only HEAD -- plugins/claude-kit',
+    const out = execSync('git ls-files -z --full-name -- plugins/claude-kit',
         { cwd: REPO, encoding: 'utf8' });
     return out.split('\0').filter(Boolean);
 }
