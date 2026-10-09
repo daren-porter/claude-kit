@@ -95,9 +95,11 @@ itself, because the hook that would carry the warning is also a Node script.
    git clone https://github.com/daren-porter/claude-kit.git
    ```
    SSH works too, if the key is loaded in `ssh-agent` and `github.com` is already in your
-   `known_hosts`. Worth knowing before step 3: the `owner/repo` shorthand that step uses clones
-   over SSH by default, so a machine set up for HTTPS only may authenticate here and still fail
-   there. If that happens, get SSH working rather than assuming the marketplace is unreachable.
+   `known_hosts`. Worth knowing before step 3: the `owner/repo` shorthand that step uses tries
+   SSH first and falls back to HTTPS when SSH is not set up (measured 2026-10-09 on 2.1.295,
+   which printed "SSH not configured, cloning via HTTPS"). If step 3 fails while this clone
+   worked, give `/plugin marketplace add` the full HTTPS clone URL above instead of the
+   shorthand; that form was measured working the same day.
    Steps 4 and 5 read two files that ship outside the plugin (`settings/settings.recommended.json`,
    and `setup.sh` on alias-profile machines), so the checkout is a prerequisite rather than a
    convenience. Repo-relative paths below are from the clone root; paths beginning
@@ -201,7 +203,7 @@ but only in a clone where `git config core.hooksPath .githooks` has been wired, 
 itself with a note when the `claude` CLI is not on PATH.
 
 Both commands below currently fail on one known error: Claude Code reserves the plugin name
-`claude-kit` (first seen on 2.1.295). Installs are unaffected, and the hook tolerates exactly
+`claude-kit` (present on 2.1.293 and 2.1.295). Installs are unaffected, and the hook tolerates exactly
 that error and nothing else; `docs/backlog.md` carries why the name was kept.
 
 ```

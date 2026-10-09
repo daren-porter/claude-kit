@@ -629,7 +629,7 @@ Separable from the wholesale rejection above and judged worth having, but reserv
 ## Editing this file
 
 The `kit-adoption-pass` skill owns the procedure; it is the single source for how a pass
-runs, and nothing here restates it. Three conventions belong to the file itself:
+runs, and nothing here restates it. Four conventions belong to the file itself:
 
 - **New pass sections go directly under `## Verdicts`, above the previous pass.** The
   ordering is newest-first, so a literal append would put the newest pass at the bottom.

@@ -72,8 +72,8 @@ if ! command -v claude >/dev/null 2>&1; then
 fi
 
 # One validation error is tolerated, and only that one: the CLI reserves the
-# plugin's own name (a third-party name cannot start with "claude-"), first seen
-# on 2.1.295. Installs still succeed with it, and renaming strands every
+# plugin's own name (a third-party name cannot start with "claude-"), present
+# on 2.1.293 and 2.1.295. Installs still succeed with it, and renaming strands every
 # existing install, so the name is kept and the debt is in docs/backlog.md.
 # The JSON report is read rather than the printed one so the match is on the
 # error's path and message. Every `errors` array is walked (the manifest's and
