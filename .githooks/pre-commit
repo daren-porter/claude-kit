@@ -71,9 +71,34 @@ if ! command -v claude >/dev/null 2>&1; then
     exit 0
 fi
 
-if ! claude plugin validate ./plugins/claude-kit; then
-    echo "plugin validation failed; commit blocked (fix the payload or bypass with --no-verify)" >&2
-    exit 1
+# One validation error is tolerated, and only that one: the CLI reserves the
+# plugin's own name (a third-party name cannot start with "claude-"), first seen
+# on 2.1.295. Installs still succeed with it, and renaming strands every
+# existing install, so the name is kept and the debt is in docs/backlog.md.
+# The JSON report is read rather than the printed one so the match is on the
+# error's path and message. Every `errors` array is walked (the manifest's and
+# each content file's), and anything else in any of them still blocks, as does
+# a report that fails to parse.
+if ! report=$(claude plugin validate --json ./plugins/claude-kit 2>/dev/null); then
+    if ! printf '%s' "$report" | node -e '
+        let s = "";
+        process.stdin.on("data", (c) => { s += c; }).on("end", () => {
+            const errs = [];
+            (function walk(v) {
+                if (Array.isArray(v)) return v.forEach(walk);
+                if (v && typeof v === "object") {
+                    if (Array.isArray(v.errors)) errs.push(...v.errors);
+                    Object.values(v).forEach(walk);
+                }
+            })(JSON.parse(s));
+            const reserved = (e) => e.path === "name" && /^Plugin name "claude-kit" is reserved/.test(e.message);
+            process.exit(errs.length > 0 && errs.every(reserved) ? 0 : 1);
+        });' 2>/dev/null; then
+        claude plugin validate ./plugins/claude-kit >&2
+        echo "plugin validation failed; commit blocked (fix the payload or bypass with --no-verify)" >&2
+        exit 1
+    fi
+    echo "plugin validation: passed except the known reserved-name error (docs/backlog.md)" >&2
 fi
 
 exit 0

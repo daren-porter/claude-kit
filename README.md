@@ -200,6 +200,10 @@ Validate before pushing: `claude plugin validate` catches structure and schema m
 but only in a clone where `git config core.hooksPath .githooks` has been wired, and it skips
 itself with a note when the `claude` CLI is not on PATH.
 
+Both commands below currently fail on one known error: Claude Code reserves the plugin name
+`claude-kit` (first seen on 2.1.295). Installs are unaffected, and the hook tolerates exactly
+that error and nothing else; `docs/backlog.md` carries why the name was kept.
+
 ```
 claude plugin validate .
 claude plugin validate ./plugins/claude-kit
