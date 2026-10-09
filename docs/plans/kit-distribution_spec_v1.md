@@ -143,6 +143,128 @@ that starts with an empty history starts without the thing that makes the kit co
 a fork inherits any of core's reasoning, and in what form, is an open question this stub will not
 answer.
 
+## Evidence: the first fork run, 2026-10-09
+
+A colleague forked the kit at `91ff385` with a paste-in setup guide kept outside the repo (the
+user's home directory, `claude-kit-colleague-setup-2026-10-09.md`), on Windows 11 through the
+Claude desktop app, and returned a friction log of about 30 entries. The fork ended renamed,
+pushed, installed with its hooks firing, and with its suite at 0 failing. The raw log stays outside
+the repo because it records the colleague's account names and credential-store contents; this
+section carries its substance. **Verified** marks a claim checked against this repo; everything
+else is the log's report, not re-measured here. Five entries were defects in the kit as it stands
+and were fixed in `d55ff23` instead of being recorded here.
+
+One observation bears on the open question in the section above: offered the choice, the forker
+kept this kit's backlog and parked plans as their starting point, because the backlog describes
+known gaps in code they now own.
+
+### Windows and the desktop app (capability 1)
+
+- **The suite is not portable.** From Git Bash, 25 of 642 tests fail:
+  - 2 are line endings. Git for Windows checks out CRLF, and a `.gitattributes` with
+    `* text=auto eol=lf` fixes both.
+  - 18 are setups that only work on Linux or macOS: symlinks, Unix mode bits, FIFOs, copying
+    `/bin/sh`, a `"` in a filename, and a read-only directory.
+  - 5 are other: two `docs-write-guard` fixtures pair a POSIX cwd with a drive-letter path, one
+    test overrides `HOME`, which Windows ignores in favor of `USERPROFILE`, and three were not
+    examined.
+
+  `.githooks/pre-commit` runs the suite as a hard gate, so a Windows forker's first gated commit
+  is blocked. The forker made the suite pass in their own fork (23 edits across 9 test files plus
+  the `.gitattributes`: 622 pass, 0 fail, 20 skipped). Ask for that patch when this work starts.
+- **The FIFO guard does not hold on Windows.** The FIFO tests return early when `mkfifo` fails
+  (verified: `session-start-kaizen.test.js:181`). Git Bash ships an `mkfifo` that exits 0 but makes
+  something Node does not treat as a FIFO, so the early return never fires.
+- **The memory nudge never prints a runnable command on Windows** (verified:
+  `session-start.js:331-336`). `memoryCommand()` refuses any path containing `\`. Printing the
+  path with forward slashes on win32 would pass that guard (suggested, untested).
+- **`node-probe.sh` is probably not silent on Windows.** README INSTALL step 6 says it is silent
+  there, "where no `sh` is on PATH". The forker read the Claude Code docs as saying shell-form
+  hooks run in Git Bash when it is installed, and Git Bash supplies `sh`. If so, the README claim
+  holds only for the PowerShell fallback. Unverified.
+- **The desktop app is a different install path.**
+  - It ships no Node.
+  - It bundles its own CLI at a versioned path that is not on PATH.
+  - It documents no in-app way to add a marketplace, and has no in-session `/plugin update`.
+  - Its restart is a sidebar click, not `claude --continue`.
+
+  The CLI installer (`install.ps1`) put `claude.exe` in `%USERPROFILE%\.local\bin` and did not
+  add that folder to the saved PATH. Without `claude` on PATH, `.githooks/pre-commit` skips
+  validation and only prints a note. What worked was installing the CLI and using it for the
+  marketplace add, the install and the restart. A desktop session's transcript resumes from a
+  terminal `claude --continue`.
+- **GitHub identity is ambiguous.** "Repository not found" is GitHub's answer both for no access
+  and for the wrong signed-in account. On a machine with two GitHub identities in Git Credential
+  Manager, putting the account in the URL (`https://<user>@github.com/...`) worked for push,
+  clone, and as a marketplace source, which the Claude Code docs do not cover. The first push's
+  sign-in also changed which account plain GitHub URLs use on that machine.
+- **`merged-pr-push-guard.js` needs `gh` or `az` signed in to ever block** (verified;
+  `architecture.md` now says so). The README lists Node as a prerequisite and neither CLI.
+- **Superpowers interferes from the first turn.** Its SessionStart injection was live in the fork
+  session and pulled against the guide's interview-first instruction. Uninstalling it leaves its
+  marketplace registered.
+
+### What a fork changes by hand (capabilities 1 and 3)
+
+- **The de-naming test guards the wrong name.** `test/denaming.test.js` hard-fails the upstream
+  author's name, so in a fork it keeps protecting a name the fork never writes, and it checks no
+  name the fork's own sessions might write. This lands on "Does core carry a name at all?" above.
+- **The ledger test's floors are sized to this kit's ledger** (at least 25 candidate rows, at least
+  5 tables). A fork's fresh ledger fails exactly those two, as predicted and confirmed. Lowering
+  the row floor to 0 makes that assertion vacuous until a pass raises it. A conditional floor,
+  requiring rows once any pass section exists, would hold in both repos.
+- **`kit-adoption-pass` assumes this kit's own upstream layout twice** (verified):
+  - step 1's `ls-tree` lists `plugins/claude-kit/scripts/` and treats a missing directory as a
+    moved layout, a false stop when the upstream is this kit;
+  - the index diff reads `docs/plans/README.md`, which this kit does not have.
+
+  Both are right for this kit's upstream and wrong for a fork of it: capability 3's
+  parameterized upstream, in concrete form.
+- **`kit-adoption-pass` cannot tell "nothing upstream" from "nothing reachable".** A reference
+  clone whose `origin` is a bundle file fetches successfully, pins the watermark, and reports an
+  empty window. The forker's clone works that way until its `origin` is repointed. A check that `origin`
+  is a network remote, or a prompt to confirm an empty window, would close it.
+- **Moving the ledger to `archive/` leaves stale citations.** Six citations of specific upstream
+  entries by line ended up pointing at the fresh ledger: in `docs/README.md`, `architecture.md`,
+  `usage-awareness.md`, `hooks/usage-autocontinue-nudge.js`, and a plan. The forker redirected
+  them.
+- **Docs speak in the first person about this machine and account** (verified):
+  - "on this machine means `~/.claude-work/...`" (`architecture.md:93`);
+  - "this Team seat with overage enabled" (`docs/README.md:15`);
+  - "this account's Anthropic usage windows" (`usage-awareness.md:3`, `docs/README.md:42`).
+
+  De-naming removed the name and kept the first person. For a forker these statements are false.
+- **The kit's prose calls itself `claude-kit` where it means "this kit"** (verified):
+  `kit-adoption-pass/SKILL.md:8` and `kaizen/SKILL.md:224`, plus the session-start and take-stock
+  nudge text. That is ambiguous in a fork whose upstream is also claude-kit, and wrong after a
+  rename. The memory nudge's fallback text names a cache directory `claude-kit`, which a renamed
+  plugin's cache is not.
+- **A rename touches more than the guide listed:** the pre-commit hook's reserved-name tolerance
+  block, `tools/token-profiler.js`'s prefix strip, and the README's STRUCTURE tree, which then
+  needs a line on why the directory keeps the old name.
+- **A deleted style skill can break a reference the repo cannot see.** An org-provisioned skill
+  outside the repo (ASR's `freshdesk-kb-article`) names `sql-style`.
+
+### What the setup guide must change before the next colleague (capability 1)
+
+- **Missing upstream access should be a warning, not a stop.** Nothing before section 1E needs
+  it, and a clone of the bundle works as the reference copy until access arrives;
+  `remote set-url` then converts it.
+- **Make the `claude` CLI an explicit prerequisite,** with the Windows PATH caveat. Also add a
+  desktop-app branch, or a note that the plugin commands and the restart need the terminal.
+- **Check the DevOps connector by tool-name suffix.** In the desktop app its prefix is a UUID, not
+  `mcp__claude_ai_DevOps__`.
+- **Uninstall superpowers before starting,** not in Phase 2.
+- **Fix a contradiction between 1A and 1B.** 1A says the backlog's uninstall command stays, and
+  1B deletes the item that contains it on the rename path.
+- **Widen the rename instructions.** A rename also replaces the pre-commit tolerance block, and the
+  search must look for bare `claude-kit` in prose, not only the id forms.
+- **Say that a same-org fork keeping the defaults has an empty third commit.**
+- **Explain GitHub identities:** how to tell which account git is presenting, and how to pin the
+  account in URLs.
+- **Settle the Windows baseline.** Either make the suite portable first, or have the guide predict
+  the failures and order the forker's Windows commit before the others.
+
 ## Out of scope
 
 Licensing, contribution legal terms, and repo or marketplace renaming. Whether the upstream kit is
