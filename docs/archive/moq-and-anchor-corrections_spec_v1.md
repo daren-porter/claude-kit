@@ -232,3 +232,8 @@ Kit friction filed to the inbox:
 - `security-model.md:513`'s "only place ... off the machine" overlooks pr-review's postings to Azure DevOps.
 Next: none. Effort complete.
 Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-11-02 (post-close: the user's confirmation)
+Completed: record only, no code or skill change
+Decisions: Shown the June ruling ("hand-rolled fakes primary; NSubstitute as the sanctioned mocking library") and asked whether to keep the 2026-11-02 "simplest test double" rule or restore fakes-first, the user replied "Agree with your first items." Read as keeping the shipped text, so the 2026-11-02 rulings now supersede the June ruling, confirmed rather than pending. Drift items D1 and D2 stay at their recommended ruling (keep), which is the as-shipped state either way.
+Commit Model: Commit-and-Push
