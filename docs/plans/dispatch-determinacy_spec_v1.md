@@ -78,6 +78,22 @@ session model").
 Candidate: say to pass the session model explicitly wherever the text means the session model, and
 keep omission only for the two genuinely pinned agents.
 
+## An adjacent case, folded in by the 2026-11-02 triage
+
+2026-10-02 (Covenant-Env-Sync): "finishing-work mandates a full QA/security/docs/adversarial
+battery even for a one-section effort whose section review already covered the whole changeset
+with all reviewers; duplicative when the user has asked to keep effort proportionate."
+
+This is not an instance of Finding 1; it is the opposite case. Finding 1's effort had no
+meaningful per-section reviews and the exception's two preconditions disagree on whether it may
+collapse. This effort had a full section review, so the exception does not reach it at all, and
+the only relief is `:12`'s instruction to tell the finishing reviewers what earlier passes covered
+("Eliminate true duplication, not coverage"), which narrows each reviewer's budget but still
+dispatches every step. Folded here because both cases turn on the same paragraph, so a rewrite of
+the combined-pass exception should decide this one in the same edit rather than reopen `:12`
+twice. Unarmed. The pressure on it is the user's own proportionality instruction set against the
+battery's mandate.
+
 ## What a design pass has to settle
 
 - **Whether these are one change or two.** They are in the same paragraph region of the same skill

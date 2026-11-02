@@ -34,6 +34,13 @@ is structural rather than careless: two reviewers are dispatched in one message,
 returns a CRITICAL, and the orchestrator repairs rather than idling while the second still
 reads.
 
+**A fourth instance, with a different cause** (2026-09-17, EleosCore, folded in by the
+2026-11-02 triage). Under Review-Only every section stages into one diff, so a section started
+inside an earlier section's review window, on `executing-work:147`'s licence, landed in that
+review's surface mid-flight. The cause is concurrency the skill sanctions rather than a repair.
+The disjointness half is owned by the `executing-work-batch` kaizen brief (item 2, 2026-09-02);
+the freeze question it raises is this gap's.
+
 ## Gap 2: there is no repair cycle, so each pass invents one
 
 Eight rounds ran across three items in that session, every sequencing decision made on judgment

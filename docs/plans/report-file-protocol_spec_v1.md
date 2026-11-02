@@ -6,6 +6,9 @@ Created: 2026-09-02
 
 ## Related
 
+- `plans/blind-seat-memory-channel_spec_v1.md` - the other blind-seat leak route on record,
+  opened 2026-11-02: project memory reaching a blind seat through a channel no dispatch text
+  controls, where this stub bounds a path the orchestrator chooses.
 - `plans/prose-claim-review_spec_v1.md` - its 2026-09-04 design council hands this spec one
   constraint and one corroboration. **Constraint:** the report path this stub must bound also has
   to satisfy that council's placement criterion, because an orchestrator-materialized report
@@ -118,6 +121,31 @@ rather than anything the kit or the dispatch supplies:**
 - **Problems 3 and 4 survive intact** and are now the whole remaining design: a report path is
   still needed for the orchestrator's own materialized files, and it still must be bounded,
   round-distinct, and leak nothing to a blind seat.
+
+## Three more instances, 2026-09-22 to 2026-10-06, folded in by the 2026-11-02 triage
+
+All three come from real-project efforts in two repos rather than from kit arms, and all three
+postdate this stub's last edit:
+
+- **2026-09-22** (EleosCore, PBI #25315): `qa-verifier` pre-created its report file as a one-word
+  placeholder before doing the work, so the orchestrator's poll on file existence fired at once
+  and read "placeholder" as the report. `executing-work` tells implementer dispatches to write the
+  file last, but `qa-verifier`'s charter carries no such rule and `finishing-work` step 1 says
+  only "with a named report path to poll". The session re-polled on content. This is the
+  missing-file-versus-still-working failure from the other end: a present file that is not yet a
+  report.
+- **2026-10-02** (Covenant-Env-Sync): `executing-work` says never to end the turn to await a
+  reviewer and to poll its report file, but `blind-reviewer` and `security-reviewer` refuse to
+  write one, so their results arrived only by notification and the only in-turn wait was a
+  timeout-and-read loop.
+- **2026-10-06** (EleosCore, PBI 25271): the same, with the adversarial, blind and security
+  reviewers all refusing the write by charter and a bare sleep blocked by the harness. The
+  in-turn wait was a `pgrep` idle-build condition loop, with hand-backs arriving between tool
+  calls.
+
+The second and third are the ANSWERED section's finding recurring in live use: the convention
+still instructs a poll that three charters make impossible, and each session improvised its own
+wait.
 
 ## What a design pass has to settle
 
