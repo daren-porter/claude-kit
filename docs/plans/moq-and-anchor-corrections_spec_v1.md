@@ -27,23 +27,34 @@ git history before it is relied on. Both proofs follow.
 **Section 1's claim is about the user's codebase and house practice.**
 - Provenance: the sentence has been in `csharp-style/references/csharp-style.md` since the kit's
   first commit (`a1bb6f7`, 2026-06-10), whose message says the style guides were derived from the
-  user's code and adjudications. Nothing in `docs/` records the adjudication. The upstream kit (`~/repos/sapplefeld-claude-kit`) has never
-  mentioned Moq, at HEAD or in its history.
+  user's code and adjudications. **Corrected in Section 1:** this spec first said nothing in
+  `docs/` records the adjudication, which was false. The kit's first spec records the user's June
+  ruling twice, without ever naming Moq: Open Question 5, "RESOLVED: hand-rolled fakes primary;
+  NSubstitute as the sanctioned mocking library" (`archive/claude-kit_spec_v1.md:189`), and "a
+  mocking library acceptable where it genuinely helps" (`:101`). The literal ban overstated that
+  ruling; the ruling itself was the user's. The search that missed it looked for the banned term
+  rather than for what the ruling sanctioned. The upstream kit
+  (`~/repos/sapplefeld-claude-kit`) has never mentioned Moq, at HEAD or in its history.
 - Measurement, 2026-11-02, across `~/repos`: 9 `.csproj` files reference Moq, none reference
   NSubstitute or FakeItEasy; about 900 Moq uses (`new Mock<` plus `Mock.Of<`) across six repos,
   one of which looks like a second checkout of EleosCore. The 23 hand-rolled fakes found (classes
   named Fake, Stub, Spy or Dummy) are all in Eleos MCP Server, where 272 of 273 commits are
-  co-authored by Claude, so they most likely reflect this rule rather than the user's practice.
+  co-authored by Claude, so they reflect the June ruling as Claude applied it, not the practice
+  in the repos the user wrote.
 - The incident: 2026-10-28, EleosCore PBI 25858. A test project referencing only Moq
   (`ASR.Eleos.Horizon.Custom.Tests`) collided with the rule, and a reviewer rated the Moq use
   Minor.
-- The user's rulings, 2026-11-02. On the library: drop the ban, mocks use whichever library the
-  test project already references, never adding a second, "noting that NSubstitute is preferred if
-  the library doesn't otherwise use Moq already." On fakes against mocks: "do the simplest thing
+- The user's rulings, 2026-11-02, which supersede the June ruling above (they were given before
+  the June ruling was surfaced; see the close-out). On the library: drop the ban and never add a
+  second library, choosing the option "mocks use whichever library the test project already
+  references", "but noting that NSubstitute is preferred if the library doesn't otherwise use Moq
+  already." That clause ("doesn't otherwise use") is why the criterion below keys on what the
+  existing tests use, nearest first, rather than on the test project's own references. On fakes
+  against mocks: "do the simplest thing
   ... Mocks when appropriate, hand-rolled when that's easier or will work in a way that a mock
   can't."
 
-This is a **contradicted** rule, not a narrower-than-written one (`writing-skills`' counter-case
+As a claim about house practice this is a **contradicted** rule, not a narrower-than-written one (`writing-skills`' counter-case
 section), so it is fixed rather than scoped. The new wording is the user's preference, which is
 judgment rather than a claim about how something behaves, so the skill text carries no citation;
 the commit message carries the provenance and measurement as the recorded instance.
@@ -80,7 +91,7 @@ caught short.
 
 ## Sections of Work
 
-### 1. csharp-style: the mocking rule matches the house practice
+### 1. csharp-style: the mocking rule matches the house practice (complete, Chapter 1)
 
 Edit `plugins/claude-kit/skills/csharp-style/references/csharp-style.md` (the "Fakes first"
 bullet in section 11, currently `:186`) and `plugins/claude-kit/skills/csharp-style/SKILL.md`
@@ -89,12 +100,15 @@ bullet in section 11, currently `:186`) and `plugins/claude-kit/skills/csharp-st
 Acceptance criteria:
 - The bullet no longer contains "Moq is not used in new tests", and no wording in either file
   discourages Moq.
-- The bullet states the library rule: a mock uses the mocking library the test project already
-  references, a second mocking library is never added, and where the project references none,
-  NSubstitute is preferred.
-- The bullet states the choice rule in the user's terms: do the simplest thing, a mock where a
-  mock fits and a hand-rolled `private sealed` fake where that is easier or has to behave in a way
-  a mock cannot. "Fakes first" no longer stands as a default.
+- The library rule: a mock uses the mocking library the existing tests already use, judged by
+  the tests rather than by one project file and looking nearest first (the tests around the
+  change, the same test project, then the repository); a second mocking library is never added;
+  only where no test in the repository uses one is NSubstitute the library to add. (Amended in
+  Section 1 from "the test project already references", on review; see Chapter 1.)
+- The choice rule in the user's terms: do the simplest thing, a mock where a mock fits and a
+  hand-rolled `private sealed` fake where that is easier or has to behave in a way a mock cannot.
+  "Fakes first" no longer stands as a default, and the mock branch carries no leftover conditions
+  from the old NSubstitute exception.
 - The `SKILL.md` checklist item agrees with the bullet and no longer names NSubstitute as the only
   library.
 - `SKILL.md:92`'s antipattern ("Mocking simple collaborators with a library when a five-line
@@ -145,3 +159,26 @@ Execution mode: main.
 None. Every ruling this effort needs was given on 2026-11-02 and is quoted above.
 
 ## Chapters
+
+### Chapter 1 - 2026-11-02
+Completed: 1. csharp-style: the mocking rule matches the house practice
+Implemented By: main session
+Metrics: 2 review rounds, each paired (adversarial + blind); NEEDS_CONTEXT 0; escalations 0; advisor on, consulted once mid-section (whether the provenance error blocked the run)
+Decisions / Surprises:
+- **The spec's provenance premise was false, and the user was told it.** The triage told the user nothing in `docs/` records why the Moq rule exists; `archive/claude-kit_spec_v1.md:189` records their June ruling ("hand-rolled fakes primary; NSubstitute as the sanctioned mocking library") and `:101` says "a mocking library acceptable where it genuinely helps". The grep looked for the banned term, which that ruling never uses. Found by the round-2 adversarial reviewer. Corrected in the spec, `docs/README.md` and the kaizen brief. Not treated as a blocker: the 2026-11-02 rulings are the user's latest explicit word, they rest on evidence the error does not touch, and the library half agrees with June. The close-out still opens with the correction and asks the user to confirm, because they ruled after hearing the false account.
+- **The library criterion was amended on review.** As specced it keyed on what "the test project already references". A new test project in a repo that pins Moq centrally (EleosCore's `ASR.Eleos/Directory.Packages.props`, DataBroker Hub) would read that as "references none" and add NSubstitute as a second library, the outcome the rule exists to prevent. The user's own clause, "if the library doesn't otherwise use Moq already", supports keying on what the existing tests use, nearest first, so the criterion and the Approach were both updated. Recorded rather than raised: it settles an ambiguity in the direction of the user's own words and the rule's stated purpose.
+- The single bullet became two, the choice rule and the library rule.
+- Neither reviewer wrote the report file the dispatch offered; both cited their charters. Findings came back as hand-backs, and the only in-turn wait available was a background until-loop. That is `plans/report-file-protocol_spec_v1.md`'s friction again, so no new note was filed.
+Review Findings:
+- Round 1, fixed. Major: the checklist (`SKILL.md:110`) was silent on a project with no mocking library, contradicting the reference. Major: the library rule was scoped to the test project. Minor: "(Moq or NSubstitute)" read as a complete list. Minor: no tie-break for a project using two libraries. Minor: detection keyed on a project file that `Directory.Build.props` or central package management can bypass. Minor: the mock clause carried the old NSubstitute exception's conditions.
+- Round 1, declined. Minor: requiring the user's go-ahead before adding NSubstitute. The user ruled the preference directly.
+- Round 2, fixed. Major: the false provenance premise, as above. Major: the amended criterion disagreed with the Approach; the Approach now quotes the user's clause. Three items the round-1 repair had introduced or worsened: the example "a call the test has to verify" (it overlapped the template's hand-rolled counter), the checklist dropping "nearest first", and "is NSubstitute the library to add", which read as an order and went back to the user's verb, "preferred".
+- Round 2, declined, with reasons:
+  - Blind Major: `SKILL.md:92`'s antipattern pulls toward fakes. Its "is clearer" qualifier is the user's "hand-rolled when that's easier" branch, both adversarial rounds read it as consistent, and the spec keeps it unchanged.
+  - A matching over-faking antipattern. The user never ruled it, and it adds text.
+  - A precedence-exception clause. The specific bullet outranks the general rule, and `adversarial-reviewer.md:31` defers to "each skill's stated precedence".
+  - The referenced-but-unused case and a tie-break at repository level. No measured repo uses two libraries.
+- Round 2, recorded and left. Minor: whether adding a package counts as "new test infrastructure" under `SKILL.md:111`. It predates this change.
+- No third paired round. There are no Criticals, every Major is fixed or justified, and finishing-work's whole-changeset Fable adversarial review is the backstop.
+Next: Section 2
+Commit Model: Commit-and-Push

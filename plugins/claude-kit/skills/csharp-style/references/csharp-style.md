@@ -183,7 +183,8 @@ public async Task Submit_StillEmails_WhenDbFails()
 ```
 
 - A private static `Build()` factory constructs the system under test and returns a tuple of it plus the collaborators the assertions need. Named helper methods (`ValidModel()`) for common fixtures.
-- **Fakes first:** simple collaborators get hand-rolled fakes as `private sealed` nested classes implementing the interface, with counters/flags the test asserts on. Reach for **NSubstitute** when behavior verification or many-membered interfaces make hand-rolling noisy. Moq is not used in new tests.
+- **Simplest test double:** use whichever double is simplest for the collaborator. Use a mock where one fits, such as a collaborator needed only to construct the system under test. Hand-roll a fake (a `private sealed` nested class implementing the interface, with counters/flags the test asserts on) where that is easier or has to behave in a way a mock cannot.
+- **Mocking library:** use whichever one the existing tests already use, judged by what the tests use rather than by one project file, and looking nearest first: the tests around the change, then the same test project, then the rest of the repository. Never add a second mocking library. Where no test in the repository uses one, **NSubstitute** is preferred.
 - **Assertions:** FluentAssertions, pinned to the 7.x line (the last Apache-licensed majors). Never upgrade to 8+ (commercial license). AwesomeAssertions (the free 7.x-API fork) is the approved alternative when updates matter. Plain xUnit `Assert` is fine where it reads better.
 - Tests are allowed to be more compact than production code, but the same hard rules hold: no same-line if/return, no em dashes, no narration comments.
 
