@@ -119,7 +119,7 @@ Acceptance criteria:
 
 Execution mode: main.
 
-### 2. pr-reviewer: the charter carries the anchor offset convention
+### 2. pr-reviewer: the charter carries the anchor offset convention (complete, Chapter 2)
 
 Edit `plugins/claude-kit/agents/pr-reviewer.md` (the suggestion-block paragraph at `:60` and the
 `Anchor:` line in Output format at `:70`).
@@ -181,4 +181,25 @@ Review Findings:
 - Round 2, recorded and left. Minor: whether adding a package counts as "new test infrastructure" under `SKILL.md:111`. It predates this change.
 - No third paired round. There are no Criticals, every Major is fixed or justified, and finishing-work's whole-changeset Fable adversarial review is the backstop.
 Next: Section 2
+Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-11-02
+Completed: 2. pr-reviewer: the charter carries the anchor offset convention
+Implemented By: main session
+Metrics: 1 review round, paired (adversarial + blind); NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted during this section
+Decisions / Surprises:
+- **Premise check widened before editing,** after Section 1's narrow search failed. A sweep of all 10 commits touching `pr-reviewer.md`, for both the convention's names ("offset", "1-based", "one past", "exclusive", "inclusive") and the language it would use ("character", "past the", "end", "column"), confirmed that no version has ever said how offsets are counted.
+- **A contradiction already in the charter was fixed in the same edit.** "with leading indentation left out" covered every anchor, including the whole-block case that `pr-review/SKILL.md:100` says keeps its indentation. The new full-line sentence would have sat next to it. It is now scoped to **fragment** anchors, as criterion 4 requires.
+Review Findings:
+- Fixed, Major (adversarial; the blind reviewer rated it Minor): the convention named the source ref but not how to read it, while the charter's Inputs say to read the touched files and pr-review's local-clone mode leaves the working tree unchecked-out. The parenthetical now carries `git show <source-sha>:<path>`, or the scratchpad copy, never the working tree.
+- Fixed, Minor:
+  - The anchor grammar had no multi-line slot. It is now `<startLine>:<start>-<endLine>:<end>`, and a fragment "may cross lines", per `SKILL.md:100`.
+  - "1-2 span" collided with the line-range form and now reads `1..2`, as the skill writes it.
+  - The worked example now names its six leading tabs.
+  - **fragment** and **block** are bolded, so the anchor shape stops sharing a name with the suggestion block.
+  - The dangling "Worked from the skill" is now "Worked example".
+- Declined, Minor (both reviewers, both calling it speculative): whether "the line's length" counts a CRLF terminator or a byte-order mark. `SKILL.md:99` has the same gap, so the fix belongs in the skill first, and it needs a live Azure DevOps thread to settle. The verified `245:1-245:24` implies the terminator is excluded.
+- No second round: there are no Criticals, the one Major is fixed with the parenthetical both reviewers proposed, and finishing-work's whole-changeset Fable review is the backstop.
+- Criterion 5: the suite passes with the change in place; the pre-commit hook runs it again along with plugin validation.
+Next: finishing-work
 Commit Model: Commit-and-Push

@@ -57,7 +57,9 @@ For every blocker and suggestion, draft the comment to post: what is wrong, plus
 
 End the comment with an applyable suggestion when the fix that thread carries is small, unambiguous, and confined to one location: a fenced code block with language `suggestion`. That bar is about the fix, not the severity, so a soft correctness bug can carry one and a blocker whose fix spans three files cannot, unless it splits into one thread per location and each thread then carries a single edit. When the fix is large, crosses files, or needs the author's judgment, give the direction and skip the block.
 
-Azure DevOps renders the block with an Apply button, and Apply overwrites exactly the anchored span. So the Anchor is the smallest span that still reads as a complete thought on its own (an expression, a predicate, one projection item, a statement, or a whole block when the block is what the finding is about), with leading indentation left out. Not reflexively the whole line, and not the minimal edit either: for a `D.` to `K.` alias fix the anchor is the whole projection item `,D.[DispatchDate]`, never the single character `D`. Then produce the block's content by copying that exact substring out of the file and editing it, which is why a span that left indentation out carries none in the body and a span that included it reproduces it byte for byte, tabs included.
+Azure DevOps renders the block with an Apply button, and Apply overwrites exactly the anchored span. So the Anchor is the smallest span that still reads as a complete thought on its own (an expression, a predicate, one projection item, a statement, or a whole block when the block is what the finding is about), with leading indentation left out of a **fragment** anchor, which may cross lines; a **block** anchor covers whole lines, indentation included. Not reflexively the whole line, and not the minimal edit either: for a `D.` to `K.` alias fix the anchor is the whole projection item `,D.[DispatchDate]`, never the single character `D`. Then produce the block's content by copying that exact substring out of the file and editing it, which is why a span that left indentation out carries none in the body and a span that included it reproduces it byte for byte, tabs included.
+
+Count the Anchor's offsets the way Azure DevOps does: character-exact and 1-based, in the file at the source ref (`git show <source-sha>:<path>`, or the scratchpad copy; never the working tree, which a local clone leaves on whatever was checked out), with the end offset one past the last character covered, so a 1..2 span highlights one character. A full-line span therefore runs offset 1 through the line's length plus 1, and a block span through its last line's length plus 1. Worked example: on a line opening with six tabs (one character each), `,D.[DispatchDate]` is 17 characters starting at offset 7 of line 245, so its anchor is `245:7-245:24`; ending at the last character instead, `245:7-245:23`, leaves the closing bracket out of what Apply overwrites.
 
 ## Output format
 
@@ -67,7 +69,7 @@ Azure DevOps renders the block with an Apply button, and Apply overwrites exactl
 
 ```
 [BLOCKER|SUGGESTION] file:line - what and why (failure scenario, or practice + source). Fix direction (one line).
-  Anchor: <line> | <first>-<last> | <line>:<start>-<line>:<end> | file (new side; the smallest span that reads as a complete thought, and exactly what a suggestion block would overwrite)
+  Anchor: <line> | <first>-<last> | <startLine>:<start>-<endLine>:<end> | file (new side; offsets 1-based with <end> one past the last character, per Comment drafts; the smallest span that reads as a complete thought, and exactly what a suggestion block would overwrite)
   Comment: "<exact text to post>"
 [NOTE] file:line - the observation and why it is worth the user's attention. No comment draft.
 ```
