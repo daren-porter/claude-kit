@@ -44,8 +44,8 @@ git history before it is relied on. Both proofs follow.
 - The incident: 2026-10-28, EleosCore PBI 25858. A test project referencing only Moq
   (`ASR.Eleos.Horizon.Custom.Tests`) collided with the rule, and a reviewer rated the Moq use
   Minor.
-- The user's rulings, 2026-11-02, which supersede the June ruling above (they were given before
-  the June ruling was surfaced; see the close-out). On the library: drop the ban and never add a
+- The user's rulings, 2026-11-02, which supersede the June ruling above, pending the user's
+  confirmation: they were given before the June ruling was surfaced (Close-out, first bullet). On the library: drop the ban and never add a
   second library, choosing the option "mocks use whichever library the test project already
   references", "but noting that NSubstitute is preferred if the library doesn't otherwise use Moq
   already." That clause ("doesn't otherwise use") is why the criterion below keys on what the
@@ -84,7 +84,7 @@ caught short.
   colliding in one tree were filed on 2026-11-02.
 - Each section takes the paired review (`adversarial-reviewer` with this spec,
   `blind-reviewer` with the diff only), because both edit corpus prose.
-- This spec and its index entry are committed before Section 1 starts, so neither lands in a
+- This spec and its index entry are committed before Section 1 starts, so their creation lands in no
   section's diff (`~/.claude-kaizen/declined.md`, 2026-11-02).
 - An `agents/` change trips the pre-commit hook's hard test gate and the plugin validation; the
   suite was green at `8ff7e58`.
@@ -149,6 +149,10 @@ Execution mode: main.
 
 ## Close-out, beyond finishing-work
 
+- Open the close-out message with the provenance correction and a yes/no: the user's 2026-11-02
+  rulings reverse their recorded June ruling ("hand-rolled fakes primary; NSubstitute as the
+  sanctioned mocking library"), which they were not shown before ruling. Keep 11-02, or restore
+  fakes-first? Added on the final review.
 - Move `~/.claude-kaizen/briefs/csharp-moq-rule.md` to `~/.claude-kaizen/applied/`.
 - Mark item 2 done inside `~/.claude-kaizen/briefs/pr-review-batch.md`, which stays in `briefs/`
   for its other five items.

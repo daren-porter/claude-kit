@@ -107,6 +107,6 @@ No regions, no section comments, one why-comment doing real work, every return v
 - [ ] `ILogger<T>` injected; structured messages; no trailing periods; `LogError` passes the exception object
 - [ ] Library entry points validate and throw; exceptions propagate (catch-log-continue only at background-loop tops; empty catch carries a justifying comment)
 - [ ] `Async` suffix on Task methods; `CancellationToken` last and propagated down the chain
-- [ ] Tests: xUnit, `Method_DoesSomething_WhenSomeCondition`, Arrange/Act/Assert comments, `Build()` tuple factory, the simplest test double (a mock from the mocking library the nearest existing tests use, NSubstitute where no test in the repository uses one, or a hand-rolled sealed fake), FluentAssertions 7.x
+- [ ] Tests: xUnit, `Method_DoesSomething_WhenSomeCondition`, Arrange/Act/Assert comments, `Build()` tuple factory, the simplest test double (a mock from the mocking library the nearest existing tests use, NSubstitute preferred where no test in the repository uses one, or a hand-rolled sealed fake), FluentAssertions 7.x
 - [ ] Tests earn their place (edge cases, business rules, regressions); no coverage padding, no new test infrastructure unless asked; say so when no test is worth writing
 - [ ] A new configurable setting has values in `appsettings.json` AND `appsettings.Development.json`, not just a model-side default (and a non-configurable constant is a `const`/`static`, not a settings property)
