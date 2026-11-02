@@ -103,7 +103,8 @@ Acceptance criteria:
 - The library rule: a mock uses the mocking library the existing tests already use, judged by
   the tests rather than by one project file and looking nearest first (the tests around the
   change, the same test project, then the repository); a second mocking library is never added;
-  only where no test in the repository uses one is NSubstitute the library to add. (Amended in
+  where no test in the repository uses one, NSubstitute is preferred (the user's verb; a round-1
+  repair that read "the library to add" was reverted in round 2). (Amended in
   Section 1 from "the test project already references", on review; see Chapter 1.)
 - The choice rule in the user's terms: do the simplest thing, a mock where a mock fits and a
   hand-rolled `private sealed` fake where that is easier or has to behave in a way a mock cannot.
