@@ -1,6 +1,6 @@
 # Two Kit Corrections: the Mocking Rule and the Anchor Convention
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-11-02
@@ -130,7 +130,9 @@ Acceptance criteria:
   and 1-based, computed from the file at the source ref; the end offset is one past the last
   character covered; a full-line span runs offset 1 through the line's length plus 1.
 - The `Anchor:` line carries or points at that convention, so an agent filling
-  `<line>:<start>-<line>:<end>` cannot read `<end>` as the last character's offset.
+  `<startLine>:<start>-<endLine>:<end>` cannot read `<end>` as the last character's offset.
+  (Amended at close-out: the grammar gained its multi-line form on review, Chapter 2; the
+  criterion first read `<line>:<start>-<line>:<end>`.)
 - One worked example taken from the skill, `245:7-245:24` over `,D.[DispatchDate]` (17
   characters), with arithmetic that checks.
 - Nothing in the charter contradicts `pr-review/SKILL.md:99-101`'s fragment and block rules,
@@ -207,4 +209,26 @@ Review Findings:
 - No second round: there are no Criticals, the one Major is fixed with the parenthetical both reviewers proposed, and finishing-work's whole-changeset Fable review is the backstop.
 - Criterion 5: the suite passes with the change in place; the pre-commit hook runs it again along with plugin validation.
 Next: finishing-work
+Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-11-02 (close-out)
+Completed: finishing-work
+Implemented By: main session, with qa-verifier, adversarial-reviewer (Fable) and docs-curator dispatched
+Metrics: QA 1 run; final adversarial 1 round at the Fable override (Fable weekly 0%, ratchet 85%, not tripped); security review skipped (no production-code surface: a skill, an agent charter and plan docs); document battery skipped (no section carried an `Audience:` line); NEEDS_CONTEXT 0; escalations 0; advisor on
+Summary: Two kit texts now agree with measured facts and the user's 2026-11-02 rulings.
+- `csharp-style` drops "Moq is not used in new tests" and "fakes first". The choice rule is "use whichever test double is simplest". The library rule follows the existing tests, nearest first, never adds a second library, and prefers NSubstitute where no test uses one.
+- `pr-reviewer` carries `pr-review`'s anchor convention whole: 1-based offsets, the end one past the last character, full-line and block ends, read at the source ref. It also gains a multi-line grammar, fragment/block indentation scoping, and a source-ref rule for reading touched files.
+- Commits: `58d0d9b` the spec, `4d2a9b4` Section 1, `ce9f80a` Section 2, `57a14ec` QA's spec-hygiene fix, `5aff483` the final-review fixes, then this close.
+Review Outcomes:
+- QA passed every criterion, with the suite green across three runs and validation showing only the tolerated reserved-name error. One hygiene note was fixed: the amended criterion's "the library to add" now reads "preferred".
+- The final Fable review approved with concerns. One Major was fixed: the Close-out list lacked the confirm-with-user step. Six Minors were fixed: "preferred" in the checklist, the source-ref read in Inputs, "suggestion block's content", the supersession stated as pending, "creation lands in no section's diff", and the kaizen brief annotated. One Minor was declined: a caveat on multi-line fragment anchors, since `pr-review/SKILL.md:102` keeps that check at the orchestrator's gate.
+- The final-review fixes post-date the review and were not themselves reviewed; they are wording the reviewer prescribed.
+Drift Adjudications: The curator changed no docs; no solution doc describes either area. Two items, neither a likely mistake, both presented to the user at close-out with a recommended ruling:
+- **D1, deliberate deviation.** `pr-reviewer.md:12`'s Inputs now read touched files at the source ref, never the working tree (`5aff483`). The trade-off: the change reaches past anchor counting into what the reviewer reads for every finding. It is the better behavior because pr-review's local-clone mode never checks out (`pr-review/SKILL.md:28`). Left open: the same sentence's "surrounding code and callers" still read the working tree, added to the `pr-review-batch` kaizen brief. Recommended ruling: keep.
+- **D2, deliberate deviation recorded in Chapter 2.** The `Anchor:` grammar is `<startLine>:<start>-<endLine>:<end>`. Criterion 2 is amended in place above. Recommended ruling: keep.
+Still with the user: confirming that the 2026-11-02 rulings supersede the recorded June ruling ("hand-rolled fakes primary; NSubstitute as the sanctioned mocking library"), which they were not shown before ruling. The text stays as shipped unless they restore fakes-first.
+Kit friction filed to the inbox:
+- **The `/kit-goal` leash never bound.** `kit-goal-stop.js` reads only a long transcript's first 384KB and last 128KB, and the arming entry, at byte 2.38MB, had left the tail window by the first stop. It was reproduced by feeding the hook a Stop event, and the run executed unleashed throughout.
+- `security-model.md:513`'s "only place ... off the machine" overlooks pr-review's postings to Azure DevOps.
+Next: none. Effort complete.
 Commit Model: Commit-and-Push
