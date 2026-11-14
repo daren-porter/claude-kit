@@ -514,3 +514,32 @@ Review Findings:
 - No second round. The finishing pass's Fable adversarial review reads this section with the rest of the changeset.
 Next: finishing-work
 Commit Model: Commit-and-Push
+
+### Chapter 4 - 2026-11-14 (close-out evidence: REFACTOR on the shipped wording)
+Completed: the evidence section 1's criterion requires for wording revised after its paired review
+Implemented By: main session
+Metrics: one arm, 3 reps, serial through `tools/arm-harness.js`; review rounds 0 (this Chapter changes no corpus text); advisor on, not consulted
+Decisions / Surprises:
+- **Why this arm exists.** QA failed section 1's evidence bullet ("Wording revised after the paired review owes a fresh REFACTOR arm on what it changed"). Chapter 1 recorded the round-2 and round-3 revisions as shipped on review evidence alone. QA was right that the criterion as written does not allow that, so the arm ran rather than the criterion being argued.
+- **The arm.** It ran on `pr-review/SKILL.md` exactly as committed in `2f121f6`, handed to each rep as a fixture copy. The held round 1 holds three findings:
+  - an unvetoed blocker B1, with the user's edited draft text and anchor `14:9-14:77`
+  - a vetoed suggestion S2
+  - a note N2 the user promoted, with anchor `15:25-15:53`
+
+  The new delta adds a header comment that shifts `RateCalculator.cs` down a line, plus a test rename. The org arrives as `Tarnwick` in the URL, and the store root starts at 0775.
+- **Result: 3/3.** Every rep:
+  - carried B1 and N2 and left S2 out
+  - recomputed the anchors to `15:9-15:77` and `16:25-16:53`
+  - posted B1's edited text byte for byte
+  - posted B1 Active and N2 Closed and voted Wait for author
+  - wrote round 2 as `approved, posting unconfirmed` before the post calls, then set it `posted`
+
+  One rep had dispatched pr-reviewer, which re-raised the divisor at its shifted line, and that rep matched it to the round-1 veto in one line. The other two verified the five-line delta inline. That is section 2's dispatch judgment working, and it left them no re-raise to match. No inbox writes.
+- **Not armed, by design.** The `<target-sha>` move and the merge-base fallback correct premises about ADO's merge preview and about git ranges, and the blind seat reproduced both failures in a scratch repo. They owe measurement, not arms, by `writing-skills`' "What this costs".
+- **Recording gaps QA named, closed here.**
+  - Every GREEN and REFACTOR arm in this effort supplied the wording as a fixture copy of the skill in the rep's own directory, never through the installed plugin. That is the arm harness's in-prompt equivalent, so no rep read the repo's copy.
+  - The fixtures used identifiers checked absent from this disk before use (`tarnwick`, `Cartage`, `rate-engine`, `Whitcombe`, `Lindqvist`, `Ashworth`, `FuelSurchargeCap`). The only hits were this session's own transcript.
+  - Close-out step 7 also banked one record in the cross-project memory tier: `dotnet-ioptions-unbound-default`, from the two reps' .NET repro.
+Review Findings: none; no corpus text changed.
+Next: finishing-work steps 1 (re-check) and 3
+Commit Model: Commit-and-Push
