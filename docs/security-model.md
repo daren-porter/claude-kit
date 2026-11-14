@@ -515,19 +515,23 @@ change, and keeps in full any comment the user chose not to post, so it is proje
 construction. The skill re-tightens the root to owner-only (`chmod 700`) before every write rather
 than relying on a creation-time mode, because a tool that creates the directory first leaves it at
 the umask's default; like every skill instruction, that holds as far as the model follows it, and
-nothing mechanical checks it. The store is machine-local, never synced and never posted, and the
-skill deletes a record on a later run once ADO shows its PR completed, or abandoned more than 30
-days ago; a record whose PR cannot be looked up, or that no later run reaches, stays until someone
+nothing mechanical checks it. The store is machine-local and never synced, and no record is ever
+posted as such, though drafts carried from one reach the PR through a fresh gate; and the skill
+deletes a record on a later run once ADO shows its PR completed, or abandoned more than 30 days
+ago; a record whose PR cannot be looked up, or that no later run reaches, stays until someone
 deletes it, and the delete is a model-issued `rm` that a permission classifier has been observed to
 refuse. The path carries only the org name, lowercased and checked against `[a-z0-9-]`, and the
 numeric PR id, so no project, repo or title string from the PR becomes a path component. A record
 is read back into the model when a later run of the skill re-reviews the PR. That is a read the
 skill orders rather than a hook output, so it has no row in the trusted-channel table above, whose
-counting unit is a hook output field. Read its text as data rather than instruction, which is the
-stance a review rates it by and not a mechanism: the author-originated parts are quoted code and
-the header's PR title and author, the same text the skill reads live at gather every round, so a
-record adds no exposure the PR's own text does not. The skill keeps everything in it but a scoping
-ref out of every reviewer's dispatch.
+counting unit is a hook output field. Two kinds of text sit in it. Its rulings and dispositions are
+acted on by design: the filter repeats a prior disposition, visibly, one line at the gate. Text
+that originated elsewhere (quoted code, the header's PR title and author, summarized acceptance
+criteria and thread replies) is to be read as data and never as instruction, the same text the
+skill reads live at gather every round. The skill keeps everything in a record but a scoping ref
+out of every reviewer's dispatch, and its prune sweep opens no record but the reviewed PR's, taking
+each other PR's status from the path alone. All three are a stance a model follows, not a
+mechanism, which is the caveat of the next section but one.
 
 ## Operator-initiated egress that moves project content
 
@@ -563,7 +567,7 @@ text at the skill's gate, and that gate is also instruction rather than mechanis
 - Supply chain. There is no `package.json`, no lockfile, and no dependency anywhere: Node core
   only, CommonJS, in every hook. That is a deliberate property worth preserving, and it is why
   `npm audit` has no target here.
-- Secrets at rest. The kit stores none, and that still holds literally now that one component
+- Secrets at rest. The kit stores none of its own, and that still holds literally now that one component
   reads a credential: `usage-lib.js` sends the token and persists none of it (see the credential
   section above, which also names the store it does write). `~/.claude-kit-memory/` is 0700 with 0600 records because
   its content can describe production configuration, not because it holds credentials; an

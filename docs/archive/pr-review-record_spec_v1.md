@@ -1,6 +1,6 @@
 # A PR Review That Remembers Its Earlier Rounds
 
-Status: In Progress
+Status: Complete
 Commit Model: Commit-and-Push
 Fable Spend: finishing reviews only
 Created: 2026-11-14
@@ -252,6 +252,20 @@ need to claim anything about the unmeasured reset-on-push case.
   target triggers that fallback, so it would fire the full dispatch on a four-line author change.
   That is notes 2 and 3 again, against the user's ruling that the delta's content decides.
 
+*Amended in execution (final review):*
+- The dispatch sentence kept security-reviewer's trigger "as written" on a re-review. On note
+  3's own case, a config delta, every RED rep read that trigger as firing. On a re-review it is
+  now weighed by whether the change alters how a trigger surface behaves, not by the kind of
+  file the change sits in.
+- Under the full-diff fallback, the thing sized is the full diff. It narrows only by comparing
+  the three-dot diffs across rounds, never by the author's latest commit, since a merge can
+  carry edits no commit of theirs shows.
+- The Re-review section is split into ordered paragraphs: settle, threads and delta, reviewers,
+  gate items, vote. The vote refresh reads every minimum-reviewers entry carrying the flag, and
+  records both writes and the re-read.
+- The prune sweep takes each PR's status from the record's path alone and opens no other
+  review's record.
+
 ## Sections of Work
 
 ### 1. The review record in `pr-review/SKILL.md` (complete, Chapter 1)
@@ -355,6 +369,12 @@ Tests: none durable, for the same reason as section 1.
 
 Acceptance: every location above is updated, no count anywhere in either file is left stale by
 the new store, and no trusted-channel row is added.
+
+*Amended in execution:* the docs shipped the amended rules, not the bullets above as first
+written. Abandoned records wait 30 days past `closedDate`, and the root is re-tightened before
+every write. The native store's ordinal is "ninth", since it was already off by one before this
+effort. The egress section is scoped to destinations outside the project's own systems (Chapter
+3). The root README's uninstall checklist also lists the store.
 
 Execution mode: delegate-capable.
 
@@ -542,4 +562,67 @@ Decisions / Surprises:
   - Close-out step 7 also banked one record in the cross-project memory tier: `dotnet-ioptions-unbound-default`, from the two reps' .NET repro.
 Review Findings: none; no corpus text changed.
 Next: finishing-work steps 1 (re-check) and 3
+Commit Model: Commit-and-Push
+
+### Chapter 5 - 2026-11-14 (close-out)
+Completed: finishing-work
+Implemented By: main session; QA by `qa-verifier`; the final review by `adversarial-reviewer` on the `fable` override
+Metrics:
+- QA: FAIL then PASS on re-check (one criterion, closed by Chapter 4's arm)
+- final adversarial review on Fable: CHANGES_REQUIRED, then CHANGES_REQUIRED on its verification read, with the three items it named fixed or armed after that read (below)
+- arms at close: 4 more 3-rep arms on the final wording
+- security-reviewer: skipped (all-prose changeset; the final adversarial pass was the security read)
+- document battery: skipped (no section carries an `Audience:` line)
+- docs-curator: skipped (the deliverable is itself documentation, with no code layer beneath it to reconcile)
+- Fable spend: the final review ran on `fable` as `Fable Spend: finishing reviews only` authorizes, with the Fable weekly window at 0% against the 85% ratchet
+- advisor on, consulted once in the effort
+Decisions / Surprises:
+- **QA failed the clause this effort wrote for itself:** wording revised after review owes a REFACTOR arm. The arm ran (Chapter 4) rather than the clause being argued down.
+- **The final review held section 2 to the same bar and found two real gaps.**
+  - Keeping security-reviewer's trigger "as written" still mandated a dispatch on note 3's own config delta, against the user's ruling.
+  - The vote fixture's stub carried no `configuration` while the shipped text read the flag from one.
+  - Both got fixes and fresh arms on the final text, all 3/3:
+    - A1, the RED config-delta state: verified inline, with security weighed by substance
+    - A2, a stale approval with `configuration` present: NoVote then Approve, both writes named, completion warned
+    - A3, a standing Wait for author over an open blocker: no vote write, no evaluation read
+    - A4, the security narrowing's third arm (the state it leaves alone): the same small re-review delta, with one line flipping Production's JWT `RequireHttpsMetadata` to `false`. Every rep still dispatched security-reviewer, because the change "alters how JwtBearer authentication behaves in Production, which is one of its triggers even though the file is JSON"
+- **The `:83` check QA marked unverifiable did happen.** Section 1's round-1 adversarial reviewer wrote, of the record against the saved-copy paragraph: "I found no reading under which the record carries the gate." Chapter 1 did not quote it.
+- **The memory record naming `FuelSurchargeCap` was banked before Chapter 4's arm ran.** It describes `IOptions<>` defaults, which answers nothing that arm graded, and subagent reps do not receive the memory block.
+- **Drift adjudications: none.** The curator did not run, for the reason above. Every deviation from the spec as approved is recorded in Approach as "Amended in execution". The two that change a detail the user approved in the sketch are flagged here for their attention: approved comment text is kept rather than "never copied", and abandoned PRs' records wait 30 days.
+- **State changed outside the repo:**
+  - the kaizen inbox lost the five notes this effort promoted, and gained one new note (kit-goal with a prose argument)
+  - `~/.claude-kaizen/briefs/pr-review-batch.md` gained a block saying which of its items this effort touched
+  - the cross-project tier gained `dotnet-ioptions-unbound-default`
+  - 36 rep directories under `/tmp` were created and removed
+  - `~/.claude-kit-reviews` was created and removed around every rep and is absent
+  - two rep-written inbox notes were removed
+Review Findings:
+- Final review, round 1: no Criticals, four Majors fixed:
+  - the security trigger on a re-review
+  - section 2's unarmed vote wording
+  - the full-diff fallback against delta-sized dispatch
+  - the sweep opening other reviews' records
+- Minors fixed:
+  - refresh writes in the schema, "and why" for dispatched rounds
+  - every minimum-reviewers entry, `project=<projectId>`, no refresh when evaluations cannot be read
+  - the merge-base wording, the gate-duty list, carried replies
+  - a record-write failure mode, edits in place
+  - the security-model data/instruction wording and its "stores none of its own" opening
+  - delete the records on uninstall
+  - the vote refresh as its own paragraph, the Re-review section ordered
+  - section 3's bullets amended, `az` named as the only path for two reads
+- Declined: a clause telling a session to name a secret by file:line rather than copy it. No observed failure is behind it, which `writing-skills` calls guidance from imagination.
+- Deferred to `pr-review-batch.md`: threads ordered before the vote, the pre-post head re-check, no-clone mode's shas, and the vote write dropping an individually required reviewer's flag.
+- Verification read on Fable: CHANGES_REQUIRED. All four Majors were resolved in wording, and it named three new items.
+  - `git range-diff` skips merge commits, so the narrowing hint failed on the merge case it was written for. The reviewer reproduced this in a scratch repo and the git 2.43 man page says it too. The hint is now the two three-dot diffs compared, a correction of a tool premise owing measurement, which the repro supplies.
+  - The security change is a narrowing owing its third arm. A4 above, 3/3.
+  - This Chapter.
+  - Its Minors fixed:
+    - a `notApplicable` minimum-reviewers entry is skipped, an API status value
+    - `architecture.md:120`'s closed count dropped
+    - the security-model hedge restored
+    - a carried reply seeds that thread's reply rather than adding a second one
+    - only an un-narrowed full-diff round re-lists AC, and the scope field can say "narrowed"
+- No further review round after those fixes. The range-diff wording is the reviewer's own suggested comparison, A4 armed the narrowing, and the rest are one-clause clarifications of points the reviewer itself rated Minor. Not exercised by any rep: the re-read after casting, the evaluations-unreadable clause, and more than one minimum-reviewers entry. The reviewer rated those low risk.
+Next: none
 Commit Model: Commit-and-Push

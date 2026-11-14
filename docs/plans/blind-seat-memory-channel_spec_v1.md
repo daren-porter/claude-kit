@@ -15,7 +15,7 @@ Created: 2026-11-02
   precedent for a remedy.
 - `plans/kit-concurrent-sessions_spec_v1.md` - its third finding, a second session's uncommitted
   files priming the first session's reviewers, is the working-tree version of this channel.
-- `plans/pr-review-record_spec_v1.md` - gives pr-review's round state a durable home outside
+- `archive/pr-review-record_spec_v1.md` - gives pr-review's round state a durable home outside
   every channel a subagent inherits, and routes it there rather than to project memory. That
   removes the reason the PR 458 memory was written, without measuring or closing this channel.
 

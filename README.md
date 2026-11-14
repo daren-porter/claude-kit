@@ -155,8 +155,9 @@ itself, because the hook that would carry the warning is also a Node script.
    - Standing state the kit accumulates as you use it, none of it removed by uninstalling:
      `~/.claude-kaizen/` (the kaizen inbox), `~/.claude-kit-memory/` (cross-project memory),
      `~/.claude-kit-usage/` (usage-awareness config) and `~/.claude-kit-reviews/` (pr-review's per-PR
-     records, which quote client code). Each is durable content rather than cache, so removing any of them
-     is a decision.
+     records, which quote client code). The first three are durable content rather than cache, so removing
+     any of them is a decision. The review records are meant to be short-lived and nothing prunes them once
+     the kit is gone, so delete `~/.claude-kit-reviews/` when you uninstall.
    - Per-project `.kit/` directories (goal state, scratch), gitignored and safe to delete.
 
 Updating: run `/plugin update claude-kit` on each machine. (Publishing the change in the first place is the maintainer half, under PUBLISHING below.) Because `plugin.json` omits `version`, every commit is a new version - no version bumping required. Background auto-updates on a private repo need more than the foreground path does, and setting `GITHUB_TOKEN` in your environment is not enough on its own: a provider token takes effect only through a configured credential helper, such as the `gh` CLI's, which reads `GH_TOKEN` and `GITHUB_TOKEN`. Background marketplace refreshes also disable credential helpers by default, so an HTTPS private repo fails there until you either set `CLAUDE_CODE_PLUGIN_KEEP_MARKETPLACE_ON_FAILURE=1` to keep the cached copy, configure a git URL rewrite embedding a read-only token, or configure a helper the re-clone fallback can use. When a kit update changes the recommended CLAUDE.md, the SessionStart hook offers to reconcile it into your live file (or run the `reconcile-claude-md` skill).
