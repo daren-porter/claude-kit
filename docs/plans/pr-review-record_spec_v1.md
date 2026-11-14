@@ -330,7 +330,7 @@ Execution mode: main.
 
 Tests: none durable, for the same reason as section 1.
 
-### 3. Docs: the new store, its security posture, and the egress claim
+### 3. Docs: the new store, its security posture, and the egress claim (complete, Chapter 3)
 
 - `docs/architecture.md`: the state table (`:80-89`) gains a row for `~/.claude-kit-reviews/`,
   written by the pr-review main thread and pruned by pr-review when ADO shows the PR completed or
@@ -483,4 +483,34 @@ Review Findings:
   - Reverted: the round-1 clause forcing the full first-review dispatch on every full-diff fallback. A routine merge from the target triggers that fallback, so it would have fired the full dispatch on four-line author changes, against the user's ruling that the delta's content decides.
   - Accepted: a policy with only `requireVoteOnEachIteration` set is unmeasured, and the rule proposes no refresh there.
 Next: 3. Docs: the new store, its security posture, and the egress claim
+Commit Model: Commit-and-Push
+
+### Chapter 3 - 2026-11-14
+Completed: 3. Docs: the new store, its security posture, and the egress claim
+Implemented By: main session (`docs/` writes are main-thread only)
+Metrics: 1 review round, adversarial alone (the section is docs-only, so a blind seat has no diff to read); NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section
+Decisions / Surprises:
+- **Drafted during section 1's arm window, then parked.** The edits were stashed during sections 1 and 2's blind reviews, so their hunks could not reach those seats. They were unparked after section 2 landed, then corrected to what section 1 shipped: the 30-day abandoned rule, `chmod 700` before every write, the org check.
+- **A second exclusivity claim was false too.** `security-model.md` called the visual companion's screens "the only kit surface whose contents can be project-confidential". That now just says the screens can be.
+- **The egress claim was false before pr-review existed.** "The only place any kit skill moves project content off the machine" was already contradicted by the commit models' pushes and by `finishing-work`'s PRs. The section is now scoped to destinations outside the project's own systems. One path counts, the visual companion's Artifact. The write-backs to the project's own systems are named as not counted, pr-review's posting among them, each with its gate.
+- **Beyond the spec's file list:** the root README's uninstall checklist, and the docs index's descriptions of `architecture.md` and `security-model.md`.
+Review Findings:
+- **Round 1: CHANGES_REQUIRED.**
+  - Majors, fixed:
+    - `architecture.md`'s summary still counted one egress path
+    - the native store's ordinal is "ninth" (off by one since `ae21f31`, carried forward by every count change since)
+    - "Two paths" was still a false closed count
+    - the uninstall checklist omitted the new store
+  - Minors, fixed:
+    - "data, never instruction" stated as a mechanism, and naming the wrong author-originated text
+    - retention presented as bounded, when unresolvable or unreached records stay and a classifier can refuse the `rm`
+    - "copied byte for byte" for suggestion bodies, which are derived from the file
+    - secrets at rest, since a record can quote a committed credential
+    - "holds project content" read as exclusive
+    - pr-review's instruction-only controls added to "Its own instructions being ignored"
+    - "30 days ago"
+  - Minors, deferred: the plan's own index entry (still the pre-amendment prune rule) waits for the close flip.
+  - Minors, declined: adding the records to `architecture.md`'s data-flow writing paragraph. It is an open list, and the state table and the home-rooted paragraph already name the writer.
+- No second round. The finishing pass's Fable adversarial review reads this section with the rest of the changeset.
+Next: finishing-work
 Commit Model: Commit-and-Push

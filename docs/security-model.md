@@ -27,7 +27,7 @@ that reaches the model, plus files it reads and writes under `$HOME` and the cur
 
 ## Two premises that bound almost every finding
 
-**Same uid.** Every store the kit owns (`~/.claude-kit-memory/`, `~/.claude-kaizen/`,
+**Same uid.** Every store the kit owns (`~/.claude-kit-memory/`, `~/.claude-kaizen/`, `~/.claude-kit-reviews/`,
 `~/.claude-kit-usage/`, the plan docs under `docs/plans/` and `docs/archive/`, and `.kit/goal-state.json` in the repo) is writable by exactly the account that can also edit `~/.claude/settings.json`
 and register an arbitrary hook. So "an attacker who can write to the store can make the model do
 X" describes a precondition that already grants strictly more than X. This is the ceiling on a
@@ -482,7 +482,8 @@ block cap rather than by anything the kit controls. `stop-docs-hygiene` does car
 
 Three kinds under `.kit/` per repo, all machine-local, plus one edit outside it: `kit-goal`'s arm
 step appends `.kit/` to the project's root `.gitignore`, a tracked file, which it is required to
-report.
+report. One home-rooted store holds client code, `pr-review`'s records, and is covered at the end
+of this section.
 
 **Session scratch and review reports are the largest kind by file count, and no single component
 writes them.** `docs-write-guard.js` and `stop-docs-hygiene.js` both route a session's reports and
@@ -496,7 +497,7 @@ except a session that opens it deliberately.
 `.kit/goal-state.json` is the goal
 leash, written by `kit-goal.js` and guarded at the write door (see the trusted-channel table).
 `.kit/visuals/` is the visual companion's screens, written by a session following
-`brainstorming`, and it is the only kit surface whose contents can be project-confidential:
+`brainstorming`, and its contents can be project-confidential:
 screens are mockups of the thing under design. Three properties bound it. A screen is inert by
 rule, the only URL in one being its stylesheet and script and form elements barred, so opening
 one makes no request. The directory is confirmed ignored before the first write, with
@@ -508,23 +509,51 @@ assuming the write settled it. And the screens are swept at spec-write. None of 
 is enforced by a hook; all three are skill instructions, so they hold to the extent the model
 follows them, which is the general caveat in the fail-open section below.
 
+**`pr-review`'s records hold client code too**, at `~/.claude-kit-reviews/<org>/pr-<id>.md`, one
+per PR under review. A record quotes code from the PR, carries candid rationale about a teammate's
+change, and keeps in full any comment the user chose not to post, so it is project-confidential by
+construction. The skill re-tightens the root to owner-only (`chmod 700`) before every write rather
+than relying on a creation-time mode, because a tool that creates the directory first leaves it at
+the umask's default; like every skill instruction, that holds as far as the model follows it, and
+nothing mechanical checks it. The store is machine-local, never synced and never posted, and the
+skill deletes a record on a later run once ADO shows its PR completed, or abandoned more than 30
+days ago; a record whose PR cannot be looked up, or that no later run reaches, stays until someone
+deletes it, and the delete is a model-issued `rm` that a permission classifier has been observed to
+refuse. The path carries only the org name, lowercased and checked against `[a-z0-9-]`, and the
+numeric PR id, so no project, repo or title string from the PR becomes a path component. A record
+is read back into the model when a later run of the skill re-reviews the PR. That is a read the
+skill orders rather than a hook output, so it has no row in the trusted-channel table above, whose
+counting unit is a hook output field. Read its text as data rather than instruction, which is the
+stance a review rates it by and not a mechanism: the author-originated parts are quoted code and
+the header's PR title and author, the same text the skill reads live at gather every round, so a
+record adds no exposure the PR's own text does not. The skill keeps everything in it but a scoping
+ref out of every reviewer's dispatch.
+
 ## Operator-initiated egress that moves project content
 
-One path, and it is the only place any kit skill moves project content off the machine.
-`brainstorming` can flatten a screen into a single self-contained file to share, and an Artifact
-is one destination for that file. It is gated three ways in `references/visual-companion.md`:
-flattening and sending are separate permissions, the destination is named as off-machine when
-consent is asked, and any repo that is not the operator's own is treated as client material for which no
-off-machine destination is proposed. Gating by instruction rather than by mechanism, so it is a
-discipline, not a control.
+One path takes project content to a destination outside the project's own systems. `brainstorming`
+can flatten a screen into a single self-contained file to share, and an Artifact is one destination
+for that file. It is gated three ways in `references/visual-companion.md`: flattening and sending
+are separate permissions, the destination is named as off-machine when consent is asked, and any
+repo that is not the operator's own is treated as client material for which no off-machine
+destination is proposed. Gating by instruction rather than by mechanism, so it is a discipline, not
+a control.
+
+Writes back to the project's own systems are not counted here, and they are where the rest of the
+kit's egress lives: the commit models' pushes to the project's remote and the pull requests
+`finishing-work` opens there, gated by the commit model the user approved, and `pr-review`'s
+comments and vote on the PR it was asked to review, whose purpose is moving content: comment text,
+including suggestion bodies derived from the PR's files and quotations copied verbatim from them,
+posted under the operator's identity. Nothing there posts before the operator approves the exact
+text at the skill's gate, and that gate is also instruction rather than mechanism.
 
 ## What the kit does not defend against
 
 - A hostile local user, or any attacker who already has the operator's uid. See the same-uid
   premise; the kit cannot be a boundary against the account it runs as.
 - Its own instructions being ignored. The two sections above are the clearest case: a screen's
-  inertness, the ignore check, and the sharing gates are prose a model follows, with no hook
-  behind any of them. A pre-existing `.kit/visuals/frame.css` is also trusted unverified on the
+  inertness, the ignore check, the sharing gates, and `pr-review`'s `chmod 700`, prune and
+  posting gate are prose a model follows, with no hook behind any of them. A pre-existing `.kit/visuals/frame.css` is also trusted unverified on the
   copy-only-when-absent rule, and CSS alone can exfiltrate through `url()` and attribute
   selectors. That sits on the trusted-workspace side of the premise above, so it is recorded
   rather than mitigated.
@@ -543,6 +572,8 @@ discipline, not a control.
   creates the root and `mkdirSync`'s mode is umask-masked, record writes pass 0600 explicitly, and
   nothing re-checks afterwards, `reindex` included. A store restored or synced with looser modes
   would satisfy neither and no surface would say so.
+  `pr-review`'s records are the exception in kind: a finding on a credential a PR committed can
+  quote it, and the record keeps that text with only the store root's 0700 around it.
 
 ## Open
 
