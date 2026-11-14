@@ -235,6 +235,23 @@ also the merge. The corrected rule diagnoses from the evaluation and refreshes w
 re-cast. That procedure is safe whether or not the policy reset the vote, so the rule does not
 need to claim anything about the unmeasured reset-on-push case.
 
+*Amended in execution (S2 review):*
+- Both reviewers found that the refresh, as first drafted, fired on a standing Wait for author:
+  a -5 voter is never in `lastIterationApprovers`, and resetting one would lift its block
+  between the two writes. The refresh now applies only to an approving standing vote matching the
+  row, and only where the policy has `requireVoteOnLastIteration` set. The record measured that
+  flag with `requireVoteOnEachIteration` also set and `resetOnSourcePush` off; a policy with only
+  the each-iteration flag is unmeasured, and the rule proposes no refresh there.
+- The command carries `--organization`. Item 4 proposes and names both writes, warns that the
+  cast can complete the PR unless another policy is known to block it, and the evaluation is
+  re-read a few seconds after casting.
+- The dispatch sentence first called all of Dispatch's rules first-review-only, which would
+  have released the bar on build and test commands for a blind pass, never pre-judging, and the
+  security trigger. It now names only the selection rules. A round-1 suggestion to force the full
+  dispatch on every full-diff fallback was applied, then reverted: a routine merge from the
+  target triggers that fallback, so it would fire the full dispatch on a four-line author change.
+  That is notes 2 and 3 again, against the user's ruling that the delta's content decides.
+
 ## Sections of Work
 
 ### 1. The review record in `pr-review/SKILL.md` (complete, Chapter 1)
@@ -279,7 +296,7 @@ Execution mode: main.
 Tests: none durable. The kit suite covers hooks and tools, never prose, and this section adds no
 code. The GREEN arms are the verification.
 
-### 2. Re-review corrections in `pr-review/SKILL.md`
+### 2. Re-review corrections in `pr-review/SKILL.md` (complete, Chapter 2)
 
 Two changes to the Re-review section, as stated in Approach: dispatch on a re-review delta
 becomes the main thread's call from the delta's content, disclosed at the gate; and the vote rule
@@ -387,7 +404,7 @@ Decisions / Surprises:
   - abandoned records wait 30 days past `closedDate`
   - org normalization, and `chmod 700` before every write
 - **The materialize half of `pr-review-batch.md` item 1 is now done.** Re-resolving the head right before posting stays with that brief.
-- **Side effects on the machine.** `~/.claude-kit-reviews` was created and removed around every rep and is absent now. Two rep-written kaizen notes were removed (one more from the section 2 arms is covered in Chapter 2). The .NET repros left VBCSCompiler server processes, `/tmp/dotnet-diagnostic-*` sockets and `/tmp/MSBuildTemp*` directories.
+- **Side effects on the machine.** `~/.claude-kit-reviews` was created and removed around every rep and is absent now. Two rep-written kaizen notes were removed, both from read reps. The section 2 arms wrote none. The .NET repros left VBCSCompiler server processes, `/tmp/dotnet-diagnostic-*` sockets and `/tmp/MSBuildTemp*` directories.
 Review Findings:
 - **Round 1: both reviewers CHANGES_REQUIRED.**
   - Critical, fixed: a held round lost its findings, and the gate could propose Approve over a held blocker.
@@ -422,4 +439,48 @@ Review Findings:
   - Fixed: the fallback's wording (the target branch's name, not its moving head) and the promoted-note outcome.
   - Accepted: the no-clone sha pairing (same reasoning as above) and the gate-count wording at `:141`, which section 2 rewrites.
 Next: 2. Re-review corrections in `pr-review/SKILL.md`
+Commit Model: Commit-and-Push
+
+### Chapter 2 - 2026-11-14
+Completed: 2. Re-review corrections in `pr-review/SKILL.md`
+Implemented By: main session
+Metrics: 2 review rounds (round 1 paired, adversarial + blind; round 2 an adversarial verification read); NEEDS_CONTEXT 0; escalations 0; advisor on, not consulted this section; arms: 12 reps through `tools/arm-harness.js` (3 RED serial, then 9 GREEN-side three at a time)
+Decisions / Surprises:
+- **RED for the dispatch change: 3/3, run before any draft existed on disk.** On an 11-line, 4-file config delta under standup time pressure, every rep dispatched pr-reviewer, blind-reviewer and security-reviewer, and held the gate for them.
+  - Rep 1: "The file count meets the letter, even though three of the four files are one-line JSON edits. I followed the letter."
+  - Rep 2: "I followed the letter of the rule even though the change is trivial."
+  - Rep 3: "The skill doesn't say whether the threshold applies to the delta or the full PR on a re-review."
+  - No inbox writes.
+- **GREEN, dispatch: 3/3.** Each rep verified the same delta inline from its content and said so with the reason in gate item 1.
+- **Narrowing arm, a first review of a small PR with the draft in place: 3/3.** Each rep still dispatched pr-reviewer ("always runs") and skipped blind on the size bar.
+- **GREEN, vote: 3/3**, in a stale-approval state under a last-iteration policy with auto-complete set. Each rep proposed NoVote then Approve, read `lastIterationApprovers` rather than the status, and told the user the approve would complete the PR. All three flagged that the meaning of an empty `context` was underdetermined. The PR 468 measurement answers it (the context stayed `{}` until a vote counted), so "an empty `context` names nobody" was added as a premise fact, owing no arm.
+- **Premise-correction proof for the vote rule.** `:125` arrived in `750d8df` (2026-08-15), whose message records that its re-review gate rules came from "probe reps against synthetic fixtures", with no live ADO measurement. The measurement that corrects it is the `ado-same-value-revote-noop` memory record (PR 468 and PR 628, 2026-11-09).
+- **The arms ran against section 1's first draft** plus section 2's draft. Section 1's later revisions touched the same paragraph's settle and delta sentences, not the dispatch or vote text, so the results stand on the wording they tested.
+- **The review fixes went in without a further arm.** Each narrows the rule, and the GREEN states remain inside the narrowed rules with unchanged outcomes:
+  - The refresh now applies only to an approving standing vote under a last-iteration policy, which is the vote GREEN's state.
+  - The dispatch sentence now releases only the selection rules, and the dispatch GREEN's reps verified inline either way.
+  - The added confirm-after-cast and the fail-safe auto-complete warning are the only new directives. Both act after the measured decision and do not change it.
+- **Correction to Chapter 1.** As first committed in `8a8316a`, Chapter 1 said the section 2 arms left a kaizen note. Their inbox diff was 0 bytes; the note-writing reps were both in section 1's read arm. Chapter 1 now says so.
+Review Findings:
+- **Round 1: both reviewers CHANGES_REQUIRED.**
+  - Critical (both), fixed: the refresh fired on a standing Wait for author, which is never in `lastIterationApprovers`. That meant two pointless writes, and a NoVote that could lift the block under auto-complete.
+  - Critical (adversarial), fixed: "the Dispatch rules above are written for a first review" released the bar on build and test commands for a blind pass, plus never-pre-judge and the security trigger.
+  - Major (both), fixed: the refresh assumed every minimum-reviewers configuration behaves like the measured one. It is now gated on `requireVoteOnLastIteration`.
+  - Major (blind), fixed: the `az devops invoke` call lacked `--organization`, reproduced failing.
+  - Major (blind), fixed: nothing confirmed the re-cast landed.
+  - Minors, fixed: completion claimed for rows that cannot complete, NoVote missing from the Vote bullet's values, the inline "why" in item 1, the reset phrased as an action rather than a proposal, and `<projectId>`'s source.
+  - Minors, deferred:
+    - threads posted before the vote (`pr-review-batch.md` item 3)
+    - a pre-post re-check of the vote (the same brief's item 1 family)
+    - the settle step reading a refresh vote from the payload, which is harmless because the next round's item 4 re-derives the vote from the evaluation
+- **Round 2 (adversarial verification): APPROVED_WITH_CONCERNS.** Every Critical and Major resolved.
+  - Minors, fixed:
+    - the policy setting is read from the evaluation record's `configuration`
+    - the refresh requires the standing approval to match the row
+    - the re-read waits a few seconds
+    - the auto-complete warning is fail-safe
+    - the spec amendment names the full measured configuration
+  - Reverted: the round-1 clause forcing the full first-review dispatch on every full-diff fallback. A routine merge from the target triggers that fallback, so it would have fired the full dispatch on four-line author changes, against the user's ruling that the delta's content decides.
+  - Accepted: a policy with only `requireVoteOnEachIteration` set is unmeasured, and the rule proposes no refresh there.
+Next: 3. Docs: the new store, its security posture, and the egress claim
 Commit Model: Commit-and-Push
