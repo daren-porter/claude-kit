@@ -94,8 +94,12 @@ by the user. The location was settled with the user against three alternatives:
 **Keyed by org and PR id alone.** ADO PR ids are unique within an organization, which the skill
 already relies on when a bare id resolves org-wide (`:14`). The project, repo and title go in
 the record's header rather than its path. That keeps strings that come from outside the kit out
-of path components, the precedent at `docs/security-model.md:370`. The store root is created
+of path components, the precedent at `docs/security-model.md:370`. The store root is kept
 owner-only (0700), matching the memory tier, because records hold client code excerpts.
+*Amended in execution (S1 review):* the org is the bare name lowercased, with the org and id
+checked against `[a-z0-9-]` and digits before the path is built, since the org also comes from
+outside and arrives in several URL shapes. The root is re-tightened with `chmod 700` before every
+write, because `mkdir -m` never tightens a directory a tool already created.
 
 **What the record holds, and what it never holds.** ADO stays the source of truth for thread
 status and the vote, re-gathered on every run, and wins any disagreement. The record holds only
@@ -106,25 +110,30 @@ what ADO lacks:
   "AC 3 was consciously deferred, per Y"), with the user's reasons. Updated in place when a
   ruling changes.
 - Rounds, append-only, one entry per round. Each entry holds:
-  - the date and session id
+  - the date
   - the source and target shas reviewed, and the scope (full diff, or delta from which sha)
   - the reviewers dispatched, or that the round was verified inline and why
   - AC coverage
-  - every surviving finding: category, provenance verdict, rationale and outcome (posted as
-    thread N, edited at the gate, or vetoed with the user's reason)
-  - the dropped and demoted findings with their reasons
+  - every surviving finding: file:line at the reviewed sha, category, provenance verdict,
+    rationale, the anchor span and exact text if it was approved to post, and the outcome
+    (posted as thread N, edited at the gate, or vetoed with the user's reason)
+  - the dropped and demoted findings with their file:line and reasons
   - notes left unpromoted, in full
-  - on a re-review, the disposition of each existing thread
+  - on a re-review, the disposition of each existing thread and the exact text of any reply
   - the vote proposed and the vote cast
   - a status line
 
-Posted comments are referenced by thread id, never copied. Text that never posted is kept in
-full, because nowhere else holds it.
+*Amended in execution (S1 review):* this spec first said posted comments are referenced by thread
+id and never copied. Both reviewers showed that cannot work. The first write happens before
+anything posts, so the approved text has to be in it, or a session that dies mid-post leaves the
+settle step nothing to re-present. So an approved comment keeps its anchor and exact text and
+gains its thread id once posted. The duplicate of ADO's copy is harmless. The session id was
+dropped: no harness surface names it reliably, and an agent asked for one would invent it.
 
 **Two write points per round.** Right after the user's go-ahead at the gate, before any write to
 the PR, the status is `approved, posting unconfirmed`, or `held, nothing posted` when the user
-ends the gate without posting. After posting, thread ids are filled in and the status becomes
-`posted`.
+ends the gate without posting. After posting, thread ids and the vote cast are filled in and the
+status becomes `posted`, or `partly posted` naming what did not.
 
 **Main thread only.** The record never goes into any reviewer's dispatch: not pr-reviewer's,
 because handing it the dropped list tells it what to ignore and breaks "never pre-judge" (`:38`);
@@ -133,25 +142,50 @@ never a substitute for presenting the gate in the terminal. `:83` ("A saved copy
 presentation") already names the pull to file a report and point at it, and a mandated record
 file strengthens that pull. So the wording has to leave `:83` intact and say outright that the
 record is written in addition to the full gate. Round state goes to the record and never to
-project auto-memory, which loads into blind seats.
+project auto-memory, which reached a blind seat on PR 458. A ref from the record (the delta's
+base sha) may scope a dispatch; no finding, ruling, rationale or drop may.
 
 **How a re-review uses it.**
 
 - **Detection.** A re-review is detected from the record or from the user's prior thread or vote
   (`:23`). A round that posted nothing is invisible to ADO, and only the record shows it.
-- **Unconfirmed posts first.** When the last round reads `approved, posting unconfirmed`, it is
-  checked against the live threads and reviewer votes before anything else. What did post gets
-  its thread ids recorded. What did not goes back to the gate, because nothing posts on a dead
-  session's approval.
-- **The delta** runs from the last round's recorded source sha to the current head, resolved
-  with `git ls-remote` per the `ado-pr-source-commit-stale` memory record. This replaces the
-  date-against-`git log` heuristic at `:123`. When the recorded sha is not an ancestor of the
-  head (a force-push or rebase), review the full diff, as `:123` already says to do when the
-  point is ambiguous.
-- **The filter's dedup** (`:52`) also checks prior rulings and prior drops, and drops a
-  re-raised finding unless the new code changed its facts. Each such drop appears at the gate
-  as one line, so a finding whose facts did change cannot vanish silently.
+- **Unsettled rounds first.** When the last round reads anything but `posted`, it is checked
+  against the live threads and reviewer votes before anything else. What did post gets its
+  thread ids recorded and the status updated to match. What did not goes back to the gate,
+  re-verified at this round's head, because nothing posts on a dead session's approval.
+  *Amended in execution (S1 review, a Critical from both reviewers):* this first covered only
+  `approved, posting unconfirmed`. A `held, nothing posted` round then let the next run review
+  only the delta past the held sha, so a held blocker never came back, and the gate could
+  propose Approve over it. A held round's surviving findings now come back the same way.
+- **The delta** runs from the last round's recorded source sha to this round's `<source-sha>`.
+  This replaces the date-against-`git log` heuristic at `:123`. When the recorded sha is not an
+  ancestor of the head (a force-push or rebase), or there is no clone to check it in, review the
+  full diff, as `:123` already says to do when the point is ambiguous. *Amended in execution
+  (S1 review):* this first resolved the head with `git ls-remote` here alone, while Materialize
+  still diffed `lastMergeSourceCommit`, so a round could record a head nobody reviewed. The fix
+  is in Materialize: `<source-sha>` is the fetched head of `origin/<source-branch>`, never
+  `lastMergeSourceCommit` (measured lagging on PR 415, 2026-08-30, in the
+  `ado-pr-source-commit-stale` memory record). The diff, the anchors and the recorded sha then
+  agree. This is a correction of a wrong premise and owes no arm. It closes only the materialize
+  half of `pr-review-batch.md` item 1. Re-resolving the head before posting stays there.
+- **The filter's dedup** (`:52`) also checks prior rulings, vetoes, drops and demotions, and
+  gives a re-raised finding the same disposition again unless the new code changed its facts.
+  Each repeat appears at the gate as one line, so a finding whose facts did change cannot
+  vanish silently. *Amended in execution (S1 review):* vetoes and demotions were added, since a
+  veto is stored as a finding's outcome and matched neither "ruling" nor "drop".
 - **Thread dispositions** draw on the recorded rationale for each thread.
+
+*Amended in execution (S1 review round 2):*
+- Settling brings back only what was approved and did not post, plus a held round's findings
+  the user did not veto, matched on anchor and substance. Each carried item gets its anchor
+  recomputed at the head and joins this round's findings: the dedup, gate item 3, item 4's row,
+  and this round's entry. That last part stops a second hold from losing it.
+- Held drafts keep their text as the gate left them.
+- `<target-sha>` also comes from the fetched branch, since `lastMergeTargetCommit` belongs to
+  the same lagging preview. The blind reviewer reproduced merged-in target code entering the
+  diff when the two shas were taken at different times.
+- A changed target branch or merge base sends the re-review to the full diff, since a retarget
+  or a merge from the target passes the ancestor check while making the source-only delta wrong.
 
 **Pruning on observed terminal state, never on a vote.** The user wanted records to be ephemeral
 and asked whether a clean final approve should prune. It should not. An approve is not the end
@@ -159,16 +193,21 @@ of a PR: another reviewer can still block and the author push again, and where p
 re-requires votes on a push, a later push puts the user back into re-review, which is exactly
 when the record is needed. Pruning too early loses the reasoning when it may still matter, and
 pruning late costs a few days of a small local file. So a record is deleted when ADO shows its
-PR completed or abandoned, checked in two places:
+PR completed, or abandoned for more than 30 days, checked in two places:
 
 1. When the PR being reviewed is already completed or abandoned, the report-and-stop path (`:25`,
-   `:133`) deletes its record as part of stopping.
+   `:133`) prunes its record by the same rule as part of stopping.
 2. A sweep on every pr-review run, the no-argument listing included: one status lookup per
-   record on disk, deleting the terminal ones, and reported in one line. A record whose PR
+   record on disk, deleting those that qualify, and reported in one line. A record whose PR
    cannot be looked up (lost access, deleted repo) is listed in that line and kept, never deleted
    on a guess.
 
-An abandoned PR counts as terminal. If it is reactivated, the next review starts a fresh record.
+*Amended in execution (S1 review):* this spec first counted an abandoned PR as terminal. ADO can
+reactivate an abandoned PR, and the sweep runs on unrelated runs, so one run during the abandoned
+window would delete the rulings a reactivated review needs. The same asymmetry that rules out
+pruning on a vote applies, so an abandoned PR's record gets 30 days. Completed is final. The
+user approved "completed or abandoned" in the sketch; this narrows it in the direction their own
+"ephemeral, but not lost while still needed" reasoning points, and is flagged in the close-out.
 The sweep lives in the skill, not in a SessionStart hook, because a status lookup needs the
 connector or `az` over the network, and that does not belong in a hook that runs at every session
 start.
@@ -198,27 +237,31 @@ need to claim anything about the unmeasured reset-on-push case.
 
 ## Sections of Work
 
-### 1. The review record in `pr-review/SKILL.md`
+### 1. The review record in `pr-review/SKILL.md` (complete, Chapter 1)
 
 The store, the record's contents, the two write points, the re-review reads, the filter's dedup
 against prior rulings, and pruning, all as stated in Approach. The delta-location sentence at
 `:123` is replaced here, because its replacement is the record's recorded sha.
 
 Acceptance:
-- The skill names the store as `~/.claude-kit-reviews/<org>/pr-<id>.md`, keyed by org and PR id
-  only, with the root created owner-only on first write.
-- The record's contents match Approach. Posted comments are referenced by thread id, and unposted
-  text is kept in full.
+- The skill names the store as `~/.claude-kit-reviews/<org>/pr-<id>.md`, keyed by the lowercased
+  org name and the numeric PR id only, both checked before the path is built, with the root
+  re-tightened to owner-only before every write.
+- The record's contents match Approach. An approved comment keeps its anchor and exact text and
+  gains its thread id, and unposted text is kept in full.
 - Both write points are stated with their status values, the first before any write to the PR.
+- `<source-sha>` in Materialize is the fetched branch head, never `lastMergeSourceCommit`, with
+  the PR 415 provenance stated.
 - The record is stated as main-thread only, excluded from every reviewer dispatch, and written in
   addition to the full terminal gate. `:83` is unweakened, and a paired reviewer reading both
   passages finds no reading under which the record carries the gate.
 - ADO is stated as authoritative on conflict, and round state is routed to the record, never to
   project auto-memory.
-- Re-review detection, the unconfirmed-post reconcile, the recorded-sha delta with its full-diff
-  fallback, the visible dedup, and record-informed dispositions are each stated.
+- Re-review detection, the settling of any last round not `posted` (a held round included), the
+  recorded-sha delta with its full-diff fallback, the visible dedup (rulings, vetoes, drops and
+  demotions), and record-informed dispositions are each stated.
 - Pruning is stated for both trigger points. An unresolvable record is reported and kept, an
-  abandoned PR counts as terminal, and nothing prunes on a vote.
+  abandoned PR's record waits 30 days, and nothing prunes on a vote.
 - Evidence: the capability was specified by the user in their own words (note 1 and the
   2026-11-14 brainstorm), so no RED is owed, and the current skill has no record step to fail.
   GREEN is owed, every rep of at least three, wording in-prompt, on isomorph fixtures carrying no
@@ -226,7 +269,9 @@ Acceptance:
   a simulated post, and (b) a re-review from an existing record that holds a vetoed finding a
   reviewer re-raises with unchanged facts, a second one re-raised with changed facts, an
   `approved, posting unconfirmed` round, and a stale record for a completed PR. Fixture writes to
-  the real store use a fixture org name and are removed after the arm.
+  the real store use a fixture org name and are removed after the arm. Wording revised after the
+  paired review owes a fresh REFACTOR arm on what it changed: at least a held last round whose
+  blocker survives an unrelated delta, followed through a go-ahead.
 - Paired review before commit, Criticals resolved, and the findings recorded in the Chapter.
 
 Execution mode: main.
@@ -304,7 +349,9 @@ Execution mode: delegate-capable.
 - Amending `cross-project-memory`'s routing test or the global CLAUDE.md's "memory is three
   destinations". pr-review's own clause carries the routing for round state.
 - Which changes count as the PR's own when the source branch merges the target in. `:123`'s
-  existing scope language is kept as written.
+  existing scope language is kept as written. (Narrowed in execution: such a round now falls
+  back to the full diff instead of taking a source-only delta, which avoids the question rather
+  than answering it.)
 - Any change to `agents/pr-reviewer.md` or `agents/blind-reviewer.md`. The record is never in
   their inputs.
 
@@ -313,3 +360,66 @@ Execution mode: delegate-capable.
 None at creation.
 
 ## Chapters
+
+### Chapter 1 - 2026-11-14
+Completed: 1. The review record in `pr-review/SKILL.md`
+Implemented By: main session
+Metrics: 3 review rounds (rounds 1 and 2 paired, adversarial + blind; round 3 an adversarial verification read of the round-2 fixes); NEEDS_CONTEXT 0; escalations 0; advisor on, consulted once before the brainstorm's opening position; arms: 9 reps, all through `tools/arm-harness.js`, serial where they shared the real store
+Decisions / Surprises:
+- **Arms.** No RED owed: the user specified the capability in their own words, and the shipped skill had no record step to fail.
+  - GREEN (a), the write: 3/3. Each rep created the root 0700 and keyed the record by org and PR id. The record's birth time preceded `post-calls.md`'s (8s, 6s and 8s), and its status went from `approved, posting unconfirmed` to `posted`. The standing ruling was kept with the user's reason, and the dropped findings and the unpromoted note were kept in full.
+  - GREEN (b), the read: 3/3. Each rep settled the unconfirmed round 2 first: the 4410 reply posted, while the 4411 reply, S3 and the vote did not, and those came back for re-approval. Each ran the delta from the recorded sha after an ancestor check, dropped the re-raised divisor and retry-constant findings in one visible line each, re-checked D1 because its facts had changed instead of dropping it on the old reason, kept every record field out of the dispatches, and deleted the completed PR's record while keeping the live one.
+  - REFACTOR on the round-1 revisions: 3/3. Each rep brought the held round's blocker back re-verified at the head, proposed Wait for author over the delta-only reviewer's advisory Approve, and matched the re-raised divisor to the round-1 veto. Each lowercased `Tarnwick` to find the record, re-tightened the root from 0775 to 0700, and wrote the round's anchor and exact text before the post call.
+- **The round-2 fixes went in without a further arm**, on the review evidence alone. The REFACTOR reps had already done what the clarified text now says: no rep re-presented the veto, all voted -5 over the carried blocker, all recomputed the anchor at the head, and all wrote the carried blocker into round 2's entry. The fixes close literal-reading gaps that capable reps survived, plus two corrections of wrong premises (the target sha, the merge-base fallback).
+- **A real-world finding from rep (b)3.** The auto-mode permission classifier denied the prune's `rm` as destructive. The rep surfaced it at the gate as a pending ask. No clause was added, since the rep did the right thing unprompted.
+- **A fixture defect the reps caught.** The stubbed pr-reviewer claimed `GetService` returns null. Two reps proved with a throwaway .NET repro that the host registers `IOptions<>` by default, so the real bug is a silent zero cap. Grading was unaffected: what it measured was the D1 re-check.
+- **Two reps independently wrote "partially posted"** for a settled round. That became `partly posted` in the wording.
+- **Channels open in the arms.** The harness closed auto-memory and the skill listing. Still open:
+  - The filesystem. The write reps went looking for a clone and read the scratchpad fixture repo, which held no wording and no grading.
+  - The global CLAUDE.md and the org instructions.
+  - The real `devops-connector-capabilities` memory record, which the skill tells a session to read.
+- **Deviations from the spec**, each marked "Amended in execution" in Approach:
+  - an approved comment keeps its text (dropping "never copied")
+  - session id dropped
+  - every round not `posted` is settled, held rounds included, with carried items joining the new round
+  - head resolution moved to Materialize, using the fetched heads for both shas
+  - a full-diff fallback on a retarget or a moved merge base
+  - abandoned records wait 30 days past `closedDate`
+  - org normalization, and `chmod 700` before every write
+- **The materialize half of `pr-review-batch.md` item 1 is now done.** Re-resolving the head right before posting stays with that brief.
+- **Side effects on the machine.** `~/.claude-kit-reviews` was created and removed around every rep and is absent now. Two rep-written kaizen notes were removed (one more from the section 2 arms is covered in Chapter 2). The .NET repros left VBCSCompiler server processes, `/tmp/dotnet-diagnostic-*` sockets and `/tmp/MSBuildTemp*` directories.
+Review Findings:
+- **Round 1: both reviewers CHANGES_REQUIRED.**
+  - Critical, fixed: a held round lost its findings, and the gate could propose Approve over a held blocker.
+  - Majors, fixed:
+    - vetoes and demotions were invisible to the dedup
+    - no file:line, anchor or approved text in the record, so the settle step had nothing to re-present
+    - the head resolved in one place while the diff used another
+    - pruning on abandoned
+    - the root mode held only if mkdir ran first
+    - `<org>` was unnormalized
+  - Moot: the ls-remote prefix doubling went away with the head fix.
+  - Minors, fixed: the status lifecycle, the ref exemption from the dispatch bar, the unverified auto-memory mechanism, the sweep pointer, the session id, "that memory record", and the failure-mode lines.
+  - Minors, accepted:
+    - concurrent sessions on one PR, which is `plans/kit-concurrent-sessions_spec_v1.md`'s question
+    - a session dying at an unanswered gate writes nothing; under the across-rounds ruling, a dead gate is a rerun
+- **Round 2: both CHANGES_REQUIRED, no Criticals.**
+  - Majors, fixed:
+    - settling brought vetoes back
+    - carried items missed the vote row, their anchors, this round's entry and a second hold
+    - held drafts lost their text
+    - the source and target shas came from different times (reproduced by the blind seat)
+    - a source-only delta was wrong after a merge from the target or a retarget (reproduced)
+  - Minors, fixed: the write-path-down status, the dispatch exclusion as a closed list, the 30-day clock, standing context at the write point, the ref-name form, the dedup over carried items, and the "stop" ambiguity.
+  - Minors, accepted:
+    - the no-clone head and the head re-check before posting (both `pr-review-batch.md` item 1)
+    - unresolvable records named on every run
+    - a reset vote recorded as not cast (re-casting is needed then anyway)
+    - ADO Server collection names
+    - single-branch clones whose refspec leaves `origin/<branch>` unwritten
+    - "verified inline", which section 2 defines
+- **Round 3: APPROVED_WITH_CONCERNS.**
+  - Fixed: the fallback's wording (the target branch's name, not its moving head) and the promoted-note outcome.
+  - Accepted: the no-clone sha pairing (same reasoning as above) and the gate-count wording at `:141`, which section 2 rewrites.
+Next: 2. Re-review corrections in `pr-review/SKILL.md`
+Commit Model: Commit-and-Push
